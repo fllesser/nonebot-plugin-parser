@@ -15,7 +15,7 @@ import aiohttp
 import httpx
 
 from ..constants import COMMON_HEADER, PLUGIN_NAME, RESOLVE_SHUTDOWN_LIST_NAME
-
+from ..config import *
 
 async def download_video(url, proxy: str = None, ext_headers=None) -> str:
     """
@@ -29,7 +29,7 @@ async def download_video(url, proxy: str = None, ext_headers=None) -> str:
     :return: 保存视频的路径。
     """
     # 使用时间戳生成文件名，确保唯一性
-    path = os.path.join(os.getcwd(), f"{int(time.time())}.mp4")
+    path = os.path.join(AUDIO_PATH, f"{int(time.time())}.mp4")
 
     # 判断 ext_headers 是否为 None
     if ext_headers is None:
@@ -73,7 +73,7 @@ async def download_img(url: str, path: str = '', proxy: str = None, session=None
     :return: 保存图片的路径。
     """
     if path == '':
-        path = os.path.join(os.getcwd(), url.split('/').pop())
+        path = os.path.join(IMAGE_PATH, url.split('/').pop())
     # 单个文件下载
     if session is None:
         async with aiohttp.ClientSession() as session:
@@ -99,7 +99,7 @@ async def download_audio(url):
     # 去除可能存在的请求参数
     file_name = file_name.split('?')[0]
 
-    path = os.path.join(os.getcwd(), file_name)
+    path = os.path.join(AUDIO_PATH, file_name)
 
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
@@ -117,31 +117,6 @@ def delete_boring_characters(sentence):
     :return:
     """
     return re.sub(r'[0-9’!"∀〃#$%&\'()*+,-./:;<=>?@，。?★、…【】《》？“”‘’！[\\]^_`{|}~～\s]+', "", sentence)
-
-
-def remove_files(file_paths: List[str]) -> Dict[str, str]:
-    """
-    根据路径删除文件
-
-    Parameters:
-    *file_paths (str): 要删除的一个或多个文件路径
-
-    Returns:
-    dict: 一个以文件路径为键、删除状态为值的字典
-    """
-    results = { }
-
-    for file_path in file_paths:
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-                results[file_path] = 'remove'
-            except Exception as e:
-                results[file_path] = f'error: {e}'
-        else:
-            results[file_path] = 'don\'t exist'
-
-    return results
 
 
 def get_file_size_mb(file_path):

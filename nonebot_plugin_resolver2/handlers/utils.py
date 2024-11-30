@@ -1,4 +1,4 @@
-import os
+#import os
 
 from typing import cast, Iterable, Union, List
 from nonebot import logger
@@ -93,7 +93,8 @@ def get_id_both(event: Event):
         return event.user_id
 
 
-async def auto_video_send(event: Event, data_path: str):
+@DeprecationWarning
+async def auto_video_send(event: Event, data_path: Path):
     """
     自动判断视频类型并进行发送，支持群发和私发
     :param event:
@@ -119,14 +120,9 @@ async def auto_video_send(event: Event, data_path: str):
         await send_both(bot, event, MessageSegment.video(f'file://{data_path}'))
     except Exception as e:
         logger.error(f"解析发送出现错误，具体为\n{e}")
-    finally:
-        # 删除临时文件
-        if os.path.exists(data_path):
-            os.unlink(data_path)
-        if os.path.exists(data_path + '.jpg'):
-            os.unlink(data_path + '.jpg')
 
-async def get_video_seg(data_path: str) -> MessageSegment:
+
+async def get_video_seg(data_path: Path) -> MessageSegment:
     seg: MessageSegment
     try:
         # 如果data以"http"开头，先下载视频
@@ -138,10 +134,22 @@ async def get_video_seg(data_path: str) -> MessageSegment:
 
         # 如果视频大于 100 MB 自动转换为群文件, 先忽略
         if file_size_in_mb > VIDEO_MAX_MB:
-            seg = Message(f"当前解析文件 {file_size_in_mb} MB 大于 {VIDEO_MAX_MB} MB, 取消发送")
-        seg = MessageSegment.video(f'file://{data_path}')
+            # seg = Message(f"当前解析文件 {file_size_in_mb} MB 大于 {VIDEO_MAX_MB} MB, 取消发送")
+            seg = get_file_seg(data_path)
+        seg = MessageSegment.video(data_path)
     except Exception as e:
         logger.error(f"下载视频失败，具体错误为\n{e}")
         seg = Message(f"下载视频失败，具体错误为\n{e}")
     finally:
         return seg
+    
+def get_file_seg(data_path: Path) -> MessageSegment:
+    return MessageSegment(type = "file", data = {
+    "name": data_path.name, # [发] [选]
+    "file": data_path.absolute(),
+    "path": "empty", #  [收]
+    "url": "empty", #  [收]
+    "file_id": "empty", #  [收]
+    "file_size": "empty", #  [收]
+    "file_unique": "empty" #  [收]
+  })

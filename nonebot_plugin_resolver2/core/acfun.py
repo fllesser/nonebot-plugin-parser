@@ -1,9 +1,9 @@
 import json
+import httpx
 import re
 import subprocess
-import os
 
-import httpx
+from ..config import RPATH
 
 headers = {
     'referer': 'https://www.acfun.cn/',
@@ -104,18 +104,13 @@ def parse_video_name(video_info: json):
 def merge_ac_file_to_mp4(ts_names, full_file_name, should_delete=True):
     concat_str = '\n'.join([f"file {i}.ts" for i, d in enumerate(ts_names)])
     # print(concat_str)
-    with open('file.txt', 'w') as f:
+    with open(RPATH / 'temp'/ 'file.txt', 'w') as f:
         f.write(concat_str)
 
     subprocess.call(f'ffmpeg -y -f concat -safe 0 -i "file.txt" -c copy "{full_file_name}"', shell=True,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                     )
-    if should_delete:
-        os.unlink('file.txt')
-        # os.unlink(full_file_name)
-        for i in range(len(ts_names)):
-            os.unlink(f'{i}.ts')
 
 
 def parse_video_name_fixed(video_info: json):

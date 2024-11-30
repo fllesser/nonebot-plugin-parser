@@ -1,4 +1,5 @@
-import os, re, asyncio
+import re
+import asyncio
 
 from nonebot import on_regex
 from nonebot.adapters.onebot.v11 import Message, Event
@@ -32,6 +33,5 @@ async def acfun_handler(event: Event) -> None:
     # logger.info(output_folder_name, output_file_name)
     await asyncio.gather(*[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)])
     merge_ac_file_to_mp4(ts_names, output_file_name)
-    # await acfun.send(Message(MessageSegment.video(f"{os.getcwd()}/{output_file_name}")))
-    await auto_video_send(event, f"{os.getcwd()}/{output_file_name}")
+    await auto_video_send(event, f"{VIDEO_PATH.absolute()}/{output_file_name}")
 

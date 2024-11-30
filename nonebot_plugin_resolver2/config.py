@@ -16,6 +16,11 @@ class Config(BaseModel):
 
 # 插件数据目录
 RPATH: Path = Path() / 'data' /'nonebot-plugin-resolver'
+
+VIDEO_PATH: Path = RPATH / "temp" / "video"
+AUDIO_PATH: Path = RPATH / "temp" / "audio"
+IMAGE_PATH: Path = RPATH / "temp" / "image"
+
 YTB_COOKIES_FILE = (RPATH / 'cookie' / 'ytb_cookies.txt').absolute()
 BILI_COOKIES_FILE = (RPATH / 'cookie' / 'bili_cookies.txt').absolute()
 # 配置加载

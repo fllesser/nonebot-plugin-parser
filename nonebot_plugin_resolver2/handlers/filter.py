@@ -92,6 +92,6 @@ async def check_disable(bot: Bot, event: Event):
                                 list(load_sub_user())]
     persistence_disable_list = "2. 在【持久层】中的名单有：\n" + '\n'.join(persistence_disable_list)
 
-    await check_resolve.send(Message("已经发送到私信了~"))
+    await check_resolve.send("已经发送到私信了~")
     await bot.send_private_msg(user_id=event.user_id, message=Message(
-        "[nonebot-plugin-resolver 关闭名单如下：]" + "\n\n" + memory_disable_list + '\n\n' + persistence_disable_list + "\n\n" + "🌟 温馨提示：如果想关闭解析需要艾特我然后输入: 关闭解析"))
+        "[nonebot-plugin-resolver2 关闭名单如下：]" + "\n\n" + memory_disable_list + '\n\n' + persistence_disable_list + "\n\n" + "🌟 温馨提示：如果想关闭解析需要艾特我然后输入: 关闭解析"))
