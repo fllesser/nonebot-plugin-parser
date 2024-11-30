@@ -1,16 +1,11 @@
-from .bilibili import bilibili
-from .douyin import douyin
-from .kugou import kugou
-from .twitter import twitter
-from .ncm import ncm
-from .ytb import ytb
-from .ac import acfun
-from .tiktok import tiktok
-from .weibo import weibo
-from .kugou import kugou
-from .xhs import xhs
+# 使用列表批量导入 matcher
+modules = ["bilibili", "douyin", "kugou", "twitter", "ncm", "ytb", "acfun", "tiktok", "weibo", "xhs"]
+for module in modules:
+    exec(f"from .{module} import {module}")
+
+# import other matcher
 from .filter import enable_resolve, disable_resolve, check_resolve
 
-resolvers = {"bilibili": bilibili, "douyin": douyin, "tiktok": tiktok, "acfun": acfun,
-              "twitter": twitter, "xhs": xhs, "ytb": ytb, "ncm": ncm, "weibo": weibo, "kugou": kugou}
+# 定义 resolvers 和 controllers
+resolvers = {module: eval(module) for module in modules}
 controllers = [enable_resolve, disable_resolve, check_resolve]
