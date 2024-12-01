@@ -42,7 +42,7 @@ async def _(bot: Bot, event: Event) -> None:
     douyin_ck = rconfig.r_douyin_ck
     if douyin_ck == "":
         logger.error(rconfig)
-        await douyin.send(Message(f"{NICKNAME}识别 | 抖音，无法获取到管理员设置的抖音ck！"))
+        await douyin.send(Message(f"{NICKNAME}解析 | 抖音，无法获取到管理员设置的抖音ck！"))
         return
     # API、一些后续要用到的参数
     headers = {
@@ -56,17 +56,17 @@ async def _(bot: Bot, event: Event) -> None:
         async with session.get(api_url, headers=headers, timeout=10) as response:
             detail = await response.json()
             if detail is None:
-                await douyin.send(Message(f"{NICKNAME}识别 | 抖音，解析失败！"))
+                await douyin.send(Message(f"{NICKNAME}解析 | 抖音，解析失败！"))
                 return
             # 获取信息
             detail = detail['aweme_detail']
             # 判断是图片还是视频
             url_type_code = detail['aweme_type']
             url_type = URL_TYPE_CODE_DICT.get(url_type_code, 'video')
-            await douyin.send(Message(f"{NICKNAME}识别 | 抖音，{detail.get('desc')}"))
+            await douyin.send(Message(f"{NICKNAME}解析 | 抖音，{detail.get('desc')}"))
             # 根据类型进行发送
             if url_type == 'video':
-                # 识别播放地址
+                # 解析播放地址
                 player_uri = detail.get("video").get("play_addr")['uri']
                 player_real_addr = DY_TOUTIAO_INFO.replace("{}", player_uri)
                 # 发送视频

@@ -1,5 +1,5 @@
 import re
-import asyncio
+import asyncio, aiofiles
 import subprocess
 import httpx
 import json
@@ -29,11 +29,11 @@ async def _(event: Event) -> None:
         inputMsg = f"https://www.acfun.cn/v/ac{re.search(r'ac=([^&?]*)', inputMsg)[1]}"
 
     url_m3u8s, video_name = parse_url(inputMsg)
-    await acfun.send(Message(f"{NICKNAME}识别：猴山，{video_name}"))
+    await acfun.send(Message(f"{NICKNAME}解析：猴山，{video_name}"))
     m3u8_full_urls, ts_names, output_folder_name, output_file_name = parse_m3u8(url_m3u8s)
     # logger.info(output_folder_name, output_file_name)
     await asyncio.gather(*[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)])
-    merge_ac_file_to_mp4(ts_names, output_file_name)
+    await merge_ac_file_to_mp4(ts_names, output_file_name)
     await auto_video_send(event, f"{video_path.absolute()}/{output_file_name}")
 
 headers = {
@@ -132,17 +132,18 @@ def parse_video_name(video_info: json):
     return raw
 
 
-def merge_ac_file_to_mp4(ts_names, full_file_name, should_delete=True):
+async def merge_ac_file_to_mp4(ts_names, full_file_name):
     concat_str = '\n'.join([f"file {i}.ts" for i, d in enumerate(ts_names)])
-    # print(concat_str)
-    with open(temp_path / 'file.txt', 'w') as f:
+
+    async with aiofiles.open(temp_path / 'file.txt', 'w') as f:
         f.write(concat_str)
-
-    subprocess.call(f'ffmpeg -y -f concat -safe 0 -i "file.txt" -c copy "{full_file_name}"', shell=True,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    )
-
+    command = f'ffmpeg -y -f concat -safe 0 -i "file.txt" -c copy "{full_file_name}"'
+    stdout = subprocess.DEVNULL
+    stderr = subprocess.DEVNULL
+    await asyncio.get_event_loop().run_in_executor(
+        None,
+        lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
+    )
 
 def parse_video_name_fixed(video_info: json):
     """

@@ -24,14 +24,14 @@ ncm = on_regex(
 @resolve_filter
 async def ncm_handler(bot: Bot, event: Event):
     message = str(event.message)
-    # 识别短链接
+    # 解析短链接
     if "163cn.tv" in message:
         message = re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", message).group(0)
         message = str(httpx.head(message, follow_redirects=True).url)
 
     ncm_id = re.search(r"id=(\d+)", message).group(1)
     if ncm_id is None:
-        await ncm.finish(f"{NICKNAME}识别 | 网易云 - 获取链接失败")
+        await ncm.finish(f"{NICKNAME}解析 | 网易云 - 获取链接失败")
     # 拼接获取信息的链接
     # ncm_detail_url = f'{NETEASE_API_CN}/song/detail?ids={ncm_id}'
     # ncm_detail_resp = httpx.get(ncm_detail_url, headers=COMMON_HEADER)
@@ -46,7 +46,7 @@ async def ncm_handler(bot: Bot, event: Event):
     ncm_singer = ncm_vip_data['singer']
     ncm_title = ncm_vip_data['title']
     await ncm.send(Message(
-        [MessageSegment.image(ncm_cover), MessageSegment.text(f'{NICKNAME}识别 | 网易云音乐 - {ncm_title}-{ncm_singer}')]))
+        [MessageSegment.image(ncm_cover), MessageSegment.text(f'{NICKNAME}解析 | 网易云音乐 - {ncm_title}-{ncm_singer}')]))
     # 下载音频文件后会返回一个下载路径
     ncm_music_path = await download_audio(ncm_url)
     # 发送语音

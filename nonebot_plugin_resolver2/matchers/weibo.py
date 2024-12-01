@@ -82,7 +82,7 @@ async def weibo_handler(bot: Bot, event: Event):
     # 发送消息
     await weibo.send(
         Message(
-            f"{NICKNAME}识别 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}"))
+            f"{NICKNAME}解析 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}"))
     if pics:
         pics = map(lambda x: x['url'], pics)
         download_img_funcs = [asyncio.create_task(download_img(item, '', headers={

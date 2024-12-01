@@ -33,7 +33,7 @@ async def xhs_handler(bot: Bot, event: Event):
     # 如果没有设置xhs的ck就结束，因为获取不到
     xhs_ck = rconfig.r_xhs_ck
     if xhs_ck == "":
-        await xiaohongshu.send(Message(f"{NICKNAME}识别内容来自：【小红书】\n无法获取到管理员设置的小红书ck！"))
+        await xiaohongshu.send(Message(f"{NICKNAME}解析内容来自：【小红书】\n无法获取到管理员设置的小红书ck！"))
         return
     # 请求头
     headers = {
@@ -64,7 +64,7 @@ async def xhs_handler(bot: Bot, event: Event):
         response_json = re.findall('window.__INITIAL_STATE__=(.*?)</script>', html)[0]
     except IndexError:
         await xiaohongshu.send(
-            Message(f"{NICKNAME}识别内容来自：【小红书】\n当前ck已失效，请联系管理员重新设置的小红书ck！"))
+            Message(f"{NICKNAME}解析内容来自：【小红书】\n当前ck已失效，请联系管理员重新设置的小红书ck！"))
         return
     response_json = response_json.replace("undefined", "null")
     response_json = json.loads(response_json)
@@ -73,7 +73,7 @@ async def xhs_handler(bot: Bot, event: Event):
     note_title = note_data['title']
     note_desc = note_data['desc']
     await xiaohongshu.send(Message(
-        f"{NICKNAME}识别 | 小红书 - {note_title}\n{note_desc}"))
+        f"{NICKNAME}解析 | 小红书 - {note_title}\n{note_desc}"))
 
     aio_task = []
     if type == 'normal':

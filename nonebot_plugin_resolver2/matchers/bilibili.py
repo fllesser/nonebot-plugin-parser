@@ -81,7 +81,7 @@ async def _(bot: Bot, event: Event) -> None:
                     break
             desc = paragraphs[0]['text']['nodes'][0]['word']['words']
             pics = paragraphs[1]['pic']['pics']
-            await bilibili.send(Message(f"{NICKNAME}识别 | B站动态 - {title}\n{desc}"))
+            await bilibili.send(Message(f"{NICKNAME}解析 | B站动态 - {title}\n{desc}"))
             send_pics = []
             for pic in pics:
                 img = pic['url']
@@ -89,7 +89,7 @@ async def _(bot: Bot, event: Event) -> None:
             # 发送异步后的数据
             await send_forward_both(bot, event, send_pics)
         return
-    # 直播间识别
+    # 直播间解析
     if 'live' in url:
         # https://live.bilibili.com/30528999?hotRank=0
         room_id = re.search(r'\/(\d+)', url).group(1)
@@ -97,9 +97,9 @@ async def _(bot: Bot, event: Event) -> None:
         room_info = (await room.get_room_info())['room_info']
         title, cover, keyframe = room_info['title'], room_info['cover'], room_info['keyframe']
         await bilibili.send(Message([MessageSegment.image(cover), MessageSegment.image(keyframe),
-                                   MessageSegment.text(f"{NICKNAME}识别 | 哔哩哔哩直播 - {title}")]))
+                                   MessageSegment.text(f"{NICKNAME}解析 | 哔哩哔哩直播 - {title}")]))
         return
-    # 专栏识别
+    # 专栏解析
     if 'read' in url:
         read_id = re.search(r'read\/cv(\d+)', url).group(1)
         ar = article.Article(read_id)
@@ -112,9 +112,9 @@ async def _(bot: Bot, event: Event) -> None:
         markdown_path = rpath / 'article.md'
         with open(markdown_path, 'w', encoding='utf8') as f:
             f.write(ar.markdown())
-        await bilibili.send(Message(f"{NICKNAME}识别 | 哔哩哔哩专栏"))
+        await bilibili.send(Message(f"{NICKNAME}解析 | 哔哩哔哩专栏"))
         await bilibili.finish(Message(MessageSegment(type="file", data={ "file": markdown_path })))
-    # 收藏夹识别
+    # 收藏夹解析
     if 'favlist' in url and credential:
         # https://space.bilibili.com/22990202/favlist?fid=2344812202
         fav_id = re.search(r'favlist\?fid=(\d+)', url).group(1)
@@ -126,10 +126,10 @@ async def _(bot: Bot, event: Event) -> None:
             favs.append(
                 [MessageSegment.image(cover),
                  MessageSegment.text(f'🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}')])
-        await bilibili.send(f'{NICKNAME}识别 | 哔哩哔哩收藏夹，正在为你找出相关链接请稍等...')
+        await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩收藏夹，正在为你找出相关链接请稍等...')
         await bilibili.finish(make_node_segment(bot.self_id, favs))
     # 获取视频信息
-    will_delete_id: int = (await bilibili.send(f'{NICKNAME}识别 | 哔哩哔哩, 解析中.....'))["message_id"]
+    will_delete_id: int = (await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩, 解析中.....'))["message_id"]
     video_id = re.search(r"video\/[^\?\/ ]+", url)[0].split('/')[1]
     if "av" in video_id:
         v = video.Video(aid=int(video_id.split("av")[1]), credential=credential)
@@ -138,9 +138,9 @@ async def _(bot: Bot, event: Event) -> None:
     try:
         video_info = await v.get_info()
     except Exception as e:
-        await bilibili.finish(Message(f"{NICKNAME}识别 | 哔哩哔哩，出错，{e}"))
+        await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩，出错，{e}"))
     if video_info is None:
-        await bilibili.finish(Message(f"{NICKNAME}识别 | 哔哩哔哩，出错，无法获取数据！"))
+        await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩，出错，无法获取数据！"))
     video_title, video_cover, video_desc, video_duration = video_info['title'], video_info['pic'], video_info['desc'], \
         video_info['duration']
     # 校准 分 p 的情况
@@ -194,6 +194,7 @@ async def _(bot: Bot, event: Event) -> None:
             segs.append(Message("bilibili AI总结:\n" + ai_conclusion['model_result']['summary']))
     await send_forward_both(bot, event, make_node_segment(bot.self_id, segs))
     await bot.delete_msg(message_id = will_delete_id)
+
 
 
 async def download_b_file(url, full_file_name, progress_callback):

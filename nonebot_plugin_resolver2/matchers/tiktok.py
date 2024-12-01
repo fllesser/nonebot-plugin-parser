@@ -41,9 +41,9 @@ async def _(event: Event) -> None:
         url = re.search(url_reg, url)[0]
     try:
         title = await get_video_title(url = url, proxy = PROXY)
-        await tiktok.send(Message(f"{NICKNAME}识别 | TikTok - {title}"))
+        await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - {title}"))
     except Exception as e:
-        await tiktok.send(Message(f"{NICKNAME}识别 | TikTok - 标题获取出错: {e}"))
+        await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - 标题获取出错: {e}"))
     try:
         video_path = await ytdlp_download_video(url = url, type = 'tiktok', proxy = PROXY)
         await tiktok.send(await get_video_seg(video_path))

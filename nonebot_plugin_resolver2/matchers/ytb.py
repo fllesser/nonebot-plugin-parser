@@ -21,9 +21,9 @@ async def ytb_handler(event: MessageEvent, state: T_State):
         str(event.message).strip())[0]
     try:
         title = await get_video_title(url, YTB_COOKIES_FILE, PROXY)
-        await ytb.send(f"{NICKNAME}识别 | 油管 - {title}")
+        await ytb.send(f"{NICKNAME}解析 | 油管 - {title}")
     except Exception as e:
-        await ytb.send(f"{NICKNAME}识别 | 油管 - 标题获取出错: {e}")
+        await ytb.send(f"{NICKNAME}解析 | 油管 - 标题获取出错: {e}")
     state["url"] = url
 
 @ytb.got("type", prompt="您需要的是音频(0)，还是视频(1)")
