@@ -7,7 +7,7 @@
 
 # nonebot-plugin-resolver2
 
-_✨ NoneBot2 链接分享解析器插件重置版, 支持的解析(BV号/链接/小程序/卡片),支持平台(b站，抖音，网易云，微博，小红书，youtube，tiktok，twitter...) ✨_
+_✨ NoneBot2 链接分享解析器插件重制版 ✨_
 
 
 <a href="./LICENSE">
@@ -37,7 +37,11 @@ _✨ NoneBot2 链接分享解析器插件重置版, 支持的解析(BV号/链接
 
 ## 📖 介绍
 
-[nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) 重置版，优化了一些交互逻辑，效果见实际体验
+[nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) 重制版，优化了一些交互逻辑，效果见实际体验
+
+支持的解析(BV号/链接/小程序/卡片)
+
+支持平台(b站，抖音，网易云，微博，小红书，youtube，tiktok，twitter...) 
 
 注意：还有些地方没有改完，可能存在亿点点 bug
 
