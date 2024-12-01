@@ -8,7 +8,7 @@
 
 # nonebot-plugin-resolver2
 
-_✨ NoneBot2 链接分享解析器插件, 支持的解析(BV号/链接/小程序/卡片),支持平台(b站，抖音，网易云，微博，小红书，youtube，tiktok，twitter...) ✨_
+_✨ NoneBot2 链接分享解析器插件重置版, 支持的解析(BV号/链接/小程序/卡片),支持平台(b站，抖音，网易云，微博，小红书，youtube，tiktok，twitter...) ✨_
 
 
 <a href="./LICENSE">
@@ -20,7 +20,6 @@ _✨ NoneBot2 链接分享解析器插件, 支持的解析(BV号/链接/小程�
 <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="python">
 
 </div>
-
 
 
 <details>
@@ -39,9 +38,10 @@ _✨ NoneBot2 链接分享解析器插件, 支持的解析(BV号/链接/小程�
 
 ## 📖 介绍
 
-这里是插件的详细介绍部分
+[nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) 重置版，优化了一些交互逻辑，效果见实际体验
 
 ## 💿 安装
+
 
 <details open>
 <summary>使用 nb-cli 安装</summary>
@@ -107,4 +107,7 @@ _✨ NoneBot2 链接分享解析器插件, 支持的解析(BV号/链接/小程�
 | 开启所有解析 | SUPERUSER | 否 | 私聊 | 关闭解析 |
 | 关闭所有解析 | SUPERUSER | 否 | 私聊 | 关闭解析 |
 | 查看关闭解析 | SUPERUSER | 否 | - | 获取已经关闭解析的群聊 |
-### 效果图
+
+
+## 致谢
+大部分解析代码来自 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
