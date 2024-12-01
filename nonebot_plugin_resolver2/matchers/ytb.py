@@ -41,7 +41,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
             audio_path = await ytdlp_download_audio(
                 url = url, type="ytb", cookiefile = YTB_COOKIES_FILE, proxy = PROXY)
             # seg = get_file_seg(f'{state["title"]}.mp3', audio_path)
-            await upload_both(bot=bot, event=event, file_path=audio_path, name=f'{state["title"]}.mp3')
+            await upload_both(bot=bot, event=event, file_path=audio_path, name=f'{state["title"]}.flac')
     except Exception as e:
         await ytb.send(f"下载失败 | {e}")
     

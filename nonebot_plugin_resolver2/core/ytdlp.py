@@ -37,7 +37,7 @@ async def ytdlp_download_video(url: str, type: str, height: int = 1080, cookiefi
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         await asyncio.to_thread(ydl.download, [url])
-    return f'{filename}.mp4'
+    return f'{filename.absolute()}.mp4'
         
 
 async def ytdlp_download_audio(url: str, type: str, cookiefile: str | Path = '', proxy: str = '') -> str:
@@ -45,7 +45,7 @@ async def ytdlp_download_audio(url: str, type: str, cookiefile: str | Path = '',
     ydl_opts = {
         'outtmpl': f'{filename}.%(ext)s',
         'format': 'bestaudio',
-        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '0', }]
+        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'flac', 'preferredquality': '0', }]
     }
     
     if proxy:
@@ -54,4 +54,4 @@ async def ytdlp_download_audio(url: str, type: str, cookiefile: str | Path = '',
         ydl_opts['cookiefile'] = cookiefile.absolute() if isinstance(cookiefile, Path) else cookiefile
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         await asyncio.to_thread(ydl.download, [url])
-    return f'{filename}.mp3'
+    return f'{filename.absolute()}.flac'
