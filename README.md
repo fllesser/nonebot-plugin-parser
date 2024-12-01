@@ -87,15 +87,15 @@ _✨ NoneBot2 链接分享解析器插件重置版, 支持的解析(BV号/链接
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
-| NICKNAME | 是 | 无 | nonebot2内置配置，可作为解析结果消息的前缀 |
-| r_xhs_ck | 否 | 无 | 小红书 cookie |
-| r_douyin_ck | 是 | 无 | 抖音 cookie |
-| r_bili_ck | 否 | 无 | B站 cookie, 必须含有 SESSDATA 项 填写后可附加 B 站 ai 总结 |
-| r_ytb_ck | 否 | 无 | Youtube cookie, Youtube 视频因人机检测下载失败，可填写 |
+| NICKNAME | 否 | "" | nonebot2内置配置，可作为解析结果消息的前缀 |
+| r_xhs_ck | 否 | "" | 小红书 cookie |
+| r_douyin_ck | 否 | "" | 抖音 cookie |
+| r_bili_ck | 否 | "" | B站 cookie, 必须含有 SESSDATA 项 填写后可附加 B 站 ai 总结 |
+| r_ytb_ck | 否 | "" | Youtube cookie, Youtube 视频因人机检测下载失败，可填写 |
 | r_is_oversea | 否 | False | 海外服务器部署，或者使用了透明代理，设置为 True |
 | r_proxy | 否 | 'http://127.0.0.1:7890' | # 代理 r_is_oversea=False 时生效 |
 | r_video_duration_maximum | 否 | 480 | 视频最大解析长度，默认480s为8分钟，计算公式为480s/60s=8mins |
-| r_disable_resolvers | 否 | 无 | 全局禁止的解析，示例 r_disable_resolvers=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kugou", "twitter", "ncm", "ytb", "acfun", "tiktok", "weibo", "xiaohongshu"] |
+| r_disable_resolvers | 否 | [] | 全局禁止的解析，示例 r_disable_resolvers=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kugou", "twitter", "ncm", "ytb", "acfun", "tiktok", "weibo", "xiaohongshu"] |
 
 ## 🎉 使用
 ### 指令表
@@ -103,8 +103,8 @@ _✨ NoneBot2 链接分享解析器插件重置版, 支持的解析(BV号/链接
 |:-----:|:----:|:----:|:----:|:----:|
 | 开启解析 | SUPERUSER/OWNER/ADMIN | 是 | 群聊 | 开启解析 |
 | 关闭解析 | SUPERUSER/OWNER/ADMIN | 是 | 群聊 | 关闭解析 |
-| 开启所有解析 | SUPERUSER | 否 | 私聊 | 关闭解析 |
-| 关闭所有解析 | SUPERUSER | 否 | 私聊 | 关闭解析 |
+| 开启所有解析 | SUPERUSER | 否 | 私聊 | 开启所有群的解析 |
+| 关闭所有解析 | SUPERUSER | 否 | 私聊 | 关闭所有群的解析 |
 | 查看关闭解析 | SUPERUSER | 否 | - | 获取已经关闭解析的群聊 |
 
 
