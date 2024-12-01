@@ -8,7 +8,6 @@ from .filter import resolve_filter
 from .utils import get_video_seg, make_node_segment, send_forward_both, auto_determine_send_type
 from ..constant import COMMON_HEADER, GENERAL_REQ_LINK
 from ..core.common import download_img, download_video
-from ..core.request import fetch_data
 
 from ..config import *
 

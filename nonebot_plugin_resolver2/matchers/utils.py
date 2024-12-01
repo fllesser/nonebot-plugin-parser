@@ -1,6 +1,6 @@
 from typing import cast, Iterable, Union, List
 from nonebot import logger
-
+from pathlib import Path
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment, GROUP_ADMIN, GROUP_OWNER
 from nonebot.adapters.onebot.v11.event import GroupMessageEvent, PrivateMessageEvent, MessageEvent
 from nonebot.matcher import current_bot
@@ -135,17 +135,14 @@ async def get_video_seg(data_path: Path) -> MessageSegment:
         seg = MessageSegment.video(data_path)
     except Exception as e:
         logger.error(f"下载视频失败，具体错误为\n{e}")
-        seg = Message(f"下载视频失败，具体错误为\n{e}")
+        seg = MessageSegment.text(f"下载视频失败，具体错误为\n{e}")
     finally:
         return seg
     
-def get_file_seg(data_path: Path) -> MessageSegment:
-    return MessageSegment(type = "file", data = {
-        "name": data_path.name, # [发] [选]
-        "file": data_path.absolute(),
-        "path": "empty", #  [收]
-        "url": "empty", #  [收]
-        "file_id": "empty", #  [收]
-        "file_size": "empty", #  [收]
-        "file_unique": "empty" #  [收]
+def get_file_seg(filename: str, data_path: Path | str) -> MessageSegment:
+    file = data_path if isinstance(data_path, str) else data_path.absolute()
+    return MessageSegment("file", data = {
+        "name": filename, # [发] [选]
+        "file": file,
+        "path": file,
   })

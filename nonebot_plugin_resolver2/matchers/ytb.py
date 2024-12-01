@@ -1,11 +1,11 @@
 import re
 
 from nonebot import on_regex
-from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment, Bot
 from nonebot.typing import T_State
 from nonebot.params import Arg
 from .filter import resolve_filter
-from .utils import get_video_seg, get_file_seg
+from .utils import get_video_seg, upload_both
 from ..core.ytdlp import *
 from ..config import *
 
@@ -24,22 +24,24 @@ async def _(event: MessageEvent, state: T_State):
         await ytb.send(f"{NICKNAME}解析 | 油管 - {title}")
     except Exception as e:
         await ytb.send(f"{NICKNAME}解析 | 油管 - 标题获取出错: {e}")
+    state["title"] = title
     state["url"] = url
 
+@resolve_filter
 @ytb.got("type", prompt="您需要下载音频(0)，还是视频(1)")
-async def _(state: T_State, type: Message = Arg()):
+async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()):
     url: str = state["url"]
-    seg: MessageSegment = MessageSegment.text("下载失败")
     try:
         if int(type.extract_plain_text()) == 1:
             video_path = await ytdlp_download_video(
                 url = url, type="ytb", cookiefile = YTB_COOKIES_FILE, proxy = PROXY)
             seg = await get_video_seg(video_path)
+            await ytb.send(seg)
         else: 
             audio_path = await ytdlp_download_audio(
                 url = url, type="ytb", cookiefile = YTB_COOKIES_FILE, proxy = PROXY)
-            seg = await get_file_seg(audio_path)
-        await ytb.send(seg)
+            # seg = get_file_seg(f'{state["title"]}.mp3', audio_path)
+            await upload_both(bot=bot, event=event, file_path=audio_path, name=f'{state["title"]}.mp3')
     except Exception as e:
         await ytb.send(f"下载失败 | {e}")
     
