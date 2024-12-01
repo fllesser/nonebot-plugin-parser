@@ -30,8 +30,7 @@ def resolve_filter(func):
     async def wrapper(*args, **kwargs):
         # 假设 `event` 是通过被装饰函数的参数传入的
         event = kwargs.get('event') or args[1]  # 根据位置参数或者关键字参数获取 event
-        if not isinstance(event, GroupMessageEvent): return # 只过滤群聊
-        if event.group_id not in disable_group_list:
+        if not isinstance(event, GroupMessageEvent) or event.group_id not in disable_group_list:
             return await func(*args, **kwargs)
         else:
             logger.info(f"群 [{event.group_id}] 已关闭解析，不再执行")
