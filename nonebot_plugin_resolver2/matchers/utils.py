@@ -89,7 +89,6 @@ def get_id_both(event: MessageEvent):
         return event.user_id
 
 
-@DeprecationWarning
 async def auto_video_send(event: Event, data_path: Path):
     """
     自动判断视频类型并进行发送，支持群发和私发
@@ -131,7 +130,7 @@ async def get_video_seg(data_path: Path) -> MessageSegment:
         # 如果视频大于 100 MB 自动转换为群文件, 先忽略
         if file_size_in_mb > VIDEO_MAX_MB:
             # seg = Message(f"当前解析文件 {file_size_in_mb} MB 大于 {VIDEO_MAX_MB} MB, 取消发送")
-            seg = get_file_seg(data_path=data_path)
+            seg = get_file_seg(data_path.name, data_path)
         seg = MessageSegment.video(data_path)
     except Exception as e:
         logger.error(f"下载视频失败，具体错误为\n{e}")
