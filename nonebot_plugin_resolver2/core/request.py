@@ -8,6 +8,6 @@ from ..constant import COMMON_HEADER
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
 async def fetch_data(url, headers: dict[str, str]) -> httpx.Response:
     async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers= COMMON_HEADER | headers)
+        response = await client.get(url, headers= headers | COMMON_HEADER)
         response.raise_for_status()  # 如果响应状态码不是200-299，抛出异常
         return response

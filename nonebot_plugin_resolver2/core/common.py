@@ -29,7 +29,7 @@ async def download_video(url, proxy: str = None, ext_headers=None) -> str:
     :return: 保存视频的路径。
     """
     # 使用时间戳生成文件名，确保唯一性
-    path = os.path.join(audio_path, f"{int(time.time())}.mp4")
+    path = os.path.join(video_path.absolute(), f"{int(time.time())}.mp4")
 
     # 判断 ext_headers 是否为 None
     if ext_headers is None:
@@ -39,12 +39,12 @@ async def download_video(url, proxy: str = None, ext_headers=None) -> str:
         headers = COMMON_HEADER.copy()  # 先复制 COMMON_HEADER
         headers.update(ext_headers)  # 然后更新 ext_headers
 
-    # 配置代理
     client_config = {
         'headers': headers,
         'timeout': httpx.Timeout(60, connect=5.0),
         'follow_redirects': True
     }
+    # 配置代理
     if proxy:
         client_config['proxies'] = { 'https': proxy }
 
@@ -61,7 +61,7 @@ async def download_video(url, proxy: str = None, ext_headers=None) -> str:
         return None
 
 
-async def download_img(url: str, path: str = '', proxy: str = None, session=None, headers=None) -> str:
+async def download_img(url: str, proxy: str = None, session=None, headers=None) -> str:
     """
     异步下载（aiohttp）网络图片，并支持通过代理下载。
     如果未指定path，则图片将保存在当前工作目录并以图片的文件名命名。
@@ -72,8 +72,7 @@ async def download_img(url: str, path: str = '', proxy: str = None, session=None
     :param proxy: 可选，下载图片时使用的代理服务器的URL。
     :return: 保存图片的路径。
     """
-    if path == '':
-        path = os.path.join(image_path, url.split('/').pop())
+    path = os.path.join(image_path.absolute(), url.split('/').pop())
     # 单个文件下载
     if session is None:
         async with aiohttp.ClientSession() as session:
@@ -99,7 +98,7 @@ async def download_audio(url):
     # 去除可能存在的请求参数
     file_name = file_name.split('?')[0]
 
-    path = os.path.join(audio_path, file_name)
+    path = os.path.join(audio_path.absolute(), file_name)
 
     async with httpx.AsyncClient() as client:
         response = await client.get(url)

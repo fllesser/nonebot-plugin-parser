@@ -40,7 +40,7 @@ async def ytdlp_download_video(url: str, type: str, height: int = 1080, cookiefi
     return f'{filename}.mp4'
         
 
-async def ytdlp_download_audio(url: str, cookiefile: str | Path = '', proxy: str = '') -> str:
+async def ytdlp_download_audio(url: str, type: str, cookiefile: str | Path = '', proxy: str = '') -> str:
     filename = audio_path / f"{type}-{random.randint(1, 10000)}"
     ydl_opts = {
         'outtmpl': f'{filename.cwd()}.%(ext)s',

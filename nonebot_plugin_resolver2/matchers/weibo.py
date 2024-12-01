@@ -85,7 +85,7 @@ async def weibo_handler(bot: Bot, event: Event):
             f"{NICKNAME}解析 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}"))
     if pics:
         pics = map(lambda x: x['url'], pics)
-        download_img_funcs = [asyncio.create_task(download_img(item, '', headers={
+        download_img_funcs = [asyncio.create_task(download_img(item, headers={
                                                                                      "Referer": "http://blog.sina.com.cn/"
                                                                                  } | COMMON_HEADER)) for item in pics]
         links_path = await asyncio.gather(*download_img_funcs)

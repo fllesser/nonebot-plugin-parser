@@ -31,6 +31,6 @@ BILI_COOKIES_FILE = (rpath / 'cookie' / 'bili_cookies.txt').absolute()
 # 全局名称
 NICKNAME: str = next(iter(get_driver().config.nickname))
 # 根据是否为国外机器声明代理
-PROXY: str = "" if not rconfig.r_is_oversea else rconfig.r_proxy
+PROXY: str = None if rconfig.r_is_oversea else rconfig.r_proxy
 # 哔哩哔哩限制的最大视频时长（默认8分钟）单位：秒
 DURATION_MAXIMUM: int = rconfig.r_video_duration_maximum

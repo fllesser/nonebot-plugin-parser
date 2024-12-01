@@ -9,19 +9,17 @@ from ..constant import VIDEO_MAX_MB
 from ..core.common import download_video, get_file_size_mb
 from ..config import *
 
-def auto_determine_send_type(user_id: int, task: str) -> MessageSegment:
+def auto_determine_send_type(path: str) -> MessageSegment:
     """
         判断是视频还是图片然后发送最后删除，函数在 twitter 这类可以图、视频混合发送的媒体十分有用
     :param user_id:
     :param task:
     :return:
     """
-    if task.endswith("jpg") or task.endswith("png"):
-        return MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME,
-                                          content=Message(MessageSegment.image(task)))
-    elif task.endswith("mp4"):
-        return MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME,
-                                          content=Message(MessageSegment.video(task)))
+    if path.endswith("jpg") or path.endswith("png"):
+        return MessageSegment.image(path)
+    elif path.endswith("mp4"):
+        return MessageSegment.video(path)
 
 
 def make_node_segment(user_id, segments: Union[MessageSegment, List]) -> Union[

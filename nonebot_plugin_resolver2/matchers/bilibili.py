@@ -178,10 +178,10 @@ async def _(bot: Bot, event: Event) -> None:
             streams = detecter.detect_best_streams()
             video_url, audio_url = streams[0].url, streams[1].url
             # 下载视频和音频
-            path = (rpath / "temp" / video_id).absolute()
+            path = (video_path / video_id).absolute()
             await asyncio.gather(
-                    download_b_file(video_url, f"{path}-video.m4s", logger.info),
-                    download_b_file(audio_url, f"{path}-audio.m4s", logger.info))
+                    download_b_file(video_url, f"{path}-video.m4s", logger.debug),
+                    download_b_file(audio_url, f"{path}-audio.m4s", logger.debug))
             await merge_file_to_mp4(f"{path}-video.m4s", f"{path}-audio.m4s", f"{path}-res.mp4")
             segs.append(await get_video_seg(f"{path}-res.mp4"))
         except Exception as e:
@@ -209,7 +209,6 @@ async def download_b_file(url, full_file_name, progress_callback):
         async with client.stream("GET", url, headers=BILIBILI_HEADER) as resp:
             current_len = 0
             total_len = int(resp.headers.get('content-length', 0))
-            print(total_len)
             async with aiofiles.open(full_file_name, "wb") as f:
                 async for chunk in resp.aiter_bytes():
                     current_len += len(chunk)
