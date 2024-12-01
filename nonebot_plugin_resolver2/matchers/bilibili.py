@@ -21,7 +21,8 @@ from ..config import *
 from ..cookie import cookies_str_to_dict
 
 # format cookie
-credential: Credential = Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck))
+if rconfig.r_bili_ck:
+    credential: Credential = Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck))
 
 # 哔哩哔哩的头请求
 BILIBILI_HEADER = {
