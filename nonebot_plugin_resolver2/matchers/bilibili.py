@@ -1,6 +1,8 @@
 import re
 import httpx
 import asyncio
+import aiofiles
+import subprocess
 
 from nonebot import on_regex
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
@@ -13,16 +15,21 @@ from urllib.parse import parse_qs, urlparse
 
 from .utils import *
 from .filter import resolve_filter
-from ..constants import BILIBILI_HEADER
-from ..core.bili23 import download_b_file, merge_file_to_mp4, extra_bili_info
-from ..core.ytdlp import ytdlp_download_video
 from ..core.common import delete_boring_characters
 
 from ..config import *
 from ..cookie import cookies_str_to_dict
 
 # format cookie
-BILI_CREDENTIAL: Credential = Credential.from_cookies(cookies_str_to_dict(RCONFIG.r_bili_ck))
+credential: Credential = Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck))
+
+# 哔哩哔哩的头请求
+BILIBILI_HEADER = {
+    'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 '
+        'Safari/537.36',
+    'referer': 'https://www.bilibili.com',
+}
 
 bilibili = on_regex(
     r"(bilibili.com|b23.tv|^BV[0-9a-zA-Z]{10}$)", priority=1
@@ -30,7 +37,7 @@ bilibili = on_regex(
 
 @bilibili.handle()
 @resolve_filter
-async def bilibili_handler(bot: Bot, event: Event) -> None:
+async def _(bot: Bot, event: Event) -> None:
 
     """
         哔哩哔哩解析
@@ -58,12 +65,12 @@ async def bilibili_handler(bot: Bot, event: Event) -> None:
     else:
         url: str = re.search(url_reg, url).group(0)
     # ===============发现解析的是动态，转移一下===============
-    if ('t.bilibili.com' in url or '/opus' in url) and BILI_CREDENTIAL:
+    if ('t.bilibili.com' in url or '/opus' in url) and credential:
         # 去除多余的参数
         if '?' in url:
             url = url[:url.index('?')]
         dynamic_id = int(re.search(r'[^/]+(?!.*/)', url)[0])
-        dynamic_info = await Opus(dynamic_id, BILI_CREDENTIAL).get_info()
+        dynamic_info = await Opus(dynamic_id, credential).get_info()
         # 这里比较复杂，暂时不用管，使用下面这个算法即可实现哔哩哔哩动态转发
         if dynamic_info is not None:
             title = dynamic_info['item']['basic']['title']
@@ -102,13 +109,13 @@ async def bilibili_handler(bot: Bot, event: Event) -> None:
             ar = ar.turn_to_note()
         # 加载内容
         await ar.fetch_content()
-        markdown_path = RPATH / 'article.md'
+        markdown_path = rpath / 'article.md'
         with open(markdown_path, 'w', encoding='utf8') as f:
             f.write(ar.markdown())
         await bilibili.send(Message(f"{NICKNAME}识别 | 哔哩哔哩专栏"))
         await bilibili.finish(Message(MessageSegment(type="file", data={ "file": markdown_path })))
     # 收藏夹识别
-    if 'favlist' in url and BILI_CREDENTIAL:
+    if 'favlist' in url and credential:
         # https://space.bilibili.com/22990202/favlist?fid=2344812202
         fav_id = re.search(r'favlist\?fid=(\d+)', url).group(1)
         fav_list = (await get_video_favorite_list_content(fav_id))['medias'][:10]
@@ -125,9 +132,9 @@ async def bilibili_handler(bot: Bot, event: Event) -> None:
     will_delete_id: int = (await bilibili.send(f'{NICKNAME}识别 | 哔哩哔哩, 解析中.....'))["message_id"]
     video_id = re.search(r"video\/[^\?\/ ]+", url)[0].split('/')[1]
     if "av" in video_id:
-        v = video.Video(aid=int(video_id.split("av")[1]), credential=BILI_CREDENTIAL)
+        v = video.Video(aid=int(video_id.split("av")[1]), credential=credential)
     else:
-        v = video.Video(bvid=video_id, credential=BILI_CREDENTIAL)
+        v = video.Video(bvid=video_id, credential=credential)
     try:
         video_info = await v.get_info()
     except Exception as e:
@@ -171,7 +178,7 @@ async def bilibili_handler(bot: Bot, event: Event) -> None:
             streams = detecter.detect_best_streams()
             video_url, audio_url = streams[0].url, streams[1].url
             # 下载视频和音频
-            path = (RPATH / "temp" / video_id).absolute()
+            path = (rpath / "temp" / video_id).absolute()
             await asyncio.gather(
                     download_b_file(video_url, f"{path}-video.m4s", logger.info),
                     download_b_file(audio_url, f"{path}-audio.m4s", logger.info))
@@ -181,10 +188,79 @@ async def bilibili_handler(bot: Bot, event: Event) -> None:
             logger.error(f"下载视频失败，错误为\n{e}")
             segs.append(Message(f"下载视频失败，错误为\n{e}"))
      # 这里是总结内容，如果写了 cookie 就可以
-    if BILI_CREDENTIAL:
+    if credential:
         ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
         if ai_conclusion['model_result']['summary'] != '':
             segs.append(Message("bilibili AI总结:\n" + ai_conclusion['model_result']['summary']))
     await send_forward_both(bot, event, make_node_segment(bot.self_id, segs))
     await bot.delete_msg(message_id = will_delete_id)
 
+
+async def download_b_file(url, full_file_name, progress_callback):
+    """
+        下载视频文件和音频文件
+    :param url:
+    :param full_file_name:
+    :param progress_callback:
+    :return:
+    """
+    async with httpx.AsyncClient() as client:
+        async with client.stream("GET", url, headers=BILIBILI_HEADER) as resp:
+            current_len = 0
+            total_len = int(resp.headers.get('content-length', 0))
+            print(total_len)
+            async with aiofiles.open(full_file_name, "wb") as f:
+                async for chunk in resp.aiter_bytes():
+                    current_len += len(chunk)
+                    await f.write(chunk)
+                    progress_callback(f'下载进度：{round(current_len / total_len, 3)}')
+
+async def merge_file_to_mp4(v_full_file_name: str, a_full_file_name: str, output_file_name: str, log_output: bool = False):
+    """
+    合并视频文件和音频文件
+    :param v_full_file_name: 视频文件路径
+    :param a_full_file_name: 音频文件路径
+    :param output_file_name: 输出文件路径
+    :param log_output: 是否显示 ffmpeg 输出日志，默认忽略
+    :return:
+    """
+    logger.info(f'正在合并：{output_file_name}')
+
+    # 构建 ffmpeg 命令
+    command = f'ffmpeg -y -i "{v_full_file_name}" -i "{a_full_file_name}" -c copy "{output_file_name}"'
+    stdout = None if log_output else subprocess.DEVNULL
+    stderr = None if log_output else subprocess.DEVNULL
+    await asyncio.get_event_loop().run_in_executor(
+        None,
+        lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
+    )
+    
+
+def extra_bili_info(video_info):
+    """
+        格式化视频信息
+    """
+    video_state = video_info['stat']
+    video_like, video_coin, video_favorite, video_share, video_view, video_danmaku, video_reply = video_state['like'], \
+        video_state['coin'], video_state['favorite'], video_state['share'], video_state['view'], video_state['danmaku'], \
+        video_state['reply']
+
+    video_data_map = {
+        "点赞": video_like,
+        "硬币": video_coin,
+        "收藏": video_favorite,
+        "分享": video_share,
+        "总播放量": video_view,
+        "弹幕数量": video_danmaku,
+        "评论": video_reply
+    }
+
+    video_info_result = ""
+    for key, value in video_data_map.items():
+        if int(value) > 10000:
+            formatted_value = f"{value / 10000:.1f}万"
+        else:
+            formatted_value = value
+        video_info_result += f"{key}: {formatted_value} | "
+
+    return video_info_result

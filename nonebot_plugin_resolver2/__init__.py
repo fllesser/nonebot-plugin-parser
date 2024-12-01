@@ -1,11 +1,10 @@
 import os
 import shutil
 
-from nonebot import get_driver, logger, require
+from nonebot import get_driver, require, logger
 from nonebot.plugin import PluginMetadata
-from bilibili_api import Credential
 
-from .handlers import resolvers, controllers
+from .matchers import resolvers, commands
 from .config import *
 from .cookie import *
 
@@ -24,18 +23,18 @@ __plugin_meta__ = PluginMetadata(
 
 @get_driver().on_startup
 async def _():
-    if RCONFIG.r_bili_ck:
+    if rconfig.r_bili_ck:
         pass
-        # cookie_dict = cookies_str_to_dict(RCONFIG.r_bili_ck)
+        # cookie_dict = cookies_str_to_dict(rconfig.r_bili_ck)
         # if cookie_dict["SESSDATA"]:
         #     logger.info(f"bilibili credential format sucess from cookie")
         # else:
         #     logger.error(f"配置的 bili_ck 未包含 SESSDATA 项，可能无效")
-        # save_cookies_to_netscape(RCONFIG.bili_ck, bili_cookies_file, 'bilibili.com')
-    if RCONFIG.r_ytb_ck:
-        save_cookies_to_netscape(RCONFIG.r_ytb_ck, YTB_COOKIES_FILE, 'youtube.com')
+        # save_cookies_to_netscape(rconfig.bili_ck, bili_cookies_file, 'bilibili.com')
+    if rconfig.r_ytb_ck:
+        save_cookies_to_netscape(rconfig.r_ytb_ck, YTB_COOKIES_FILE, 'youtube.com')
     # 处理黑名单 resovler
-    for resolver in RCONFIG.r_black_resolvers:
+    for resolver in rconfig.r_disable_resolvers:
         if matcher := resolvers[resolver]:
             matcher.destroy()
             logger.info(f"解析器 {resolver} 已销毁")
@@ -46,7 +45,7 @@ async def _():
     minute=0,
 )
 async def _():
-    temp_path = RPATH / "temp"
+    temp_path = rpath / "temp"
     if not os.path.exists(temp_path):
         logger.error(f"The folder {temp_path} does not exist.")
         return

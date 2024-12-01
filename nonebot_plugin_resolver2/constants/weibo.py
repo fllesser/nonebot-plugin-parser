@@ -1,1 +1,0 @@
-WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"

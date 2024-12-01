@@ -6,7 +6,7 @@ from nonebot import logger
 
 from .filter import resolve_filter
 from .utils import send_forward_both, auto_determine_send_type
-from ..constants.common import COMMON_HEADER, GENERAL_REQ_LINK
+from ..constant import COMMON_HEADER, GENERAL_REQ_LINK
 from ..core.common import download_img, download_video
 
 from ..config import *

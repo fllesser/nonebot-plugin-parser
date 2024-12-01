@@ -8,8 +8,8 @@ from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
 from .utils import *
 from .filter import resolve_filter
 from ..core.tiktok import generate_x_bogus_url
-from ..constants.tiktok import DOUYIN_VIDEO, DY_TOUTIAO_INFO, URL_TYPE_CODE_DICT
-from ..constants.common import COMMON_HEADER
+from ..constant import DOUYIN_VIDEO, DY_TOUTIAO_INFO, URL_TYPE_CODE_DICT
+from ..constant import COMMON_HEADER
 
 from ..config import *
 
@@ -19,7 +19,7 @@ douyin = on_regex(
 
 @douyin.handle()
 @resolve_filter
-async def douyin_handler(bot: Bot, event: Event) -> None:
+async def _(bot: Bot, event: Event) -> None:
     """
         抖音解析
     :param bot:
@@ -39,9 +39,9 @@ async def douyin_handler(bot: Bot, event: Event) -> None:
     dou_id = re.search(reg2, dou_url_2, re.I)[2]
     # logger.info(dou_id)
     # 如果没有设置dy的ck就结束，因为获取不到
-    douyin_ck = RCONFIG.r_douyin_ck
+    douyin_ck = rconfig.r_douyin_ck
     if douyin_ck == "":
-        logger.error(RCONFIG)
+        logger.error(rconfig)
         await douyin.send(Message(f"{NICKNAME}识别 | 抖音，无法获取到管理员设置的抖音ck！"))
         return
     # API、一些后续要用到的参数

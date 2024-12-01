@@ -14,7 +14,7 @@ import aiofiles
 import aiohttp
 import httpx
 
-from ..constants import COMMON_HEADER, PLUGIN_NAME, RESOLVE_SHUTDOWN_LIST_NAME
+from ..constant import COMMON_HEADER, PLUGIN_NAME, DISABLE_GROUPS
 from ..config import *
 
 async def download_video(url, proxy: str = None, ext_headers=None) -> str:
@@ -29,7 +29,7 @@ async def download_video(url, proxy: str = None, ext_headers=None) -> str:
     :return: 保存视频的路径。
     """
     # 使用时间戳生成文件名，确保唯一性
-    path = os.path.join(AUDIO_PATH, f"{int(time.time())}.mp4")
+    path = os.path.join(audio_path, f"{int(time.time())}.mp4")
 
     # 判断 ext_headers 是否为 None
     if ext_headers is None:
@@ -73,7 +73,7 @@ async def download_img(url: str, path: str = '', proxy: str = None, session=None
     :return: 保存图片的路径。
     """
     if path == '':
-        path = os.path.join(IMAGE_PATH, url.split('/').pop())
+        path = os.path.join(image_path, url.split('/').pop())
     # 单个文件下载
     if session is None:
         async with aiohttp.ClientSession() as session:
@@ -99,7 +99,7 @@ async def download_audio(url):
     # 去除可能存在的请求参数
     file_name = file_name.split('?')[0]
 
-    path = os.path.join(AUDIO_PATH, file_name)
+    path = os.path.join(audio_path, file_name)
 
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
@@ -135,32 +135,20 @@ def get_file_size_mb(file_path):
 
 
 def load_or_initialize_list() -> List[Any]:
-    data_file = store.get_data_file(PLUGIN_NAME, RESOLVE_SHUTDOWN_LIST_NAME)
+    data_file = store.get_data_file(PLUGIN_NAME, DISABLE_GROUPS)
     # 判断是否存在
     if not data_file.exists():
         data_file.write_text(json.dumps([]))
     return list(json.loads(data_file.read_text()))
 
 
-def save_sub_user(sub_group):
+def save(disable_group_list: List[int]) -> None:
     """
     使用pickle将对象保存到文件
     :return: None
     """
-    data_file = store.get_data_file(PLUGIN_NAME, RESOLVE_SHUTDOWN_LIST_NAME)
-    data_file.write_text(json.dumps(sub_group))
-
-
-def load_sub_user():
-    """
-    从文件中加载对象
-    :return: 订阅用户列表
-    """
-    data_file = store.get_data_file(PLUGIN_NAME, RESOLVE_SHUTDOWN_LIST_NAME)
-    # 判断是否存在
-    if not data_file.exists():
-        data_file.write_text(json.dumps([]))
-    return json.loads(data_file.read_text())
+    data_file = store.get_data_file(PLUGIN_NAME, DISABLE_GROUPS)
+    data_file.write_text(json.dumps(disable_group_list))
 
 
 def split_and_strip(text, sep=None) -> List[str]:

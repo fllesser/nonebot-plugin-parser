@@ -5,12 +5,13 @@ from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
 
 from .utils import upload_both
 from ..core.common import download_audio
-from ..constants.kugou import KUGOU_TEMP_API
-from ..constants.common import COMMON_HEADER
+from ..constant import COMMON_HEADER
 
 from .filter import resolve_filter
 from ..config import *
 
+# KG临时接口
+KUGOU_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={}&n=1&type=json"
 
 kugou = on_regex(r"(kugou.com)")
 

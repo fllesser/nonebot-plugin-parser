@@ -1,13 +1,11 @@
-#import os
-
 from typing import cast, Iterable, Union, List
 from nonebot import logger
 
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment, GROUP_ADMIN, GROUP_OWNER
-from nonebot.adapters.onebot.v11.event import GroupMessageEvent, PrivateMessageEvent
+from nonebot.adapters.onebot.v11.event import GroupMessageEvent, PrivateMessageEvent, MessageEvent
 from nonebot.matcher import current_bot
 
-from ..constants.common import VIDEO_MAX_MB
+from ..constant import VIDEO_MAX_MB
 from ..core.common import download_video, get_file_size_mb
 from ..config import *
 
@@ -86,7 +84,7 @@ async def upload_both(bot: Bot, event: Event, file_path: str, name: str) -> None
         await bot.upload_private_file(user_id=event.user_id, file=file_path, name=name)
 
 
-def get_id_both(event: Event):
+def get_id_both(event: MessageEvent):
     if isinstance(event, GroupMessageEvent):
         return event.group_id
     elif isinstance(event, PrivateMessageEvent):
@@ -145,11 +143,11 @@ async def get_video_seg(data_path: Path) -> MessageSegment:
     
 def get_file_seg(data_path: Path) -> MessageSegment:
     return MessageSegment(type = "file", data = {
-    "name": data_path.name, # [发] [选]
-    "file": data_path.absolute(),
-    "path": "empty", #  [收]
-    "url": "empty", #  [收]
-    "file_id": "empty", #  [收]
-    "file_size": "empty", #  [收]
-    "file_unique": "empty" #  [收]
+        "name": data_path.name, # [发] [选]
+        "file": data_path.absolute(),
+        "path": "empty", #  [收]
+        "url": "empty", #  [收]
+        "file_id": "empty", #  [收]
+        "file_size": "empty", #  [收]
+        "file_unique": "empty" #  [收]
   })

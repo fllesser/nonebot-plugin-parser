@@ -4,9 +4,8 @@ from nonebot import on_regex
 from nonebot.adapters.onebot.v11 import Event, Message
 
 from .filter import resolve_filter
-from .utils import auto_video_send
-from ..core.ytdlp import get_video_title, ytdlp_download_video
-
+from .utils import get_video_seg
+from ..core.ytdlp import *
 from ..config import *
 
 tiktok = on_regex(
@@ -15,7 +14,7 @@ tiktok = on_regex(
 
 @tiktok.handle()
 @resolve_filter
-async def tiktok_handler(event: Event) -> None:
+async def _(event: Event) -> None:
     """
         tiktok解析
     :param event:
@@ -46,9 +45,8 @@ async def tiktok_handler(event: Event) -> None:
     except Exception as e:
         await tiktok.send(Message(f"{NICKNAME}识别 | TikTok - 标题获取出错: {e}"))
     try:
-        video_path = await ytdlp_download_video(
-            url = url, path = (RPATH / 'temp').absolute(), type = 'tiktok', proxy = PROXY)
-        await auto_video_send(event, video_path)
+        video_path = await ytdlp_download_video(url = url, type = 'tiktok', proxy = PROXY)
+        await tiktok.send(await get_video_seg(video_path))
     except Exception as e:
         await tiktok.send(f"视频下载失败 | {e}")
 

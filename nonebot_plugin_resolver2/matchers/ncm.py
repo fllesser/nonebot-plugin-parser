@@ -6,11 +6,15 @@ from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
 
 from .filter import resolve_filter
 from .utils import *
-from ..constants.common import COMMON_HEADER
-from ..constants import COMMON_HEADER
-from ..constants.ncm import NETEASE_API_CN, NETEASE_TEMP_API
+from ..constant import COMMON_HEADER
 from ..core.common import download_audio
 from ..config import *
+
+# NCM获取歌曲信息链接
+NETEASE_API_CN = 'https://www.markingchen.ink'
+
+# NCM临时接口
+NETEASE_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_wyymusic.php?id={}&br=7&type=json"
 
 ncm = on_regex(
     r"(music.163.com|163cn.tv)"
@@ -49,5 +53,3 @@ async def ncm_handler(bot: Bot, event: Event):
     await ncm.send(Message(MessageSegment.record(ncm_music_path)))
     # 发送群文件
     await upload_both(bot, event, ncm_music_path, f'{ncm_title}-{ncm_singer}.{ncm_music_path.split(".")[-1]}')
-    if os.path.exists(ncm_music_path):
-        os.unlink(ncm_music_path)
