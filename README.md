@@ -43,7 +43,7 @@ _✨ NoneBot2 链接分享解析器插件重置版, 支持的解析(BV号/链接
 
 ## 💿 安装
 
-**⚠如果你已经在使用nonebot-plugin-resolver 请在安装此插件前卸载(bushi **
+⚠如果你已经在使用 nonebot-plugin-resolver 请在安装此插件前卸载(bushi
 
 <details open>
 <summary>使用 nb-cli 安装</summary>
