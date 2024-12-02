@@ -136,7 +136,7 @@ async def merge_ac_file_to_mp4(ts_names, file_name):
     filetxt = video_path / 'file.txt'
     filepath = video_path / file_name
     async with aiofiles.open(filetxt, 'w') as f:
-        f.write(concat_str)
+        await f.write(concat_str)
     command = f'ffmpeg -y -f concat -safe 0 -i {filetxt} -c copy "{filepath}"'
     stdout = subprocess.DEVNULL
     stderr = subprocess.DEVNULL

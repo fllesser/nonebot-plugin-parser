@@ -33,7 +33,7 @@ async def kugou_handler(bot: Bot, event: Event):
             if match:
                 get_url = match.group(1)
             else:
-                await kugou.send(Message(f"{NICKNAME}\n解析 | 酷狗音乐 - 获取链接失败"))
+                await kugou.send(Message(f"{NICKNAME}解析 | 酷狗音乐 - 获取链接失败"))
                 get_url = None
                 return
         if get_url:
@@ -58,7 +58,7 @@ async def kugou_handler(bot: Bot, event: Event):
             kugou_singer = kugou_vip_data.get('singer')
             await kugou.send(Message(
                 [MessageSegment.image(kugou_cover),
-                 MessageSegment.text(f'{NICKNAME}\n解析 | 酷狗音乐 - 歌曲：{kugou_name}-{kugou_singer}')]))
+                 MessageSegment.text(f'{NICKNAME}解析 | 酷狗音乐 - 歌曲：{kugou_name}-{kugou_singer}')]))
             # 下载音频文件后会返回一个下载路径
             kugou_music_path = await download_audio(kugou_url)
             # 发送语音
@@ -71,4 +71,4 @@ async def kugou_handler(bot: Bot, event: Event):
         else:
             await kugou.send(Message(f"{NICKNAME}解析 | 酷狗音乐 - 不支持当前外链，请重新分享再试"))
     else:
-        await kugou.send(Message(f"{NICKNAME}来解析 | 酷狗音乐 - 获取链接失败"))
+        await kugou.send(Message(f"{NICKNAME}解析 | 酷狗音乐 - 获取链接失败"))

@@ -59,12 +59,12 @@ async def _(bot: Bot, event: Event):
     seg: MessageSegment = None
     # 图片
     if x_url_res.endswith(".jpg") or x_url_res.endswith(".png"):
-        res = await download_img(x_url_res, proxy = PROXY)
-        seg = MessageSegment.image(f"file://{res}")
+        img_name = await download_img(url = x_url_res, proxy = PROXY)
+        seg = MessageSegment.image(image_path / img_name)
     else:
         # 视频
-        res = await download_video(x_url_res, proxy=PROXY)
-        seg = get_video_seg(filename=res)
+        video_name = await download_video(x_url_res, proxy=PROXY)
+        seg = await get_video_seg(file_name = video_name)
     if seg:
         await twitter.send(seg)
     # logger.info(f"X解析: {x_url}")

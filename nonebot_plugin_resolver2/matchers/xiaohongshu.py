@@ -82,7 +82,7 @@ async def xhs_handler(bot: Bot, event: Event):
         async with aiohttp.ClientSession() as session:
             for index, item in enumerate(image_list):
                 aio_task.append(asyncio.create_task(
-                    download_img(item['urlDefault'], f'{index}.jpg', session=session)))
+                    download_img(item['urlDefault'], img_name=f'{index}.jpg', session=session)))
             links_path = await asyncio.gather(*aio_task)
     elif type == 'video':
         # 这是一条解析有水印的视频
@@ -97,10 +97,8 @@ async def xhs_handler(bot: Bot, event: Event):
         await auto_video_send(event, file_name = video_name)
         return
     # 发送图片
-    links = make_node_segment(bot.self_id, [MessageSegment.image(f"file://{link}") for link in links_path])
+    links = make_node_segment(bot.self_id, [MessageSegment.image(image_path / img) for img in links_path])
     # 发送异步后的数据
     await send_forward_both(bot, event, links)
-    # 清除图片
-    for temp in links_path:
-        os.unlink(temp)
+
 

@@ -17,7 +17,7 @@ import httpx
 from ..constant import COMMON_HEADER, PLUGIN_NAME, DISABLE_GROUPS
 from ..config import *
 
-async def download_video(url, proxy: str = None, ext_headers=None) -> str:
+async def download_video(url, proxy: str = None, ext_headers: dict[str, str] = {}) -> str:
     """
     异步下载（httpx）视频，并支持通过代理下载。
     文件名将使用时间戳生成，以确保唯一性。
@@ -55,7 +55,7 @@ async def download_video(url, proxy: str = None, ext_headers=None) -> str:
         return None
 
 
-async def download_img(url: str, proxy: str = None, session=None, headers=None) -> str:
+async def download_img(url: str, img_name: str = "", proxy: str = None, session=None, headers=None) -> str:
     """
     异步下载（aiohttp）网络图片，并支持通过代理下载。
     如果未指定path，则图片将保存在当前工作目录并以图片的文件名命名。
@@ -64,9 +64,12 @@ async def download_img(url: str, proxy: str = None, session=None, headers=None) 
     :param url: 要下载的图片的URL。
     :param path: 图片保存的路径。如果为空，则保存在当前目录。
     :param proxy: 可选，下载图片时使用的代理服务器的URL。
-    :return: 保存图片的路径。
+    :return: 图片名
     """
-    path = os.path.join(image_path.absolute(), url.split('/').pop())
+    if not url:
+        return ""
+    img_name = img_name if img_name else f"{url.split('/').pop()}.jpg"
+    path = image_path / img_name
     # 单个文件下载
     if session is None:
         async with aiohttp.ClientSession() as session:
@@ -82,7 +85,7 @@ async def download_img(url: str, proxy: str = None, session=None, headers=None) 
                 data = await response.read()
                 with open(path, 'wb') as f:
                     f.write(data)
-    return path
+    return img_name
 
 
 async def download_audio(url):
