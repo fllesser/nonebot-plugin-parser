@@ -43,8 +43,6 @@ _✨ NoneBot2 链接分享解析器插件重制版 ✨_
 
 支持平台(b站，抖音，网易云，微博，小红书，youtube，tiktok，twitter...) 
 
-注意：还有些地方没有改完，可能存在亿点点 bug
-
 ## 💿 安装
 
 ⚠如果你已经在使用 nonebot-plugin-resolver 请在安装此插件前卸载(bushi
