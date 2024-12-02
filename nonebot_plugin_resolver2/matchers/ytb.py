@@ -34,7 +34,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
     try:
         if int(type.extract_plain_text()) == 1:
             filename = await ytdlp_download_video(url = url, cookiefile = YTB_COOKIES_FILE)
-            seg = await get_video_seg(filename)
+            seg = await get_video_seg()
             await ytb.send(seg)
         else: 
             filename = await ytdlp_download_audio(url = url, cookiefile = YTB_COOKIES_FILE)

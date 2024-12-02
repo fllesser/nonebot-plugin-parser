@@ -29,12 +29,12 @@ async def _(event: Event) -> None:
         inputMsg = f"https://www.acfun.cn/v/ac{re.search(r'ac=([^&?]*)', inputMsg)[1]}"
 
     url_m3u8s, video_name = parse_url(inputMsg)
-    await acfun.send(Message(f"{NICKNAME}解析：猴山，{video_name}"))
-    m3u8_full_urls, ts_names, output_folder_name, output_file_name = parse_m3u8(url_m3u8s)
+    await acfun.send(Message(f"{NICKNAME}解析 | 猴山 - {video_name}"))
+    m3u8_full_urls, ts_names, output_file_name = parse_m3u8(url_m3u8s)
     # logger.info(output_folder_name, output_file_name)
     await asyncio.gather(*[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)])
     await merge_ac_file_to_mp4(ts_names, output_file_name)
-    await auto_video_send(event, f"{video_path.absolute()}/{output_file_name}")
+    await auto_video_send(event, output_file_name)
 
 headers = {
     'referer': 'https://www.acfun.cn/',
@@ -92,11 +92,9 @@ def parse_m3u8(m3u8_url: str):
     m3u8_full_urls = [m3u8_prefix + "/" + d for d in m3u8_relative_links]
     # aria2c下载的文件名，就是取url最后一段，去掉末尾url参数(?之后是url参数)
     ts_names = [d.split("?")[0] for d in m3u8_relative_links]
-    # print(ts_names)
     output_folder_name = ts_names[0][:-9]
     output_file_name = output_folder_name + ".mp4"
-    # print(output_file_name)
-    return m3u8_full_urls, ts_names, output_folder_name, output_file_name
+    return m3u8_full_urls, ts_names, output_file_name
 
 
 async def download_m3u8_videos(m3u8_full_url, i):
@@ -107,7 +105,7 @@ async def download_m3u8_videos(m3u8_full_url, i):
     """
     async with httpx.AsyncClient() as client:
         async with client.stream("GET", m3u8_full_url, headers=headers) as resp:
-            with open(f"{i}.ts", "wb") as f:
+            with open(video_path / f"{i}.ts", "wb") as f:
                 async for chunk in resp.aiter_bytes():
                     f.write(chunk)
 
@@ -132,12 +130,14 @@ def parse_video_name(video_info: json):
     return raw
 
 
-async def merge_ac_file_to_mp4(ts_names, full_file_name):
+async def merge_ac_file_to_mp4(ts_names, file_name):
     concat_str = '\n'.join([f"file {i}.ts" for i, d in enumerate(ts_names)])
 
-    async with aiofiles.open(temp_path / 'file.txt', 'w') as f:
+    filetxt = video_path / 'file.txt'
+    filepath = video_path / file_name
+    async with aiofiles.open(filetxt, 'w') as f:
         f.write(concat_str)
-    command = f'ffmpeg -y -f concat -safe 0 -i "file.txt" -c copy "{full_file_name}"'
+    command = f'ffmpeg -y -f concat -safe 0 -i {filetxt} -c copy "{filepath}"'
     stdout = subprocess.DEVNULL
     stderr = subprocess.DEVNULL
     await asyncio.get_event_loop().run_in_executor(

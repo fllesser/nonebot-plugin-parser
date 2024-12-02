@@ -51,12 +51,17 @@ async def _():
     minute=0,
 )
 async def _():
-    directories_to_clean = [video_path, audio_path, image_path]
+    directories_to_clean = [temp_path, video_path, audio_path, image_path]
     def clean_directory(path: Path): 
         for item in path.iterdir(): 
             if item.is_file(): 
-                item.unlink() 
-
+                item.unlink()
+            else:
+                # 递归删除子目录中的文件 
+                clean_directory(item)
+                # 如果子目录为空，删除子目录 
+                if not any(item.iterdir()):
+                    item.rmdir()
     for path in directories_to_clean:
         clean_directory(path)
         logger.info(f"{path} 已清理")

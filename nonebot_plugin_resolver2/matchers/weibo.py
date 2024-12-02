@@ -100,11 +100,11 @@ async def weibo_handler(bot: Bot, event: Event):
     if page_info:
         video_url = page_info.get('urls', '').get('mp4_720p_mp4', '') or page_info.get('urls', '').get('mp4_hd_mp4', '')
         if video_url:
-            path = await download_video(video_url, ext_headers={
+            video_name = await download_video(video_url, ext_headers={
                 "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
                 "referer": "https://weibo.com/"
             })
-            await auto_video_send(event, path)
+            await auto_video_send(event, file_name=video_name)
             
             
             

@@ -56,14 +56,17 @@ async def _(bot: Bot, event: Event):
 
     await twitter.send(Message(f"{NICKNAME}识别 | 小蓝鸟学习版"))
 
+    seg: MessageSegment = None
     # 图片
     if x_url_res.endswith(".jpg") or x_url_res.endswith(".png"):
-        res = await download_img(x_url_res, PROXY)
+        res = await download_img(x_url_res, proxy = PROXY)
+        seg = MessageSegment.image(f"file://{res}")
     else:
         # 视频
-        res = await download_video(x_url_res, PROXY)
-    if res:
-        await twitter.send(auto_determine_send_type(res))
+        res = await download_video(x_url_res, proxy=PROXY)
+        seg = get_video_seg(filename=res)
+    if seg:
+        await twitter.send(seg)
     # logger.info(f"X解析: {x_url}")
     # headers = {
     #         'Accept': 'ext/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'

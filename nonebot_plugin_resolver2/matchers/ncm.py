@@ -32,12 +32,6 @@ async def ncm_handler(bot: Bot, event: Event):
     ncm_id = re.search(r"id=(\d+)", message).group(1)
     if ncm_id is None:
         await ncm.finish(f"{NICKNAME}解析 | 网易云 - 获取链接失败")
-    # 拼接获取信息的链接
-    # ncm_detail_url = f'{NETEASE_API_CN}/song/detail?ids={ncm_id}'
-    # ncm_detail_resp = httpx.get(ncm_detail_url, headers=COMMON_HEADER)
-    # # 获取歌曲名
-    # ncm_song = ncm_detail_resp.json()['songs'][0]
-    # ncm_title = f'{ncm_song["name"]}-{ncm_song["ar"][0]["name"]}'.replace(r'[\/\?<>\\:\*\|".… ]', "")
 
     # 对接临时接口
     ncm_vip_data = httpx.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER).json()

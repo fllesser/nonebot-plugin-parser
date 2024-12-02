@@ -81,7 +81,7 @@ async def upload_both(bot: Bot, event: Event, file_path: str, name: str) -> None
         # 上传私聊文件
         await bot.upload_private_file(user_id=event.user_id, file=file_path, name=name)
 
-async def auto_video_send(event: Event, data_path: Path):
+async def auto_video_send(event: Event, file_name: str = None, url: str = None):
     """
     自动判断视频类型并进行发送，支持群发和私发
     :param event:
@@ -92,8 +92,12 @@ async def auto_video_send(event: Event, data_path: Path):
         bot: Bot = cast(Bot, current_bot.get())
 
         # 如果data以"http"开头，先下载视频
-        if data_path is not None and data_path.startswith("http"):
-            data_path = await download_video(data_path)
+        if not filename:
+            if url and url.startswith("http"):
+                filename = await download_video(url)
+        if not filename:
+            return None
+        data_path = video_path / filename
 
         # 检测文件大小
         file_size_in_mb = get_file_size_mb(data_path)
@@ -104,7 +108,7 @@ async def auto_video_send(event: Event, data_path: Path):
             await upload_both(bot, event, data_path, data_path.split('/')[-1])
             return
         # 根据事件类型发送不同的消息
-        await send_both(bot, event, MessageSegment.video(f'file://{data_path}'))
+        await send_both(bot, event, MessageSegment.video(data_path))
     except Exception as e:
         logger.error(f"解析发送出现错误，具体为\n{e}")
 
@@ -113,8 +117,9 @@ async def get_video_seg(filename: str = "", url: str = "") -> MessageSegment:
     seg: MessageSegment
     try:
         # 如果data以"http"开头，先下载视频
-        if not filename and url and url.startswith("http"):
-            filename = await download_video(data_path)
+        if not filename:
+            if url and url.startswith("http"):
+                filename = await download_video(url)
         if not filename:
             return None
         data_path = video_path / filename
@@ -126,8 +131,8 @@ async def get_video_seg(filename: str = "", url: str = "") -> MessageSegment:
             seg = get_file_seg(data_path.name, data_path)
         seg = MessageSegment.video(data_path)
     except Exception as e:
-        logger.error(f"下载视频失败，具体错误为\n{e}")
-        seg = MessageSegment.text(f"下载视频失败，具体错误为\n{e}")
+        logger.error(f"转换为 segment 失败\n{e}")
+        seg = MessageSegment.text(f"转换为 segment 失败\n{e}")
     finally:
         return seg
     

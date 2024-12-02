@@ -59,7 +59,8 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
     ydl_opts = {
         'outtmpl': f'{video_path / title}.%(ext)s',
         'merge_output_format': 'mp4',
-        'format': f'best[filesize<{duration // 12}]'
+        'format': f'b*[filesize<{duration // 8}M]',
+        'postprocessors': [{ 'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}]
     } | ydl_download_base_opts
     
     if cookiefile:
@@ -75,7 +76,6 @@ async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
     if not info_dict:
         info_dict = await get_video_info(url, cookiefile)
     title = info_dict.get('title', random.randint(0, 1000))
-    # duration = info_dict.get('duration', 600)
     ydl_opts = {
         'outtmpl': f'{ audio_path / title}.%(ext)s',
         'format': 'bestaudio',

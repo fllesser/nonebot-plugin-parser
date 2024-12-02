@@ -39,8 +39,8 @@ async def _(event: Event) -> None:
     else:
         url = re.search(url_reg, url)[0]
     try:
-        title = await get_video_info(url).get("title", "未知")
-        await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - {title}"))
+        info = await get_video_info(url)
+        await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - {info['title']}"))
     except Exception as e:
         await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - 标题获取出错: {e}"))
     try:

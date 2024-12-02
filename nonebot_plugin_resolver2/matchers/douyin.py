@@ -72,7 +72,7 @@ async def _(bot: Bot, event: Event) -> None:
                 # 发送视频
                 # logger.info(player_addr)
                 # await douyin.send(Message(MessageSegment.video(player_addr)))
-                await auto_video_send(event, player_real_addr)
+                await auto_video_send(event, url = player_real_addr)
             elif url_type == 'image':
                 # 无水印图片列表/No watermark image list
                 no_watermark_image_list = []
