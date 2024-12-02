@@ -2,14 +2,14 @@ import os
 import shutil
 
 from nonebot import get_driver, require, logger
+require("nonebot_plugin_apscheduler")
+from nonebot_plugin_apscheduler import scheduler
 from nonebot.plugin import PluginMetadata
-
 from .matchers import resolvers, commands
 from .config import *
 from .cookie import *
 
-require("nonebot_plugin_apscheduler")
-from nonebot_plugin_apscheduler import scheduler
+
 
 __plugin_meta__ = PluginMetadata(
     name="流媒体链接分享解析器重置版",
@@ -28,7 +28,7 @@ async def _():
         for path in paths:
             if not path.exists():
                 path.mkdir(parents=True, exist_ok=True)
-                logger.info(f"Created directory: {path}")
+                logger.info(f"创建文件夹: {path}")
 
     paths = [rpath, temp_path, video_path, audio_path, image_path, rpath / "cookie"] 
     # 检查并创建目录 create_directories(paths)
@@ -36,12 +36,7 @@ async def _():
     
     if rconfig.r_bili_ck:
         pass
-        # cookie_dict = cookies_str_to_dict(rconfig.r_bili_ck)
-        # if cookie_dict["SESSDATA"]:
-        #     logger.info(f"bilibili credential format sucess from cookie")
-        # else:
-        #     logger.error(f"配置的 bili_ck 未包含 SESSDATA 项，可能无效")
-        # save_cookies_to_netscape(rconfig.bili_ck, bili_cookies_file, 'bilibili.com')
+
     if rconfig.r_ytb_ck:
         save_cookies_to_netscape(rconfig.r_ytb_ck, YTB_COOKIES_FILE, 'youtube.com')
     # 处理黑名单 resovler
@@ -56,17 +51,12 @@ async def _():
     minute=0,
 )
 async def _():
-    temp_path = rpath / "temp"
-    if not os.path.exists(temp_path):
-        logger.error(f"The folder {temp_path} does not exist.")
-        return
-    for filename in os.listdir(temp_path):
-        file_path = os.path.join(temp_path, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)  # 删除文件或链接
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)  # 递归删除文件夹
-        except Exception as e:
-            logger.error(f"Failed to delete {file_path}. Reason: {e}")
-    logger.info(f"{temp_path.absolute()} 已清理")
+    directories_to_clean = [video_path, audio_path, image_path]
+    def clean_directory(path: Path): 
+        for item in path.iterdir(): 
+            if item.is_file(): 
+                item.unlink() 
+
+    for path in directories_to_clean:
+        clean_directory(path)
+        logger.info(f"{path} 已清理")

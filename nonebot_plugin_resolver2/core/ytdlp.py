@@ -2,56 +2,88 @@ import yt_dlp
 import random
 import asyncio
 
-from nonebot import logger
+from nonebot import logger, require
 from pathlib import Path
-from ..config import video_path, audio_path
+from ..config import video_path, audio_path, PROXY
+
+require("nonebot_plugin_apscheduler")
+from nonebot_plugin_apscheduler import scheduler
+
+# 缓存链接信息
+url_info: dict[str, dict[str, str]] = {}
+
+# 定时清理
+@scheduler.scheduled_job(
+    "cron",
+    hour=0,
+    minute=0,
+)
+async def _():
+    url_info.clear()
+
+# 获取视频信息的 基础 opts
+ydl_extract_base_opts = {
+    'quiet': True,
+    'skip_download': True,
+    'force_generic_extractor': True
+}
+
+# 下载视频的 基础 opts
+ydl_download_base_opts = {
+
+}
+
+if PROXY:
+    ydl_download_base_opts['proxy'] = PROXY
+    ydl_extract_base_opts['proxy'] = PROXY
 
 
-async def get_video_title(url: str, cookiefile: str | Path = '', proxy: str = '') -> str:
-    ydl_opts = {
-        'quiet': True,
-        'skip_download': True,
-        'force_generic_extractor': True,
-    }
-    if proxy:
-        ydl_opts['proxy'] = proxy
+async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
+    ydl_opts = {} | ydl_extract_base_opts
+
     if cookiefile:
-        ydl_opts['cookiefile'] = cookiefile.absolute() if isinstance(cookiefile, Path) else cookiefile
+        ydl_opts['cookiefile'] = str(cookiefile)
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.extract_info
         info_dict = await asyncio.to_thread(ydl.extract_info, url, download=False)
-        return info_dict.get('title', '')
+        url_info[url] = info_dict
+        return info_dict
+
         
-async def ytdlp_download_video(url: str, type: str, height: int = 1080, cookiefile: str | Path = '', proxy: str = '') -> str:
-    filename = video_path / f"{type}-{random.randint(1, 10000)}"
+async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
+    info_dict = url_info[url]
+    if not info_dict:
+        info_dict = await get_video_info(url, cookiefile)
+    title = info_dict.get('title', random.randint(0, 1000))
+    duration = info_dict.get('duration', 600)
     ydl_opts = {
-        'outtmpl': f'{filename}.%(ext)s',
+        'outtmpl': f'{video_path / title}.%(ext)s',
         'merge_output_format': 'mp4',
-    }
+        'format': f'best[filesize<{duration // 12}]'
+    } | ydl_download_base_opts
     
-    if proxy:
-        ydl_opts['proxy'] = proxy
     if cookiefile:
-        ydl_opts['cookiefile'] = cookiefile.absolute() if isinstance(cookiefile, Path) else cookiefile
+        ydl_opts['cookiefile'] = str(cookiefile)
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         await asyncio.to_thread(ydl.download, [url])
-    return f'{filename.absolute()}.mp4'
+    return f'{title}.mp4'
         
 
-async def ytdlp_download_audio(url: str, type: str, cookiefile: str | Path = '', proxy: str = '') -> str:
-    filename = audio_path / f"{type}-{random.randint(1, 10000)}"
+async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
+    info_dict = url_info[url]
+    if not info_dict:
+        info_dict = await get_video_info(url, cookiefile)
+    title = info_dict.get('title', random.randint(0, 1000))
+    # duration = info_dict.get('duration', 600)
     ydl_opts = {
-        'outtmpl': f'{filename}.%(ext)s',
+        'outtmpl': f'{ audio_path / title}.%(ext)s',
         'format': 'bestaudio',
-        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'flac', 'preferredquality': '0', }]
-    }
+        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '0', }]
+    } | ydl_download_base_opts
     
-    if proxy:
-        ydl_opts['proxy'] = proxy
     if cookiefile:
-        ydl_opts['cookiefile'] = cookiefile.absolute() if isinstance(cookiefile, Path) else cookiefile
+        ydl_opts['cookiefile'] = str(cookiefile)
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         await asyncio.to_thread(ydl.download, [url])
-    return f'{filename.absolute()}.flac'
+    return f'{title}.mp3'

@@ -17,7 +17,7 @@ class Config(BaseModel):
 # 插件数据目录
 rpath: Path = Path() / 'data' /'nonebot-plugin-resolver2'
 
-temp_path: Path = rpath/ "temp"
+temp_path: Path = rpath / "temp"
 video_path: Path = temp_path / "video"
 audio_path: Path = temp_path / "audio"
 image_path: Path = temp_path / "image"
@@ -25,8 +25,8 @@ image_path: Path = temp_path / "image"
 rconfig: Config = get_plugin_config(Config)
 
 # cookie 存储位置
-YTB_COOKIES_FILE = (rpath / 'cookie' / 'ytb_cookies.txt').absolute()
-BILI_COOKIES_FILE = (rpath / 'cookie' / 'bili_cookies.txt').absolute()
+YTB_COOKIES_FILE = rpath / 'cookie' / 'ytb_cookies.txt'
+BILI_COOKIES_FILE = rpath / 'cookie' / 'bili_cookies.txt'
 
 # 全局名称
 NICKNAME: str = next(iter(get_driver().config.nickname), "")

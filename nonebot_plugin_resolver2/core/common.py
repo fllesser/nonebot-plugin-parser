@@ -26,18 +26,12 @@ async def download_video(url, proxy: str = None, ext_headers=None) -> str:
     :param ext_headers:
     :param url: 要下载的视频的URL。
     :param proxy: 可选，下载视频时使用的代理服务器的URL。
-    :return: 保存视频的路径。
+    :return: 视频名称
     """
     # 使用时间戳生成文件名，确保唯一性
-    path = os.path.join(video_path.absolute(), f"{int(time.time())}.mp4")
+    file_name = f"{int(time.time())}.mp4"
 
-    # 判断 ext_headers 是否为 None
-    if ext_headers is None:
-        headers = COMMON_HEADER
-    else:
-        # 使用 update 方法合并两个字典
-        headers = COMMON_HEADER.copy()  # 先复制 COMMON_HEADER
-        headers.update(ext_headers)  # 然后更新 ext_headers
+    headers = COMMON_HEADER | ext_headers
 
     client_config = {
         'headers': headers,
@@ -46,16 +40,16 @@ async def download_video(url, proxy: str = None, ext_headers=None) -> str:
     }
     # 配置代理
     if proxy:
-        client_config['proxies'] = { 'https': proxy }
+        client_config['proxy'] = { 'https': proxy }
 
     # 下载文件
     try:
         async with httpx.AsyncClient(**client_config) as client:
             async with client.stream("GET", url) as resp:
-                async with aiofiles.open(path, "wb") as f:
+                async with aiofiles.open(video_path / file_name, "wb") as f:
                     async for chunk in resp.aiter_bytes():
                         await f.write(chunk)
-        return path
+        return file_name
     except Exception as e:
         print(f"下载视频错误原因是: {e}")
         return None

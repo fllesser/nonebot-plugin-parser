@@ -36,18 +36,17 @@ async def _(event: Event) -> None:
         temp_resp = httpx.get(temp_url, headers={ "User-Agent": "facebookexternalhit/1.1" }, follow_redirects=True,
                               proxies=PROXY)
         url = str(temp_resp.url)
-        # logger.info(url)
     else:
         url = re.search(url_reg, url)[0]
     try:
-        title = await get_video_title(url = url, proxy = PROXY)
+        title = await get_video_info(url).get("title", "未知")
         await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - {title}"))
     except Exception as e:
         await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - 标题获取出错: {e}"))
     try:
-        video_path = await ytdlp_download_video(url = url, type = 'tiktok', proxy = PROXY)
-        await tiktok.send(await get_video_seg(video_path))
+        filename = await ytdlp_download_video(url = url)
+        await tiktok.send(await get_video_seg(filename))
     except Exception as e:
-        await tiktok.send(f"视频下载失败 | {e}")
+        await tiktok.send(f"下载失败 | {e}")
 
 

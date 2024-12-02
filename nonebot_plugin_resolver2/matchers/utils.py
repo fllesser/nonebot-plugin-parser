@@ -81,14 +81,6 @@ async def upload_both(bot: Bot, event: Event, file_path: str, name: str) -> None
         # 上传私聊文件
         await bot.upload_private_file(user_id=event.user_id, file=file_path, name=name)
 
-
-def get_id_both(event: MessageEvent):
-    if isinstance(event, GroupMessageEvent):
-        return event.group_id
-    elif isinstance(event, PrivateMessageEvent):
-        return event.user_id
-
-
 async def auto_video_send(event: Event, data_path: Path):
     """
     自动判断视频类型并进行发送，支持群发和私发
@@ -117,19 +109,20 @@ async def auto_video_send(event: Event, data_path: Path):
         logger.error(f"解析发送出现错误，具体为\n{e}")
 
 
-async def get_video_seg(data_path: Path) -> MessageSegment:
+async def get_video_seg(filename: str = "", url: str = "") -> MessageSegment:
     seg: MessageSegment
     try:
         # 如果data以"http"开头，先下载视频
-        if data_path is not None and data_path.startswith("http"):
-            data_path = await download_video(data_path)
-
+        if not filename and url and url.startswith("http"):
+            filename = await download_video(data_path)
+        if not filename:
+            return None
+        data_path = video_path / filename
         # 检测文件大小
         file_size_in_mb = get_file_size_mb(data_path)
-
         # 如果视频大于 100 MB 自动转换为群文件, 先忽略
         if file_size_in_mb > VIDEO_MAX_MB:
-            # seg = Message(f"当前解析文件 {file_size_in_mb} MB 大于 {VIDEO_MAX_MB} MB, 取消发送")
+            # 转为文件 Seg
             seg = get_file_seg(data_path.name, data_path)
         seg = MessageSegment.video(data_path)
     except Exception as e:

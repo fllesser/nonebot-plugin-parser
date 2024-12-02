@@ -180,15 +180,14 @@ async def _(bot: Bot, event: Event) -> None:
             streams = detecter.detect_best_streams()
             video_url, audio_url = streams[0].url, streams[1].url
             # 下载视频和音频
-            path = (video_path / video_id).absolute()
             await asyncio.gather(
-                    download_b_file(video_url, f"{path}-video.m4s", logger.debug),
-                    download_b_file(audio_url, f"{path}-audio.m4s", logger.debug))
-            await merge_file_to_mp4(f"{path}-video.m4s", f"{path}-audio.m4s", f"{path}-res.mp4")
-            segs.append(await get_video_seg(f"{path}-res.mp4"))
+                    download_b_file(video_url, f"{video_id}-video.m4s", logger.debug),
+                    download_b_file(audio_url, f"{video_id}-audio.m4s", logger.debug))
+            await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", f"{video_id}-res.mp4")
+            segs.append(await get_video_seg(f"{video_id}-res.mp4"))
         except Exception as e:
-            logger.error(f"下载视频失败，错误为\n{e}")
-            segs.append(Message(f"下载视频失败，错误为\n{e}"))
+            logger.error(f"下载视频失败，\n{e}")
+            segs.append(Message(f"下载视频失败，\n{e}"))
      # 这里是总结内容，如果写了 cookie 就可以
     if credential:
         ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
@@ -199,7 +198,7 @@ async def _(bot: Bot, event: Event) -> None:
 
 
 
-async def download_b_file(url, full_file_name, progress_callback):
+async def download_b_file(url, file_name, progress_callback):
     """
         下载视频文件和音频文件
     :param url:
@@ -211,13 +210,13 @@ async def download_b_file(url, full_file_name, progress_callback):
         async with client.stream("GET", url, headers=BILIBILI_HEADER) as resp:
             current_len = 0
             total_len = int(resp.headers.get('content-length', 0))
-            async with aiofiles.open(full_file_name, "wb") as f:
+            async with aiofiles.open(video_path / file_name, "wb") as f:
                 async for chunk in resp.aiter_bytes():
                     current_len += len(chunk)
                     await f.write(chunk)
                     progress_callback(f'下载进度：{round(current_len / total_len, 3)}')
 
-async def merge_file_to_mp4(v_full_file_name: str, a_full_file_name: str, output_file_name: str, log_output: bool = False):
+async def merge_file_to_mp4(v_name: str, a_name: str, output_file_name: str, log_output: bool = False):
     """
     合并视频文件和音频文件
     :param v_full_file_name: 视频文件路径
@@ -229,7 +228,7 @@ async def merge_file_to_mp4(v_full_file_name: str, a_full_file_name: str, output
     logger.info(f'正在合并：{output_file_name}')
 
     # 构建 ffmpeg 命令
-    command = f'ffmpeg -y -i "{v_full_file_name}" -i "{a_full_file_name}" -c copy "{output_file_name}"'
+    command = f'ffmpeg -y -i "{video_path / v_name}" -i "{video_path / a_name}" -c copy "{video_path / output_file_name}"'
     stdout = None if log_output else subprocess.DEVNULL
     stderr = None if log_output else subprocess.DEVNULL
     await asyncio.get_event_loop().run_in_executor(
