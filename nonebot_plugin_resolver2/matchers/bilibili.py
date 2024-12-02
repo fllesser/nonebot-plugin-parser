@@ -184,7 +184,7 @@ async def _(bot: Bot, event: Event) -> None:
                     download_b_file(video_url, f"{video_id}-video.m4s", logger.debug),
                     download_b_file(audio_url, f"{video_id}-audio.m4s", logger.debug))
             await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", f"{video_id}-res.mp4")
-            segs.append(await get_video_seg(f"{video_id}-res.mp4"))
+            segs.append(await get_video_seg(file_name=f"{video_id}-res.mp4"))
         except Exception as e:
             logger.error(f"下载视频失败，\n{e}")
             segs.append(Message(f"下载视频失败，\n{e}"))

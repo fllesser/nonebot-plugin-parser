@@ -44,8 +44,8 @@ async def _(event: Event) -> None:
     except Exception as e:
         await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - 标题获取出错: {e}"))
     try:
-        filename = await ytdlp_download_video(url = url)
-        await tiktok.send(await get_video_seg(filename))
+        video_name = await ytdlp_download_video(url = url)
+        await tiktok.send(await get_video_seg(video_name))
     except Exception as e:
         await tiktok.send(f"下载失败 | {e}")
 

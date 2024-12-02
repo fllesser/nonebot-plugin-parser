@@ -33,15 +33,14 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
     url: str = state["url"]
     try:
         if int(type.extract_plain_text()) == 1:
-            filename = await ytdlp_download_video(url = url, cookiefile = YTB_COOKIES_FILE)
-            seg = await get_video_seg()
-            await ytb.send(seg)
+            video_name = await ytdlp_download_video(url = url, cookiefile = YTB_COOKIES_FILE)
+            await ytb.send(await get_video_seg(video_name))
         else: 
-            filename = await ytdlp_download_audio(url = url, cookiefile = YTB_COOKIES_FILE)
+            audio_name = await ytdlp_download_audio(url = url, cookiefile = YTB_COOKIES_FILE)
             # seg = get_file_seg(f'{state["title"]}.mp3', audio_path)
-            path = audio_path / filename
+            path = audio_path / audio_name
             await ytb.send(MessageSegment.record(path))
-            await upload_both(bot=bot, event=event, file_path=str(path.absolute()), name=filename)
+            await upload_both(bot=bot, event=event, file_path=str(path.absolute()), name=audio_name)
     except Exception as e:
         await ytb.send(f"下载失败 | {e}")
     

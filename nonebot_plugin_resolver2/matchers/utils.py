@@ -92,12 +92,12 @@ async def auto_video_send(event: Event, file_name: str = None, url: str = None):
         bot: Bot = cast(Bot, current_bot.get())
 
         # 如果data以"http"开头，先下载视频
-        if not filename:
+        if not file_name:
             if url and url.startswith("http"):
-                filename = await download_video(url)
-        if not filename:
+                file_name = await download_video(url)
+        if not file_name:
             return None
-        data_path = video_path / filename
+        data_path = video_path / file_name
 
         # 检测文件大小
         file_size_in_mb = get_file_size_mb(data_path)
@@ -113,22 +113,22 @@ async def auto_video_send(event: Event, file_name: str = None, url: str = None):
         logger.error(f"解析发送出现错误，具体为\n{e}")
 
 
-async def get_video_seg(filename: str = "", url: str = "") -> MessageSegment:
+async def get_video_seg(file_name: str = "", url: str = "") -> MessageSegment:
     seg: MessageSegment
     try:
         # 如果data以"http"开头，先下载视频
-        if not filename:
+        if not file_name:
             if url and url.startswith("http"):
-                filename = await download_video(url)
-        if not filename:
+                file_name = await download_video(url)
+        if not file_name:
             return None
-        data_path = video_path / filename
+        data_path = video_path / file_name
         # 检测文件大小
         file_size_in_mb = get_file_size_mb(data_path)
         # 如果视频大于 100 MB 自动转换为群文件, 先忽略
         if file_size_in_mb > VIDEO_MAX_MB:
             # 转为文件 Seg
-            seg = get_file_seg(data_path.name, data_path)
+            seg = get_file_seg(file_name, data_path)
         seg = MessageSegment.video(data_path)
     except Exception as e:
         logger.error(f"转换为 segment 失败\n{e}")
@@ -136,10 +136,10 @@ async def get_video_seg(filename: str = "", url: str = "") -> MessageSegment:
     finally:
         return seg
     
-def get_file_seg(filename: str, data_path: Path | str) -> MessageSegment:
+def get_file_seg(file_name: str, data_path: Path | str) -> MessageSegment:
     file = data_path if isinstance(data_path, str) else data_path.absolute()
     return MessageSegment("file", data = {
-        "name": filename, # [发] [选]
+        "name": file_name, # [发] [选]
         "file": file,
         "path": file,
   })
