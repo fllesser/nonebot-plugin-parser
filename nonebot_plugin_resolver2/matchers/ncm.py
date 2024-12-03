@@ -21,7 +21,7 @@ ncm = on_keyword(keywords={"music.163.com", "163cn.tv"}, rule = Rule(is_not_in_d
 
 @ncm.handle()
 async def ncm_handler(bot: Bot, event: MessageEvent):
-    message = event.message.extract_plain_text().strip()
+    message = str(event.message).strip()
     # 解析短链接
     if "163cn.tv" in message:
         message = re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", message).group(0)

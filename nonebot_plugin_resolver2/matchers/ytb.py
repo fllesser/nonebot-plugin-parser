@@ -36,10 +36,8 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
             await ytb.send(await get_video_seg(video_name))
         else: 
             audio_name = await ytdlp_download_audio(url = url, cookiefile = YTB_COOKIES_FILE)
-            # seg = get_file_seg(f'{state["title"]}.mp3', audio_path)
             await ytb.send(MessageSegment.record(plugin_cache_dir / audio_name))
             await ytb.send(get_file_seg(audio_name))
-            # await upload_both(bot=bot, event=event, file_path=str(path.absolute()), name=audio_name)
     except Exception as e:
         await ytb.send(f"下载失败 | {e}")
     finally:

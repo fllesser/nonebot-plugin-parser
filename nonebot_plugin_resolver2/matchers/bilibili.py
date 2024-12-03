@@ -42,7 +42,7 @@ async def _(bot: Bot, event: MessageEvent) -> None:
     will_delete_id = 0
 
     # 消息
-    url: str = event.message.extract_plain_text().strip()
+    url: str = str(event.message).strip()
 
     # 正则匹配
     url_reg = r"(http:|https:)\/\/(space|www|live).bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
