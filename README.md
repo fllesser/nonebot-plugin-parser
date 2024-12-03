@@ -20,6 +20,7 @@ _✨ NoneBot2 链接分享解析器插件重制版 ✨_
 
 </div>
 
+**:warning: 如果你已经在使用 nonebot-plugin-resolver 请在安装此插件前卸载(bushi **
 
 <details>
 <summary>触发发布工作流</summary>
@@ -44,8 +45,6 @@ _✨ NoneBot2 链接分享解析器插件重制版 ✨_
 支持平台(b站，抖音，网易云，微博，小红书，youtube，tiktok，twitter...) 
 
 ## 💿 安装
-
-**:warning: 如果你已经在使用 nonebot-plugin-resolver 请在安装此插件前卸载(bushi **
 
 <details open>
 <summary>使用 nb-cli 安装</summary>
