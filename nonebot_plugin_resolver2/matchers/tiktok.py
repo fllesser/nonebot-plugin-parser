@@ -28,12 +28,12 @@ async def _(event: Event) -> None:
 
     if "vt.tiktok" in url:
         temp_url = re.search(url_short_reg, url)[0]
-        async with httpx.AsyncClient as client:
+        async with httpx.AsyncClient() as client:
             temp_resp = await client.get(temp_url, follow_redirects=True, proxies=PROXY)
         url = temp_resp.url
     elif "vm.tiktok" in url:
         temp_url = re.search(url_short_reg2, url)[0]
-        async with httpx.AsyncClient as client:
+        async with httpx.AsyncClient() as client:
             temp_resp = await client.get(temp_url, headers={ "User-Agent": "facebookexternalhit/1.1" }, follow_redirects=True,
                               proxies=PROXY)
         url = str(temp_resp.url)
