@@ -51,8 +51,8 @@ def parse_url(url: str):
     url_suffix = "?quickViewId=videoInfo_new&ajaxpipe=1"
     url = url + url_suffix
     # print(url)
-
-    raw = httpx.get(url, headers=headers).text
+    async with httpx.AsyncClient as client:
+        raw = (await client.get(url, headers=headers)).text
     strs_remove_header = raw.split("window.pageInfo = window.videoInfo =")
     strs_remove_tail = strs_remove_header[1].split("</script>")
     str_json = strs_remove_tail[0]
@@ -75,7 +75,9 @@ def parse_m3u8(m3u8_url: str):
     :param m3u8_url:
     :return:
     """
-    m3u8_file = httpx.get(m3u8_url, headers=headers).text
+    # m3u8_file = httpx.get(m3u8_url, headers=headers).text
+    async with httpx.AsyncClient() as client:
+        m3u8_file = (await client.get(m3u8_url, headers=headers)).text
     # 分离ts文件链接
     raw_pieces = re.split(r"\n#EXTINF:.{8},\n", m3u8_file)
     # print(raw_pieces)
