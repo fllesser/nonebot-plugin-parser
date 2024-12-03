@@ -66,11 +66,12 @@ async def _(bot: Bot, event: MessageEvent):
     weibo_id = weibo_id.split("/")[1] if "/" in weibo_id else weibo_id
     logger.info(weibo_id)
     # 请求数据
-    resp = httpx.get(WEIBO_SINGLE_INFO.replace('{}', weibo_id), headers={
+    async with httpx.AsyncClient as client:
+        resp = (await client.get(WEIBO_SINGLE_INFO.replace('{}', weibo_id), headers={
                                                                             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
                                                                             "cookie": "_T_WM=40835919903; WEIBOCN_FROM=1110006030; MLOGIN=0; XSRF-TOKEN=4399c8",
                                                                             "Referer": f"https://m.weibo.cn/detail/{id}",
-                                                                        } | COMMON_HEADER).json()
+                                                                        } | COMMON_HEADER)).json()
     weibo_data = resp['data']
     logger.info(weibo_data)
     text, status_title, source, region_name, pics, page_info = (weibo_data.get(key, None) for key in
