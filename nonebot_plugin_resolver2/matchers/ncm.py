@@ -39,7 +39,7 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
         await ncm.finish(f"{NICKNAME}解析 | 网易云 - 获取链接失败")
 
     # 对接临时接口
-    async with httpx.AsyncClient as client:
+    async with httpx.AsyncClient() as client:
         ncm_vip_data = (await client.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER)).json()
     ncm_url = ncm_vip_data['music_url']
     ncm_cover = ncm_vip_data['cover']
