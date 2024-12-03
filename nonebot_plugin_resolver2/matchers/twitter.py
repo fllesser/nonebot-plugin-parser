@@ -24,7 +24,7 @@ async def _(bot: Bot, event: MessageEvent):
     x_url = GENERAL_REQ_LINK.replace("{}", x_url)
 
     # 内联一个请求
-    def x_req(url):
+    async def x_req(url):
         async with httpx.AsyncClient as client:
             return client.get(url, headers={
                 'Accept': 'ext/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
@@ -38,13 +38,13 @@ async def _(bot: Bot, event: MessageEvent):
                 **COMMON_HEADER
             })
 
-    x_data: object = x_req(x_url).json()['data']
+    x_data: object = (await x_req(x_url)).json()['data']
 
     
     if x_data is None:
         x_url = x_url + '/photo/1'
         logger.info(x_url)
-        x_data = x_req(x_url).json()['data']
+        x_data = await (x_req(x_url)).json()['data']
 
     x_url_res = x_data['url']
 
