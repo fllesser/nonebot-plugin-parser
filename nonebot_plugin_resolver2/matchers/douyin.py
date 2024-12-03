@@ -31,7 +31,7 @@ async def _(bot: Bot, event: Event) -> None:
     # 正则匹配
     reg = r"(http:|https:)\/\/v.douyin.com\/[A-Za-z\d._?%&+\-=#]*"
     dou_url = re.search(reg, msg, re.I)[0]
-    async with httpx.AsyncClient as client:
+    async with httpx.AsyncClient() as client:
         dou_url_2 = (await client.get(dou_url)).headers.get('location')
     # logger.error(dou_url_2)
     reg2 = r".*(video|note)\/(\d+)\/(.*?)"
