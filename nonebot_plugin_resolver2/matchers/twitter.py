@@ -26,7 +26,7 @@ async def _(bot: Bot, event: MessageEvent):
     # 内联一个请求
     async def x_req(url):
         async with httpx.AsyncClient() as client:
-            return client.get(url, headers={
+            return await client.get(url, headers={
                 'Accept': 'ext/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
                           'application/signed-exchange;v=b3;q=0.7',
                 'Accept-Encoding': 'gzip, deflate',
