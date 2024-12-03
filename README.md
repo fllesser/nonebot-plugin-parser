@@ -37,11 +37,30 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 
 ## 📖 介绍
 
-[nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) 重制版，优化了一些交互逻辑，效果见实际体验
+[nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) 重制版
+- 重构了整体结构，使用 localstore 存储下载的数据，并定时清理（原插件全是用的绝对路径，给孩子改哭了）
+- 匹配消息换用 on_keyword，防止正则导致 Bot 卡死
+- 优化了一些交互体验，尽可能避免刷屏（还没改到自己满意）
+- ......
 
-支持的解析(BV号/链接/小程序/卡片)
+触发解析的消息形态:
+- BV号
+- 链接
+- 小程序
+- 卡片(b站[包括av号], 网易云)
 
-支持平台(b站，抖音，网易云，微博，小红书，youtube，tiktok，twitter...) 
+支持的平台:
+- B站
+- 抖音
+- 网易云
+- 微博
+- 小红书
+- 酷狗
+- 网易云
+- acfun 猴山
+- youtube
+- tiktok
+- twitter
 
 ## 💿 安装
 
