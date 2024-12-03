@@ -46,7 +46,7 @@ async def kugou_handler(bot: Bot, event: MessageEvent):
     if response.status_code == 200:
         title = response.text
         get_name = r"<title>(.*?)_高音质在线试听"
-        if name := re.search(get_name, title)
+        if name := re.search(get_name, title):
             kugou_title = name.group(1)  # 只输出歌曲名和歌手名的部分
             async with httpx.AsyncClient as client:
                 kugou_vip_data = await client.get(f"{KUGOU_TEMP_API.replace('{}', kugou_title)}", headers=COMMON_HEADER).json()
