@@ -52,12 +52,12 @@ async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
         
 async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
     info_dict = await get_video_info(url, cookiefile)
-    title = delete_boring_characters(info_dict.get('title', random.randint(0, 1000)))
+    title = info_dict.get('title', random.randint(0, 1000)).replace('/', '')
     duration = info_dict.get('duration', 600)
     ydl_opts = {
         'outtmpl': f'{plugin_cache_dir / title}.%(ext)s',
         'merge_output_format': 'mp4',
-        'format': f'b*[filesize<{duration // 8}M]',
+        'format': f'b*[filesize<{duration // 8 + 1}M]',
         'postprocessors': [{ 'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}]
     } | ydl_download_base_opts
     
@@ -71,7 +71,7 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
 
 async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
     info_dict = await get_video_info(url, cookiefile)
-    title = delete_boring_characters(info_dict.get('title', random.randint(0, 1000)))
+    title = info_dict.get('title', random.randint(0, 1000)).replace('/', '')
     ydl_opts = {
         'outtmpl': f'{ plugin_cache_dir / title}.%(ext)s',
         'format': 'bestaudio',
