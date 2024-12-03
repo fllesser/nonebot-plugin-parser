@@ -28,9 +28,9 @@ async def _(event: MessageEvent) -> None:
     if "m.acfun.cn" in inputMsg:
         inputMsg = f"https://www.acfun.cn/v/ac{re.search(r'ac=([^&?]*)', inputMsg)[1]}"
 
-    url_m3u8s, video_name = parse_url(inputMsg)
+    url_m3u8s, video_name = await parse_url(inputMsg)
     await acfun.send(Message(f"{NICKNAME}解析 | 猴山 - {video_name}"))
-    m3u8_full_urls, ts_names, output_file_name = parse_m3u8(url_m3u8s)
+    m3u8_full_urls, ts_names, output_file_name = await parse_m3u8(url_m3u8s)
     # logger.info(output_folder_name, output_file_name)
     await asyncio.gather(*[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)])
     await merge_ac_file_to_mp4(ts_names, output_file_name)
@@ -42,7 +42,7 @@ headers = {
 }
 
 
-def parse_url(url: str):
+async def parse_url(url: str):
     """
         解析acfun链接
     :param url:
@@ -69,7 +69,7 @@ def parse_url(url: str):
     return url_m3u8s, video_name
 
 
-def parse_m3u8(m3u8_url: str):
+async def parse_m3u8(m3u8_url: str):
     """
         解析m3u8链接
     :param m3u8_url:
