@@ -41,14 +41,14 @@ async def kugou_handler(bot: Bot, event: MessageEvent):
         url = match.group()
 
         # 使用 httpx 获取 URL 的标题
-    async with httpx.AsyncClient as client:
+    async with httpx.AsyncClient() as client:
         response = await client.get(url, follow_redirects=True)
     if response.status_code == 200:
         title = response.text
         get_name = r"<title>(.*?)_高音质在线试听"
         if name := re.search(get_name, title):
             kugou_title = name.group(1)  # 只输出歌曲名和歌手名的部分
-            async with httpx.AsyncClient as client:
+            async with httpx.AsyncClient() as client:
                 kugou_vip_data = await client.get(f"{KUGOU_TEMP_API.replace('{}', kugou_title)}", headers=COMMON_HEADER).json()
             # logger.info(kugou_vip_data)
             kugou_url = kugou_vip_data.get('music_url')
