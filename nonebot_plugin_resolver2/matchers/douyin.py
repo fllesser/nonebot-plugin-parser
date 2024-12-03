@@ -1,6 +1,7 @@
 import re
 import httpx
 import aiohttp
+import asyncio
 
 from nonebot import on_keyword, logger
 from nonebot.rule import Rule
