@@ -4,7 +4,7 @@ import asyncio
 import aiofiles
 import subprocess
 
-from nonebot import on_keyword
+from nonebot import on_keyword, on_message
 from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
@@ -32,7 +32,11 @@ BILIBILI_HEADER = {
     'referer': 'https://www.bilibili.com',
 }
 
-bilibili = on_keyword(keywords = {"bilibili.com", "b23.tv", "BV"}, rule = Rule(is_not_in_disable_group))
+async def is_bilibili(event: MessageEvent) -> bool:
+    message = str(event.message).strip()
+    return any(key in message for key in {"bilibili.com", "b23.tv", "BV"})
+
+bilibili = on_message(rule = Rule(is_bilibili, is_not_in_disable_group))
 
 @bilibili.handle()
 async def _(bot: Bot, event: MessageEvent) -> None:

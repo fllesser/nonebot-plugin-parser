@@ -1,7 +1,7 @@
 import re
 import httpx
 
-from nonebot import on_keyword
+from nonebot import on_message
 from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
@@ -17,7 +17,11 @@ NETEASE_API_CN = 'https://www.markingchen.ink'
 # NCM临时接口
 NETEASE_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_wyymusic.php?id={}&br=7&type=json"
 
-ncm = on_keyword(keywords={"music.163.com", "163cn.tv"}, rule = Rule(is_not_in_disable_group))
+async def is_ncm(event: MessageEvent) -> bool:
+    message = str(event.message).strip()
+    return any(key in message for key in {"music.163.com", "163cn.tv"})
+
+ncm = on_message(rule = Rule(is_ncm, is_not_in_disable_group))
 
 @ncm.handle()
 async def ncm_handler(bot: Bot, event: MessageEvent):
