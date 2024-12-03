@@ -1,4 +1,4 @@
-import re, httpx
+import re, httpx, asyncio
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
@@ -25,17 +25,18 @@ async def _(bot: Bot, event: MessageEvent):
 
     # 内联一个请求
     def x_req(url):
-        return httpx.get(url, headers={
-            'Accept': 'ext/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
-                      'application/signed-exchange;v=b3;q=0.7',
-            'Accept-Encoding': 'gzip, deflate',
-            'Accept-Language': 'zh-CN,zh;q=0.9',
-            'Host': '47.99.158.118',
-            'Proxy-Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-User': '?1',
-            **COMMON_HEADER
-        })
+        async with httpx.AsyncClient as client:
+            return client.get(url, headers={
+                'Accept': 'ext/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
+                          'application/signed-exchange;v=b3;q=0.7',
+                'Accept-Encoding': 'gzip, deflate',
+                'Accept-Language': 'zh-CN,zh;q=0.9',
+                'Host': '47.99.158.118',
+                'Proxy-Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+                'Sec-Fetch-User': '?1',
+                **COMMON_HEADER
+            })
 
     x_data: object = x_req(x_url).json()['data']
 
