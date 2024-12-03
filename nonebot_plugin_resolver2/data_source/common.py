@@ -35,7 +35,7 @@ async def download_video(url, proxy: str = None, ext_headers: Dict[str, str] = {
     }
     # 配置代理
     if proxy:
-        client_config['proxy'] = { 'https': proxy }
+        client_config['proxies'] = { 'https': proxy }
 
     # 下载文件
     try:
