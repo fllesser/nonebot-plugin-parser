@@ -1,4 +1,4 @@
-import os, httpx, re, json
+import os, httpx, re, json, asyncio
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
