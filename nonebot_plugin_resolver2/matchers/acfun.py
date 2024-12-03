@@ -52,7 +52,8 @@ async def parse_url(url: str):
     url = url + url_suffix
     # print(url)
     async with httpx.AsyncClient() as client:
-        raw = (await client.get(url, headers=headers)).text
+        resp = await client.get(url, headers=headers)
+        raw = resp.text
     strs_remove_header = raw.split("window.pageInfo = window.videoInfo =")
     strs_remove_tail = strs_remove_header[1].split("</script>")
     str_json = strs_remove_tail[0]
@@ -77,7 +78,8 @@ async def parse_m3u8(m3u8_url: str):
     """
     # m3u8_file = httpx.get(m3u8_url, headers=headers).text
     async with httpx.AsyncClient() as client:
-        m3u8_file = (await client.get(m3u8_url, headers=headers)).text
+        resp = await client.get(m3u8_url, headers=headers)
+        m3u8_file = resp.text
     # 分离ts文件链接
     raw_pieces = re.split(r"\n#EXTINF:.{8},\n", m3u8_file)
     # print(raw_pieces)
