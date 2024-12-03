@@ -35,7 +35,7 @@ async def _(bot: Bot, event: MessageEvent):
                   'cookie': xhs_ck,
               } | COMMON_HEADER
     if "xhslink" in msg_url:
-        async with httpx.AsyncClient as client:
+        async with httpx.AsyncClient() as client:
             msg_url = str((await client.get(msg_url, headers=headers, follow_redirects=True)).url)
     xhs_id = re.search(r'/explore/(\w+)', msg_url)
     if not xhs_id:
@@ -50,7 +50,7 @@ async def _(bot: Bot, event: MessageEvent):
     # 提取 xsec_source 和 xsec_token
     xsec_source = params.get('xsec_source', [None])[0] or "pc_feed"
     xsec_token = params.get('xsec_token', [None])[0]
-    async with httpx.AsyncClient as client:
+    async with httpx.AsyncClient() as client:
         html = (await client.get(f'{XHS_REQ_LINK}{xhs_id}?xsec_source={xsec_source}&xsec_token={xsec_token}', headers=headers)).text
     # response_json = re.findall('window.__INITIAL_STATE__=(.*?)</script>', html)[0]
     try:
