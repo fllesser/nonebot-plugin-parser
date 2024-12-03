@@ -1,8 +1,10 @@
-from nonebot import get_driver
+from nonebot import get_driver, require, get_plugin_config
+require("nonebot_plugin_localstore")
+require("nonebot_plugin_apscheduler")
+from nonebot_plugin_apscheduler import scheduler
+import nonebot_plugin_localstore as store
 from pydantic import BaseModel
-from nonebot import get_plugin_config
 from pathlib import Path
-from bilibili_api import Credential
 
 class Config(BaseModel):
     r_xhs_ck: str = ''
@@ -14,19 +16,18 @@ class Config(BaseModel):
     r_video_duration_maximum: int = 480
     r_disable_resolvers: list[str] = []
 
-# 插件数据目录
-rpath: Path = Path() / 'data' /'nonebot-plugin-resolver2'
 
-temp_path: Path = rpath / "temp"
-video_path: Path = temp_path / "video"
-audio_path: Path = temp_path / "audio"
-image_path: Path = temp_path / "image"
+plugin_cache_dir: Path = store.get_plugin_cache_dir()
+plugin_config_dir: Path = store.get_plugin_config_dir()
+plugin_data_dir: Path = store.get_plugin_data_dir()
+
 # 配置加载
 rconfig: Config = get_plugin_config(Config)
 
 # cookie 存储位置
-YTB_COOKIES_FILE = rpath / 'cookie' / 'ytb_cookies.txt'
-BILI_COOKIES_FILE = rpath / 'cookie' / 'bili_cookies.txt'
+YTB_COOKIES_FILE = plugin_config_dir / 'ytb_cookies.txt' if rconfig.r_ytb_ck else None
+BILI_COOKIES_FILE = plugin_config_dir / 'bili_cookies.txt' if rconfig.r_bili_ck else None
+
 
 # 全局名称
 NICKNAME: str = next(iter(get_driver().config.nickname), "")

@@ -1,13 +1,13 @@
 import os, re, asyncio, json, httpx, math
 
-from nonebot import on_regex
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
+from nonebot import on_keyword
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 from nonebot import logger
 
-from .filter import resolve_filter
+from .filter import is_not_in_disable_group
 from .utils import auto_video_send, make_node_segment, send_forward_both
 from ..constant import COMMON_HEADER
-from ..core.common import download_img, download_video
+from ..data_source.common import download_img, download_video
 
 
 from ..config import *
@@ -15,14 +15,11 @@ from ..config import *
 # WEIBO_SINGLE_INFO
 WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
 
-weibo = on_regex(
-    r"(weibo.com|m.weibo.cn)"
-)
+weibo = on_keyword({"weibo.com|m.weibo.cn"}, rule = is_not_in_disable_group)
 
 @weibo.handle()
-@resolve_filter
-async def weibo_handler(bot: Bot, event: Event):
-    message = str(event.message)
+async def _(bot: Bot, event: MessageEvent):
+    message = event.message.extract_plain_text().strip()
     weibo_id = None
     reg = r'(jumpUrl|qqdocurl)": ?"(.*?)"'
 

@@ -1,13 +1,11 @@
-import os, http.cookiejar
+import http.cookiejar
 from nonebot import logger
+from pathlib import Path
+from typing import Dict
 
-def save_cookies_to_netscape(cookies_str, file_path, domain):
-    # 先检测目录是否存在
-    dirpath = os.path.dirname(file_path) 
-    if not os.path.exists(dirpath):
-        os.makedirs(dirpath)
+def save_cookies_to_netscape(cookies_str: str, file: Path, domain: str):
     # 创建 MozillaCookieJar 对象
-    cj = http.cookiejar.MozillaCookieJar(file_path)
+    cj = http.cookiejar.MozillaCookieJar(file)
 
     # 从字符串创建 cookies 并添加到 MozillaCookieJar 对象
     for cookie in cookies_str.split(';'):
@@ -22,9 +20,9 @@ def save_cookies_to_netscape(cookies_str, file_path, domain):
 
     # 保存 cookies 到文件
     cj.save(ignore_discard=True, ignore_expires=True)
-    logger.info(f"{file_path} saved sucessfully")
+    logger.info(f"{file} saved sucessfully")
     
-def cookies_str_to_dict(cookies_str: str) -> dict[str, str]:
+def cookies_str_to_dict(cookies_str: str) -> Dict[str, str]:
     res = {}
     for cookie in cookies_str.split(';'):
         name, value = cookie.strip().split('=', 1)

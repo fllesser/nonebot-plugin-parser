@@ -16,11 +16,8 @@ COMMON_HEADER = {
 """
 VIDEO_MAX_MB = 100
 
-# 插件名字
-PLUGIN_NAME = "nonebot-plugin-resolver2"
-
 # 解析列表文件名
-DISABLE_GROUPS = "disable_group_list"
+DISABLE_GROUPS = "disable_group_list.json"
 
 ############################################################################
 """以下为抖音/TikTok类型代码/Type code for Douyin/TikTok"""

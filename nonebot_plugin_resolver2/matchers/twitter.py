@@ -1,30 +1,22 @@
 import re, httpx
 
-from nonebot import on_regex
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
+from nonebot import on_keyword
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 from nonebot import logger
 
-from .filter import resolve_filter
-from .utils import get_video_seg, make_node_segment, send_forward_both, auto_determine_send_type
+from .filter import is_not_in_disable_group
+from .utils import get_video_seg
 from ..constant import COMMON_HEADER, GENERAL_REQ_LINK
-from ..core.common import download_img, download_video
+from ..data_source.common import download_img, download_video
 
 from ..config import *
 
-twitter = on_regex(
-    r"(x.com)", priority=1
-)
+twitter = on_keyword("x.com", rule = is_not_in_disable_group)
 
 @twitter.handle()
-@resolve_filter
-async def _(bot: Bot, event: Event):
-    """
-        X解析
-    :param bot:
-    :param event:
-    :return:
-    """
-    msg: str = str(event.message).strip()
+async def _(bot: Bot, event: MessageEvent):
+
+    msg: str = event.message.extract_plain_text().strip()
 
     x_url = re.search(r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]*)", msg)[0]
 
@@ -54,13 +46,13 @@ async def _(bot: Bot, event: Event):
 
     x_url_res = x_data['url']
 
-    await twitter.send(Message(f"{NICKNAME}识别 | 小蓝鸟学习版"))
+    await twitter.send(Message(f"{NICKNAME}识别 | X"))
 
     seg: MessageSegment = None
     # 图片
     if x_url_res.endswith(".jpg") or x_url_res.endswith(".png"):
         img_name = await download_img(url = x_url_res, proxy = PROXY)
-        seg = MessageSegment.image(image_path / img_name)
+        seg = MessageSegment.image(plugin_cache_dir / img_name)
     else:
         # 视频
         video_name = await download_video(x_url_res, proxy=PROXY)

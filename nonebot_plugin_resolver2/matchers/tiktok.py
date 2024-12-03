@@ -1,19 +1,17 @@
 import re, httpx
 
-from nonebot import on_regex
+from nonebot import on_regex, on_keyword
 from nonebot.adapters.onebot.v11 import Event, Message
 
-from .filter import resolve_filter
+from .filter import is_not_in_disable_group
 from .utils import get_video_seg
-from ..core.ytdlp import *
+from ..data_source.ytdlp import *
 from ..config import *
 
-tiktok = on_regex(
-    r"(www.tiktok.com|vt.tiktok.com|vm.tiktok.com)", priority=1
-)
+
+tiktok = on_keyword({"tiktok.com", "vt.tiktok.com", "vm.tiktok.com"}, rule = is_not_in_disable_group)
 
 @tiktok.handle()
-@resolve_filter
 async def _(event: Event) -> None:
     """
         tiktok解析

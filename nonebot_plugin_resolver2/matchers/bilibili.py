@@ -4,26 +4,24 @@ import asyncio
 import aiofiles
 import subprocess
 
-from nonebot import on_regex
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
+from nonebot import on_keyword
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
-from bilibili_api import video, live, article
+from bilibili_api import video, live, article, Credential
 from bilibili_api.favorite_list import get_video_favorite_list_content
 from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
 from urllib.parse import parse_qs, urlparse
 
 from .utils import *
-from .filter import resolve_filter
-from ..core.common import delete_boring_characters
+from .filter import is_not_in_disable_group
+from ..data_source.common import delete_boring_characters
 
 from ..config import *
 from ..cookie import cookies_str_to_dict
 
 # format cookie
-credential: Credential = None
-if rconfig.r_bili_ck:
-    credential = Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck))
+credential: Credential = Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck)) if rconfig.r_bili_ck else None
 
 # 哔哩哔哩的头请求
 BILIBILI_HEADER = {
@@ -33,35 +31,27 @@ BILIBILI_HEADER = {
     'referer': 'https://www.bilibili.com',
 }
 
-bilibili = on_regex(
-    r"(bilibili.com|b23.tv|^BV[0-9a-zA-Z]{10}$)", priority=1
-)
+bilibili = on_keyword({"bilibili.com", "b23.tv", "BV"}, rule=is_not_in_disable_group)
 
 @bilibili.handle()
-@resolve_filter
-async def _(bot: Bot, event: Event) -> None:
+async def _(bot: Bot, event: MessageEvent) -> None:
 
-    """
-        哔哩哔哩解析
-    :param bot:
-    :param event:
-    :return:
-    """
-    # 所有消息
+    # 合并转发消息 list
     segs = []
     will_delete_id = 0
 
     # 消息
-    url: str = str(event.message).strip()
+    url: str = event.message.extract_plain_text().strip()
+
     # 正则匹配
     url_reg = r"(http:|https:)\/\/(space|www|live).bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
-    b_short_rex = r"(http:|https:)\/\/b23.tv\/[A-Za-z\d._?%&+\-=\/#]*"
+    b_short_reg = r"(http:|https:)\/\/b23.tv\/[A-Za-z\d._?%&+\-=\/#]*"
     # BV处理
     if re.match(r'^BV[1-9a-zA-Z]{10}$', url):
         url = 'https://www.bilibili.com/video/' + url
     # 处理短号、小程序问题
     if 'b23.tv' in url or ('b23.tv' and 'QQ小程序' in url):
-        b_short_url = re.search(b_short_rex, url.replace("\\", ""))[0]
+        b_short_url = re.search(b_short_reg, url.replace("\\", ""))[0]
         resp = httpx.get(b_short_url, headers=BILIBILI_HEADER, follow_redirects=True)
         url: str = str(resp.url)
     else:
@@ -111,7 +101,7 @@ async def _(bot: Bot, event: Event) -> None:
             ar = ar.turn_to_note()
         # 加载内容
         await ar.fetch_content()
-        markdown_path = rpath / 'article.md'
+        markdown_path = plugin_cache_dir / 'article.md'
         with open(markdown_path, 'w', encoding='utf8') as f:
             f.write(ar.markdown())
         await bilibili.send(Message(f"{NICKNAME}解析 | 哔哩哔哩专栏"))
@@ -210,7 +200,7 @@ async def download_b_file(url, file_name, progress_callback):
         async with client.stream("GET", url, headers=BILIBILI_HEADER) as resp:
             current_len = 0
             total_len = int(resp.headers.get('content-length', 0))
-            async with aiofiles.open(video_path / file_name, "wb") as f:
+            async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
                 async for chunk in resp.aiter_bytes():
                     current_len += len(chunk)
                     await f.write(chunk)
@@ -228,7 +218,7 @@ async def merge_file_to_mp4(v_name: str, a_name: str, output_file_name: str, log
     logger.info(f'正在合并：{output_file_name}')
 
     # 构建 ffmpeg 命令
-    command = f'ffmpeg -y -i "{video_path / v_name}" -i "{video_path / a_name}" -c copy "{video_path / output_file_name}"'
+    command = f'ffmpeg -y -i "{plugin_cache_dir / v_name}" -i "{plugin_cache_dir / a_name}" -c copy "{plugin_cache_dir / output_file_name}"'
     stdout = None if log_output else subprocess.DEVNULL
     stderr = None if log_output else subprocess.DEVNULL
     await asyncio.get_event_loop().run_in_executor(

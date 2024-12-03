@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11.event import GroupMessageEvent, PrivateMessageE
 from nonebot.matcher import current_bot
 
 from ..constant import VIDEO_MAX_MB
-from ..core.common import download_video, get_file_size_mb
+from ..data_source.common import download_video, get_file_size_mb
 from ..config import *
 
 def auto_determine_send_type(path: str) -> MessageSegment:
@@ -22,19 +22,15 @@ def auto_determine_send_type(path: str) -> MessageSegment:
         return MessageSegment.video(path)
 
 
-def make_node_segment(user_id, segments: Union[MessageSegment, List]) -> Union[
-    MessageSegment, Iterable[MessageSegment]]:
+def make_node_segment(user_id, segments: MessageSegment | List[MessageSegment]) -> Iterable[MessageSegment]:
     """
         将消息封装成 Segment 的 Node 类型，可以传入单个也可以传入多个，返回一个封装好的转发类型
     :param user_id: 可以通过event获取
     :param segments: 一般为 MessageSegment.image / MessageSegment.video / MessageSegment.text
     :return:
     """
-    if isinstance(segments, list):
-        return [MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME,
-                                           content=Message(segment)) for segment in segments]
-    return MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME,
-                                      content=Message(segments))
+    return [MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=Message(segment)) for segment in [segments]]
+
 
 
 async def send_forward_both(bot: Bot, event: Event, segments: Union[MessageSegment, List]) -> None:
@@ -97,7 +93,7 @@ async def auto_video_send(event: Event, file_name: str = None, url: str = None):
                 file_name = await download_video(url)
         if not file_name:
             return None
-        data_path = video_path / file_name
+        data_path = plugin_cache_dir / file_name
 
         # 检测文件大小
         file_size_in_mb = get_file_size_mb(data_path)
@@ -121,14 +117,14 @@ async def get_video_seg(file_name: str = "", url: str = "") -> MessageSegment:
             if url and url.startswith("http"):
                 file_name = await download_video(url)
         if not file_name:
-            return None
-        data_path = video_path / file_name
+            return MessageSegment.text(f"获取 video 出错, file_name: {file_name}, url: {url}")
+        data_path = plugin_cache_dir / file_name
         # 检测文件大小
         file_size_in_mb = get_file_size_mb(data_path)
         # 如果视频大于 100 MB 自动转换为群文件, 先忽略
         if file_size_in_mb > VIDEO_MAX_MB:
             # 转为文件 Seg
-            seg = get_file_seg(file_name, data_path)
+            seg = get_file_seg(file_name)
         seg = MessageSegment.video(data_path)
     except Exception as e:
         logger.error(f"转换为 segment 失败\n{e}")
@@ -136,10 +132,10 @@ async def get_video_seg(file_name: str = "", url: str = "") -> MessageSegment:
     finally:
         return seg
     
-def get_file_seg(file_name: str, data_path: Path | str) -> MessageSegment:
-    file = data_path if isinstance(data_path, str) else data_path.absolute()
+def get_file_seg(file_name: str) -> MessageSegment:
+    file = plugin_cache_dir / file_name
     return MessageSegment("file", data = {
         "name": file_name, # [发] [选]
-        "file": file,
-        "path": file,
+        "file": f"file://{file.absolute()}",
+        "path": f"file://{file.absolute()}",
   })

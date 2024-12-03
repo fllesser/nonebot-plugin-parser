@@ -1,13 +1,13 @@
 import re
 import httpx
 
-from nonebot import on_regex
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
+from nonebot import on_keyword
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
-from .filter import resolve_filter
+from .filter import is_not_in_disable_group
 from .utils import *
 from ..constant import COMMON_HEADER
-from ..core.common import download_audio
+from ..data_source.common import download_audio
 from ..config import *
 
 # NCM获取歌曲信息链接
@@ -16,14 +16,11 @@ NETEASE_API_CN = 'https://www.markingchen.ink'
 # NCM临时接口
 NETEASE_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_wyymusic.php?id={}&br=7&type=json"
 
-ncm = on_regex(
-    r"(music.163.com|163cn.tv)"
-)
+ncm = on_keyword({"music.163.com", "163cn.tv"}, rule = is_not_in_disable_group)
 
 @ncm.handle()
-@resolve_filter
-async def ncm_handler(bot: Bot, event: Event):
-    message = str(event.message)
+async def ncm_handler(bot: Bot, event: MessageEvent):
+    message = event.message.extract_plain_text().strip()
     # 解析短链接
     if "163cn.tv" in message:
         message = re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", message).group(0)

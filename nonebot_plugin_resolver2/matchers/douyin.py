@@ -2,23 +2,20 @@ import re
 import httpx
 import aiohttp
 
-from nonebot import on_regex
+from nonebot import on_keyword
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
 
 from .utils import *
-from .filter import resolve_filter
-from ..core.tiktok import generate_x_bogus_url
+from .filter import is_not_in_disable_group
+from ..data_source.tiktok import generate_x_bogus_url
 from ..constant import DOUYIN_VIDEO, DY_TOUTIAO_INFO, URL_TYPE_CODE_DICT
 from ..constant import COMMON_HEADER
 
 from ..config import *
 
-douyin = on_regex(
-    r"(v.douyin.com)", priority=1
-)
+douyin = on_keyword("v.douyin.com", rule=is_not_in_disable_group)
 
 @douyin.handle()
-@resolve_filter
 async def _(bot: Bot, event: Event) -> None:
     """
         抖音解析

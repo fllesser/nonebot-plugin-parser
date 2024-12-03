@@ -2,12 +2,9 @@ import yt_dlp
 import random
 import asyncio
 
-from nonebot import logger, require
 from pathlib import Path
-from ..config import video_path, audio_path, PROXY
-
-require("nonebot_plugin_apscheduler")
-from nonebot_plugin_apscheduler import scheduler
+from ..config import *
+from .common import delete_boring_characters
 
 # 缓存链接信息
 url_info: dict[str, dict[str, str]] = {}
@@ -15,7 +12,7 @@ url_info: dict[str, dict[str, str]] = {}
 # 定时清理
 @scheduler.scheduled_job(
     "cron",
-    hour=0,
+    hour=2,
     minute=0,
 )
 async def _():
@@ -39,6 +36,8 @@ if PROXY:
 
 
 async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
+    info_dict = url_info[url]
+    if info_dict: return info_dict
     ydl_opts = {} | ydl_extract_base_opts
 
     if cookiefile:
@@ -51,13 +50,11 @@ async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
 
         
 async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
-    info_dict = url_info[url]
-    if not info_dict:
-        info_dict = await get_video_info(url, cookiefile)
-    title = info_dict.get('title', random.randint(0, 1000))
+    info_dict = await get_video_info(url, cookiefile)
+    title = delete_boring_characters(info_dict.get('title', random.randint(0, 1000)))
     duration = info_dict.get('duration', 600)
     ydl_opts = {
-        'outtmpl': f'{video_path / title}.%(ext)s',
+        'outtmpl': f'{plugin_cache_dir / title}.%(ext)s',
         'merge_output_format': 'mp4',
         'format': f'b*[filesize<{duration // 8}M]',
         'postprocessors': [{ 'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}]
@@ -72,12 +69,10 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
         
 
 async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
-    info_dict = url_info[url]
-    if not info_dict:
-        info_dict = await get_video_info(url, cookiefile)
-    title = info_dict.get('title', random.randint(0, 1000))
+    info_dict = await get_video_info(url, cookiefile)
+    title = delete_boring_characters(info_dict.get('title', random.randint(0, 1000)))
     ydl_opts = {
-        'outtmpl': f'{ audio_path / title}.%(ext)s',
+        'outtmpl': f'{ plugin_cache_dir / title}.%(ext)s',
         'format': 'bestaudio',
         'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '0', }]
     } | ydl_download_base_opts

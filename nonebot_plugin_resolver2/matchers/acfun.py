@@ -4,25 +4,24 @@ import subprocess
 import httpx
 import json
 
-from nonebot import on_regex
-from nonebot.adapters.onebot.v11 import Message, Event
+from nonebot import on_keyword
+from nonebot.adapters.onebot.v11 import Message, MessageEvent
 
-from .filter import resolve_filter
+from .filter import is_not_in_disable_group
 from .utils import auto_video_send
-from ..config import *
+from ..config import plugin_cache_dir, NICKNAME
 
-acfun = on_regex(r"(acfun.cn)")
+acfun = on_keyword("acfun.cn", rule=is_not_in_disable_group)
 
 @acfun.handle()
-@resolve_filter
-async def _(event: Event) -> None:
+async def _(event: MessageEvent) -> None:
     """
         acfun解析
     :param event:
     :return:
     """
     # 消息
-    inputMsg: str = str(event.message).strip()
+    inputMsg: str = event.message.extract_plain_text().strip()
 
     # 短号处理
     if "m.acfun.cn" in inputMsg:
@@ -105,7 +104,7 @@ async def download_m3u8_videos(m3u8_full_url, i):
     """
     async with httpx.AsyncClient() as client:
         async with client.stream("GET", m3u8_full_url, headers=headers) as resp:
-            with open(video_path / f"{i}.ts", "wb") as f:
+            with open(plugin_cache_dir / f"{i}.ts", "wb") as f:
                 async for chunk in resp.aiter_bytes():
                     f.write(chunk)
 
@@ -133,8 +132,8 @@ def parse_video_name(video_info: json):
 async def merge_ac_file_to_mp4(ts_names, file_name):
     concat_str = '\n'.join([f"file {i}.ts" for i, d in enumerate(ts_names)])
 
-    filetxt = video_path / 'file.txt'
-    filepath = video_path / file_name
+    filetxt = plugin_cache_dir / 'file.txt'
+    filepath = plugin_cache_dir / file_name
     async with aiofiles.open(filetxt, 'w') as f:
         await f.write(concat_str)
     command = f'ffmpeg -y -f concat -safe 0 -i {filetxt} -c copy "{filepath}"'

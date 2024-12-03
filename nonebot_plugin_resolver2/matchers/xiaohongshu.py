@@ -1,40 +1,33 @@
 import os, re, httpx, aiohttp, json, asyncio
 
-from nonebot import on_regex
+from nonebot import on_keyword
 from nonebot import logger
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 from urllib.parse import parse_qs, urlparse
 
-from .filter import resolve_filter
+from .filter import is_not_in_disable_group
 from .utils import send_forward_both, make_node_segment, auto_video_send
 
 from ..constant import COMMON_HEADER
-
-from ..core.common import download_video, download_img
+from ..data_source.common import download_video, download_img
 from ..config import *
 
 # 小红书下载链接
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"
 
-xiaohongshu = on_regex(
-    r"(xhslink.com|xiaohongshu.com)", priority=1
-)
+
+xiaohongshu = on_keyword({"xiaohongshu.com", "xhslink.com"}, rule = is_not_in_disable_group)
 
 @xiaohongshu.handle()
-@resolve_filter
-async def xhs_handler(bot: Bot, event: Event):
-    """
-        小红书解析
-    :param event:
-    :return:
-    """
-    msg_url = re.search(r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",
-                        str(event.message).replace("&amp;", "&").strip())[0]
+async def _(bot: Bot, event: MessageEvent):
+
+    message: str = event.message.extract_plain_text().replace("&amp;", "&").strip()
+
+    msg_url = re.search(r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",message)[0]
     # 如果没有设置xhs的ck就结束，因为获取不到
     xhs_ck = rconfig.r_xhs_ck
     if xhs_ck == "":
-        await xiaohongshu.send(Message(f"{NICKNAME}解析内容来自：【小红书】\n无法获取到管理员设置的小红书ck！"))
-        return
+        await xiaohongshu.finish(f"{NICKNAME}解析 | 小红书 - 无法获取到管理员设置的小红书 cookie！")
     # 请求头
     headers = {
                   'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,'
@@ -64,7 +57,7 @@ async def xhs_handler(bot: Bot, event: Event):
         response_json = re.findall('window.__INITIAL_STATE__=(.*?)</script>', html)[0]
     except IndexError:
         await xiaohongshu.send(
-            Message(f"{NICKNAME}解析内容来自：【小红书】\n当前ck已失效，请联系管理员重新设置的小红书ck！"))
+            Message(f"{NICKNAME}解析 | 小红书 - 当前ck已失效，请联系管理员重新设置的小红书 cookie！"))
         return
     response_json = response_json.replace("undefined", "null")
     response_json = json.loads(response_json)
@@ -97,7 +90,7 @@ async def xhs_handler(bot: Bot, event: Event):
         await auto_video_send(event, file_name = video_name)
         return
     # 发送图片
-    links = make_node_segment(bot.self_id, [MessageSegment.image(image_path / img) for img in links_path])
+    links = make_node_segment(bot.self_id, [MessageSegment.image(plugin_cache_dir / img) for img in links_path])
     # 发送异步后的数据
     await send_forward_both(bot, event, links)
 

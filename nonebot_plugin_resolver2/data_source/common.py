@@ -2,22 +2,17 @@ import json
 import os
 import re
 import time
-from typing import List, Dict, Any
-from urllib.parse import urlparse
-from nonebot import require, logger
-
-require("nonebot_plugin_localstore")
-
-import nonebot_plugin_localstore as store
-
 import aiofiles
 import aiohttp
 import httpx
 
-from ..constant import COMMON_HEADER, PLUGIN_NAME, DISABLE_GROUPS
-from ..config import *
+from typing import Set, Dict
+from urllib.parse import urlparse
 
-async def download_video(url, proxy: str = None, ext_headers: dict[str, str] = {}) -> str:
+from ..constant import COMMON_HEADER, PLUGIN_NAME, DISABLE_GROUPS
+from ..config import store, plugin_cache_dir
+
+async def download_video(url, proxy: str = None, ext_headers: Dict[str, str] = {}) -> str:
     """
     异步下载（httpx）视频，并支持通过代理下载。
     文件名将使用时间戳生成，以确保唯一性。
@@ -46,7 +41,7 @@ async def download_video(url, proxy: str = None, ext_headers: dict[str, str] = {
     try:
         async with httpx.AsyncClient(**client_config) as client:
             async with client.stream("GET", url) as resp:
-                async with aiofiles.open(video_path / file_name, "wb") as f:
+                async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
                     async for chunk in resp.aiter_bytes():
                         await f.write(chunk)
         return file_name
@@ -69,7 +64,7 @@ async def download_img(url: str, img_name: str = "", proxy: str = None, session=
     if not url:
         return ""
     img_name = img_name if img_name else f"{url.split('/').pop()}.jpg"
-    path = image_path / img_name
+    path = plugin_cache_dir / img_name
     # 单个文件下载
     if session is None:
         async with aiohttp.ClientSession() as session:
@@ -88,34 +83,31 @@ async def download_img(url: str, img_name: str = "", proxy: str = None, session=
     return img_name
 
 
-async def download_audio(url):
+async def download_audio(url) -> str:
     # 从URL中提取文件名
     parsed_url = urlparse(url)
     file_name = parsed_url.path.split('/')[-1]
     # 去除可能存在的请求参数
     file_name = file_name.split('?')[0]
 
-    path = os.path.join(audio_path.absolute(), file_name)
-
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
         response.raise_for_status()  # 检查请求是否成功
+    async with aiofiles.open(plugin_cache_dir / file_name, 'wb') as file:
+        await file.write(response.content)
+    return file_name
 
-        async with aiofiles.open(path, 'wb') as file:
-            await file.write(response.content)
-    return path
 
-
-def delete_boring_characters(sentence):
+def delete_boring_characters(sentence) -> str:
     """
         去除标题的特殊字符
     :param sentence:
     :return:
     """
-    return re.sub(r'[0-9’!"∀〃#$%&\'()*+,-./:;<=>?@，。?★、…【】《》？“”‘’！[\\]^_`{|}~～\s]+', "", sentence)
+    return re.sub(r'[’!"∀〃#$%&\'()*+,-./:;<=>?@，。?★、…【】《》？“”‘’！[\\]^_`{|}~～\s]+', "", sentence)
 
 
-def get_file_size_mb(file_path):
+def get_file_size_mb(file_path) -> int:
     """
     判断当前文件的大小是多少MB
     :param file_path:
@@ -123,32 +115,14 @@ def get_file_size_mb(file_path):
     """
     # 获取文件大小（以字节为单位）
     file_size_bytes = os.path.getsize(file_path)
-
     # 将字节转换为 MB 并取整
     file_size_mb = int(file_size_bytes / (1024 * 1024))
-
     return file_size_mb
 
 
-def load_or_initialize_list() -> List[Any]:
-    data_file = store.get_data_file(PLUGIN_NAME, DISABLE_GROUPS)
-    # 判断是否存在
-    if not data_file.exists():
-        data_file.write_text(json.dumps([]))
-    return list(json.loads(data_file.read_text()))
 
-
-def save(disable_group_list: List[int]) -> None:
-    """
-    使用pickle将对象保存到文件
-    :return: None
-    """
-    data_file = store.get_data_file(PLUGIN_NAME, DISABLE_GROUPS)
-    data_file.write_text(json.dumps(disable_group_list))
-
-
-def split_and_strip(text, sep=None) -> List[str]:
-    # 先去除两边的空格，然后按指定分隔符分割
-    split_text = text.strip().split(sep)
-    # 去除每个子字符串两边的空格
-    return [sub_text.strip() for sub_text in split_text]
+# def split_and_strip(text, sep=None) -> List[str]:
+#     # 先去除两边的空格，然后按指定分隔符分割
+#     split_text = text.strip().split(sep)
+#     # 去除每个子字符串两边的空格
+#     return [sub_text.strip() for sub_text in split_text]

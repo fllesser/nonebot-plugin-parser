@@ -1,36 +1,33 @@
 import os, httpx, re, json
 
-from nonebot import on_regex
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
+from nonebot import on_keyword
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
 from .utils import upload_both
-from ..core.common import download_audio
+from ..data_source.common import download_audio
 from ..constant import COMMON_HEADER
 
-from .filter import resolve_filter
+from .filter import is_not_in_disable_group
 from ..config import *
 
 # KG临时接口
 KUGOU_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={}&n=1&type=json"
 
-kugou = on_regex(r"(kugou.com)")
+kugou = on_keyword("kugou.com", rule = is_not_in_disable_group)
 
 @kugou.handle()
-@resolve_filter
-async def kugou_handler(bot: Bot, event: Event):
-    message = str(event.message)
+async def kugou_handler(bot: Bot, event: MessageEvent):
+    message = event.message.extract_plain_text().strip()
     # logger.info(message)
     reg1 = r"https?://.*?kugou\.com.*?(?=\s|$|\n)"
     reg2 = r'jumpUrl":\s*"(https?:\\/\\/[^"]+)"'
     reg3 = r'jumpUrl":\s*"(https?://[^"]+)"'
     # 处理卡片问题
     if 'com.tencent.structmsg' in message:
-        match = re.search(reg2, message)
-        if match:
+        if match := re.search(reg2, message):
             get_url = match.group(1)
         else:
-            match = re.search(reg3, message)
-            if match:
+            if match := re.search(reg3, message):
                 get_url = match.group(1)
             else:
                 await kugou.send(Message(f"{NICKNAME}解析 | 酷狗音乐 - 获取链接失败"))
