@@ -37,14 +37,14 @@ async def _(bot: Bot, event: MessageEvent):
                 'Sec-Fetch-User': '?1',
                 **COMMON_HEADER
             })
-
-    x_data: object = (await x_req(x_url)).json()['data']
+    resp = await x_req(x_url)
+    x_data: object = resp.json()['data']
 
     
     if x_data is None:
         x_url = x_url + '/photo/1'
-        logger.info(x_url)
-        x_data = await (x_req(x_url)).json()['data']
+        resp = await x_req(x_url)
+        x_data = resp.json()['data']
 
     x_url_res = x_data['url']
 
