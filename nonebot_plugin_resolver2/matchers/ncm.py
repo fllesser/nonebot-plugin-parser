@@ -32,7 +32,8 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
         message = re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", message).group(0)
         # message = str(httpx.head(message, follow_redirects=True).url)
         async with httpx.AsyncClient() as client:
-            message = str((await client.head(message, follow_redirects=True)).url)
+            resp = await client.head(message, follow_redirects=True)
+            message = str(resp.url)
         
     ncm_id = re.search(r"id=(\d+)", message).group(1)
     if ncm_id is None:
@@ -40,7 +41,8 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
 
     # 对接临时接口
     async with httpx.AsyncClient() as client:
-        ncm_vip_data = (await client.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER)).json()
+        resp = await client.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER)
+        ncm_vip_data = resp.json()
     ncm_url = ncm_vip_data['music_url']
     ncm_cover = ncm_vip_data['cover']
     ncm_singer = ncm_vip_data['singer']
