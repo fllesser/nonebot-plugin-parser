@@ -10,7 +10,6 @@ from .utils import auto_video_send, make_node_segment, send_forward_both
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_img, download_video
 
-
 from ..config import *
 
 # WEIBO_SINGLE_INFO

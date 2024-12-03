@@ -1,4 +1,4 @@
-from nonebot import get_driver, require, logger
+from nonebot import get_driver, logger
 
 from nonebot.plugin import PluginMetadata
 from .matchers import resolvers, commands

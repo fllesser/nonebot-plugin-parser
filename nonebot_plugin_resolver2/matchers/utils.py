@@ -1,7 +1,7 @@
 from typing import cast, Iterable, Union, List
 from nonebot import logger
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
-from nonebot.adapters.onebot.v11.event import GroupMessageEvent, PrivateMessageEvent, MessageEvent
+from nonebot.adapters.onebot.v11.event import GroupMessageEvent, PrivateMessageEvent
 from nonebot.matcher import current_bot
 
 from ..constant import VIDEO_MAX_MB

@@ -28,7 +28,6 @@ rconfig: Config = get_plugin_config(Config)
 YTB_COOKIES_FILE = plugin_config_dir / 'ytb_cookies.txt' if rconfig.r_ytb_ck else None
 BILI_COOKIES_FILE = plugin_config_dir / 'bili_cookies.txt' if rconfig.r_bili_ck else None
 
-
 # 全局名称
 NICKNAME: str = next(iter(get_driver().config.nickname), "")
 # 根据是否为国外机器声明代理
