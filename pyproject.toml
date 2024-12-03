@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-resolver2"
-version = "1.2.6"
+version = "1.2.7"
 description = "NoneBot2 链接分享解析器插件, 支持的解析(BV号/链接/小程序/卡片),支持平台(b站，抖音，网易云，微博，小红书，youtube，tiktok，twitter...)"
 authors = ["fllesser <fllessive@gmail.com>"]
 readme = "README.md"
