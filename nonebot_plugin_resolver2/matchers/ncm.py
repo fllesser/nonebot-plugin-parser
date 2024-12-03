@@ -1,5 +1,6 @@
 import re
 import httpx
+import asyncio
 
 from nonebot import on_message
 from nonebot.rule import Rule
@@ -29,14 +30,17 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
     # 解析短链接
     if "163cn.tv" in message:
         message = re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", message).group(0)
-        message = str(httpx.head(message, follow_redirects=True).url)
-
+        # message = str(httpx.head(message, follow_redirects=True).url)
+        async with httpx.AsyncClient() as client:
+            message = str((await client.head(message, follow_redirects=True)).url)
+        
     ncm_id = re.search(r"id=(\d+)", message).group(1)
     if ncm_id is None:
         await ncm.finish(f"{NICKNAME}解析 | 网易云 - 获取链接失败")
 
     # 对接临时接口
-    ncm_vip_data = httpx.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER).json()
+    async with httpx.AsyncClient as client:
+        ncm_vip_data = (await client.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER)).json()
     ncm_url = ncm_vip_data['music_url']
     ncm_cover = ncm_vip_data['cover']
     ncm_singer = ncm_vip_data['singer']
