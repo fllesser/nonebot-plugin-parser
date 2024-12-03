@@ -2,6 +2,7 @@ import re
 import httpx
 
 from nonebot import on_keyword
+from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
 from .filter import is_not_in_disable_group
@@ -16,7 +17,7 @@ NETEASE_API_CN = 'https://www.markingchen.ink'
 # NCM临时接口
 NETEASE_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_wyymusic.php?id={}&br=7&type=json"
 
-ncm = on_keyword({"music.163.com", "163cn.tv"}, rule = is_not_in_disable_group)
+ncm = on_keyword(keywords={"music.163.com", "163cn.tv"}, rule = Rule(is_not_in_disable_group))
 
 @ncm.handle()
 async def ncm_handler(bot: Bot, event: MessageEvent):
@@ -39,8 +40,9 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
     await ncm.send(Message(
         [MessageSegment.image(ncm_cover), MessageSegment.text(f'{NICKNAME}解析 | 网易云音乐 - {ncm_title}-{ncm_singer}')]))
     # 下载音频文件后会返回一个下载路径
-    ncm_music_path = await download_audio(ncm_url)
+    file_name = await download_audio(ncm_url)
+    file = plugin_cache_dir / file_name
     # 发送语音
-    await ncm.send(Message(MessageSegment.record(ncm_music_path)))
+    await ncm.send(Message(MessageSegment.record(file)))
     # 发送群文件
-    await upload_both(bot, event, ncm_music_path, f'{ncm_title}-{ncm_singer}.{ncm_music_path.split(".")[-1]}')
+    await upload_both(bot, event, file, f'{ncm_title}-{ncm_singer}.{file_name.split(".")[-1]}')

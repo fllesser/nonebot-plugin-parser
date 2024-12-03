@@ -1,6 +1,7 @@
 import os, httpx, re, json
 
 from nonebot import on_keyword
+from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
 from .utils import upload_both
@@ -13,7 +14,7 @@ from ..config import *
 # KG临时接口
 KUGOU_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={}&n=1&type=json"
 
-kugou = on_keyword("kugou.com", rule = is_not_in_disable_group)
+kugou = on_keyword(keywords={"kugou.com"}, rule = Rule(is_not_in_disable_group))
 
 @kugou.handle()
 async def kugou_handler(bot: Bot, event: MessageEvent):
@@ -57,14 +58,13 @@ async def kugou_handler(bot: Bot, event: MessageEvent):
                 [MessageSegment.image(kugou_cover),
                  MessageSegment.text(f'{NICKNAME}解析 | 酷狗音乐 - 歌曲：{kugou_name}-{kugou_singer}')]))
             # 下载音频文件后会返回一个下载路径
-            kugou_music_path = await download_audio(kugou_url)
+            file_name = await download_audio(kugou_url)
+
+            file = store.get_plugin_cache_file(file_name)
             # 发送语音
-            await kugou.send(Message(MessageSegment.record(kugou_music_path)))
+            await kugou.send(MessageSegment.record(file = file))
             # 发送群文件
-            await upload_both(bot, event, kugou_music_path,
-                              f'{kugou_name}-{kugou_singer}.{kugou_music_path.split(".")[-1]}')
-            if os.path.exists(kugou_music_path):
-                os.unlink(kugou_music_path)
+            await upload_both(bot, event, file, f'{kugou_name}-{kugou_singer}.{file_name.split(".")[-1]}')
         else:
             await kugou.send(Message(f"{NICKNAME}解析 | 酷狗音乐 - 不支持当前外链，请重新分享再试"))
     else:

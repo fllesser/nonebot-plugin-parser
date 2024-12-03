@@ -1,6 +1,7 @@
 import re, httpx
 
-from nonebot import on_regex, on_keyword
+from nonebot import on_keyword
+from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Event, Message
 
 from .filter import is_not_in_disable_group
@@ -9,7 +10,7 @@ from ..data_source.ytdlp import *
 from ..config import *
 
 
-tiktok = on_keyword({"tiktok.com", "vt.tiktok.com", "vm.tiktok.com"}, rule = is_not_in_disable_group)
+tiktok = on_keyword(keywords={"tiktok.com", "vt.tiktok.com", "vm.tiktok.com"}, rule = Rule(is_not_in_disable_group))
 
 @tiktok.handle()
 async def _(event: Event) -> None:

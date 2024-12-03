@@ -1,6 +1,7 @@
 import re, httpx
 
 from nonebot import on_keyword
+from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 from nonebot import logger
 
@@ -11,7 +12,7 @@ from ..data_source.common import download_img, download_video
 
 from ..config import *
 
-twitter = on_keyword("x.com", rule = is_not_in_disable_group)
+twitter = on_keyword(keywords={"x.com"}, rule = Rule(is_not_in_disable_group))
 
 @twitter.handle()
 async def _(bot: Bot, event: MessageEvent):

@@ -36,8 +36,9 @@ if PROXY:
 
 
 async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
-    info_dict = url_info[url]
-    if info_dict: return info_dict
+    info_dict = url_info.get(url, None)
+    if info_dict: 
+        return info_dict
     ydl_opts = {} | ydl_extract_base_opts
 
     if cookiefile:

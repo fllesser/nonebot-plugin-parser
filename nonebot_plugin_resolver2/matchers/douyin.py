@@ -2,10 +2,11 @@ import re
 import httpx
 import aiohttp
 
-from nonebot import on_keyword
+from nonebot import on_keyword, logger
+from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
 
-from .utils import *
+from .utils import get_video_seg, send_forward_both, make_node_segment
 from .filter import is_not_in_disable_group
 from ..data_source.tiktok import generate_x_bogus_url
 from ..constant import DOUYIN_VIDEO, DY_TOUTIAO_INFO, URL_TYPE_CODE_DICT
@@ -13,7 +14,7 @@ from ..constant import COMMON_HEADER
 
 from ..config import *
 
-douyin = on_keyword("v.douyin.com", rule=is_not_in_disable_group)
+douyin = on_keyword(keywords={"v.douyin.com"}, rule = Rule(is_not_in_disable_group))
 
 @douyin.handle()
 async def _(bot: Bot, event: Event) -> None:
@@ -69,22 +70,18 @@ async def _(bot: Bot, event: Event) -> None:
                 # 发送视频
                 # logger.info(player_addr)
                 # await douyin.send(Message(MessageSegment.video(player_addr)))
-                await auto_video_send(event, url = player_real_addr)
+                await douyin.send(await get_video_seg(url = player_real_addr))
             elif url_type == 'image':
                 # 无水印图片列表/No watermark image list
                 no_watermark_image_list = []
                 # 有水印图片列表/With watermark image list
-                watermark_image_list = []
+                # watermark_image_list = []
                 # 遍历图片列表/Traverse image list
                 for i in detail['images']:
                     # 无水印图片列表
-                    # no_watermark_image_list.append(i['url_list'][0])
                     no_watermark_image_list.append(MessageSegment.image(i['url_list'][0]))
                     # 有水印图片列表
                     # watermark_image_list.append(i['download_url_list'][0])
-                # 异步发送
-                # logger.info(no_watermark_image_list)
-                # imgList = await asyncio.gather([])
                 await send_forward_both(bot, event, make_node_segment(bot.self_id, no_watermark_image_list))
 
 

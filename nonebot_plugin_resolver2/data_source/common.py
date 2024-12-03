@@ -9,7 +9,7 @@ import httpx
 from typing import Set, Dict
 from urllib.parse import urlparse
 
-from ..constant import COMMON_HEADER, PLUGIN_NAME, DISABLE_GROUPS
+from ..constant import COMMON_HEADER
 from ..config import store, plugin_cache_dir
 
 async def download_video(url, proxy: str = None, ext_headers: Dict[str, str] = {}) -> str:

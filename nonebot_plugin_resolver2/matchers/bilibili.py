@@ -5,6 +5,7 @@ import aiofiles
 import subprocess
 
 from nonebot import on_keyword
+from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
 from bilibili_api import video, live, article, Credential
@@ -31,13 +32,13 @@ BILIBILI_HEADER = {
     'referer': 'https://www.bilibili.com',
 }
 
-bilibili = on_keyword({"bilibili.com", "b23.tv", "BV"}, rule=is_not_in_disable_group)
+bilibili = on_keyword(keywords = {"bilibili.com", "b23.tv", "BV"}, rule = Rule(is_not_in_disable_group))
 
 @bilibili.handle()
 async def _(bot: Bot, event: MessageEvent) -> None:
 
     # 合并转发消息 list
-    segs = []
+    segs: List[MessageSegment | str] = []
     will_delete_id = 0
 
     # 消息
@@ -159,9 +160,9 @@ async def _(bot: Bot, event: MessageEvent) -> None:
     online = await v.get_online()
     online_str = f'🏄‍♂️ 总共 {online["total"]} 人在观看，{online["count"]} 人在网页端观看'
     segs.append(MessageSegment.image(video_cover))
-    segs.append(Message(f"{video_title}\n{extra_bili_info(video_info)}\n📝 简介：{video_desc}\n{online_str}"))
+    segs.append(f"{video_title}\n{extra_bili_info(video_info)}\n📝 简介：{video_desc}\n{online_str}")
     if video_duration > DURATION_MAXIMUM:
-        segs.append(Message(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!"))
+        segs.append(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
     else:
         # 下载视频和音频
         try:
@@ -177,12 +178,12 @@ async def _(bot: Bot, event: MessageEvent) -> None:
             segs.append(await get_video_seg(file_name=f"{video_id}-res.mp4"))
         except Exception as e:
             logger.error(f"下载视频失败，\n{e}")
-            segs.append(Message(f"下载视频失败，\n{e}"))
+            segs.append(f"下载视频失败，\n{e}")
      # 这里是总结内容，如果写了 cookie 就可以
     if credential:
         ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
         if ai_conclusion['model_result']['summary'] != '':
-            segs.append(Message("bilibili AI总结:\n" + ai_conclusion['model_result']['summary']))
+            segs.append(f"bilibili AI总结:\n{ai_conclusion['model_result']['summary']}")
     await send_forward_both(bot, event, make_node_segment(bot.self_id, segs))
     await bot.delete_msg(message_id = will_delete_id)
 

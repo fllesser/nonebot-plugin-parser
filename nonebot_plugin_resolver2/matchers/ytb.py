@@ -4,12 +4,13 @@ from nonebot import on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment, Bot
 from nonebot.typing import T_State
 from nonebot.params import Arg
+from nonebot.rule import Rule
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg, upload_both, get_file_seg
 from ..data_source.ytdlp import *
 from ..config import *
 
-ytb = on_keyword({"youtube.com", "youtu.be"}, rule = is_not_in_disable_group)
+ytb = on_keyword(keywords = {"youtube.com", "youtu.be"}, rule = Rule(is_not_in_disable_group))
 
 @ytb.handle()
 async def _(event: MessageEvent, state: T_State):

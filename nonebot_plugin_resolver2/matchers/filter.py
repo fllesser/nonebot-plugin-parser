@@ -104,6 +104,6 @@ async def _(bot: Bot, event: MessageEvent):
     disable_groups = '\n'.join(disable_groups)
     if isinstance(event, GroupMessageEvent):
         await check_resolve.send("已经发送到私信了~")
-    message = f"解析关闭的群聊如下：{disable_groups} \n🌟 温馨提示：如果想开关解析需要在群聊@我然后输入[开启/关闭解析], 另外还可以私信我发送[开启/关闭所有解析]"
+    message = f"解析关闭的群聊如下：\n{disable_groups} \n🌟 温馨提示：如果想开关解析需要在群聊@我然后输入[开启/关闭解析], 另外还可以私信我发送[开启/关闭所有解析]"
     await bot.send_private_msg(user_id=event.user_id, message=message)
 

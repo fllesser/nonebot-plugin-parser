@@ -1,7 +1,7 @@
-import os, re, httpx, aiohttp, json, asyncio
+import re, httpx, aiohttp, json, asyncio
 
-from nonebot import on_keyword
-from nonebot import logger
+from nonebot import on_keyword, logger
+from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 from urllib.parse import parse_qs, urlparse
 
@@ -16,7 +16,7 @@ from ..config import *
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"
 
 
-xiaohongshu = on_keyword({"xiaohongshu.com", "xhslink.com"}, rule = is_not_in_disable_group)
+xiaohongshu = on_keyword(keywords={"xiaohongshu.com", "xhslink.com"}, rule = Rule(is_not_in_disable_group))
 
 @xiaohongshu.handle()
 async def _(bot: Bot, event: MessageEvent):
