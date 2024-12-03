@@ -15,7 +15,7 @@ from ..config import *
 # WEIBO_SINGLE_INFO
 WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
 
-weibo = on_keyword(keywords={"weibo.com|m.weibo.cn"}, rule = Rule(is_not_in_disable_group))
+weibo = on_keyword(keywords={"weibo.com", "m.weibo.cn"}, rule = Rule(is_not_in_disable_group))
 
 @weibo.handle()
 async def _(bot: Bot, event: MessageEvent):
