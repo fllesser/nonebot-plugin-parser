@@ -57,7 +57,8 @@ async def _(bot: Bot, event: MessageEvent) -> None:
     # 处理短号、小程序问题
     if 'b23.tv' in url or ('b23.tv' and 'QQ小程序' in url):
         b_short_url = re.search(b_short_reg, url.replace("\\", ""))[0]
-        resp = httpx.get(b_short_url, headers=BILIBILI_HEADER, follow_redirects=True)
+        async with httpx.AsyncClient as client:
+            resp = await client.get(b_short_url, headers=BILIBILI_HEADER, follow_redirects=True)
         url: str = str(resp.url)
     else:
         if match := re.search(url_reg, url):
