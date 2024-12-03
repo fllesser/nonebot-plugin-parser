@@ -51,7 +51,7 @@ async def parse_url(url: str):
     url_suffix = "?quickViewId=videoInfo_new&ajaxpipe=1"
     url = url + url_suffix
     # print(url)
-    async with httpx.AsyncClient as client:
+    async with httpx.AsyncClient() as client:
         raw = (await client.get(url, headers=headers)).text
     strs_remove_header = raw.split("window.pageInfo = window.videoInfo =")
     strs_remove_tail = strs_remove_header[1].split("</script>")
