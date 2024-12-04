@@ -20,30 +20,28 @@ async def _(event: Event) -> None:
     :return:
     """
     # 消息
-    url: str = str(event.message).strip()
-
-    url_reg = r"(http:|https:)\/\/www.tiktok.com\/[A-Za-z\d._?%&+\-=\/#@]*"
-    url_short_reg = r"(http:|https:)\/\/vt.tiktok.com\/[A-Za-z\d._?%&+\-=\/#]*"
-    url_short_reg2 = r"(http:|https:)\/\/vm.tiktok.com\/[A-Za-z\d._?%&+\-=\/#]*"
-
-    if "vt.tiktok" in url:
-        temp_url = re.search(url_short_reg, url)[0]
-        async with httpx.AsyncClient() as client:
-            temp_resp = await client.get(temp_url, follow_redirects=True, proxies=PROXY)
-        url = temp_resp.url
-    elif "vm.tiktok" in url:
-        temp_url = re.search(url_short_reg2, url)[0]
-        async with httpx.AsyncClient() as client:
-            temp_resp = await client.get(temp_url, headers={ "User-Agent": "facebookexternalhit/1.1" }, follow_redirects=True,
-                              proxies=PROXY)
-        url = str(temp_resp.url)
+    message: str = event.message.extract_plain_text().strip()
+    url_reg = r"(http:|https:)\/\/(www|vt|vm).tiktok.com\/[A-Za-z\d._?%&+\-=\/#@]*"
+    if match := re.search(url_reg, message):
+        url = match.group(0)
+        prefix = match.group(2)
     else:
-        url = re.search(url_reg, url)[0]
+        # not match, return
+        return
+    if prefix == "vt":
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url, follow_redirects=True, proxies=PROXY)
+        url = resp.url
+    elif prefix == "vm":
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url, headers={ "User-Agent": "facebookexternalhit/1.1" }, follow_redirects=True,
+                              proxies=PROXY)
+        url = resp.url
     try:
         info = await get_video_info(url)
-        await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - {info['title']}"))
+        await tiktok.send(f"{NICKNAME}解析 | TikTok - {info['title']}")
     except Exception as e:
-        await tiktok.send(Message(f"{NICKNAME}解析 | TikTok - 标题获取出错: {e}"))
+        await tiktok.send(f"{NICKNAME}解析 | TikTok - 标题获取出错: {e}")
     try:
         video_name = await ytdlp_download_video(url = url)
         await tiktok.send(await get_video_seg(video_name))
