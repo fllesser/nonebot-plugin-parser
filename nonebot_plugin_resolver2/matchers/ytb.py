@@ -17,7 +17,7 @@ async def _(event: MessageEvent, state: T_State):
     message = event.message.extract_plain_text().strip()
     if match := re.search(
         r"(?:https?:\/\/)?(www\.)?youtube\.com\/[A-Za-z\d._?%&+\-=\/#]*|(?:https?:\/\/)?youtu\.be\/[A-Za-z\d._?%&+\-=\/#]*",
-        message)
+        message):
         url = match.group(0)
     else:
         return
