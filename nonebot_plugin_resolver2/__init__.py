@@ -22,6 +22,10 @@ async def _():
         pass
     if rconfig.r_ytb_ck:
         save_cookies_to_netscape(rconfig.r_ytb_ck, YTB_COOKIES_FILE, 'youtube.com')
+    if rconfig.r_douyin_ck:
+        if douyin := resovlers.pop("douyin", None):
+            douyin.destroy()
+            logger.info("未配置抖音 cookie, 故抖音解析器已销毁")
     # 处理黑名单 resovler
     for resolver in rconfig.r_disable_resolvers:
         if matcher := resolvers.get(resolver, None):
