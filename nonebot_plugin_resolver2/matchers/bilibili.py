@@ -40,108 +40,113 @@ bilibili = on_message(rule = Rule(is_bilibili, is_not_in_disable_group))
 
 @bilibili.handle()
 async def _(bot: Bot, event: MessageEvent) -> None:
-
+    # 消息
+    message: str = str(event.message).strip()
+    # 正则匹配
+    url: str = ""
+    bvid: str = ""
+    # BV处理
+    if re.match(r'^BV[1-9a-zA-Z]{10}$', message):
+        # url = 'https://www.bilibili.com/video/' + message
+        bvid = message
+    # 处理短号、小程序问题
+    elif 'b23.tv' in message or ('b23.tv' and 'QQ小程序' in message):
+        b_short_reg = r"(http:|https:)\/\/b23.tv\/[A-Za-z\d._?%&+\-=\/#]*"
+        if match := re.search(b_short_reg, message.replace("\\", "")):
+            b_short_url = match.group(0)
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(b_short_url, headers=BILIBILI_HEADER, follow_redirects=True)
+            url = str(resp.url)
+    else:
+        url_reg = r"(http:|https:)\/\/(space|www|live).bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
+        if match := re.search(url_reg, message):
+            url = match.group(0)
+    if url:
+        # ===============发现解析的是动态，转移一下===============
+        if ('t.bilibili.com' in url or '/opus' in url) and credential:
+            # 去除多余的参数
+            if '?' in url:
+                url = url[:url.index('?')]
+            dynamic_id = int(re.search(r'[^/]+(?!.*/)', url)[0])
+            dynamic_info = await Opus(dynamic_id, credential).get_info()
+            # 这里比较复杂，暂时不用管，使用下面这个算法即可实现哔哩哔哩动态转发
+            if dynamic_info is not None:
+                title = dynamic_info['item']['basic']['title']
+                paragraphs = []
+                for module in dynamic_info['item']['modules']:
+                    if 'module_content' in module:
+                        paragraphs = module['module_content']['paragraphs']
+                        break
+                desc = paragraphs[0]['text']['nodes'][0]['word']['words']
+                pics = paragraphs[1]['pic']['pics']
+                await bilibili.send(Message(f"{NICKNAME}解析 | B站动态 - {title}\n{desc}"))
+                send_pics = []
+                for pic in pics:
+                    img = pic['url']
+                    send_pics.append(make_node_segment(bot.self_id, MessageSegment.image(img)))
+                # 发送异步后的数据
+                await send_forward_both(bot, event, send_pics)
+            return
+        # 直播间解析
+        if 'live' in url:
+            # https://live.bilibili.com/30528999?hotRank=0
+            room_id = re.search(r'\/(\d+)', url).group(1)
+            room = live.LiveRoom(room_display_id=int(room_id))
+            room_info = (await room.get_room_info())['room_info']
+            title, cover, keyframe = room_info['title'], room_info['cover'], room_info['keyframe']
+            await bilibili.send(Message([MessageSegment.image(cover), MessageSegment.image(keyframe),
+                                       MessageSegment.text(f"{NICKNAME}解析 | 哔哩哔哩直播 - {title}")]))
+            return
+        # 专栏解析
+        if 'read' in url:
+            read_id = re.search(r'read\/cv(\d+)', url).group(1)
+            ar = article.Article(read_id)
+            # 如果专栏为公开笔记，则转换为笔记类
+            # NOTE: 笔记类的函数与专栏类的函数基本一致
+            if ar.is_note():
+                ar = ar.turn_to_note()
+            # 加载内容
+            await ar.fetch_content()
+            markdown_path = plugin_cache_dir / 'article.md'
+            with open(markdown_path, 'w', encoding='utf8') as f:
+                f.write(ar.markdown())
+            await bilibili.send(Message(f"{NICKNAME}解析 | 哔哩哔哩专栏"))
+            await bilibili.finish(Message(MessageSegment(type="file", data={ "file": markdown_path })))
+        # 收藏夹解析
+        if 'favlist' in url and credential:
+            # https://space.bilibili.com/22990202/favlist?fid=2344812202
+            fav_id = re.search(r'favlist\?fid=(\d+)', url).group(1)
+            fav_list = (await get_video_favorite_list_content(fav_id))['medias'][:10]
+            favs = []
+            for fav in fav_list:
+                title, cover, intro, link = fav['title'], fav['cover'], fav['intro'], fav['link']
+                logger.info(title, cover, intro)
+                favs.append(
+                    [MessageSegment.image(cover),
+                     MessageSegment.text(f'🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}')])
+            await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩收藏夹，正在为你找出相关链接请稍等...')
+            await bilibili.finish(make_node_segment(bot.self_id, favs))
+   
+    if bvid:
+        v = video.Video(bvid=bvid, credential=credential)
+    elif match := re.search(r"video\/[^\?\/ ]+", url):
+        video_id = match.group(0).split('/')[1]
+        if "av" in video_id:
+            v = video.Video(aid=int(video_id.split("av")[1]), credential=credential)
+        else:
+            v = video.Video(bvid=video_id, credential=credential)
     # 合并转发消息 list
     segs: List[MessageSegment | str] = []
     will_delete_id = 0
-
-    # 消息
-    url: str = str(event.message).strip()
-
-    # 正则匹配
-    url_reg = r"(http:|https:)\/\/(space|www|live).bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
-    b_short_reg = r"(http:|https:)\/\/b23.tv\/[A-Za-z\d._?%&+\-=\/#]*"
-    # BV处理
-    if re.match(r'^BV[1-9a-zA-Z]{10}$', url):
-        url = 'https://www.bilibili.com/video/' + url
-    # 处理短号、小程序问题
-    if 'b23.tv' in url or ('b23.tv' and 'QQ小程序' in url):
-        b_short_url = re.search(b_short_reg, url.replace("\\", ""))[0]
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(b_short_url, headers=BILIBILI_HEADER, follow_redirects=True)
-        url: str = str(resp.url)
-    else:
-        if match := re.search(url_reg, url):
-            url = match.group(0)
-    # ===============发现解析的是动态，转移一下===============
-    if ('t.bilibili.com' in url or '/opus' in url) and credential:
-        # 去除多余的参数
-        if '?' in url:
-            url = url[:url.index('?')]
-        dynamic_id = int(re.search(r'[^/]+(?!.*/)', url)[0])
-        dynamic_info = await Opus(dynamic_id, credential).get_info()
-        # 这里比较复杂，暂时不用管，使用下面这个算法即可实现哔哩哔哩动态转发
-        if dynamic_info is not None:
-            title = dynamic_info['item']['basic']['title']
-            paragraphs = []
-            for module in dynamic_info['item']['modules']:
-                if 'module_content' in module:
-                    paragraphs = module['module_content']['paragraphs']
-                    break
-            desc = paragraphs[0]['text']['nodes'][0]['word']['words']
-            pics = paragraphs[1]['pic']['pics']
-            await bilibili.send(Message(f"{NICKNAME}解析 | B站动态 - {title}\n{desc}"))
-            send_pics = []
-            for pic in pics:
-                img = pic['url']
-                send_pics.append(make_node_segment(bot.self_id, MessageSegment.image(img)))
-            # 发送异步后的数据
-            await send_forward_both(bot, event, send_pics)
-        return
-    # 直播间解析
-    if 'live' in url:
-        # https://live.bilibili.com/30528999?hotRank=0
-        room_id = re.search(r'\/(\d+)', url).group(1)
-        room = live.LiveRoom(room_display_id=int(room_id))
-        room_info = (await room.get_room_info())['room_info']
-        title, cover, keyframe = room_info['title'], room_info['cover'], room_info['keyframe']
-        await bilibili.send(Message([MessageSegment.image(cover), MessageSegment.image(keyframe),
-                                   MessageSegment.text(f"{NICKNAME}解析 | 哔哩哔哩直播 - {title}")]))
-        return
-    # 专栏解析
-    if 'read' in url:
-        read_id = re.search(r'read\/cv(\d+)', url).group(1)
-        ar = article.Article(read_id)
-        # 如果专栏为公开笔记，则转换为笔记类
-        # NOTE: 笔记类的函数与专栏类的函数基本一致
-        if ar.is_note():
-            ar = ar.turn_to_note()
-        # 加载内容
-        await ar.fetch_content()
-        markdown_path = plugin_cache_dir / 'article.md'
-        with open(markdown_path, 'w', encoding='utf8') as f:
-            f.write(ar.markdown())
-        await bilibili.send(Message(f"{NICKNAME}解析 | 哔哩哔哩专栏"))
-        await bilibili.finish(Message(MessageSegment(type="file", data={ "file": markdown_path })))
-    # 收藏夹解析
-    if 'favlist' in url and credential:
-        # https://space.bilibili.com/22990202/favlist?fid=2344812202
-        fav_id = re.search(r'favlist\?fid=(\d+)', url).group(1)
-        fav_list = (await get_video_favorite_list_content(fav_id))['medias'][:10]
-        favs = []
-        for fav in fav_list:
-            title, cover, intro, link = fav['title'], fav['cover'], fav['intro'], fav['link']
-            logger.info(title, cover, intro)
-            favs.append(
-                [MessageSegment.image(cover),
-                 MessageSegment.text(f'🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}')])
-        await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩收藏夹，正在为你找出相关链接请稍等...')
-        await bilibili.finish(make_node_segment(bot.self_id, favs))
-    # 获取视频信息
-    will_delete_id: int = (await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩, 解析中.....'))["message_id"]
-    video_id = re.search(r"video\/[^\?\/ ]+", url)[0].split('/')[1]
-    if "av" in video_id:
-        v = video.Video(aid=int(video_id.split("av")[1]), credential=credential)
-    else:
-        v = video.Video(bvid=video_id, credential=credential)
     try:
         video_info = await v.get_info()
+        if video_info is None:
+            await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩，出错，无法获取数据！"))
+        # 获取视频信息
+        will_delete_id = (await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩, 解析中.....'))["message_id"]
     except Exception as e:
         await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩，出错，{e}"))
-    if video_info is None:
-        await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩，出错，无法获取数据！"))
-    video_title, video_cover, video_desc, video_duration = video_info['title'], video_info['pic'], video_info['desc'], \
-        video_info['duration']
+    video_title, video_cover, video_desc, video_duration = video_info['title'], video_info['pic'], video_info['desc'], video_info['duration']
     # 校准 分 p 的情况
     page_num = 0
     if 'pages' in video_info:
