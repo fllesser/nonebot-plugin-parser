@@ -64,7 +64,7 @@ async def _(bot: Bot, event: Event) -> None:
             # 判断是图片还是视频
             url_type_code = detail['aweme_type']
             url_type = URL_TYPE_CODE_DICT.get(url_type_code, 'video')
-            await douyin.send(Message(f"{NICKNAME}解析 | 抖音，{detail.get('desc')}"))
+            await douyin.send(Message(f"{NICKNAME}解析 | 抖音 - {detail.get('desc')}"))
             # 根据类型进行发送
             if url_type == 'video':
                 # 解析播放地址
