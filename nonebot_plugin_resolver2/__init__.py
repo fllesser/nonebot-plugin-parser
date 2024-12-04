@@ -26,6 +26,10 @@ async def _():
         if douyin := resovlers.pop("douyin", None):
             douyin.destroy()
             logger.info("未配置抖音 cookie, 故抖音解析器已销毁")
+    if rconfig.r_xhs_ck:
+        if xiaohongshu := resovlers.pop("xiaohongshu", None):
+            douyin.destroy()
+            logger.info("未配置小红书 cookie, 故小红书解析器已销毁")
     # 处理黑名单 resovler
     for resolver in rconfig.r_disable_resolvers:
         if matcher := resolvers.get(resolver, None):
