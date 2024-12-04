@@ -70,7 +70,7 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 <summary>使用 nb-cli 安装</summary>
 在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
 
-    nb plugin install nonebot-plugin-resolver2
+    nb plugin install nonebot-plugin-resolver2 --upgrade
 
 </details>
 
