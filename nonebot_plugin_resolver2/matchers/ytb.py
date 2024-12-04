@@ -15,15 +15,18 @@ ytb = on_keyword(keywords = {"youtube.com", "youtu.be"}, rule = Rule(is_not_in_d
 @ytb.handle()
 async def _(event: MessageEvent, state: T_State):
     message = event.message.extract_plain_text().strip()
-    url = re.search(
+    if match := re.search(
         r"(?:https?:\/\/)?(www\.)?youtube\.com\/[A-Za-z\d._?%&+\-=\/#]*|(?:https?:\/\/)?youtu\.be\/[A-Za-z\d._?%&+\-=\/#]*",
-        message)[0]
+        message)
+        url = match.group(0)
+    else:
+        return
     try:
         info_dict = await get_video_info(url, YTB_COOKIES_FILE)
         title = info_dict.get('title', "未知")
         await ytb.send(f"{NICKNAME}解析 | 油管 - {title}")
     except Exception as e:
-        await ytb.send(f"{NICKNAME}解析 | 油管 - 标题获取出错: {e}")
+        await ytb.finish(f"{NICKNAME}解析 | 油管 - 标题获取出错: {e}")
     state["url"] = url
 
 @ytb.got("type", prompt="您需要下载音频(0)，还是视频(1)")
