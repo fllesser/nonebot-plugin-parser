@@ -57,7 +57,7 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
     ydl_opts = {
         'outtmpl': f'{plugin_cache_dir / title}.%(ext)s',
         'merge_output_format': 'mp4',
-        'format': f'b*[filesize<{duration // 8 + 1}M]',
+        'format': f'bv[filesize<={duration // 10 + 10}M]+ba/b[filesize<={duration // 8 + 10}M]',
         'postprocessors': [{ 'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}]
     } | ydl_download_base_opts
     
