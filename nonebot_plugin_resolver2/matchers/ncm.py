@@ -29,13 +29,15 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
     message = str(event.message).strip()
     # 解析短链接
     if "163cn.tv" in message:
-        message = re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", message).group(0)
+        if match := re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", message):
+            message = match.group(0)
         # message = str(httpx.head(message, follow_redirects=True).url)
         async with httpx.AsyncClient() as client:
             resp = await client.head(message, follow_redirects=True)
             message = str(resp.url)
         
-    ncm_id = re.search(r"id=(\d+)", message).group(1)
+    if match := re.search(r"id=(\d+)", message):
+        ncm_id = match.group(1)
     if ncm_id is None:
         await ncm.finish(f"{NICKNAME}解析 | 网易云 - 获取链接失败")
 
