@@ -25,31 +25,31 @@ async def _(bot: Bot, event: Event) -> None:
     :param event:
     :return:
     """
+    # check douyin ck, future: matcher.destory()
     # 消息
     msg: str = str(event.message).strip()
     logger.info(msg)
     # 正则匹配
     reg = r"(http:|https:)\/\/v.douyin.com\/[A-Za-z\d._?%&+\-=#]*"
-    dou_url = re.search(reg, msg, re.I)[0]
+    if match := re.search(reg, msg, re.I):
+        dou_url = match.group(0)
+    else:
+        return
     async with httpx.AsyncClient() as client:
         resp = await client.get(dou_url)
         dou_url_2 = resp.headers.get("location")
     # logger.error(dou_url_2)
     reg2 = r".*(video|note)\/(\d+)\/(.*?)"
     # 获取到ID
-    dou_id = re.search(reg2, dou_url_2, re.I)[2]
-    # logger.info(dou_id)
-    # 如果没有设置dy的ck就结束，因为获取不到
-    douyin_ck = rconfig.r_douyin_ck
-    if douyin_ck == "":
-        logger.error(rconfig)
-        await douyin.send(Message(f"{NICKNAME}解析 | 抖音，无法获取到管理员设置的抖音ck！"))
+    if match := re.search(reg2, dou_url_2, re.I):
+        dou_id = match.group(2)
+    else:
         return
     # API、一些后续要用到的参数
     headers = {
                   'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
                   'referer': f'https://www.douyin.com/video/{dou_id}',
-                  'cookie': douyin_ck
+                  'cookie': rconfig.r_douyin_ck
               } | COMMON_HEADER
     api_url = DOUYIN_VIDEO.replace("{}", dou_id)
     api_url = generate_x_bogus_url(api_url, headers)  # 如果请求失败直接返回
