@@ -15,9 +15,8 @@ ytb = on_keyword(keywords = {"youtube.com", "youtu.be"}, rule = Rule(is_not_in_d
 @ytb.handle()
 async def _(event: MessageEvent, state: T_State):
     message = event.message.extract_plain_text().strip()
-    if match := re.search(
-        r"(?:https?:\/\/)?(www\.)?youtube\.com\/[A-Za-z\d._?%&+\-=\/#]*|(?:https?:\/\/)?youtu\.be\/[A-Za-z\d._?%&+\-=\/#]*",
-        message):
+    pattern = r"(https?://)?(www\.)?(youtube\.com|youtu\.be)/[A-Za-z\d._?%&+\-=/#]*"
+    if match := re.search(pattern, message):
         url = match.group(0)
     else:
         return
