@@ -44,11 +44,11 @@ async def _(bot: Bot, event: MessageEvent) -> None:
     message: str = str(event.message).strip()
     # 正则匹配
     url: str = ""
-    bvid: str = ""
+    video_id: str = ""
     # BV处理
     if re.match(r'^BV[1-9a-zA-Z]{10}$', message):
         # url = 'https://www.bilibili.com/video/' + message
-        bvid = message
+        video_id = message
     # 处理短号、小程序问题
     elif 'b23.tv' in message or ('b23.tv' and 'QQ小程序' in message):
         b_short_reg = r"(http:|https:)\/\/b23.tv\/[A-Za-z\d._?%&+\-=\/#]*"
@@ -127,14 +127,16 @@ async def _(bot: Bot, event: MessageEvent) -> None:
             await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩收藏夹，正在为你找出相关链接请稍等...')
             await bilibili.finish(make_node_segment(bot.self_id, favs))
    
-    if bvid:
-        v = video.Video(bvid=bvid, credential=credential)
+    if video_id:
+        v = video.Video(bvid = video_id, credential=credential)
     elif match := re.search(r"video\/[^\?\/ ]+", url):
         video_id = match.group(0).split('/')[1]
         if "av" in video_id:
             v = video.Video(aid=int(video_id.split("av")[1]), credential=credential)
         else:
             v = video.Video(bvid=video_id, credential=credential)
+    else:
+        return
     # 合并转发消息 list
     segs: List[MessageSegment | str] = []
     will_delete_id = 0
