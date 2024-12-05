@@ -64,9 +64,8 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 
 ## 💿 安装
 > [!Warning]
-> **注意: 如果你已经在使用 nonebot-plugin-resolver，请在安装此插件前卸载**
-'''
-'''
+> **如果你已经在使用 nonebot-plugin-resolver，请在安装此插件前卸载**
+    
 <details open>
 <summary>使用 nb-cli 安装/更新</summary>
 在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
@@ -107,19 +106,21 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 </details>
 
 <details open>
-<summary>安装必要组件 ffmpeg</summary>
+<summary>安装必要组件</summary>
+<summary>大部分解析都依赖于 ffmpeg</summary>
 
     # ubuntu/debian
     sudo apt-get install ffmpeg
+    ffmpeg -version
     # 其他 linux 参考(原项目推荐): https://gitee.com/baihu433/ffmpeg
     # Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
-
 <summary>抖音解析需要 JavaScript Runtime</summary>
 
     # ubuntu/debian
     sudo apt-get install nodejs
-    # 其他系统自行搜索
+    # 其他系统请自行搜索
 </details>
+
 ## ⚙️ 配置
 
 在 nonebot2 项目的`.env`文件中添加下表中的必填配置
