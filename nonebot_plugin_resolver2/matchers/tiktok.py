@@ -31,12 +31,12 @@ async def _(event: Event) -> None:
     if prefix == "vt":
         async with httpx.AsyncClient() as client:
             resp = await client.get(url, follow_redirects=True, proxies=PROXY)
-        url = resp.url
+        url = str(resp.url)
     elif prefix == "vm":
         async with httpx.AsyncClient() as client:
             resp = await client.get(url, headers={ "User-Agent": "facebookexternalhit/1.1" }, follow_redirects=True,
                               proxies=PROXY)
-        url = resp.url
+        url = str(resp.url)
     try:
         info = await get_video_info(url)
         await tiktok.send(f"{NICKNAME}解析 | TikTok - {info['title']}")
