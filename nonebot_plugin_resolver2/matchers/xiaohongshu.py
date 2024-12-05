@@ -31,7 +31,7 @@ async def _(bot: Bot, event: MessageEvent):
     if "xhslink" in msg_url:
         async with httpx.AsyncClient() as client:
             resp = await client.get(msg_url, headers=headers, follow_redirects=True)
-            msg_url = resp.url
+            msg_url = str(resp.url)
     # ?: 非捕获组
     pattern = r'(?:/explore/|/discovery/item/|source=note&noteId=)(\w+)'
     if match := re.search(pattern, msg_url):
