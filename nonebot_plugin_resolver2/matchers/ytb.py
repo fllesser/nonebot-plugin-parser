@@ -33,7 +33,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
     url: str = state["url"]
     will_delete_id = (await ytb.send("开始下载..."))["message_id"]
     try:
-        if int(type.extract_plain_text()) == 1:
+        if type.extract_plain_text().strip() == '1':
             video_name = await ytdlp_download_video(url = url, cookiefile = YTB_COOKIES_FILE)
             await ytb.send(await get_video_seg(video_name))
         else: 
