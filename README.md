@@ -107,14 +107,14 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 
 <details open>
 <summary>安装必要组件</summary>
-<summary>大部分解析都依赖于 ffmpeg</summary>
+<summary>1. 大部分解析都依赖于 ffmpeg</summary>
 
     # ubuntu/debian
     sudo apt-get install ffmpeg
     ffmpeg -version
     # 其他 linux 参考(原项目推荐): https://gitee.com/baihu433/ffmpeg
     # Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
-<summary>抖音解析需要 JavaScript Runtime</summary>
+<summary>2. 抖音解析需要 JavaScript Runtime</summary>
 
     # ubuntu/debian
     sudo apt-get install nodejs
