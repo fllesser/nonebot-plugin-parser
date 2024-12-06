@@ -4,7 +4,8 @@ import asyncio
 import aiofiles
 import subprocess
 
-from nonebot import on_keyword, on_message
+from typing import List
+from nonebot import on_message, logger
 from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
@@ -14,7 +15,7 @@ from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
 from urllib.parse import parse_qs, urlparse
 
-from .utils import *
+from .utils import make_node_segment, get_video_seg
 from .filter import is_not_in_disable_group
 from ..data_source.common import delete_boring_characters
 
@@ -32,11 +33,11 @@ BILIBILI_HEADER = {
     'referer': 'https://www.bilibili.com',
 }
 
-async def is_bilibili(event: MessageEvent) -> bool:
+def is_bilibili(event: MessageEvent) -> bool:
     message = str(event.message).strip()
     return any(key in message for key in {"bilibili.com", "b23.tv", "BV"})
 
-bilibili = on_message(rule = Rule(is_bilibili, is_not_in_disable_group))
+bilibili = on_message(rule = Rule(is_not_in_disable_group, is_bilibili))
 
 @bilibili.handle()
 async def _(bot: Bot, event: MessageEvent) -> None:
@@ -67,7 +68,11 @@ async def _(bot: Bot, event: MessageEvent) -> None:
             # 去除多余的参数
             if '?' in url:
                 url = url[:url.index('?')]
-            dynamic_id = int(re.search(r'[^/]+(?!.*/)', url)[0])
+            if match := re.search(r'[^/]+(?!.*/)', url):
+                dynamic_id = int(match.group(0))
+            else:
+                logger.info(f"B站解析 | 没有获取到动态 id, 忽略")
+                return
             dynamic_info = await Opus(dynamic_id, credential).get_info()
             # 这里比较复杂，暂时不用管，使用下面这个算法即可实现哔哩哔哩动态转发
             if dynamic_info is not None:
@@ -80,23 +85,21 @@ async def _(bot: Bot, event: MessageEvent) -> None:
                 desc = paragraphs[0]['text']['nodes'][0]['word']['words']
                 pics = paragraphs[1]['pic']['pics']
                 await bilibili.send(Message(f"{NICKNAME}解析 | B站动态 - {title}\n{desc}"))
-                send_pics = []
-                for pic in pics:
-                    img = pic['url']
-                    send_pics.append(make_node_segment(bot.self_id, MessageSegment.image(img)))
+                segs = [MessageSegment.image(pic['url']) for pic in pics]
                 # 发送异步后的数据
-                await send_forward_both(bot, event, send_pics)
-            return
+                await bilibili.finish(make_node_segment(bot.self_id, segs))
         # 直播间解析
         if 'live' in url:
             # https://live.bilibili.com/30528999?hotRank=0
-            room_id = re.search(r'\/(\d+)', url).group(1)
+            if match := re.search(r'\/(\d+)', url):
+                room_id = match.group(1)
+            else:
+                logger.info("B站解析 | 没有获取到直播间 id, 忽略")
+                return
             room = live.LiveRoom(room_display_id=int(room_id))
             room_info = (await room.get_room_info())['room_info']
             title, cover, keyframe = room_info['title'], room_info['cover'], room_info['keyframe']
-            await bilibili.send(Message([MessageSegment.image(cover), MessageSegment.image(keyframe),
-                                       MessageSegment.text(f"{NICKNAME}解析 | 哔哩哔哩直播 - {title}")]))
-            return
+            await bilibili.finish(MessageSegment.image(cover) + MessageSegment.image(keyframe) + f"{NICKNAME}解析 | 哔哩哔哩直播 - {title}")
         # 专栏解析
         if 'read' in url:
             read_id = re.search(r'read\/cv(\d+)', url).group(1)
@@ -115,7 +118,10 @@ async def _(bot: Bot, event: MessageEvent) -> None:
         # 收藏夹解析
         if 'favlist' in url and credential:
             # https://space.bilibili.com/22990202/favlist?fid=2344812202
-            fav_id = re.search(r'favlist\?fid=(\d+)', url).group(1)
+            if match := re.search(r'favlist\?fid=(\d+)', url):
+                fav_id = match.group(1)
+            else:
+                return
             fav_list = (await get_video_favorite_list_content(fav_id))['medias'][:10]
             favs = []
             for fav in fav_list:
@@ -197,7 +203,7 @@ async def _(bot: Bot, event: MessageEvent) -> None:
         ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
         if ai_conclusion['model_result']['summary'] != '':
             segs.append(f"bilibili AI总结:\n{ai_conclusion['model_result']['summary']}")
-    await send_forward_both(bot, event, make_node_segment(bot.self_id, segs))
+    await bilibili.send(make_node_segment(bot.self_id, segs))
     await bot.delete_msg(message_id = will_delete_id)
 
 

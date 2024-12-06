@@ -31,7 +31,7 @@ check_resolve = on_command('查看关闭解析', permission=SUPERUSER)
 
 
 # Rule
-async def is_not_in_disable_group(event: MessageEvent) -> bool:
+def is_not_in_disable_group(event: MessageEvent) -> bool:
     return True if not isinstance(event, GroupMessageEvent) else event.group_id not in disabled_group_set
 
 

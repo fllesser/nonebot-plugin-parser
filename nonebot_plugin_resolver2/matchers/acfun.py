@@ -22,13 +22,14 @@ async def _(event: MessageEvent) -> None:
     :return:
     """
     # 消息
-    inputMsg: str = event.message.extract_plain_text().strip()
+    message: str = event.message.extract_plain_text().strip()
 
     # 短号处理
-    if "m.acfun.cn" in inputMsg:
-        inputMsg = f"https://www.acfun.cn/v/ac{re.search(r'ac=([^&?]*)', inputMsg)[1]}"
+    if "m.acfun.cn" in message:
+        if match := re.search(r'ac=([^&?]*)', message):
+            message = f"https://www.acfun.cn/v/ac{match.group(1)}"
 
-    url_m3u8s, video_name = await parse_url(inputMsg)
+    url_m3u8s, video_name = await parse_url(message)
     await acfun.send(Message(f"{NICKNAME}解析 | 猴山 - {video_name}"))
     m3u8_full_urls, ts_names, output_file_name = await parse_m3u8(url_m3u8s)
     # logger.info(output_folder_name, output_file_name)

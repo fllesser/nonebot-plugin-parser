@@ -7,7 +7,7 @@ from nonebot import on_keyword, logger
 from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
 
-from .utils import get_video_seg, send_forward_both, make_node_segment
+from .utils import get_video_seg, make_node_segment
 from .filter import is_not_in_disable_group
 from ..data_source.tiktok import generate_x_bogus_url
 from ..constant import DOUYIN_VIDEO, DY_TOUTIAO_INFO, URL_TYPE_CODE_DICT
@@ -85,6 +85,6 @@ async def _(bot: Bot, event: Event) -> None:
                     no_watermark_image_list.append(MessageSegment.image(i['url_list'][0]))
                     # 有水印图片列表
                     # watermark_image_list.append(i['download_url_list'][0])
-                await send_forward_both(bot, event, make_node_segment(bot.self_id, no_watermark_image_list))
+                await douyin.finish(make_node_segment(bot.self_id, no_watermark_image_list))
 
 

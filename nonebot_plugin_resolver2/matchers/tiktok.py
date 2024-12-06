@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import Event, Message
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg
-from ..data_source.ytdlp import *
+from ..data_source.ytdlp import get_video_info, ytdlp_download_video
 from ..config import *
 
 

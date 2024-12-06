@@ -7,7 +7,7 @@ from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
 from .filter import is_not_in_disable_group
-from .utils import *
+from .utils import get_file_seg
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_audio
 from ..config import *
@@ -53,8 +53,7 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
         [MessageSegment.image(ncm_cover), MessageSegment.text(f'{NICKNAME}解析 | 网易云音乐 - {ncm_title}-{ncm_singer}')]))
     # 下载音频文件后会返回一个下载路径
     file_name = await download_audio(ncm_url)
-    file = plugin_cache_dir / file_name
     # 发送语音
-    await ncm.send(Message(MessageSegment.record(file)))
+    await ncm.send(Message(MessageSegment.record(plugin_cache_dir / file_name)))
     # 发送群文件
-    await upload_both(bot, event, file, f'{ncm_title}-{ncm_singer}.{file_name.split(".")[-1]}')
+    await ncm.finish(get_file_seg(file_name, f'{ncm_title}-{ncm_singer}.{file_name.split(".")[-1]}'))

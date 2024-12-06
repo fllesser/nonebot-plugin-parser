@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegme
 from nonebot import logger
 
 from .filter import is_not_in_disable_group
-from .utils import auto_video_send, make_node_segment, send_forward_both
+from .utils import make_node_segment, get_video_seg
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_img, download_video
 
@@ -21,57 +21,40 @@ weibo = on_keyword(keywords={"weibo.com", "m.weibo.cn"}, rule = Rule(is_not_in_d
 async def _(bot: Bot, event: MessageEvent):
     message = event.message.extract_plain_text().strip()
     weibo_id = None
-    reg = r'(jumpUrl|qqdocurl)": ?"(.*?)"'
-
     # 处理卡片问题
     if 'com.tencent.structmsg' or 'com.tencent.miniapp' in message:
-        match = re.search(reg, message)
-        print(match)
-        if match:
+        if match := re.search(r'(jumpUrl|qqdocurl)": ?"(.*?)"', message):
             get_url = match.group(2)
-            print(get_url)
-            if get_url:
-                message = json.loads('"' + get_url + '"')
-    else:
-        message = message
-    # logger.info(message)
+            message = json.loads('"' + get_url + '"')             
     # 判断是否包含 "m.weibo.cn"
-    if "m.weibo.cn" in message:
-        # https://m.weibo.cn/detail/4976424138313924
-        match = re.search(r'(?<=detail/)[A-Za-z\d]+', message) or re.search(r'(?<=m.weibo.cn/)[A-Za-z\d]+/[A-Za-z\d]+',
-                                                                            message)
-        weibo_id = match.group(0) if match else None
-
-    # 判断是否包含 "weibo.com/tv/show" 且包含 "mid="
-    elif "weibo.com/tv/show" in message and "mid=" in message:
-        # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934
-        match = re.search(r'(?<=mid=)[A-Za-z\d]+', message)
-        if match:
-            weibo_id = mid2id(match.group(0))
+    # https://m.weibo.cn/detail/4976424138313924
+    if match := re.search(r'm\.weibo\.cn(?:/detail)?/([A-Za-z\d]+)', message):
+        weibo_id = match.group(1)
+    # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934    
+    elif match := re.search(r'mid=([A-Za-z\d]+)', message):
+        weibo_id = mid2id(match.group(1))
     # 判断是否包含 "weibo.com/show" 且包含 "fid="
-    elif "weibo.com/show" in message and "fid=" in message:
-        # https://weibo.com/show?fid=1034:5007449447661594
-        match = re.search(r'(?<=fid=)[\d]+:[\d]+', message)
-        # 懒得写了
+    # https://weibo.com/show?fid=1034:5007449447661594
+    elif match := re.search(r'(?<=fid=)[\d]+:[\d]+', message):
+        logger.info("来个人写写解析fid的（bushi")
+        return # 懒得写了
     # 判断是否包含 "weibo.com"
-    elif "weibo.com" in message:
-        # https://weibo.com/1707895270/5006106478773472
-        match = re.search(r'(?<=weibo.com/)[A-Za-z\d]+/[A-Za-z\d]+', message)
-        weibo_id = match.group(0) if match else None
+    # https://weibo.com/1707895270/5006106478773472
+    elif match := re.search(r'(?<=weibo.com/)[A-Za-z\d]+/[A-Za-z\d]+', message):
+        weibo_id = match.group(0)
 
     # 无法获取到id则返回失败信息
     if not weibo_id:
         await weibo.finish(Message("解析失败：无法获取到微博的 id"))
     # 最终获取到的 id
     weibo_id = weibo_id.split("/")[1] if "/" in weibo_id else weibo_id
-    logger.info(weibo_id)
     # 请求数据
     async with httpx.AsyncClient() as client:
         resp = await client.get(WEIBO_SINGLE_INFO.replace('{}', weibo_id), headers={
-                                                                            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-                                                                            "cookie": "_T_WM=40835919903; WEIBOCN_FROM=1110006030; MLOGIN=0; XSRF-TOKEN=4399c8",
-                                                                            "Referer": f"https://m.weibo.cn/detail/{id}",
-                                                                        } | COMMON_HEADER)
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "cookie": "_T_WM=40835919903; WEIBOCN_FROM=1110006030; MLOGIN=0; XSRF-TOKEN=4399c8",
+            "Referer": f"https://m.weibo.cn/detail/{weibo_id}",
+        } | COMMON_HEADER)
     resp = resp.json()                                                                    
     weibo_data = resp['data']
     logger.info(weibo_data)
@@ -79,23 +62,18 @@ async def _(bot: Bot, event: MessageEvent):
                                                                 ['text', 'status_title', 'source', 'region_name',
                                                                  'pics', 'page_info'])
     # 发送消息
-    await weibo.send(
-        Message(
-            f"{NICKNAME}解析 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}"))
+    await weibo.send(f"{NICKNAME}解析 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}")
     if pics:
         pics = map(lambda x: x['url'], pics)
         download_img_funcs = [asyncio.create_task(download_img(url = item, headers={
                                                                                      "Referer": "http://blog.sina.com.cn/"
                                                                                  } | COMMON_HEADER)) for item in pics]
-        links_path = await asyncio.gather(*download_img_funcs)
+        image_names = await asyncio.gather(*download_img_funcs)
         # 发送图片
-        links = make_node_segment(bot.self_id,
-                                  [MessageSegment.image(f"file://{link}") for link in links_path])
+        nodes = make_node_segment(bot.self_id, [MessageSegment.image(plugin_cache_dir / img_name) for img_name in image_names])
         # 发送异步后的数据
-        await send_forward_both(bot, event, links)
-        # 清除图片
-        for temp in links_path:
-            os.unlink(temp)
+        await weibo.finish(nodes)
+
     if page_info:
         video_url = page_info.get('urls', '').get('mp4_720p_mp4', '') or page_info.get('urls', '').get('mp4_hd_mp4', '')
         if video_url:
@@ -103,12 +81,9 @@ async def _(bot: Bot, event: MessageEvent):
                 "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
                 "referer": "https://weibo.com/"
             })
-            await auto_video_send(event, file_name=video_name)
+            await weibo.finish(await get_video_seg(video_name)) 
             
             
-            
-
-
 # 定义 base62 编码字符表
 ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 

@@ -6,8 +6,8 @@ from nonebot.typing import T_State
 from nonebot.params import Arg
 from nonebot.rule import Rule
 from .filter import is_not_in_disable_group
-from .utils import get_video_seg, upload_both, get_file_seg
-from ..data_source.ytdlp import *
+from .utils import get_video_seg, get_file_seg
+from ..data_source.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 from ..config import *
 
 ytb = on_keyword(keywords = {"youtube.com", "youtu.be"}, rule = Rule(is_not_in_disable_group))

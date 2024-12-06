@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegme
 from urllib.parse import parse_qs, urlparse
 
 from .filter import is_not_in_disable_group
-from .utils import send_forward_both, make_node_segment, auto_video_send
+from .utils import get_video_seg, make_node_segment
 
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_video, download_img
@@ -74,16 +74,14 @@ async def _(bot: Bot, event: MessageEvent):
         # 这是一条解析有水印的视频
         logger.info(note_data['video'])
         video_url = note_data['video']['media']['stream']['h264'][0]['masterUrl']
-
         # ⚠️ 废弃，解析无水印视频video.consumer.originVideoKey
         # video_url = f"http://sns-video-bd.xhscdn.com/{note_data['video']['consumer']['originVideoKey']}"
         video_name = await download_video(video_url)
-        # await xhs.send(Message(MessageSegment.video(path)))
-        await auto_video_send(event, file_name = video_name)
-        return
+
+        await xiaohongshu.finish(await get_video_seg(video_name))
     # 发送图片
-    links = make_node_segment(bot.self_id, [MessageSegment.image(plugin_cache_dir / img) for img in links_path])
+    segs = make_node_segment(bot.self_id, [MessageSegment.image(plugin_cache_dir / img) for img in links_path])
     # 发送异步后的数据
-    await send_forward_both(bot, event, links)
+    await xiaohongshu.finish(segs)
 
 

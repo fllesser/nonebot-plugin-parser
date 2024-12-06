@@ -61,29 +61,4 @@ async def _(bot: Bot, event: MessageEvent):
         seg = await get_video_seg(file_name = video_name)
     if seg:
         await twitter.send(seg)
-    # logger.info(f"X解析: {x_url}")
-    # headers = {
-    #         'Accept': 'ext/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,'
-    #                   'application/signed-exchange;v=b3;q=0.7',
-    #         'Accept-Encoding': 'gzip, deflate',
-    #         'Accept-Language': 'zh-CN,zh;q=0.9',
-    #         'Host': '47.99.158.118',
-    #         'Proxy-Connection': 'keep-alive',
-    #         'Upgrade-Insecure-Requests': '1',
-    #         'Sec-Fetch-User': '?1'
-    #     }
-    # try:
-    #     x_data: object = (await fetch_data(x_url, headers=headers)).json()['data']
-    # except Exception as e:
-    #     for i in range(4):
-    #         x_data = (await fetch_data(f'{x_url}/photo/{i}', headers=headers)).json()['data']
-    #         x_url_res = x_data['url']
-    #         if x_url_res.endswith(".jpg") or x_url_res.endswith(".png"):
-    #             res = await download_img(x_url_res, '', PROXY)
-    #             segs.append(MessageSegment.image(f"file://{res}"))
-    # segs.append(f"{NICKNAME}解析 | X")
-    # if x_data:
-    #     video_path = await download_video(x_data['url'], PROXY)
-    #     segs.append(await get_video_seg(video_path))
-    # await send_forward_both(bot, event, make_node_segment(bot.self_id, segs))
 
