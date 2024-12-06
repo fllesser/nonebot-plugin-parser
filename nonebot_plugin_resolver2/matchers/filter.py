@@ -4,7 +4,7 @@ from typing import Set
 from nonebot import logger, on_command
 from nonebot.rule import to_me
 from nonebot.permission import SUPERUSER
-from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER, Bot
+from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER, Bot, GROUP, PRIVATE
 from nonebot.adapters.onebot.v11.event import PrivateMessageEvent, MessageEvent, GroupMessageEvent
 from ..config import store
 from ..constant import DISABLE_GROUPS
@@ -23,10 +23,10 @@ def save_disabled_groups():
 # 内存中关闭解析的名单，第一次先进行初始化
 disabled_group_set: Set[int] = load_or_initialize_set()
 
-enable_resolve = on_command('开启解析', rule=to_me(), permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
-disable_resolve = on_command('关闭解析', rule=to_me(), permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
-enable_all_resolve = on_command('开启所有解析', permission=SUPERUSER)
-disable_all_resolve = on_command('关闭所有解析', permission=SUPERUSER)
+enable_resolve = on_command('开启解析', rule=to_me(), permission=GROUP | GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
+disable_resolve = on_command('关闭解析', rule=to_me(), permission=GROUP | GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
+enable_all_resolve = on_command('开启所有解析', permission=PRIVATE | SUPERUSER)
+disable_all_resolve = on_command('关闭所有解析', permission=PRIVATE | SUPERUSER)
 check_resolve = on_command('查看关闭解析', permission=SUPERUSER)
 
 
