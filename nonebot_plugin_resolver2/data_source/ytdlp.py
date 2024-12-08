@@ -1,5 +1,4 @@
 import yt_dlp
-import random
 import asyncio
 
 from pathlib import Path
@@ -52,7 +51,7 @@ async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
         
 async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
     info_dict = await get_video_info(url, cookiefile)
-    title = info_dict.get('title', random.randint(0, 1000)).replace('/', '')
+    title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
     duration = info_dict.get('duration', 600)
     ydl_opts = {
         'outtmpl': f'{plugin_cache_dir / title}.%(ext)s',
@@ -71,7 +70,7 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
 
 async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
     info_dict = await get_video_info(url, cookiefile)
-    title = info_dict.get('title', random.randint(0, 1000)).replace('/', '')
+    title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
     ydl_opts = {
         'outtmpl': f'{ plugin_cache_dir / title}.%(ext)s',
         'format': 'bestaudio',
