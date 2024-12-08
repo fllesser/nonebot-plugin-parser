@@ -19,7 +19,7 @@ def make_node_segment(user_id, segments: MessageSegment | List[MessageSegment | 
 
 
 async def get_video_seg(file_name: str = "", url: str = "") -> MessageSegment:
-    seg: MessageSegment
+    seg: MessageSegment = None
     try:
         # 如果data以"http"开头，先下载视频
         if not file_name:
@@ -36,7 +36,7 @@ async def get_video_seg(file_name: str = "", url: str = "") -> MessageSegment:
             seg = get_file_seg(file_name)
         seg = MessageSegment.video(data_path)
     except Exception as e:
-        logger.error(f"转换为 segment 失败\n{e}")
+        # logger.error(f"转换为 segment 失败\n{e}")
         seg = MessageSegment.text(f"转换为 segment 失败\n{e}")
     finally:
         return seg
