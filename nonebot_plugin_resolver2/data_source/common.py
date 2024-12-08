@@ -104,7 +104,7 @@ def delete_boring_characters(sentence: str) -> str:
     :param sentence:
     :return:
     """
-    return re.sub(r'[’!"∀〃#\$%&\'\(\)\*\+,\-\./:;<=>\?@，。?★、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～\s]+', "", sentence)
+    return re.sub(r'[’!"∀〃\$%&\'\(\)\*\+,\-\./:;<=>\?@，。?★、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～]+', "", sentence)
 
 
 def get_file_size_mb(file_path) -> int:
