@@ -98,13 +98,13 @@ async def download_audio(url) -> str:
     return file_name
 
 
-def delete_boring_characters(sentence) -> str:
+def delete_boring_characters(sentence: str) -> str:
     """
         去除标题的特殊字符
     :param sentence:
     :return:
     """
-    return re.sub(r'[’!"∀〃#$%&\'()*+,-./:;<=>?@，。?★、…【】《》？“”‘’！[\\]^_`{|}~～\s]+', "", sentence)
+    return re.sub(r'[’!"∀〃#\$%&\'\(\)\*\+,\-\./:;<=>\?@，。?★、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～\s]+', "", sentence)
 
 
 def get_file_size_mb(file_path) -> int:
