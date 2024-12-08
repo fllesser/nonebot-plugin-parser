@@ -46,4 +46,4 @@ def get_file_seg(file_name: str, name: str = "") -> MessageSegment:
     return MessageSegment("file", data = {
         "name": name if name else file_name,
         "file": f"file://{file.absolute()}"
-  })
+    })
