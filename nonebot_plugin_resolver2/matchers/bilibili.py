@@ -180,8 +180,14 @@ async def _(bot: Bot, event: MessageEvent) -> None:
     online_str = f'🏄‍♂️ 总共 {online["total"]} 人在观看，{online["count"]} 人在网页端观看'
     segs.append(MessageSegment.image(video_cover))
     segs.append(f"{video_title}\n{extra_bili_info(video_info)}\n📝 简介：{video_desc}\n{online_str}")
+    # 这里是总结内容，如果写了 cookie 就可以
+    if credential:
+        ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
+        if ai_conclusion['model_result']['summary'] != '':
+            segs.append(f"bilibili AI总结:\n{ai_conclusion['model_result']['summary']}")
+    await bilibili.send(make_node_segment(bot.self_id, segs))
     if video_duration > DURATION_MAXIMUM:
-        segs.append(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
+        await bilibili.send(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
     else:
         # 下载视频和音频
         try:
@@ -194,16 +200,11 @@ async def _(bot: Bot, event: MessageEvent) -> None:
                     download_b_file(video_url, f"{video_id}-video.m4s", logger.debug),
                     download_b_file(audio_url, f"{video_id}-audio.m4s", logger.debug))
             await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", f"{video_id}-res.mp4")
-            segs.append(await get_video_seg(file_name=f"{video_id}-res.mp4"))
+            await bilibili.send(await get_video_seg(file_name=f"{video_id}-res.mp4"))
         except Exception as e:
-            logger.error(f"下载视频失败，\n{e}")
-            segs.append(f"下载视频失败，\n{e}")
-     # 这里是总结内容，如果写了 cookie 就可以
-    if credential:
-        ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
-        if ai_conclusion['model_result']['summary'] != '':
-            segs.append(f"bilibili AI总结:\n{ai_conclusion['model_result']['summary']}")
-    await bilibili.send(make_node_segment(bot.self_id, segs))
+            # logger.error(f"下载视频失败，\n{e}")
+            await bilibili.send(f"下载视频失败，\n{e}")
+ 
     await bot.delete_msg(message_id = will_delete_id)
 
 
