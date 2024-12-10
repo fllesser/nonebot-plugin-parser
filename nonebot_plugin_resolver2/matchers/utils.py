@@ -29,11 +29,12 @@ async def get_video_seg(file_name: str = "", url: str = "") -> MessageSegment:
             return MessageSegment.text(f"获取 video 出错, file_name: {file_name}, url: {url}")
         data_path = plugin_cache_dir / file_name
         # 检测文件大小
-        file_size_in_mb = get_file_size_mb(data_path)
+        file_size_bytes = int(data_path.stat().st_size)
+        # file_size_in_mb = get_file_size_mb(data_path)
         # 如果视频大于 100 MB 自动转换为群文件, 先忽略
-        if file_size_in_mb == 0:
+        if file_size_bytes == 0:
             seg = MessageSegment.text("获取视频失败")
-        elif file_size_in_mb > VIDEO_MAX_MB:
+        elif file_size_bytes > VIDEO_MAX_MB * 1024 * 1024:
             # 转为文件 Seg
             seg = get_file_seg(file_name)
         else:
