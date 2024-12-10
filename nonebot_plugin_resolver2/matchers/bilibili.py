@@ -72,7 +72,7 @@ async def _(bot: Bot, event: MessageEvent) -> None:
             if match := re.search(r'[^/]+(?!.*/)', url):
                 dynamic_id = int(match.group(0))
             else:
-                logger.info(f"B站解析 | 没有获取到动态 id, 忽略")
+                logger.info(f"{NICKNAME}解析 | B站动态 - 没有获取到动态 id, 忽略")
                 return
             dynamic_info = await Opus(dynamic_id, credential).get_info()
             # 这里比较复杂，暂时不用管，使用下面这个算法即可实现哔哩哔哩动态转发
@@ -95,12 +95,12 @@ async def _(bot: Bot, event: MessageEvent) -> None:
             if match := re.search(r'\/(\d+)', url):
                 room_id = match.group(1)
             else:
-                logger.info("B站解析 | 没有获取到直播间 id, 忽略")
+                logger.info(f"{NICKNAME}解析 | 哔哩哔哩 - 没有获取到直播间 id, 忽略")
                 return
             room = live.LiveRoom(room_display_id=int(room_id))
             room_info = (await room.get_room_info())['room_info']
             title, cover, keyframe = room_info['title'], room_info['cover'], room_info['keyframe']
-            await bilibili.finish(MessageSegment.image(cover) + MessageSegment.image(keyframe) + f"{NICKNAME}解析 | 哔哩哔哩直播 - {title}")
+            await bilibili.finish(MessageSegment.image(cover) + MessageSegment.image(keyframe) + f"{NICKNAME}解析 | 哔哩哔哩 - 直播 - {title}")
         # 专栏解析
         if 'read' in url:
             read_id = re.search(r'read\/cv(\d+)', url).group(1)
@@ -114,7 +114,7 @@ async def _(bot: Bot, event: MessageEvent) -> None:
             markdown_path = plugin_cache_dir / 'article.md'
             with open(markdown_path, 'w', encoding='utf8') as f:
                 f.write(ar.markdown())
-            await bilibili.send(Message(f"{NICKNAME}解析 | 哔哩哔哩专栏"))
+            await bilibili.send(Message(f"{NICKNAME}解析 | 哔哩哔哩 - 专栏"))
             await bilibili.finish(Message(MessageSegment(type="file", data={ "file": markdown_path })))
         # 收藏夹解析
         if 'favlist' in url and credential:
@@ -131,7 +131,7 @@ async def _(bot: Bot, event: MessageEvent) -> None:
                 favs.append(
                     [MessageSegment.image(cover),
                      MessageSegment.text(f'🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}')])
-            await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩收藏夹，正在为你找出相关链接请稍等...')
+            await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 收藏夹\n正在为你找出相关链接请稍等...')
             await bilibili.finish(make_node_segment(bot.self_id, favs))
    
     if video_id:
@@ -150,11 +150,11 @@ async def _(bot: Bot, event: MessageEvent) -> None:
     try:
         video_info = await v.get_info()
         if video_info is None:
-            await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩，出错，无法获取数据！"))
+            await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩 - 出错，无法获取数据！"))
         # 获取视频信息
-        will_delete_id = (await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩, 解析中.....'))["message_id"]
+        will_delete_id = (await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频'))["message_id"]
     except Exception as e:
-        await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩，出错，{e}"))
+        await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩 - 出错\n{e}"))
     video_title, video_cover, video_desc, video_duration = video_info['title'], video_info['pic'], video_info['desc'], video_info['duration']
     # 校准 分 p 的情况
     page_num = 0
