@@ -7,6 +7,7 @@ import subprocess
 from typing import List
 from nonebot import on_message, logger
 from nonebot.rule import Rule
+from nonebot.exception import ActionFailed
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
 from bilibili_api import video, live, article, Credential
@@ -202,8 +203,8 @@ async def _(bot: Bot, event: MessageEvent) -> None:
             await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", f"{video_id}-res.mp4")
             await bilibili.send(await get_video_seg(file_name=f"{video_id}-res.mp4"))
         except Exception as e:
-            # logger.error(f"下载视频失败，\n{e}")
-            await bilibili.send(f"下载视频失败，\n{e}")
+            if not instance(e, ActionFailed):
+                await bilibili.send(f"下载视频失败 | {e}")
  
     await bot.delete_msg(message_id = will_delete_id)
 
