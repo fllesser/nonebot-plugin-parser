@@ -18,17 +18,9 @@ from ..config import *
 douyin = on_keyword(keywords={"v.douyin.com"}, rule = Rule(is_not_in_disable_group))
 
 @douyin.handle()
-async def _(bot: Bot, event: Event) -> None:
-    """
-        抖音解析
-    :param bot:
-    :param event:
-    :return:
-    """
-    # check douyin ck, future: matcher.destory()
+async def _(bot: Bot, event: Event):
     # 消息
-    msg: str = str(event.message).strip()
-    logger.info(msg)
+    msg: str = event.message.extract_plain_text().strip()
     # 正则匹配
     reg = r"(http:|https:)\/\/v.douyin.com\/[A-Za-z\d._?%&+\-=#]*"
     if match := re.search(reg, msg, re.I):
@@ -57,22 +49,19 @@ async def _(bot: Bot, event: Event) -> None:
         async with session.get(api_url, headers=headers, timeout=10) as response:
             detail = await response.json()
             if detail is None:
-                await douyin.send(Message(f"{NICKNAME}解析 | 抖音，解析失败！"))
-                return
+                await douyin.finish(f"{NICKNAME}解析 | 抖音 - 解析失败！")
             # 获取信息
             detail = detail['aweme_detail']
             # 判断是图片还是视频
             url_type_code = detail['aweme_type']
             url_type = URL_TYPE_CODE_DICT.get(url_type_code, 'video')
-            await douyin.send(Message(f"{NICKNAME}解析 | 抖音 - {detail.get('desc')}"))
+            await douyin.send(f"{NICKNAME}解析 | 抖音 - {detail.get('desc')}")
             # 根据类型进行发送
             if url_type == 'video':
                 # 解析播放地址
                 player_uri = detail.get("video").get("play_addr")['uri']
                 player_real_addr = DY_TOUTIAO_INFO.replace("{}", player_uri)
                 # 发送视频
-                # logger.info(player_addr)
-                # await douyin.send(Message(MessageSegment.video(player_addr)))
                 await douyin.send(await get_video_seg(url = player_real_addr))
             elif url_type == 'image':
                 # 无水印图片列表/No watermark image list
