@@ -3,6 +3,7 @@ import re, httpx, asyncio
 from nonebot import on_keyword
 from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Event, Message
+from nonebot.exception import ActionFailed
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg
@@ -46,6 +47,7 @@ async def _(event: Event) -> None:
         video_name = await ytdlp_download_video(url = url)
         await tiktok.send(await get_video_seg(video_name))
     except Exception as e:
-        await tiktok.send(f"下载失败 | {e}")
+        if not instance(e, ActionFailed):
+            await tiktok.send(f"下载失败 | {e}")
 
 
