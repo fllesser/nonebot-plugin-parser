@@ -5,6 +5,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment, B
 from nonebot.typing import T_State
 from nonebot.params import Arg
 from nonebot.rule import Rule
+from nonebot.exception import ActionFailed
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg, get_file_seg
 from ..data_source.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
@@ -31,7 +32,7 @@ async def _(event: MessageEvent, state: T_State):
 @ytb.got("type", prompt="您需要下载音频(0)，还是视频(1)")
 async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()):
     url: str = state["url"]
-    will_delete_id = (await ytb.send("开始下载..."))["message_id"]
+    will_delete_id = (await ytb.send("下载中......"))["message_id"]
     try:
         if type.extract_plain_text().strip() == '1':
             video_name = await ytdlp_download_video(url = url, cookiefile = YTB_COOKIES_FILE)
@@ -41,6 +42,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
             await ytb.send(MessageSegment.record(plugin_cache_dir / audio_name))
             await ytb.send(get_file_seg(audio_name))
     except Exception as e:
-        await ytb.send(f"下载失败 | {e}")
+        if not instance(e, ActionFailed):
+            await ytb.send(f"下载失败 | {e}")
     finally:
         await bot.delete_msg(message_id = will_delete_id)
