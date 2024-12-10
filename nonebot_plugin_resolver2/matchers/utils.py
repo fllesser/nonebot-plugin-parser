@@ -31,10 +31,13 @@ async def get_video_seg(file_name: str = "", url: str = "") -> MessageSegment:
         # 检测文件大小
         file_size_in_mb = get_file_size_mb(data_path)
         # 如果视频大于 100 MB 自动转换为群文件, 先忽略
-        if file_size_in_mb > VIDEO_MAX_MB:
+        if file_size_in_mb == 0:
+            seg = MessageSegment.text("获取视频失败")
+        elif file_size_in_mb > VIDEO_MAX_MB:
             # 转为文件 Seg
             seg = get_file_seg(file_name)
-        seg = MessageSegment.video(data_path)
+        else:
+            seg = MessageSegment.video(data_path)
     except Exception as e:
         # logger.error(f"转换为 segment 失败\n{e}")
         seg = MessageSegment.text(f"转换为 segment 失败\n{e}")
