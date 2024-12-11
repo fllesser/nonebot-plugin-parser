@@ -42,7 +42,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
             await ytb.send(MessageSegment.record(plugin_cache_dir / audio_name))
             await ytb.send(get_file_seg(audio_name))
     except Exception as e:
-        if not instance(e, ActionFailed):
+        if not isinstance(e, ActionFailed):
             await ytb.send(f"下载失败 | {e}")
     finally:
         await bot.delete_msg(message_id = will_delete_id)
