@@ -16,24 +16,9 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 <a href="https://pypi.python.org/pypi/nonebot-plugin-resolver2">
     <img src="https://img.shields.io/pypi/v/nonebot-plugin-resolver2.svg" alt="pypi">
 </a>
-<img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="python">
+<img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="python">
 
 </div>
-
-
-<details>
-<summary>触发发布工作流</summary>
-从本地推送任意 tag 即可触发。
-
-创建 tag:
-
-    git tag <tag_name>
-
-推送本地所有 tag:
-
-    git push origin --tags
-
-</details>
 
 ## 📖 介绍
 
@@ -41,26 +26,27 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 - 重构了整体结构，使用 localstore 存储下载的数据，并定时清理（原插件全是用的绝对路径，给孩子改哭了）
 - 匹配消息换用 on_keyword，防止正则导致 Bot 卡死
 - 优化了一些交互体验，尽可能避免刷屏（还没改到自己满意）
+- 添加了 B站，Youtube 音频下载功能
 - ......
 
 触发解析的消息形态:
 - BV号
-- 链接
-- 小程序
-- 卡片(b站[包括av号], 网易云)
+- 链接(全平台)
+- 小程序(B站)
+- 卡片(B站[包括av号], 网易云)
 
 支持的平台:
-- B站
-- 抖音
-- 网易云
-- 微博
-- 小红书
-- 酷狗
-- 网易云
-- acfun 猴山
-- youtube
-- tiktok
-- twitter
+- B站(video, audio, pic)
+- 抖音(video, pic)
+- 网易云(audio)
+- 微博(video, pic)
+- 小红书(video, pic)
+- 酷狗(audio)
+- 网易云(audio)
+- acfun(video)
+- youtube(video, audio)
+- tiktok(video)
+- twitter(video, pic)
 
 ## 💿 安装
 > [!Warning]
