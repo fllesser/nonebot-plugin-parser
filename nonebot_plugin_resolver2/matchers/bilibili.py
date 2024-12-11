@@ -5,8 +5,9 @@ import aiofiles
 import subprocess
 
 from typing import List
-from nonebot import on_message, logger
+from nonebot import on_message, logger, on_command
 from nonebot.rule import Rule
+from nonebot.params import CommandArg
 from nonebot.exception import ActionFailed
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
 
@@ -16,7 +17,7 @@ from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
 from urllib.parse import parse_qs, urlparse
 
-from .utils import make_node_segment, get_video_seg
+from .utils import make_node_segment, get_video_seg, get_file_seg
 from .filter import is_not_in_disable_group
 from ..data_source.common import delete_boring_characters
 
@@ -39,9 +40,10 @@ def is_bilibili(event: MessageEvent) -> bool:
     return any(key in message for key in {"bilibili.com", "b23.tv", "BV"})
 
 bilibili = on_message(rule = Rule(is_not_in_disable_group, is_bilibili))
+bibili_music = on_command(cmd="bm", block = True)
 
 @bilibili.handle()
-async def _(bot: Bot, event: MessageEvent) -> None:
+async def _(bot: Bot, event: MessageEvent):
     # 消息
     message: str = str(event.message).strip()
     # 正则匹配
@@ -208,8 +210,30 @@ async def _(bot: Bot, event: MessageEvent) -> None:
  
     await bot.delete_msg(message_id = will_delete_id)
 
-
-
+@bilibili_music.handle()
+async def _(args: Message = CommandArg()):
+    bvid = args.extract_plain_text().strip()
+    if not re.match(r'^BV[1-9a-zA-Z]{10}$', bvid):
+        await bilibili_music.finish("format: bm BV...")
+    v = video.Video(bvid = bvid, credential=credential)
+    try:
+        video_info = await v.get_info()
+        #if video_info.get('pages'):
+            # todo
+            #return 
+        video_title = video_info.get('title')
+        download_url_data = await v.get_download_url(page_index=0)
+        detecter = VideoDownloadURLDataDetecter(download_url_data)
+        streams = detecter.detect_best_streams()
+        audio_url = streams[1].url
+        audio_name = delete_boring_characters(title) + ".mp3"
+        await download_b_file(audio_url, audio_name, logger.debug))
+    except Exception as e:
+        await bilibili_music.finish(f'download audio excepted err: {e}')
+    await bibili_music.send(MessageSegment.record(plugin_cache_dir / audio_name))
+    await bibili_music.send(get_file_seg(file_name=audio_name))
+    
+    
 async def download_b_file(url, file_name, progress_callback):
     """
         下载视频文件和音频文件
