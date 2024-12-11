@@ -226,7 +226,7 @@ async def _(args: Message = CommandArg()):
         detecter = VideoDownloadURLDataDetecter(download_url_data)
         streams = detecter.detect_best_streams()
         audio_url = streams[1].url
-        audio_name = delete_boring_characters(title) + ".mp3"
+        audio_name = delete_boring_characters(video_title) + ".mp3"
         await download_b_file(audio_url, audio_name, logger.debug)
     except Exception as e:
         await bili_music.finish(f'download audio excepted err: {e}')
