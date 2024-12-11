@@ -47,7 +47,7 @@ async def _(event: Event) -> None:
         video_name = await ytdlp_download_video(url = url)
         await tiktok.send(await get_video_seg(video_name))
     except Exception as e:
-        if not instance(e, ActionFailed):
+        if not isinstance(e, ActionFailed):
             await tiktok.send(f"下载失败 | {e}")
 
 
