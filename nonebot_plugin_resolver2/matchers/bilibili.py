@@ -211,10 +211,11 @@ async def _(bot: Bot, event: MessageEvent):
     await bot.delete_msg(message_id = will_delete_id)
 
 @bili_music.handle()
-async def _(args: Message = CommandArg()):
+async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     bvid = args.extract_plain_text().strip()
     if not re.match(r'^BV[1-9a-zA-Z]{10}$', bvid):
         await bili_music.finish("format: bm BV...")
+    await bot.call_api("set_msg_emoji_like", message_id = event.message_id, emoji_id = '282')
     v = video.Video(bvid = bvid, credential=credential)
     try:
         video_info = await v.get_info()
