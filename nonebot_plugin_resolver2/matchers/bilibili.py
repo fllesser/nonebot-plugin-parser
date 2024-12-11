@@ -203,7 +203,7 @@ async def _(bot: Bot, event: MessageEvent) -> None:
             await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", f"{video_id}-res.mp4")
             await bilibili.send(await get_video_seg(file_name=f"{video_id}-res.mp4"))
         except Exception as e:
-            if not instance(e, ActionFailed):
+            if not isinstance(e, ActionFailed):
                 await bilibili.send(f"下载视频失败 | {e}")
  
     await bot.delete_msg(message_id = will_delete_id)
