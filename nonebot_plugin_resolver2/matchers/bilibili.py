@@ -40,7 +40,7 @@ def is_bilibili(event: MessageEvent) -> bool:
     return any(key in message for key in {"bilibili.com", "b23.tv", "BV"})
 
 bilibili = on_message(rule = Rule(is_not_in_disable_group, is_bilibili))
-bibili_music = on_command(cmd="bm", block = True)
+bili_music = on_command(cmd="bm", block = True)
 
 @bilibili.handle()
 async def _(bot: Bot, event: MessageEvent):
@@ -210,11 +210,11 @@ async def _(bot: Bot, event: MessageEvent):
  
     await bot.delete_msg(message_id = will_delete_id)
 
-@bilibili_music.handle()
+@bili_music.handle()
 async def _(args: Message = CommandArg()):
     bvid = args.extract_plain_text().strip()
     if not re.match(r'^BV[1-9a-zA-Z]{10}$', bvid):
-        await bilibili_music.finish("format: bm BV...")
+        await bili_music.finish("format: bm BV...")
     v = video.Video(bvid = bvid, credential=credential)
     try:
         video_info = await v.get_info()
@@ -229,9 +229,9 @@ async def _(args: Message = CommandArg()):
         audio_name = delete_boring_characters(title) + ".mp3"
         await download_b_file(audio_url, audio_name, logger.debug)
     except Exception as e:
-        await bilibili_music.finish(f'download audio excepted err: {e}')
-    await bibili_music.send(MessageSegment.record(plugin_cache_dir / audio_name))
-    await bibili_music.send(get_file_seg(file_name=audio_name))
+        await bili_music.finish(f'download audio excepted err: {e}')
+    await bili_music.send(MessageSegment.record(plugin_cache_dir / audio_name))
+    await bili_music.send(get_file_seg(file_name=audio_name))
     
     
 async def download_b_file(url, file_name, progress_callback):
