@@ -93,18 +93,13 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 
 <details open>
 <summary>安装必要组件</summary>
-<summary>1. 大部分解析都依赖于 ffmpeg</summary>
+<summary>部分解析都依赖于 ffmpeg</summary>
 
     # ubuntu/debian
     sudo apt-get install ffmpeg
     ffmpeg -version
     # 其他 linux 参考(原项目推荐): https://gitee.com/baihu433/ffmpeg
     # Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
-<summary>2. 抖音解析需要 JavaScript Runtime</summary>
-
-    # ubuntu/debian
-    sudo apt-get install nodejs
-    # 其他系统请自行搜索
 </details>
 
 ## ⚙️ 配置
@@ -115,7 +110,6 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 |:-----:|:----:|:----:|:----:|
 | NICKNAME | 否 | [""] | nonebot2内置配置，可作为解析结果消息的前缀 |
 | r_xhs_ck | 否 | "" | 小红书 cookie，想要解析小红书必填|
-| r_douyin_ck | 否 | "" | 抖音 cookie，想要解析抖音必填 |
 | r_bili_ck | 否 | "" | B站 cookie, 可不填，若填写，必须含有 SESSDATA 项，可附加 B 站 AI 总结功能 |
 | r_ytb_ck | 否 | "" | Youtube cookie, Youtube 视频因人机检测下载失败，需填 |
 | r_is_oversea | 否 | False | 海外服务器部署，或者使用了透明代理，设置为 True |
