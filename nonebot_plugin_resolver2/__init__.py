@@ -22,10 +22,10 @@ async def _():
         pass
     if rconfig.r_ytb_ck:
         save_cookies_to_netscape(rconfig.r_ytb_ck, YTB_COOKIES_FILE, 'youtube.com')
-    if not rconfig.r_douyin_ck:
-        if douyin := resolvers.pop("douyin", None):
-            douyin.destroy()
-            logger.info("检测到未配置抖音 cookie, 抖音解析器已销毁")
+    # if not rconfig.r_douyin_ck:
+    #     if douyin := resolvers.pop("douyin", None):
+    #         douyin.destroy()
+    #         logger.info("检测到未配置抖音 cookie, 抖音解析器已销毁")
     if not rconfig.r_xhs_ck:
         if xiaohongshu := resolvers.pop("xiaohongshu", None):
             xiaohongshu.destroy()
