@@ -34,10 +34,9 @@ async def _(bot: Bot, event: Event):
     except Exception as e:
         await douyin.finish(f"resolve douyin share url err: {e}")
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
-    if images := video_info.images:
-        if len(images) > 0:
-            segs = [MessageSegment.image(img_url) for img_url in images]
-            await douyin.finish(make_node_segment(bot.self_id, segs))
+    if images := video_info.images and len(images) > 0:
+        segs = [MessageSegment.image(img_url) for img_url in images]
+        await douyin.finish(make_node_segment(bot.self_id, segs))
     if video_url := video_info.video_url:
         await douyin.finish(await get_video_seg(url = video_url))
          
