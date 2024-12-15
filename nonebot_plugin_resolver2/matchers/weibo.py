@@ -21,11 +21,7 @@ weibo = on_keyword(keywords={"weibo.com", "m.weibo.cn"}, rule = Rule(is_not_in_d
 async def _(bot: Bot, event: MessageEvent):
     message = event.message.extract_plain_text().strip()
     weibo_id = None
-    # 处理卡片问题
-    if 'com.tencent.structmsg' or 'com.tencent.miniapp' in message:
-        if match := re.search(r'(jumpUrl|qqdocurl)": ?"(.*?)"', message):
-            get_url = match.group(2)
-            message = json.loads('"' + get_url + '"')             
+    
     # 判断是否包含 "m.weibo.cn"
     # https://m.weibo.cn/detail/4976424138313924
     if match := re.search(r'm\.weibo\.cn(?:/detail)?/([A-Za-z\d]+)', message):
@@ -64,7 +60,7 @@ async def _(bot: Bot, event: MessageEvent):
     # 发送消息
     await weibo.send(f"{NICKNAME}解析 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}")
     if pics:
-        pics = map(lambda x: x['url'], pics)
+        pics = map(lambda x: x['large']['url'], pics)
         download_img_funcs = [asyncio.create_task(
             download_img(url = item, ext_headers={"Referer": "http://blog.sina.com.cn/"})) for item in pics]
         image_names = await asyncio.gather(*download_img_funcs)
