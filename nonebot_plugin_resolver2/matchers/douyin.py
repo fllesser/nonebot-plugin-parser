@@ -32,7 +32,7 @@ async def _(bot: Bot, event: Event):
     try:
         video_info: VideoInfo = await douyin_parser.parse_share_url(share_url)
     except Exception as e:
-        await douyin.finish(f"resolve douyin share url err: {e}")
+        await douyin.finish(f"{NICKNAME}解析 | 抖音 - {e}")
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
     if len(video_info.images) > 0:
         segs = [MessageSegment.image(img_url) for img_url in video_info.images]
