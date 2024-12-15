@@ -53,7 +53,7 @@ async def _(bot: Bot, event: MessageEvent):
         } | COMMON_HEADER)
     resp = resp.json()                                                                    
     weibo_data = resp['data']
-    logger.info(weibo_data)
+    # logger.info(weibo_data)
     text, status_title, source, region_name, pics, page_info = (weibo_data.get(key, None) for key in
                                                                 ['text', 'status_title', 'source', 'region_name',
                                                                  'pics', 'page_info'])
