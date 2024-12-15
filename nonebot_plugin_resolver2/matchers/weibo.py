@@ -65,9 +65,8 @@ async def _(bot: Bot, event: MessageEvent):
     await weibo.send(f"{NICKNAME}解析 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}")
     if pics:
         pics = map(lambda x: x['url'], pics)
-        download_img_funcs = [asyncio.create_task(download_img(url = item, headers={
-                                                                                     "Referer": "http://blog.sina.com.cn/"
-                                                                                 } | COMMON_HEADER)) for item in pics]
+        download_img_funcs = [asyncio.create_task(
+            download_img(url = item, ext_headers={"Referer": "http://blog.sina.com.cn/"})) for item in pics]
         image_names = await asyncio.gather(*download_img_funcs)
         # 发送图片
         nodes = make_node_segment(bot.self_id, [MessageSegment.image(plugin_cache_dir / img_name) for img_name in image_names])
