@@ -8,6 +8,7 @@ import httpx
 
 from typing import Set, Dict
 from urllib.parse import urlparse
+from nonebot import logger
 
 from ..constant import COMMON_HEADER
 from ..config import store, plugin_cache_dir
@@ -46,11 +47,11 @@ async def download_video(url, proxy: str = None, ext_headers: Dict[str, str] = {
                         await f.write(chunk)
         return file_name
     except Exception as e:
-        print(f"下载视频错误原因是: {e}")
+        logger.warning(f"下载视频错误: {e}")
         return None
 
 
-async def download_img(url: str, img_name: str = "", proxy: str = None, session=None, headers=None) -> str:
+async def download_img(url: str, img_name: str = "", proxy: str = None, ext_headers = {}) -> str:
     """
     异步下载（aiohttp）网络图片，并支持通过代理下载。
     如果未指定path，则图片将保存在当前工作目录并以图片的文件名命名。
@@ -63,24 +64,30 @@ async def download_img(url: str, img_name: str = "", proxy: str = None, session=
     """
     if not url:
         return ""
-    img_name = img_name if img_name else f"{url.split('/').pop()}.jpg"
-    path = plugin_cache_dir / img_name
-    # 单个文件下载
-    if session is None:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, proxy=proxy, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.read()
-                    with open(path, 'wb') as f:
-                        f.write(data)
-    # 多个文件异步下载
-    else:
-        async with session.get(url, proxy=proxy, headers=headers) as response:
-            if response.status == 200:
-                data = await response.read()
-                with open(path, 'wb') as f:
-                    f.write(data)
-    return img_name
+    img_name = img_name if img_name else f"{url.split('/').pop()}"
+    headers = COMMON_HEADER | ext_headers
+
+    client_config = {
+        'headers': headers,
+        'timeout': httpx.Timeout(60, connect=5.0),
+        'follow_redirects': True
+    }
+    # 配置代理
+    if proxy:
+        client_config['proxies'] = { 'http://': proxy }
+
+    # 下载文件
+    try:
+        async with httpx.AsyncClient(**client_config) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+        async with aiofiles.open(plugin_cache_dir / img_name, "wb") as f:
+            await f.write(response.content)
+        return img_name
+    except Exception as e:
+        logger.warning(f'download_img err:{e}')
+        return ""
+
 
 
 async def download_audio(url) -> str:
