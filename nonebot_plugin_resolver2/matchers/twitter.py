@@ -48,16 +48,8 @@ async def _(bot: Bot, event: MessageEvent):
         seg = await get_video_seg(file_name = video_name)
         await twitter.send(seg)
     else:
-        segs = []
-        for i in range(1, 3):
-            try:
-                x_pic_url = f"{x_url}/photo/{i}"
-                resp = await x_req(x_pic_url)
-                logger.info(f"url:{x_pic_url}, res:{resp}")
-                x_pic_url = resp.json()['data']['url']
-                img_name = await download_img(url = x_pic_url, proxy = PROXY)
-                segs.append(MessageSegment.image(plugin_cache_dir / img_name))
-            except Exception:
-                break
-        if segs:
-            await twitter.send(make_node_segment(bot.self_id, segs))
+        resp = await x_req(f"{x_url}/photo")
+        # logger.info(f"url:{x_pic_url}, res:{resp}")
+        x_pic_url = resp.json()['data']['url']
+        img_name = await download_img(url = x_pic_url, proxy = PROXY)
+        await twitter.send(MessageSegment.image(plugin_cache_dir / img_name))
