@@ -18,6 +18,7 @@ class DouYin(BaseParser):
             share_url = self._get_request_url_by_video_id(video_id)
         else:
             # 支持app分享链接 https://v.douyin.com/xxxxxx
+            app_url = share_url
             async with httpx.AsyncClient(follow_redirects=False) as client:
                 share_response = await client.get(share_url, headers=self.get_default_headers())
                 video_id = share_response.headers.get("location").split("?")[0].strip("/").split("/")[-1]
@@ -27,38 +28,15 @@ class DouYin(BaseParser):
             response = await client.get(share_url, headers=self.get_default_headers())
             response.raise_for_status()
 
-        pattern = re.compile(
-            pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
-            flags=re.DOTALL,
-        )
-        find_res = pattern.search(response.text)
-
-        if not find_res or not find_res.group(1):
-            raise ValueError("parse video json info from html fail")
-
-        json_data = json.loads(find_res.group(1).strip())
-
-        # 获取链接返回json数据进行视频和图集判断,如果指定类型不存在，抛出异常
-        # 返回的json数据中，视频字典类型为 video_(id)/page
-        VIDEO_ID_PAGE_KEY  = "video_(id)/page"
-        # 返回的json数据中，视频字典类型为 note_(id)/page
-        NOTE_ID_PAGE_KEY = "note_(id)/page"
-        if VIDEO_ID_PAGE_KEY  in json_data["loaderData"]:
-            original_video_info = json_data["loaderData"][VIDEO_ID_PAGE_KEY]["videoInfoRes"]
-        elif NOTE_ID_PAGE_KEY in json_data["loaderData"]:
-            original_video_info = json_data["loaderData"][NOTE_ID_PAGE_KEY]["videoInfoRes"]
-        else:
-            raise Exception("failed to parse Videos or Photo Gallery info from json")
-
-        # 如果没有视频信息，获取并抛出异常
-        if len(original_video_info["item_list"]) == 0:
-            err_detail_msg = "failed to parse video info from HTML"
-            if len(filter_list := original_video_info["filter_list"]) > 0:
-                err_detail_msg = filter_list[0]["detail_msg"]
-            raise Exception(err_detail_msg)
-
-        data = original_video_info["item_list"][0]
-
+        try:
+            data = self.format_response(response)
+        except Exception as e1:
+            try:
+                async with httpx.AsyncClient(follow_redirects=True) as client:
+                    response = await client.get(app_url, headers=self.get_default_headers())
+                data = self.format_response(response)
+            except Exception as e2:
+                raise Exception(f"req iesdouyin:{e1}, req app_url: {e2}")
         # 获取图集图片地址
         images = []
         # 如果data含有 images，并且 images 是一个列表
@@ -110,3 +88,36 @@ class DouYin(BaseParser):
 
     def _get_request_url_by_video_id(self, video_id) -> str:
         return f"https://www.iesdouyin.com/share/video/{video_id}/"
+        
+    def format_response(self, response):
+        pattern = re.compile(
+            pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
+            flags=re.DOTALL,
+        )
+        find_res = pattern.search(response.text)
+
+        if not find_res or not find_res.group(1):
+            raise ValueError("parse video json info from html fail")
+
+        json_data = json.loads(find_res.group(1).strip())
+
+        # 获取链接返回json数据进行视频和图集判断,如果指定类型不存在，抛出异常
+        # 返回的json数据中，视频字典类型为 video_(id)/page
+        VIDEO_ID_PAGE_KEY  = "video_(id)/page"
+        # 返回的json数据中，视频字典类型为 note_(id)/page
+        NOTE_ID_PAGE_KEY = "note_(id)/page"
+        if VIDEO_ID_PAGE_KEY  in json_data["loaderData"]:
+            original_video_info = json_data["loaderData"][VIDEO_ID_PAGE_KEY]["videoInfoRes"]
+        elif NOTE_ID_PAGE_KEY in json_data["loaderData"]:
+            original_video_info = json_data["loaderData"][NOTE_ID_PAGE_KEY]["videoInfoRes"]
+        else:
+            raise Exception("failed to parse Videos or Photo Gallery info from json")
+
+        # 如果没有视频信息，获取并抛出异常
+        if len(original_video_info["item_list"]) == 0:
+            err_detail_msg = "failed to parse video info from HTML"
+            if len(filter_list := original_video_info["filter_list"]) > 0:
+                err_detail_msg = filter_list[0]["detail_msg"]
+            raise Exception(err_detail_msg)
+
+        return original_video_info["item_list"][0]
