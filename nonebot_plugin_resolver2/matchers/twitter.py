@@ -49,9 +49,11 @@ async def _(bot: Bot, event: MessageEvent):
         await twitter.send(seg)
     else:
         segs = []
-        for i in range(1, 5):
+        for i in range(1, 3):
             try:
-                resp = await x_req(f"{x_url}/photo/{i}")
+                x_pic_url = f"{x_url}/photo/{i}"
+                resp = await x_req(x_pic_url)
+                logger.info(f"url:{x_pic_url}, res:{resp}")
                 x_pic_url = resp.json()['data']['url']
                 img_name = await download_img(url = x_pic_url, proxy = PROXY)
                 segs.append(MessageSegment.image(plugin_cache_dir / img_name))
