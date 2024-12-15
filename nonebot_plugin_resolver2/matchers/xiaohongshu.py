@@ -64,12 +64,11 @@ async def _(bot: Bot, event: MessageEvent):
     aio_task = []
     if type == 'normal':
         image_list = note_data['imageList']
-        # 批量下载
-        async with aiohttp.ClientSession() as session:
-            for index, item in enumerate(image_list):
-                aio_task.append(asyncio.create_task(
-                    download_img(item['urlDefault'], img_name=f'{index}.jpg', session=session)))
-            links_path = await asyncio.gather(*aio_task)
+        # 批量
+        for index, item in enumerate(image_list):
+            aio_task.append(asyncio.create_task(
+                download_img(item['urlDefault'], img_name=f'{index}.jpg')))
+        links_path = await asyncio.gather(*aio_task)
     elif type == 'video':
         # 这是一条解析有水印的视频
         logger.info(note_data['video'])
