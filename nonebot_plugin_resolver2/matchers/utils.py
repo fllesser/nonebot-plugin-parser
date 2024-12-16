@@ -49,5 +49,5 @@ def get_file_seg(file_name: str, name: str = "") -> MessageSegment:
     file = plugin_cache_dir / file_name
     return MessageSegment("file", data = {
         "name": name if name else file_name,
-        "file": f"file://{file.absolute()}"
+        "file": file.resolve().as_uri()
     })
