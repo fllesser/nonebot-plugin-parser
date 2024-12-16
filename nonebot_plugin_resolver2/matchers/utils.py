@@ -3,7 +3,7 @@ from nonebot import logger
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..constant import VIDEO_MAX_MB
-from ..data_source.common import download_video, get_file_size_mb
+from ..data_source.common import download_video
 from ..config import *
 
 
