@@ -3,7 +3,6 @@ import os
 import re
 import time
 import aiofiles
-import aiohttp
 import httpx
 
 from typing import Set, Dict
@@ -52,16 +51,6 @@ async def download_video(url, proxy: str = None, ext_headers: Dict[str, str] = {
 
 
 async def download_img(url: str, img_name: str = "", proxy: str = None, ext_headers = {}) -> str:
-    """
-    异步下载（aiohttp）网络图片，并支持通过代理下载。
-    如果未指定path，则图片将保存在当前工作目录并以图片的文件名命名。
-    如果提供了代理地址，则会通过该代理下载图片。
-
-    :param url: 要下载的图片的URL。
-    :param path: 图片保存的路径。如果为空，则保存在当前目录。
-    :param proxy: 可选，下载图片时使用的代理服务器的URL。
-    :return: 图片名
-    """
     if not url:
         return ""
     img_name = img_name if img_name else f"{url.split('/').pop()}"
@@ -86,7 +75,7 @@ async def download_img(url: str, img_name: str = "", proxy: str = None, ext_head
         return img_name
     except Exception as e:
         logger.warning(f'download_img err:{e}')
-        return ""
+        return None
 
 
 
@@ -112,24 +101,3 @@ def delete_boring_characters(sentence: str) -> str:
     :return:
     """
     return re.sub(r'[’!"∀〃\$%&\'\(\)\*\+,\./:;<=>\?@，。?★、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～]+', "", sentence)
-
-
-def get_file_size_mb(file_path) -> int:
-    """
-    判断当前文件的大小是多少MB
-    :param file_path:
-    :return:
-    """
-    # 获取文件大小（以字节为单位）
-    file_size_bytes = os.path.getsize(file_path)
-    # 将字节转换为 MB 并取整
-    file_size_mb = int(file_size_bytes / (1024 * 1024))
-    return file_size_mb
-
-
-
-# def split_and_strip(text, sep=None) -> List[str]:
-#     # 先去除两边的空格，然后按指定分隔符分割
-#     split_text = text.strip().split(sep)
-#     # 去除每个子字符串两边的空格
-#     return [sub_text.strip() for sub_text in split_text]
