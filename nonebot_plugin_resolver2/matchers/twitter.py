@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegme
 from nonebot import logger
 
 from .filter import is_not_in_disable_group
-from .utils import get_video_seg
+from .utils import get_video_seg, make_node_segment
 from ..constant import COMMON_HEADER, GENERAL_REQ_LINK
 from ..data_source.common import download_img, download_video
 
@@ -40,25 +40,16 @@ async def _(bot: Bot, event: MessageEvent):
     resp = await x_req(x_url)
     x_data: object = resp.json()['data']
 
+    await twitter.send(Message(f"{NICKNAME}解析 | X"))
     
-    if x_data is None:
-        x_url = x_url + '/photo/1'
-        resp = await x_req(x_url)
-        x_data = resp.json()['data']
-
-    x_url_res = x_data['url']
-
-    await twitter.send(Message(f"{NICKNAME}识别 | X"))
-
-    seg: MessageSegment = None
-    # 图片
-    if x_url_res.endswith(".jpg") or x_url_res.endswith(".png"):
-        img_name = await download_img(url = x_url_res, proxy = PROXY)
-        seg = MessageSegment.image(plugin_cache_dir / img_name)
-    else:
-        # 视频
-        video_name = await download_video(x_url_res, proxy=PROXY)
+    if x_data is not None:
+        x_video_url = x_data['url']
+        video_name = await download_video(x_video_url, proxy=PROXY)
         seg = await get_video_seg(file_name = video_name)
-    if seg:
         await twitter.send(seg)
-
+    else:
+        resp = await x_req(f"{x_url}/photo")
+        # logger.info(f"url:{x_pic_url}, res:{resp}")
+        x_pic_url = resp.json()['data']['url']
+        img_name = await download_img(url = x_pic_url, proxy = PROXY)
+        await twitter.send(MessageSegment.image(plugin_cache_dir / img_name))
