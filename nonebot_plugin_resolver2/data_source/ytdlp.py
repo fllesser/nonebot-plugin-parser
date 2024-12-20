@@ -1,4 +1,3 @@
-import yt_dlp
 import asyncio
 import importlib
 
@@ -27,31 +26,29 @@ async def _():
     except Exception:
         pass
 
-async def update_yt_dlp():
-    async def update_module(module_name) -> str:
-        import subprocess
-        import pkg_resources
-        process = await asyncio.create_subprocess_exec(
-            'pip', 'install', '--upgrade', module_name,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        stdout, stderr = await process.communicate()
-        if process.returncode == 0:
-            try:
-                version = pkg_resources.get_distribution(module_name).version
-                success_info = f"Successfully updated {module_name}, current version: {version}"
-                logger.info(success_info)
-                return success_info
-            except pkg_resources.DistributionNotFound:
-                return f"{module_name} is not installed"
-        else:
-            err_info = f"Failed to update {module_name}: {stderr.decode()}"
-            logger.warning(err_info)
-            return err_info
-    info = await update_module('yt-dlp')
-    importlib.reload(yt_dlp)
-    return info
+async def update_ut_dlp() -> str:
+    import yt_dlp
+    import subprocess
+    import pkg_resources
+    process = await asyncio.create_subprocess_exec(
+        'pip', 'install', '--upgrade', 'yt-dlp',
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+    if process.returncode == 0:
+        try:
+            importlib.reload(yt_dlp)
+            version = pkg_resources.get_distribution('yt-dlp').version
+            success_info = f"Successfully updated yt-dlp, current version: {version}"
+            logger.info(success_info)
+            return success_info
+        except pkg_resources.DistributionNotFound:
+            return "yt-dlp is not installed"
+    else:
+        err_info = f"Failed to update yt-dlp: {stderr.decode()}"
+        logger.warning(err_info)
+        return err_info
     
     
 # 获取视频信息的 基础 opts
@@ -72,6 +69,7 @@ if PROXY:
 
 
 async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
+    import yt_dlp
     info_dict = url_info.get(url, None)
     if info_dict: 
         return info_dict
@@ -87,6 +85,7 @@ async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
 
         
 async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
+    import yt_dlp
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
     duration = info_dict.get('duration', 600)
@@ -106,6 +105,7 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
         
 
 async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
+    import yt_dlp
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
     ydl_opts = {
