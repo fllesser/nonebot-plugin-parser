@@ -13,8 +13,7 @@ from .utils import get_video_seg, get_file_seg
 from ..data_source.ytdlp import (
     get_video_info,
     ytdlp_download_audio,
-    ytdlp_download_video,
-    update_yt_dlp
+    ytdlp_download_video
     )
 from ..config import *
 
@@ -59,5 +58,68 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
         
 @update_yt.handle()
 async def _(event: MessageEvent):
-    await update_yt.finish(await update_yt_dlp())
-    
+    get_video_info, ytdlp_download_video, ytdlp_download_audio = await update_ytdlp()
+    version = await get_yt_dlp_version()
+    success_info = f"Successfully updated {version}"
+    await update_yt.finish()
+
+@scheduler.scheduled_job(
+    "cron",
+    hour=3,
+    minute=0,
+)
+async def _():
+    await update_ytdlp()
+    version = await get_yt_dlp_version()
+    success_info = f"Successfully updated {version}"
+    try:
+        bot = get_bot()
+        superuser_id: int = int(next(iter(get_driver().config.superusers), None))
+        await bot.send_private_msg(user_id = superuser_id, message = success_info )
+    except Exception:
+        pass
+
+async def update_ytdlp() -> str:
+    import subprocess
+    import importlib
+    import sys
+    process = await asyncio.create_subprocess_exec(
+        'pip', 'install', '--upgrade', 'yt-dlp',
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+    if process.returncode == 0:
+        if 'yt_dlp' in sys.modules:
+            del sys.modules['yt_dlp']
+            logger.warning('delete cache of yt_dlp')
+        import yt_dlp
+        if 'nonebot_plugin_resolver2.data_source.ytdlp' in sys.modules:
+            del sys.modules['nonebot_plugin_resolver2.data_source.ytdlp']
+            logger.warning('delete cache of nonebot_plugin_resolver2.data_source.ytdlp')
+        from ..data_source import ytdlp
+        importlib.reload(yt_dlp)
+        importlib.reload(ytdlp)
+        from ..data_source.ytdlp import (
+            get_video_info,
+            ytdlp_download_audio,
+            ytdlp_download_video
+        )
+        return get_video_info, ytdlp_download_audio, ytdlp_download_video
+    else:
+        logger.error(f"Failed to update yt-dlp: {stderr.decode()}")
+        
+async def get_yt_dlp_version():
+    import subprocess
+    process = await asyncio.create_subprocess_exec(
+        'yt-dlp', '--version',
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    stdout, stderr = await process.communicate()
+    if process.returncode == 0:
+        version = stdout.decode().strip()
+        return f"yt-dlp {version}"
+    else:
+        error_message = stderr.decode().strip()
+        return f"Failed to get yt-dlp version: {error_message}"
