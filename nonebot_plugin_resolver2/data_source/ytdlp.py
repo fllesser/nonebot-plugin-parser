@@ -19,6 +19,15 @@ url_info: dict[str, dict[str, str]] = {}
 )
 async def _():
     url_info.clear()
+    info = await update_yt_dlp()
+    try:
+        bot = get_bot()
+        superuser_id: int = int(next(iter(get_driver().config.superusers), None))
+        await bot.send_private_msg(user_id = superusers, message = info)
+    except Exception:
+        pass
+
+async update_yt_dlp():
     async def update_module(module_name) -> str:
         import subprocess
         import pkg_resources
@@ -40,16 +49,11 @@ async def _():
             err_info = f"Failed to update {module_name}: {stderr.decode()}"
             logger.warning(err_info)
             return err_info
-    
     info = await update_module('yt-dlp')
     importlib.reload(yt_dlp)
     info += f" version: {yt_dlp.__version__}"
-    try:
-        bot = get_bot()
-        superuser_id: int = int(next(iter(get_driver().config.superusers), None))
-        await bot.send_private_msg(user_id = superusers, message = info)
-    except Exception:
-        pass
+    return info
+    
     
 # 获取视频信息的 基础 opts
 ydl_extract_base_opts = {
