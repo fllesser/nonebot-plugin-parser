@@ -1,7 +1,5 @@
 import asyncio
-import importlib
 import yt_dlp
-import sys
 
 from pathlib import Path
 from nonebot import get_bot, get_driver, logger
@@ -20,39 +18,7 @@ url_info: dict[str, dict[str, str]] = {}
 )
 async def _():
     url_info.clear()
-    info = await update_yt_dlp()
-    try:
-        bot = get_bot()
-        superuser_id: int = int(next(iter(get_driver().config.superusers), None))
-        await bot.send_private_msg(user_id = superuser_id, message = info)
-    except Exception:
-        pass
-
-async def update_yt_dlp() -> str:
-    import subprocess
-    import pkg_resources
-    process = await asyncio.create_subprocess_exec(
-        'pip', 'install', '--upgrade', 'yt-dlp',
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    stdout, stderr = await process.communicate()
-    if process.returncode == 0:
-        try:
-            if 'yt_dlp' in sys.modules:
-                del sys.modules['yt_dlp']
-            import yt_dlp
-            importlib.reload(yt_dlp)
-            version = pkg_resources.get_distribution('yt-dlp').version
-            success_info = f"Successfully updated yt-dlp, current version: {version}"
-            logger.info(success_info)
-            return success_info
-        except pkg_resources.DistributionNotFound:
-            return "yt-dlp is not installed"
-    else:
-        err_info = f"Failed to update yt-dlp: {stderr.decode()}"
-        logger.warning(err_info)
-        return err_info
+    
     
     
 # 获取视频信息的 基础 opts
