@@ -26,7 +26,7 @@ async def _():
     except Exception:
         pass
 
-async def update_ut_dlp() -> str:
+async def update_yt_dlp() -> str:
     import yt_dlp
     import subprocess
     import pkg_resources
