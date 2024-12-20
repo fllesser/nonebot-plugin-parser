@@ -1,9 +1,12 @@
 import yt_dlp
 import asyncio
+import importlib
 
 from pathlib import Path
-from ..config import *
+from nonebot import get_bot, get_driver
+
 from .common import delete_boring_characters
+from ..config import *
 
 # 缓存链接信息
 url_info: dict[str, dict[str, str]] = {}
@@ -16,7 +19,15 @@ url_info: dict[str, dict[str, str]] = {}
 )
 async def _():
     url_info.clear()
-
+    info = await update_module('yt-dlp')
+    importlib.reload(yt_dlp)
+    try:
+        bot = get_bot()
+        superuser_id: int = int(next(iter(get_driver().config.superusers), None))
+        await bot.send_private_msg(user_id = superusers, message=info)
+    except Exception as _:
+        pass
+    
 # 获取视频信息的 基础 opts
 ydl_extract_base_opts = {
     'quiet': True,
@@ -82,3 +93,25 @@ async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         await asyncio.to_thread(ydl.download, [url])
     return f'{title}.mp3'
+    
+    
+async def update_module(module_name) -> str:
+        import subprocess
+        process = await asyncio.create_subprocess_exec(
+            'pip', 'install', '--upgrade', module_name,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode == 0:
+            try:
+                version = pkg_resources.get_distribution(module_name).version
+                success_info = f"Successfully updated {module_name}, current version: {version}"
+                logger.info(success_info)
+                return success_info
+            except pkg_resources.DistributionNotFound:
+                return f"{module_name} is not installed"
+        else:
+            err_info = f"Failed to update {module_name}: {stderr.decode()}"
+            logger.warning(err_info)
+            return err_info
