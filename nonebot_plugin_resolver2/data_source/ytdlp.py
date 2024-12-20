@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+import yt_dlp
 
 from pathlib import Path
 from nonebot import get_bot, get_driver, logger
@@ -27,7 +28,6 @@ async def _():
         pass
 
 async def update_yt_dlp() -> str:
-    import yt_dlp
     import subprocess
     import pkg_resources
     process = await asyncio.create_subprocess_exec(
@@ -38,6 +38,9 @@ async def update_yt_dlp() -> str:
     stdout, stderr = await process.communicate()
     if process.returncode == 0:
         try:
+            if 'yt_dlp' in sys.modules:
+                del sys.modules['yt_dlp']
+            import yt_dlp
             importlib.reload(yt_dlp)
             version = pkg_resources.get_distribution('yt-dlp').version
             success_info = f"Successfully updated yt-dlp, current version: {version}"
@@ -69,7 +72,6 @@ if PROXY:
 
 
 async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
-    import yt_dlp
     info_dict = url_info.get(url, None)
     if info_dict: 
         return info_dict
@@ -85,7 +87,6 @@ async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
 
         
 async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
-    import yt_dlp
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
     duration = info_dict.get('duration', 600)
@@ -105,7 +106,6 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
         
 
 async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
-    import yt_dlp
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
     ydl_opts = {
