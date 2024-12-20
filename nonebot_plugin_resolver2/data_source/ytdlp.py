@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import yt_dlp
+import sys
 
 from pathlib import Path
 from nonebot import get_bot, get_driver, logger
