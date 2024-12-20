@@ -24,7 +24,7 @@ async def _():
     try:
         bot = get_bot()
         superuser_id: int = int(next(iter(get_driver().config.superusers), None))
-        await bot.send_private_msg(user_id = superusers, message = info)
+        await bot.send_private_msg(user_id = superuser_id, message = info)
     except Exception:
         pass
 
