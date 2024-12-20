@@ -43,14 +43,7 @@ async def update_yt_dlp() -> str:
                 del sys.modules['yt_dlp']
             import yt_dlp
             importlib.reload(yt_dlp)
-            # version = pkg_resources.get_distribution('yt-dlp').version
-            version_process = await asyncio.create_subprocess_exec(
-                'yt-dlp', '--version',
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-            version_stdout, version_stderr = await version_process.communicate()
-            version = version_stdout.decode().strip()
+            version = pkg_resources.get_distribution('yt-dlp').version
             success_info = f"Successfully updated yt-dlp, current version: {version}"
             logger.info(success_info)
             return success_info
