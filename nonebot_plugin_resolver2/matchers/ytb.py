@@ -1,17 +1,25 @@
 import re
 
-from nonebot import on_keyword
+from nonebot import on_keyword, on_command
 from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment, Bot
 from nonebot.typing import T_State
 from nonebot.params import Arg
 from nonebot.rule import Rule
 from nonebot.exception import ActionFailed
+from nonebot.permission import SUPERUSER
+
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg, get_file_seg
-from ..data_source.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
+from ..data_source.ytdlp import (
+    get_video_info,
+    ytdlp_download_audio,
+    ytdlp_download_video,
+    update_yt_dlp
+    )
 from ..config import *
 
 ytb = on_keyword(keywords = {"youtube.com", "youtu.be"}, rule = Rule(is_not_in_disable_group))
+update_yt = on_command(cmd="update yt", permission=SUPERUSER)
 
 @ytb.handle()
 async def _(event: MessageEvent, state: T_State):
@@ -47,3 +55,9 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
             await ytb.send(f"下载失败 | {e}")
     # finally:
         # await bot.delete_msg(message_id = will_delete_id)
+        
+        
+@update_yt.handle()
+async def _(event: MessageEvent):
+    await update_yt.finish(await update_yt_dlp())
+    
