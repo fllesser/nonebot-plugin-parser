@@ -51,7 +51,6 @@ async def update_yt_dlp():
             return err_info
     info = await update_module('yt-dlp')
     importlib.reload(yt_dlp)
-    info += f" version: {yt_dlp.__version__}"
     return info
     
     
