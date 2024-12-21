@@ -2,18 +2,26 @@ import re
 import httpx
 import asyncio
 
-from nonebot import on_keyword, logger
+from nonebot import on_keyword
+from nonebot.log import logger
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageSegment
-
+from nonebot.adapters.onebot.v11 import (
+    Message,
+    Event,
+    Bot,
+    MessageSegment
+)
 from .utils import get_video_seg, make_node_segment
 from .filter import is_not_in_disable_group
 
 from ..parsers.base import VideoInfo
 from ..parsers.douyin import DouYin
-from ..config import *
+from ..config import NICKNAME
 
-douyin = on_keyword(keywords={"douyin.com"}, rule = Rule(is_not_in_disable_group))
+douyin = on_keyword(
+    keywords={"douyin.com"},
+    rule = Rule(is_not_in_disable_group)
+)
 
 douyin_parser = DouYin()
 
