@@ -69,7 +69,7 @@ async def _(event: MessageEvent):
     minute=0,
 )
 async def _():
-    await update_ytdlp()
+    get_video_info, ytdlp_download_video, ytdlp_download_audio = await update_ytdlp()
     version = await get_yt_dlp_version()
     success_info = f"Successfully updated {version}"
     try:
