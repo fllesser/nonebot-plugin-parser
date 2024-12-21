@@ -1,12 +1,16 @@
 import re
-import asyncio, aiofiles
+import asyncio
+import aiofiles
 import subprocess
 import httpx
 import json
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import Message, MessageEvent
+from nonebot.adapters.onebot.v11 import (
+    Message,
+    MessageEvent
+)
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg
@@ -16,12 +20,6 @@ acfun = on_keyword(keywords={"acfun.cn"}, rule = Rule(is_not_in_disable_group))
 
 @acfun.handle()
 async def _(event: MessageEvent) -> None:
-    """
-        acfun解析
-    :param event:
-    :return:
-    """
-    # 消息
     message: str = event.message.extract_plain_text().strip()
 
     # 短号处理
@@ -35,7 +33,7 @@ async def _(event: MessageEvent) -> None:
     # logger.info(output_folder_name, output_file_name)
     await asyncio.gather(*[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)])
     await merge_ac_file_to_mp4(ts_names, output_file_name)
-    await acfun.send(await get_video_seg(output_file_name))
+    await acfun.send(await get_video_seg(plugin_cache_dir / output_file_name))
 
 headers = {
     'referer': 'https://www.acfun.cn/',
