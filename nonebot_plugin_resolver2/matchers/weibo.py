@@ -24,7 +24,7 @@ async def _(bot: Bot, event: MessageEvent):
     
     # 判断是否包含 "m.weibo.cn"
     # https://m.weibo.cn/detail/4976424138313924
-    if match := re.search(r'm\.weibo\.cn(?:/detail)?/([A-Za-z\d]+)', message):
+    if match := re.search(r'm\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)', message):
         weibo_id = match.group(1)
     # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934    
     elif match := re.search(r'mid=([A-Za-z\d]+)', message):
