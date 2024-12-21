@@ -6,6 +6,7 @@ from nonebot.adapters.onebot.v11 import (
 )
 from ..constant import VIDEO_MAX_MB
 from ..data_source.common import download_video
+from ..config import NICKNAME
 
 def make_node_segment(user_id, segments: MessageSegment | list) -> Message:
     return Message([MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=segment)
