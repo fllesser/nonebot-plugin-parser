@@ -61,8 +61,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
 async def _(event: MessageEvent):
     get_video_info, ytdlp_download_video, ytdlp_download_audio = await update_ytdlp()
     version = await get_yt_dlp_version()
-    success_info = f"Successfully updated {version}"
-    await update_yt.finish()
+    await update_yt.finish(f"Successfully updated {version}")
 
 @scheduler.scheduled_job(
     "cron",
@@ -75,10 +74,11 @@ async def _():
     success_info = f"Successfully updated {version}"
     try:
         bot = get_bot()
-        superuser_id: int = int(next(iter(get_driver().config.superusers), None))
-        await bot.send_private_msg(user_id = superuser_id, message = success_info )
+        if superuser_id := int(next(iter(get_driver().config.superusers), None)):
+            await bot.send_private_msg(user_id = superuser_id, message = success_info)
     except Exception:
         pass
+        
 
 async def update_ytdlp() -> str:
     import subprocess
