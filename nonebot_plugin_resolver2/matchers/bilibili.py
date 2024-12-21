@@ -27,7 +27,7 @@ from bilibili_api.video import VideoDownloadURLDataDetecter
 from urllib.parse import parse_qs, urlparse
 
 from .utils import (
-    make_node_segment,
+    construct_nodes,
     get_video_seg, 
     get_file_seg
 )
@@ -103,7 +103,7 @@ async def _(bot: Bot, event: MessageEvent):
                 await bilibili.send(Message(f"{NICKNAME}解析 | B站动态 - {title}\n{desc}"))
                 segs = [MessageSegment.image(pic['url']) for pic in pics]
                 # 发送异步后的数据
-                await bilibili.finish(make_node_segment(bot.self_id, segs))
+                await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
         if 'live' in url:
             # https://live.bilibili.com/30528999?hotRank=0
@@ -147,7 +147,7 @@ async def _(bot: Bot, event: MessageEvent):
                     [MessageSegment.image(cover),
                      MessageSegment.text(f'🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}')])
             await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 收藏夹\n正在为你找出相关链接请稍等...')
-            await bilibili.finish(make_node_segment(bot.self_id, favs))
+            await bilibili.finish(construct_nodes(bot.self_id, favs))
    
     if video_id:
         v = video.Video(bvid = video_id, credential=credential)
@@ -201,7 +201,7 @@ async def _(bot: Bot, event: MessageEvent):
             segs.append(f"bilibili AI总结:\n{ai_conclusion['model_result']['summary']}")
     if video_duration > DURATION_MAXIMUM:
         segs.append(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
-    await bilibili.send(make_node_segment(bot.self_id, segs))
+    await bilibili.send(construct_nodes(bot.self_id, segs))
     if video_duration < DURATION_MAXIMUM:
         # 下载视频和音频
         try:
