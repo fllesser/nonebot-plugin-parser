@@ -65,4 +65,4 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
     # 发送语音
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件
-    await ncm.send(get_file_seg(audio_path, f'{ncm_title}-{ncm_singer}.{file_name.split(".")[-1]}'))
+    await ncm.send(get_file_seg(audio_path, f'{ncm_title}-{ncm_singer}.{audio_path.name.split(".")[-1]}'))
