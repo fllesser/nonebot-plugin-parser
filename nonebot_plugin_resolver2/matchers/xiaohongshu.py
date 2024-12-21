@@ -9,7 +9,7 @@ from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegme
 from urllib.parse import parse_qs, urlparse
 
 from .filter import is_not_in_disable_group
-from .utils import get_video_seg, make_node_segment
+from .utils import get_video_seg, construct_nodes
 
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_video, download_img
@@ -72,7 +72,7 @@ async def _(bot: Bot, event: MessageEvent):
                 download_img(item['urlDefault'], img_name=f'{index}.jpg')))
         img_path_list = await asyncio.gather(*aio_task)
         # 发送图片
-        segs = make_node_segment(bot.self_id, [MessageSegment.image(img_path) for img_path in img_path_list])
+        segs = construct_nodes(bot.self_id, [MessageSegment.image(img_path) for img_path in img_path_list])
         await xiaohongshu.finish(segs)
     elif type == 'video':
         # 这是一条解析有水印的视频
