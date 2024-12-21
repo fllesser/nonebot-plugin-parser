@@ -8,9 +8,11 @@ from ..constant import VIDEO_MAX_MB
 from ..data_source.common import download_video
 from ..config import NICKNAME
 
-def make_node_segment(user_id, segments: MessageSegment | list) -> Message:
-    return Message([MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=segment)
-            for segment in (segments if isinstance(segments, list) else [segments])])
+def construct_nodes(user_id, segments: MessageSegment | list) -> Message:
+    def node(content):
+        return MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=content)
+    segments = segments if isinstance(segments, list) else [segments]
+    return Message([node(seg) for seg in segments])
 
 async def get_video_seg(video_path: Path = None, url: str = None, proxy: str = None) -> MessageSegment:
     seg: MessageSegment = None
