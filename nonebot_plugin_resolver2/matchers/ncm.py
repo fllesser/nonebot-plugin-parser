@@ -61,7 +61,7 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
     try:
         audio_path = await download_audio(ncm_music_url)
     except Exception as e:
-        await ncm.finish(f'音频下载失败")
+        await ncm.finish(f'音频下载失败')
     # 发送语音
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件
