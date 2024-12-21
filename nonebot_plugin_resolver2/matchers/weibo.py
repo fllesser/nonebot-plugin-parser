@@ -71,7 +71,7 @@ async def _(bot: Bot, event: MessageEvent):
             download_img(url = item, ext_headers={"Referer": "http://blog.sina.com.cn/"})) for item in pics]
         image_paths = await asyncio.gather(*download_img_funcs)
         # 发送图片
-        nodes = make_node_segment(bot.self_id, [MessageSegment.image(img_path for img_path in image_paths])
+        nodes = make_node_segment(bot.self_id, [MessageSegment.image(img_path) for img_path in image_paths])
         # 发送异步后的数据
         await weibo.finish(nodes)
 
