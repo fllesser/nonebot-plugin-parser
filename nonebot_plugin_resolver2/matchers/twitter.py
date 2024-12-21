@@ -13,7 +13,7 @@ from nonebot.adapters.onebot.v11 import (
 )
 
 from .filter import is_not_in_disable_group
-from .utils import get_video_seg, make_node_segment
+from .utils import get_video_seg
 from ..constant import COMMON_HEADER, GENERAL_REQ_LINK
 from ..data_source.common import download_img, download_video
 from ..config import PROXY, NICKNAME
