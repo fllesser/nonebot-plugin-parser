@@ -16,7 +16,7 @@ from .filter import is_not_in_disable_group
 from .utils import get_video_seg, make_node_segment
 from ..constant import COMMON_HEADER, GENERAL_REQ_LINK
 from ..data_source.common import download_img, download_video
-from ..config import PROXY
+from ..config import PROXY, NICKNAME
 
 twitter = on_keyword(keywords={"x.com"}, rule = Rule(is_not_in_disable_group))
 
