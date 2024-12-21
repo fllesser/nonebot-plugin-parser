@@ -61,8 +61,9 @@ async def _(bot: Bot, event: MessageEvent):
     resp = resp.json()                                                                    
     weibo_data = resp['data']
     # logger.info(weibo_data)
-    text, status_title, source, region_name, pics, page_info = 
-        (weibo_data.get(key) for key in ['text', 'status_title', 'source', 'region_name', 'pics', 'page_info'])
+    text, status_title, source, region_name, pics, page_info = (
+        weibo_data.get(key) for key in ['text', 'status_title', 'source', 'region_name', 'pics', 'page_info']
+    )
     # 发送消息
     await weibo.send(f"{NICKNAME}解析 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}")
     if pics:
