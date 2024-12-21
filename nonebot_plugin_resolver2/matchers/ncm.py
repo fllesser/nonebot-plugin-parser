@@ -55,7 +55,7 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
             ncm_vip_data.get(key) for key in ['music_url', 'cover', 'singer', 'title']
         )
     except Exception as e:
-        await ncm.finish(f'{NICKNAME}解析 | 网易云 - 错误: {e}")
+        await ncm.finish(f'{NICKNAME}解析 | 网易云 - 错误: {e}')
     await ncm.send(f'{NICKNAME}解析 | 网易云 - {ncm_title} {ncm_singer}' + MessageSegment.image(ncm_cover))
     # 下载音频文件后会返回一个下载路径
     try:
