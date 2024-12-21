@@ -2,20 +2,27 @@ import os, re, asyncio, json, httpx, math
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
-from nonebot import logger
+from nonebot.log import logger
+from nonebot.adapters.onebot.v11 import (
+    Message,
+    MessageEvent,
+    Bot,
+    MessageSegment
+)
 
+from .config import NICKNAME
 from .filter import is_not_in_disable_group
 from .utils import make_node_segment, get_video_seg
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_img, download_video
 
-from ..config import *
-
 # WEIBO_SINGLE_INFO
 WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
 
-weibo = on_keyword(keywords={"weibo.com", "m.weibo.cn"}, rule = Rule(is_not_in_disable_group))
+weibo = on_keyword(
+    keywords={"weibo.com", "m.weibo.cn"},
+    rule = Rule(is_not_in_disable_group)
+)
 
 @weibo.handle()
 async def _(bot: Bot, event: MessageEvent):
@@ -41,7 +48,7 @@ async def _(bot: Bot, event: MessageEvent):
 
     # 无法获取到id则返回失败信息
     if not weibo_id:
-        await weibo.finish(Message("解析失败：无法获取到微博的 id"))
+        await weibo.finish("解析失败：无法获取到微博的 id")
     # 最终获取到的 id
     weibo_id = weibo_id.split("/")[1] if "/" in weibo_id else weibo_id
     # 请求数据
@@ -54,29 +61,28 @@ async def _(bot: Bot, event: MessageEvent):
     resp = resp.json()                                                                    
     weibo_data = resp['data']
     # logger.info(weibo_data)
-    text, status_title, source, region_name, pics, page_info = (weibo_data.get(key, None) for key in
-                                                                ['text', 'status_title', 'source', 'region_name',
-                                                                 'pics', 'page_info'])
+    text, status_title, source, region_name, pics, page_info = 
+        (weibo_data.get(key) for key in ['text', 'status_title', 'source', 'region_name', 'pics', 'page_info'])
     # 发送消息
     await weibo.send(f"{NICKNAME}解析 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}")
     if pics:
         pics = map(lambda x: x['large']['url'], pics)
         download_img_funcs = [asyncio.create_task(
             download_img(url = item, ext_headers={"Referer": "http://blog.sina.com.cn/"})) for item in pics]
-        image_names = await asyncio.gather(*download_img_funcs)
+        image_paths = await asyncio.gather(*download_img_funcs)
         # 发送图片
-        nodes = make_node_segment(bot.self_id, [MessageSegment.image(plugin_cache_dir / img_name) for img_name in image_names])
+        nodes = make_node_segment(bot.self_id, [MessageSegment.image(img_path for img_path in image_paths])
         # 发送异步后的数据
         await weibo.finish(nodes)
 
     if page_info:
         video_url = page_info.get('urls', '').get('mp4_720p_mp4', '') or page_info.get('urls', '').get('mp4_hd_mp4', '')
         if video_url:
-            video_name = await download_video(video_url, ext_headers={
+            video_path = await download_video(video_url, ext_headers={
                 "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
                 "referer": "https://weibo.com/"
             })
-            await weibo.finish(await get_video_seg(video_name)) 
+            await weibo.finish(await get_video_seg(video_path)) 
             
             
 # 定义 base62 编码字符表
