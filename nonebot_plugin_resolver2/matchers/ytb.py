@@ -1,13 +1,19 @@
 import re
 import asyncio
 
-from nonebot import on_keyword, on_command, logger
-from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment, Bot
+from nonebot import on_keyword, on_command
+from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.params import Arg
 from nonebot.rule import Rule
 from nonebot.exception import ActionFailed
 from nonebot.permission import SUPERUSER
+from nonebot.adapters.onebot.v11 import (
+    MessageEvent,
+    Message,
+    MessageSegment,
+    Bot
+)
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg, get_file_seg
@@ -16,10 +22,21 @@ from ..data_source.ytdlp import (
     ytdlp_download_audio,
     ytdlp_download_video
     )
-from ..config import *
+from ..config import (
+    NICKNAME,
+    YTB_COOKIES_FILE,
+    scheduler
+)
 
-ytb = on_keyword(keywords = {"youtube.com", "youtu.be"}, rule = Rule(is_not_in_disable_group))
-update_yt = on_command(cmd="update yt", permission=SUPERUSER)
+ytb = on_keyword(
+    keywords = {"youtube.com", "youtu.be"},
+    rule = Rule(is_not_in_disable_group)
+)
+
+update_yt = on_command(
+    cmd="update yt", 
+    permission=SUPERUSER
+)
 
 @ytb.handle()
 async def _(event: MessageEvent, state: T_State):
@@ -40,22 +57,18 @@ async def _(event: MessageEvent, state: T_State):
 @ytb.got("type", prompt="您需要下载音频(0)，还是视频(1)")
 async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()):
     url: str = state["url"]
-    # will_delete_id = (await ytb.send("下载中......"))["message_id"]
     await bot.call_api("set_msg_emoji_like", message_id = event.message_id, emoji_id = '282')
     try:
         if type.extract_plain_text().strip() == '1':
-            video_name = await ytdlp_download_video(url = url, cookiefile = YTB_COOKIES_FILE)
-            await ytb.send(await get_video_seg(video_name))
+            video_path = await ytdlp_download_video(url = url, cookiefile = YTB_COOKIES_FILE)
+            await ytb.send(await get_video_seg(video_path))
         else: 
-            audio_name = await ytdlp_download_audio(url = url, cookiefile = YTB_COOKIES_FILE)
-            await ytb.send(MessageSegment.record(plugin_cache_dir / audio_name))
-            await ytb.send(get_file_seg(audio_name))
+            audio_path = await ytdlp_download_audio(url = url, cookiefile = YTB_COOKIES_FILE)
+            await ytb.send(MessageSegment.record(audio_path))
+            await ytb.send(get_file_seg(audio_path))
     except Exception as e:
         if not isinstance(e, ActionFailed):
             await ytb.send(f"下载失败 | {e}")
-    # finally:
-        # await bot.delete_msg(message_id = will_delete_id)
-        
         
 @update_yt.handle()
 async def _(event: MessageEvent):
