@@ -1,53 +1,39 @@
-from typing import Iterable, List
-from nonebot import logger
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
-
+from pathlib import Path
+from nonebot.log import logger
+from nonebot.adapters.onebot.v11 import (
+    Message,
+    MessageSegment
+)
 from ..constant import VIDEO_MAX_MB
 from ..data_source.common import download_video
-from ..config import *
 
+def make_node_segment(user_id, segments: MessageSegment | list) -> Message:
+    return Message([MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=segment)
+            for segment in (segments if isinstance(segments, list) else [segments])])
 
-def make_node_segment(user_id, segments: MessageSegment | List[MessageSegment | str]) -> Iterable[MessageSegment]:
-    """
-        将消息封装成 Segment 的 Node 类型，可以传入单个也可以传入多个，返回一个封装好的转发类型
-    :param user_id: 可以通过event获取
-    :param segments: 一般为 MessageSegment.image / MessageSegment.video / MessageSegment.text
-    :return:
-    """
-    return [(MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=Message(segment))) 
-            for segment in (segments if isinstance(segments, list) else [segments])]
-
-
-async def get_video_seg(file_name: str = "", url: str = "") -> MessageSegment:
+async def get_video_seg(video_path: Path = None, url: str = None, proxy: str = None) -> MessageSegment:
     seg: MessageSegment = None
     try:
         # 如果data以"http"开头，先下载视频
-        if not file_name:
+        if not video_path:
             if url and url.startswith("http"):
-                file_name = await download_video(url)
-        if not file_name:
-            return MessageSegment.text(f"获取 video 出错, file_name: {file_name}, url: {url}")
-        data_path = plugin_cache_dir / file_name
+                video_path = await download_video(url, proxy)
         # 检测文件大小
-        file_size_bytes = int(data_path.stat().st_size)
-        # file_size_in_mb = get_file_size_mb(data_path)
-        # 如果视频大于 100 MB 自动转换为群文件, 先忽略
+        file_size_bytes = int(video_path.stat().st_size)
         if file_size_bytes == 0:
             seg = MessageSegment.text("获取视频失败")
         elif file_size_bytes > VIDEO_MAX_MB * 1024 * 1024:
             # 转为文件 Seg
-            seg = get_file_seg(file_name)
+            seg = get_file_seg(video_path)
         else:
-            seg = MessageSegment.video(data_path)
+            seg = MessageSegment.video(video_path)
     except Exception as e:
-        # logger.error(f"转换为 segment 失败\n{e}")
-        seg = MessageSegment.text(f"转换为 segment 失败\n{e}")
+        seg = MessageSegment.text(f"视频获取失败\n{e}")
     finally:
         return seg
     
-def get_file_seg(file_name: str, name: str = "") -> MessageSegment:
-    file = plugin_cache_dir / file_name
+def get_file_seg(file_path: Path, name: str = "") -> MessageSegment:
     return MessageSegment("file", data = {
-        "name": name if name else file_name,
-        "file": file.resolve().as_uri()
+        "name": name if name else file_path.name,
+        "file": file_path.resolve().as_uri()
     })
