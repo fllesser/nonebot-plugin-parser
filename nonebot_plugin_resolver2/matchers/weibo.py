@@ -1,4 +1,9 @@
-import os, re, asyncio, json, httpx, math
+import os
+import re
+import json
+import math
+import httpx
+import asyncio
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
@@ -11,7 +16,7 @@ from nonebot.adapters.onebot.v11 import (
 )
 
 from .filter import is_not_in_disable_group
-from .utils import make_node_segment, get_video_seg
+from .utils import construct_nodes, get_video_seg
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_img, download_video
 from ..config import NICKNAME
@@ -71,7 +76,7 @@ async def _(bot: Bot, event: MessageEvent):
             download_img(url = item, ext_headers={"Referer": "http://blog.sina.com.cn/"})) for item in pics]
         image_paths = await asyncio.gather(*download_img_funcs)
         # 发送图片
-        nodes = make_node_segment(bot.self_id, [MessageSegment.image(img_path) for img_path in image_paths])
+        nodes = construct_nodes(bot.self_id, [MessageSegment.image(img_path) for img_path in image_paths])
         # 发送异步后的数据
         await weibo.finish(nodes)
 
