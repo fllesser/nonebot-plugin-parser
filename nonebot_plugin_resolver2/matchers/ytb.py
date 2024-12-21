@@ -1,7 +1,7 @@
 import re
 import asyncio
 
-from nonebot import on_keyword, on_command
+from nonebot import on_keyword, on_command, logger
 from nonebot.adapters.onebot.v11 import MessageEvent, Message, MessageSegment, Bot
 from nonebot.typing import T_State
 from nonebot.params import Arg
