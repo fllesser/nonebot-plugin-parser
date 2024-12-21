@@ -10,12 +10,11 @@ from nonebot.adapters.onebot.v11 import (
     MessageSegment
 )
 
-from .config import NICKNAME
 from .filter import is_not_in_disable_group
 from .utils import make_node_segment, get_video_seg
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_img, download_video
-
+from ..config import NICKNAME
 # WEIBO_SINGLE_INFO
 WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
 
