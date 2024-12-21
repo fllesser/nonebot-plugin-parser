@@ -200,7 +200,7 @@ async def _(bot: Bot, event: MessageEvent):
         if ai_conclusion['model_result']['summary'] != '':
             segs.append(f"bilibili AI总结:\n{ai_conclusion['model_result']['summary']}")
     if video_duration > DURATION_MAXIMUM:
-        segs.append("⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
+        segs.append(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
     await bilibili.send(make_node_segment(bot.self_id, segs))
     if video_duration < DURATION_MAXIMUM:
         # 下载视频和音频
