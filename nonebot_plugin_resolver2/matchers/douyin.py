@@ -11,7 +11,7 @@ from nonebot.adapters.onebot.v11 import (
     Bot,
     MessageSegment
 )
-from .utils import get_video_seg, make_node_segment
+from .utils import get_video_seg, construct_nodes
 from .filter import is_not_in_disable_group
 
 from ..parsers.base import VideoInfo
@@ -43,7 +43,7 @@ async def _(bot: Bot, event: Event):
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
     if len(video_info.images) > 0:
         segs = [MessageSegment.image(img_url) for img_url in video_info.images]
-        await douyin.finish(make_node_segment(bot.self_id, segs))
+        await douyin.finish(construct_nodes(bot.self_id, segs))
     if video_url := video_info.video_url:
         await douyin.finish(await get_video_seg(url = video_url))
          
