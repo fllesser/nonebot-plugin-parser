@@ -2,10 +2,15 @@ import asyncio
 import yt_dlp
 
 from pathlib import Path
-from nonebot import get_bot, get_driver, logger
+from nonebot import get_bot, get_driver
+from nonebot.log import logger
 
 from .common import delete_boring_characters
-from ..config import *
+from ..config import (
+    plugin_cache_dir,
+    scheduler,
+    PROXY
+)
 
 # 缓存链接信息
 url_info: dict[str, dict[str, str]] = {}
@@ -18,8 +23,6 @@ url_info: dict[str, dict[str, str]] = {}
 )
 async def _():
     url_info.clear()
-    
-    
     
 # 获取视频信息的 基础 opts
 ydl_extract_base_opts = {
@@ -53,10 +56,13 @@ async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
         return info_dict
 
         
-async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
+async def ytdlp_download_video(url: str, cookiefile: Path = None) -> Path:
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
     duration = info_dict.get('duration', 600)
+    video_path = plugin_cache_dir / f'{title}.mp4'
+    if video_path.exists():
+        return video_path
     ydl_opts = {
         'outtmpl': f'{plugin_cache_dir / title}.%(ext)s',
         'merge_output_format': 'mp4',
@@ -69,12 +75,15 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> str:
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         await asyncio.to_thread(ydl.download, [url])
-    return f'{title}.mp4'
+    return video_path
         
 
-async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
+async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> Path:
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
+    audio_path = plugin_cache_dir / f'{title}.mp3'
+    if audio_path.exists():
+        return audio_path
     ydl_opts = {
         'outtmpl': f'{ plugin_cache_dir / title}.%(ext)s',
         'format': 'bestaudio',
@@ -85,6 +94,6 @@ async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> str:
         ydl_opts['cookiefile'] = str(cookiefile)
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         await asyncio.to_thread(ydl.download, [url])
-    return f'{title}.mp3'
+    return audio_path
     
     
