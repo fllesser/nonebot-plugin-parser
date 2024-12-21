@@ -1,16 +1,22 @@
-import re, httpx, asyncio
+import re
+import httpx
+import asyncio
 
-from nonebot import on_keyword
+from nonebot.log import logger
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
-from nonebot import logger
+from nonebot.plugin.on import on_keyword
+from nonebot.adapters.onebot.v11 import (
+    Message, 
+    MessageEvent, 
+    Bot, 
+    MessageSegment
+)
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg, make_node_segment
 from ..constant import COMMON_HEADER, GENERAL_REQ_LINK
 from ..data_source.common import download_img, download_video
-
-from ..config import *
+from ..config import PROXY
 
 twitter = on_keyword(keywords={"x.com"}, rule = Rule(is_not_in_disable_group))
 
@@ -19,9 +25,11 @@ async def _(bot: Bot, event: MessageEvent):
 
     msg: str = event.message.extract_plain_text().strip()
 
-    x_url = re.search(r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]*)", msg)[0]
-
-    x_url = GENERAL_REQ_LINK.replace("{}", x_url)
+    if match := re.search(r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]*)", msg)
+        x_url = match.group(0)
+    else:
+        return
+    x_url = f"http://47.99.158.118/video-crack/v2/parse?content={x_url}"
 
     # 内联一个请求
     async def x_req(url):
@@ -38,18 +46,15 @@ async def _(bot: Bot, event: MessageEvent):
                 **COMMON_HEADER
             })
     resp = await x_req(x_url)
-    x_data: object = resp.json()['data']
+    x_data = resp.json().get('data')
 
-    await twitter.send(Message(f"{NICKNAME}解析 | X"))
+    await twitter.send(f"{NICKNAME}解析 | 小蓝鸟")
     
     if x_data is not None:
         x_video_url = x_data['url']
-        video_name = await download_video(x_video_url, proxy=PROXY)
-        seg = await get_video_seg(file_name = video_name)
-        await twitter.send(seg)
+        await twitter.send(await get_video_seg(url = x_video_url, proxy=PROXY))
     else:
         resp = await x_req(f"{x_url}/photo")
-        # logger.info(f"url:{x_pic_url}, res:{resp}")
         x_pic_url = resp.json()['data']['url']
-        img_name = await download_img(url = x_pic_url, proxy = PROXY)
-        await twitter.send(MessageSegment.image(plugin_cache_dir / img_name))
+        img_path = await download_img(url = x_pic_url, proxy = PROXY)
+        await twitter.send(MessageSegment.image(img_path))
