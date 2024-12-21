@@ -25,7 +25,7 @@ async def _(bot: Bot, event: MessageEvent):
 
     msg: str = event.message.extract_plain_text().strip()
 
-    if match := re.search(r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]*)", msg)
+    if match := re.search(r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]*)", msg):
         x_url = match.group(0)
     else:
         return
