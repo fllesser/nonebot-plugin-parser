@@ -40,7 +40,8 @@ from ..data_source.common import (
 from ..config import (
     rconfig,
     NICKNAME,
-    DURATION_MAXIMUM
+    DURATION_MAXIMUM,
+    plugin_cache_dir
 )
 from ..cookie import cookies_str_to_dict
 
