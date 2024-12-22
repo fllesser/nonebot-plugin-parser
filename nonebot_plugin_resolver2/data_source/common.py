@@ -24,7 +24,7 @@ client_base_config = {
 
 async def download_video(
     url: str,
-    video_name: str = None
+    video_name: str = None,
     proxy: str = None,
     ext_headers: dict[str, str] = None
 ) -> Path:
@@ -38,7 +38,7 @@ async def download_video(
 
 async def download_img(
     url: str,
-    img_name: str = "",
+    img_name: str = None,
     proxy: str = None,
     ext_headers = None
 ) -> Path:
