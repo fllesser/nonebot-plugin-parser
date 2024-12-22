@@ -4,6 +4,7 @@ import asyncio
 import aiofiles
 import subprocess
 
+from tqdm.asyncio import tqdm
 from nonebot.log import logger
 from nonebot.rule import Rule
 from nonebot.params import CommandArg
