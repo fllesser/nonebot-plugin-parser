@@ -104,6 +104,26 @@ async def download_file_by_stream(
                         await f.write(chunk)
                         bar.update(len(chunk))
 
+async def merge_av(
+    v_path: Path,
+    a_path: Path,
+    output_path: Path,
+    log_output: bool = False
+):
+    """
+    合并视频文件和音频文件
+    """
+    logger.info(f'正在合并: {output_path.name}')
+    # 构建 ffmpeg 命令
+    command = f'ffmpeg -y -i {v_path} -i "{a_path}" -c copy "{output_path}"'
+    stdout = None if log_output else subprocess.DEVNULL
+    stderr = None if log_output else subprocess.DEVNULL
+    await asyncio.get_event_loop().run_in_executor(
+        None,
+        lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
+    )
+
+
 def parse_url_resource_name(url: str) -> str:
     url_paths = urlparse(url).path.split('/')
     # 过滤掉空字符串并去除两端空白
