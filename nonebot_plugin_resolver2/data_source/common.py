@@ -37,7 +37,7 @@ async def download_video(url, proxy: str = None, ext_headers: dict[str, str] = {
                 # 设置前缀信息
                 bar.set_description(video_name)
                 async with aiofiles.open(video_path, "wb") as f:
-                    async for chunk in resp.aiter_bytes(1024):
+                    async for chunk in resp.aiter_bytes():
                         await f.write(chunk)
                         bar.update(len(chunk))
     return video_path
@@ -92,7 +92,7 @@ async def download_audio(url: str) -> Path:
                 # 设置前缀信息
                 bar.set_description(audio_name)
                 async with aiofiles.open(audio_path, "wb") as f:
-                    async for chunk in resp.aiter_bytes(1024):
+                    async for chunk in resp.aiter_bytes():
                         await f.write(chunk)
                         bar.update(len(chunk))
     return audio_path
