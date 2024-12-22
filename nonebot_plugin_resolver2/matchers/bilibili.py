@@ -4,11 +4,11 @@ import asyncio
 import aiofiles
 import subprocess
 
-from nonebot import on_message, on_command
 from nonebot.log import logger
 from nonebot.rule import Rule
 from nonebot.params import CommandArg
 from nonebot.exception import ActionFailed
+from nonebot.plugin.on import on_message, on_command
 from nonebot.adapters.onebot.v11 import (
     Message,
     MessageEvent,
@@ -205,15 +205,19 @@ async def _(bot: Bot, event: MessageEvent):
     if video_duration < DURATION_MAXIMUM:
         # 下载视频和音频
         try:
-            download_url_data = await v.get_download_url(page_index=page_num)
-            detecter = VideoDownloadURLDataDetecter(download_url_data)
-            streams = detecter.detect_best_streams()
-            video_url, audio_url = streams[0].url, streams[1].url
-            # 下载视频和音频
-            await asyncio.gather(
-                    download_b_file(video_url, f"{video_id}-video.m4s", logger.debug),
-                    download_b_file(audio_url, f"{video_id}-audio.m4s", logger.debug))
-            video_path = await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", f"{video_id}-res.mp4")
+            video_name = f"{video_id}.mp4"
+            video_path = plugin_cache_dir / video_name
+            if not video_path.exists():
+                download_url_data = await v.get_download_url(page_index=page_num)
+                detecter = VideoDownloadURLDataDetecter(download_url_data)
+                streams = detecter.detect_best_streams()
+                video_url, audio_url = streams[0].url, streams[1].url
+                # 下载视频和音频
+                await asyncio.gather(
+                        download_b_file(video_url, f"{video_id}-video.m4s", logger.info),
+                        download_b_file(audio_url, f"{video_id}-audio.m4s", logger.info)
+                    )
+                video_path = await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", video_name)
             await bilibili.send(await get_video_seg(video_path))
         except Exception as e:
             if not isinstance(e, ActionFailed):
@@ -232,19 +236,20 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             # todo
             #return 
         video_title = video_info.get('title')
-        download_url_data = await v.get_download_url(page_index=0)
-        detecter = VideoDownloadURLDataDetecter(download_url_data)
-        streams = detecter.detect_best_streams()
-        audio_url = streams[1].url
         audio_name = delete_boring_characters(video_title) + ".mp3"
-        await download_b_file(audio_url, audio_name, logger.debug)
+        audio_path = plugin_cache_dir / audio_name
+        if not audio_path.exists():
+            download_url_data = await v.get_download_url(page_index=0)
+            detecter = VideoDownloadURLDataDetecter(download_url_data)
+            streams = detecter.detect_best_streams()
+            audio_url = streams[1].url
+            await download_b_file(audio_url, audio_name, logger.info)
     except Exception as e:
         await bili_music.finish(f'download audio excepted err: {e}')
-    audio_path = plugin_cache_dir / audio_name
     await bili_music.send(MessageSegment.record(audio_path))
     await bili_music.send(get_file_seg(audio_path))
     
-    
+
 async def download_b_file(url, file_name, progress_callback):
     """
         下载视频文件和音频文件
