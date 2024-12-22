@@ -264,7 +264,7 @@ async def download_b_file(url, file_name):
             total_size = int(resp.headers.get('content-length', 0))
             with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, dynamic_ncols=True, colour='green') as bar:
                 # 设置前缀信息
-                bar.set_description(f"[nonebot-plugin-resolver2] | {file_name}")
+                bar.set_description(file_name)
                 async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
                     async for chunk in resp.aiter_bytes(1024):
                         await f.write(chunk)
