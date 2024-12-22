@@ -1,8 +1,6 @@
 import re
 import httpx
 import asyncio
-import aiofiles
-import subprocess
 
 from tqdm.asyncio import tqdm
 from nonebot.log import logger
@@ -33,9 +31,18 @@ from .utils import (
     get_file_seg
 )
 from .filter import is_not_in_disable_group
-from ..data_source.common import delete_boring_characters
+from ..data_source.common import (
+    delete_boring_characters,
+    download_file_by_stream,
+    merge_av
+)
 
-from ..config import *
+from ..config import (
+    rconfig,
+    NICKNAME,
+    DURATION_MAXIMUM,
+    plugin_cache_dir
+)
 from ..cookie import cookies_str_to_dict
 
 # format cookie
@@ -43,10 +50,7 @@ credential: Credential = Credential.from_cookies(cookies_str_to_dict(rconfig.r_b
 
 # 哔哩哔哩的头请求
 BILIBILI_HEADER = {
-    'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 '
-        'Safari/537.36',
-    'referer': 'https://www.bilibili.com',
+    'referer': 'https://www.bilibili.com'
 }
 
 def is_bilibili(event: MessageEvent) -> bool:
@@ -189,7 +193,7 @@ async def _(bot: Bot, event: MessageEvent):
             # 如果索引超出范围，使用 video_info['duration'] 或者其他默认值
             video_duration = video_info.get('duration', 0)
     # 删除特殊字符
-    video_title = delete_boring_characters(video_title)
+    # video_title = delete_boring_characters(video_title)
     # 截断下载时间比较长的视频
     online = await v.get_online()
     online_str = f'🏄‍♂️ 总共 {online["total"]} 人在观看，{online["count"]} 人在网页端观看'
@@ -206,7 +210,7 @@ async def _(bot: Bot, event: MessageEvent):
     if video_duration < DURATION_MAXIMUM:
         # 下载视频和音频
         try:
-            video_name = f"{video_id}.mp4"
+            video_name = video_id + ".mp4"
             video_path = plugin_cache_dir / video_name
             if not video_path.exists():
                 download_url_data = await v.get_download_url(page_index=page_num)
@@ -214,11 +218,13 @@ async def _(bot: Bot, event: MessageEvent):
                 streams = detecter.detect_best_streams()
                 video_url, audio_url = streams[0].url, streams[1].url
                 # 下载视频和音频
+                v_path = plugin_cache_dir / f"{video_id}-video.m4s"
+                a_path = plugin_cache_dir / f"{video_id}-audio.m4s"
                 await asyncio.gather(
-                        download_b_file(video_url, f"{video_id}-video.m4s"),
-                        download_b_file(audio_url, f"{video_id}-audio.m4s")
-                    )
-                video_path = await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", video_name)
+                    download_file_by_stream(video_url, v_path, ext_headers=BILIBILI_HEADER),
+                    download_file_by_stream(audio_url, a_path, ext_headers=BILIBILI_HEADER)
+                )
+                await merge_av(v_path, a_path, video_path)
             await bilibili.send(await get_video_seg(video_path))
         except Exception as e:
             if not isinstance(e, ActionFailed):
@@ -237,69 +243,33 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             # todo
             #return 
         video_title = video_info.get('title')
-        audio_name = delete_boring_characters(video_title) + ".mp3"
-        audio_path = plugin_cache_dir / audio_name
+        video_title = delete_boring_characters(video_title)
+        audio_path = plugin_cache_dir / f"{video_title}.mp3"
         if not audio_path.exists():
             download_url_data = await v.get_download_url(page_index=0)
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
             audio_url = streams[1].url
-            await download_b_file(audio_url, audio_name)
+            await download_file_by_stream(audio_url, audio_path, ext_headers=BILIBILI_HEADER)
     except Exception as e:
         await bili_music.finish(f'download audio excepted err: {e}')
     await bili_music.send(MessageSegment.record(audio_path))
     await bili_music.send(get_file_seg(audio_path))
     
-
-async def download_b_file(url, file_name):
-    """
-        下载视频文件和音频文件
-    :param url:
-    :param full_file_name:
-    :param progress_callback:
-    :return:
-    """
-    async with httpx.AsyncClient() as client:
-        async with client.stream("GET", url, headers=BILIBILI_HEADER) as resp:
-            total_size = int(resp.headers.get('content-length', 0))
-            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, dynamic_ncols=True, colour='green') as bar:
-                # 设置前缀信息
-                bar.set_description(file_name)
-                async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
-                    async for chunk in resp.aiter_bytes():
-                        await f.write(chunk)
-                        bar.update(len(chunk))
-
-async def merge_file_to_mp4(v_name: str, a_name: str, output_file_name: str, log_output: bool = False) -> Path:
-    """
-    合并视频文件和音频文件
-    :param v_full_file_name: 视频文件路径
-    :param a_full_file_name: 音频文件路径
-    :param output_file_name: 输出文件路径
-    :param log_output: 是否显示 ffmpeg 输出日志，默认忽略
-    :return:
-    """
-    logger.info(f'正在合并：{output_file_name}')
-    video_path = plugin_cache_dir / output_file_name
-    # 构建 ffmpeg 命令
-    command = f'ffmpeg -y -i "{plugin_cache_dir / v_name}" -i "{plugin_cache_dir / a_name}" -c copy "{video_path}"'
-    stdout = None if log_output else subprocess.DEVNULL
-    stderr = None if log_output else subprocess.DEVNULL
-    await asyncio.get_event_loop().run_in_executor(
-        None,
-        lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
-    )
-    return video_path
-    
-
 def extra_bili_info(video_info):
     """
         格式化视频信息
     """
     video_state = video_info['stat']
-    video_like, video_coin, video_favorite, video_share, video_view, video_danmaku, video_reply = video_state['like'], \
-        video_state['coin'], video_state['favorite'], video_state['share'], video_state['view'], video_state['danmaku'], \
+    video_like, video_coin, video_favorite, video_share, video_view, video_danmaku, video_reply = (
+        video_state['like'],
+        video_state['coin'],
+        video_state['favorite'],
+        video_state['share'],
+        video_state['view'],
+        video_state['danmaku'],
         video_state['reply']
+    )
 
     video_data_map = {
         "点赞": video_like,
