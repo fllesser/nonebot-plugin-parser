@@ -253,7 +253,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
             audio_url = streams[1].url
-            await download_file_by_stream(url=audio_url, file_path=audio_path, ext_headers=BILIBILI_HEADER)
+            await download_file_by_stream(audio_url, audio_path, ext_headers=BILIBILI_HEADER)
     except Exception as e:
         await bili_music.finish(f'download audio excepted err: {e}')
     await bili_music.send(MessageSegment.record(audio_path))
