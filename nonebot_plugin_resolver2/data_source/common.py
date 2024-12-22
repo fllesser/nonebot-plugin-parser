@@ -6,7 +6,8 @@ import aiofiles
 import httpx
 
 from pathlib import Path
-from nonebot import logger
+from nonebot.log import logger
+from tqdm.asyncio import tqdm
 from urllib.parse import urlparse
 
 from ..constant import COMMON_HEADER
@@ -31,9 +32,14 @@ async def download_video(url, proxy: str = None, ext_headers: dict[str, str] = {
     # 下载文件
     async with httpx.AsyncClient(**client_config) as client:
         async with client.stream("GET", url) as resp:
-            async with aiofiles.open(video_path, "wb") as f:
-                async for chunk in resp.aiter_bytes():
-                    await f.write(chunk)
+            total_size = int(resp.headers.get('content-length', 0))
+            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, color='green') as bar:
+                # 设置前缀信息
+                bar.set_description(f"[nonebot-plugin-resolver2] | {video_name} process:")
+                async with aiofiles.open(video_path, "wb") as f:
+                    async for chunk in resp.aiter_bytes(1024):
+                        await f.write(chunk)
+                        bar.update(len(chunk))
     return video_path
 
 
@@ -81,9 +87,14 @@ async def download_audio(url: str) -> Path:
     # download auido
     async with httpx.AsyncClient(**client_config) as client:
         async with client.stream("GET", url) as resp:
-            async with aiofiles.open(audio_path, "wb") as f:
-                async for chunk in resp.aiter_bytes():
-                    await f.write(chunk)
+            total_size = int(resp.headers.get('content-length', 0))
+            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, color='green') as bar:
+                # 设置前缀信息
+                bar.set_description(f"[nonebot-plugin-resolver2] | {audio_name} process:")
+                async with aiofiles.open(audio_path, "wb") as f:
+                    async for chunk in resp.aiter_bytes(1024):
+                        await f.write(chunk)
+                        bar.update(len(chunk))
     return audio_path
 
 
