@@ -99,7 +99,12 @@ async def download_audio(url: str) -> Path:
 
 
 def parse_url_resource_name(url: str) -> str:
-    return urlparse(url).path.split('/')[-1]
+    url_paths = urlparse(url).path.split('/')
+    # 过滤掉空字符串并去除两端空白
+    filtered_paths = [segment.strip() for segment in url_paths if segment.strip()]
+    # 获取最后一个非空路径段
+    name = filtered_paths[-1] if filtered_paths else str(time.time())
+    return name
 
 
 def delete_boring_characters(sentence: str) -> str:
