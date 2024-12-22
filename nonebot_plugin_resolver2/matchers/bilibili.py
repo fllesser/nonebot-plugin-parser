@@ -196,7 +196,7 @@ async def _(bot: Bot, event: MessageEvent):
             # 如果索引超出范围，使用 video_info['duration'] 或者其他默认值
             video_duration = video_info.get('duration', 0)
     # 删除特殊字符
-    video_title = delete_boring_characters(video_title)
+    # video_title = delete_boring_characters(video_title)
     # 截断下载时间比较长的视频
     online = await v.get_online()
     online_str = f'🏄‍♂️ 总共 {online["total"]} 人在观看，{online["count"]} 人在网页端观看'
@@ -213,7 +213,7 @@ async def _(bot: Bot, event: MessageEvent):
     if video_duration < DURATION_MAXIMUM:
         # 下载视频和音频
         try:
-            video_name = video_title + ".mp4"
+            video_name = video_id + ".mp4"
             video_path = plugin_cache_dir / video_name
             if not video_path.exists():
                 download_url_data = await v.get_download_url(page_index=page_num)
@@ -246,8 +246,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             # todo
             #return 
         video_title = video_info.get('title')
-        audio_name = delete_boring_characters(video_title) + ".mp3"
-        audio_path = plugin_cache_dir / audio_name
+        audio_path = plugin_cache_dir / f"{bvid}.mp3"
         if not audio_path.exists():
             download_url_data = await v.get_download_url(page_index=0)
             detecter = VideoDownloadURLDataDetecter(download_url_data)
