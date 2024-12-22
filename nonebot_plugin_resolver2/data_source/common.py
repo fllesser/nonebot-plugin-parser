@@ -105,7 +105,8 @@ async def download_file_by_stream(
                     async for chunk in resp.aiter_bytes():
                         await f.write(chunk)
                         bar.update(len(chunk))
-
+    return file_path
+    
 async def merge_av(
     v_path: Path,
     a_path: Path,
@@ -117,10 +118,10 @@ async def merge_av(
     """
     logger.info(f'正在合并: {output_path.name}')
     # 构建 ffmpeg 命令, localstore already path.resolve()
-    command = f'ffmpeg -y -i {v_path.resolve()} -i "{a_path.resolve()}" -c copy "{output_path.resolve()}"'
+    command = f'ffmpeg -y -i {v_path} -i "{a_path}" -c copy "{output_path}"'
     stdout = None if log_output else subprocess.DEVNULL
     stderr = None if log_output else subprocess.DEVNULL
-    await asyncio.get_event_loop().run_in_executor(
+    return await asyncio.get_event_loop().run_in_executor(
         None,
         lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
     )
