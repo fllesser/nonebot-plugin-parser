@@ -37,7 +37,7 @@ from ..data_source.common import (
     merge_av
 )
 
-from ..config import *
+from ..config import rconfig, NICKNAME
 from ..cookie import cookies_str_to_dict
 
 # format cookie
