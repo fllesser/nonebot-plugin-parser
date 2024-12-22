@@ -1,8 +1,6 @@
 import re
 import httpx
 import asyncio
-import aiofiles
-import subprocess
 
 from tqdm.asyncio import tqdm
 from nonebot.log import logger
