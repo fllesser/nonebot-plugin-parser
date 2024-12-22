@@ -20,7 +20,7 @@ async def get_video_seg(video_path: Path = None, url: str = None, proxy: str = N
         # 如果data以"http"开头，先下载视频
         if not video_path:
             if url and url.startswith("http"):
-                video_path = await download_video(url, proxy)
+                video_path = await download_video(url, None, proxy)
         # 检测文件大小
         file_size_bytes = int(video_path.stat().st_size)
         if file_size_bytes == 0:
