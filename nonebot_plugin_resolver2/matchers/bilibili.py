@@ -215,8 +215,8 @@ async def _(bot: Bot, event: MessageEvent):
                 video_url, audio_url = streams[0].url, streams[1].url
                 # 下载视频和音频
                 await asyncio.gather(
-                        download_b_file(video_url, f"{video_id}-video.m4s", logger.info),
-                        download_b_file(audio_url, f"{video_id}-audio.m4s", logger.info)
+                        download_b_file(video_url, f"{video_id}-video.m4s"),
+                        download_b_file(audio_url, f"{video_id}-audio.m4s")
                     )
                 video_path = await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", video_name)
             await bilibili.send(await get_video_seg(video_path))
@@ -244,14 +244,14 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
             audio_url = streams[1].url
-            await download_b_file(audio_url, audio_name, logger.info)
+            await download_b_file(audio_url, audio_name)
     except Exception as e:
         await bili_music.finish(f'download audio excepted err: {e}')
     await bili_music.send(MessageSegment.record(audio_path))
     await bili_music.send(get_file_seg(audio_path))
     
 
-async def download_b_file(url, file_name, progress_callback):
+async def download_b_file(url, file_name):
     """
         下载视频文件和音频文件
     :param url:
@@ -261,15 +261,14 @@ async def download_b_file(url, file_name, progress_callback):
     """
     async with httpx.AsyncClient() as client:
         async with client.stream("GET", url, headers=BILIBILI_HEADER) as resp:
-            # current_len = 0
             total_size = int(resp.headers.get('content-length', 0))
-            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024) as bar:
+            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, color='blue') as bar:
+                # 设置前缀信息
+                bar.set_description(f"[nonebot-plugin-resolver2] | {file_name} process:")
                 async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
                     async for chunk in resp.aiter_bytes(1024):
-                        # current_len += len(chunk)
                         await f.write(chunk)
                         bar.update(len(chunk))
-                        #progress_callback(f'下载进度：{round(current_len / total_len, 3)}')
 
 async def merge_file_to_mp4(v_name: str, a_name: str, output_file_name: str, log_output: bool = False) -> Path:
     """
