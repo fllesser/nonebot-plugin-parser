@@ -77,7 +77,7 @@ async def _(bot: Bot, event: MessageEvent):
         # 发送语音
         await kugou.send(MessageSegment.record(audio_path))
         # 发送群文件
-        await kugou.finish(get_file_seg(audio_path, f'{kugou_name}-{kugou_singer}.{file_name.split(".")[-1]}'))
+        await kugou.finish(get_file_seg(audio_path, f'{kugou_name}-{kugou_singer}.{audio_path.name.split(".")[-1]}'))
     else:
         await kugou.send(f"{NICKNAME}解析 | 酷狗音乐 - 不支持当前外链，请重新分享再试")
 
