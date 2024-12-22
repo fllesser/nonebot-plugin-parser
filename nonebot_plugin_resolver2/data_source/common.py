@@ -33,9 +33,9 @@ async def download_video(url, proxy: str = None, ext_headers: dict[str, str] = {
     async with httpx.AsyncClient(**client_config) as client:
         async with client.stream("GET", url) as resp:
             total_size = int(resp.headers.get('content-length', 0))
-            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, colour='green') as bar:
+            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, dynamic_ncols=True, colour='green') as bar:
                 # 设置前缀信息
-                bar.set_description(f"[nonebot-plugin-resolver2] | {video_name} process:")
+                bar.set_description(f"[nonebot-plugin-resolver2] | {video_name}")
                 async with aiofiles.open(video_path, "wb") as f:
                     async for chunk in resp.aiter_bytes(1024):
                         await f.write(chunk)
@@ -88,9 +88,9 @@ async def download_audio(url: str) -> Path:
     async with httpx.AsyncClient(**client_config) as client:
         async with client.stream("GET", url) as resp:
             total_size = int(resp.headers.get('content-length', 0))
-            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, colour='green') as bar:
+            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, dynamic_ncols=True, colour='green') as bar:
                 # 设置前缀信息
-                bar.set_description(f"[nonebot-plugin-resolver2] | {audio_name} process:")
+                bar.set_description(f"[nonebot-plugin-resolver2] | {audio_name}")
                 async with aiofiles.open(audio_path, "wb") as f:
                     async for chunk in resp.aiter_bytes(1024):
                         await f.write(chunk)
