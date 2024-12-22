@@ -266,7 +266,7 @@ async def download_b_file(url, file_name):
                 # 设置前缀信息
                 bar.set_description(file_name)
                 async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
-                    async for chunk in resp.aiter_bytes(1024):
+                    async for chunk in resp.aiter_bytes():
                         await f.write(chunk)
                         bar.update(len(chunk))
 
