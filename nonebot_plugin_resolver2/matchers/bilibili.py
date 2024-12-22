@@ -4,20 +4,34 @@ import asyncio
 import aiofiles
 import subprocess
 
-from typing import List
-from nonebot import on_message, logger, on_command
+from tqdm.asyncio import tqdm
+from nonebot.log import logger
 from nonebot.rule import Rule
 from nonebot.params import CommandArg
 from nonebot.exception import ActionFailed
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
-
-from bilibili_api import video, live, article, Credential
+from nonebot.plugin.on import on_message, on_command
+from nonebot.adapters.onebot.v11 import (
+    Message,
+    MessageEvent,
+    Bot,
+    MessageSegment
+)
+from bilibili_api import (
+    video,
+    live,
+    article,
+    Credential
+)
 from bilibili_api.favorite_list import get_video_favorite_list_content
 from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
 from urllib.parse import parse_qs, urlparse
 
-from .utils import make_node_segment, get_video_seg, get_file_seg
+from .utils import (
+    construct_nodes,
+    get_video_seg, 
+    get_file_seg
+)
 from .filter import is_not_in_disable_group
 from ..data_source.common import delete_boring_characters
 
@@ -90,7 +104,7 @@ async def _(bot: Bot, event: MessageEvent):
                 await bilibili.send(Message(f"{NICKNAME}解析 | B站动态 - {title}\n{desc}"))
                 segs = [MessageSegment.image(pic['url']) for pic in pics]
                 # 发送异步后的数据
-                await bilibili.finish(make_node_segment(bot.self_id, segs))
+                await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
         if 'live' in url:
             # https://live.bilibili.com/30528999?hotRank=0
@@ -134,7 +148,7 @@ async def _(bot: Bot, event: MessageEvent):
                     [MessageSegment.image(cover),
                      MessageSegment.text(f'🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}')])
             await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 收藏夹\n正在为你找出相关链接请稍等...')
-            await bilibili.finish(make_node_segment(bot.self_id, favs))
+            await bilibili.finish(construct_nodes(bot.self_id, favs))
    
     if video_id:
         v = video.Video(bvid = video_id, credential=credential)
@@ -147,14 +161,12 @@ async def _(bot: Bot, event: MessageEvent):
     else:
         return
     # 合并转发消息 list
-    segs: List[MessageSegment | str] = []
-    will_delete_id = 0
+    segs: list[MessageSegment | str] = []
     try:
         video_info = await v.get_info()
         if video_info is None:
             await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩 - 出错，无法获取数据！"))
-        # 获取视频信息
-        will_delete_id = (await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频'))["message_id"]
+        await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频')
     except Exception as e:
         await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩 - 出错\n{e}"))
     video_title, video_cover, video_desc, video_duration = video_info['title'], video_info['pic'], video_info['desc'], video_info['duration']
@@ -188,27 +200,29 @@ async def _(bot: Bot, event: MessageEvent):
         ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
         if ai_conclusion['model_result']['summary'] != '':
             segs.append(f"bilibili AI总结:\n{ai_conclusion['model_result']['summary']}")
-    await bilibili.send(make_node_segment(bot.self_id, segs))
     if video_duration > DURATION_MAXIMUM:
-        await bilibili.send(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
-    else:
+        segs.append(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
+    await bilibili.send(construct_nodes(bot.self_id, segs))
+    if video_duration < DURATION_MAXIMUM:
         # 下载视频和音频
         try:
-            download_url_data = await v.get_download_url(page_index=page_num)
-            detecter = VideoDownloadURLDataDetecter(download_url_data)
-            streams = detecter.detect_best_streams()
-            video_url, audio_url = streams[0].url, streams[1].url
-            # 下载视频和音频
-            await asyncio.gather(
-                    download_b_file(video_url, f"{video_id}-video.m4s", logger.debug),
-                    download_b_file(audio_url, f"{video_id}-audio.m4s", logger.debug))
-            await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", f"{video_id}-res.mp4")
-            await bilibili.send(await get_video_seg(file_name=f"{video_id}-res.mp4"))
+            video_name = f"{video_id}.mp4"
+            video_path = plugin_cache_dir / video_name
+            if not video_path.exists():
+                download_url_data = await v.get_download_url(page_index=page_num)
+                detecter = VideoDownloadURLDataDetecter(download_url_data)
+                streams = detecter.detect_best_streams()
+                video_url, audio_url = streams[0].url, streams[1].url
+                # 下载视频和音频
+                await asyncio.gather(
+                        download_b_file(video_url, f"{video_id}-video.m4s"),
+                        download_b_file(audio_url, f"{video_id}-audio.m4s")
+                    )
+                video_path = await merge_file_to_mp4(f"{video_id}-video.m4s", f"{video_id}-audio.m4s", video_name)
+            await bilibili.send(await get_video_seg(video_path))
         except Exception as e:
             if not isinstance(e, ActionFailed):
                 await bilibili.send(f"下载视频失败 | {e}")
- 
-    await bot.delete_msg(message_id = will_delete_id)
 
 @bili_music.handle()
 async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
@@ -223,19 +237,21 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             # todo
             #return 
         video_title = video_info.get('title')
-        download_url_data = await v.get_download_url(page_index=0)
-        detecter = VideoDownloadURLDataDetecter(download_url_data)
-        streams = detecter.detect_best_streams()
-        audio_url = streams[1].url
         audio_name = delete_boring_characters(video_title) + ".mp3"
-        await download_b_file(audio_url, audio_name, logger.debug)
+        audio_path = plugin_cache_dir / audio_name
+        if not audio_path.exists():
+            download_url_data = await v.get_download_url(page_index=0)
+            detecter = VideoDownloadURLDataDetecter(download_url_data)
+            streams = detecter.detect_best_streams()
+            audio_url = streams[1].url
+            await download_b_file(audio_url, audio_name)
     except Exception as e:
         await bili_music.finish(f'download audio excepted err: {e}')
-    await bili_music.send(MessageSegment.record(plugin_cache_dir / audio_name))
-    await bili_music.send(get_file_seg(file_name=audio_name))
+    await bili_music.send(MessageSegment.record(audio_path))
+    await bili_music.send(get_file_seg(audio_path))
     
-    
-async def download_b_file(url, file_name, progress_callback):
+
+async def download_b_file(url, file_name):
     """
         下载视频文件和音频文件
     :param url:
@@ -245,15 +261,16 @@ async def download_b_file(url, file_name, progress_callback):
     """
     async with httpx.AsyncClient() as client:
         async with client.stream("GET", url, headers=BILIBILI_HEADER) as resp:
-            current_len = 0
-            total_len = int(resp.headers.get('content-length', 0))
-            async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
-                async for chunk in resp.aiter_bytes():
-                    current_len += len(chunk)
-                    await f.write(chunk)
-                    progress_callback(f'下载进度：{round(current_len / total_len, 3)}')
+            total_size = int(resp.headers.get('content-length', 0))
+            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024, dynamic_ncols=True, colour='green') as bar:
+                # 设置前缀信息
+                bar.set_description(file_name)
+                async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
+                    async for chunk in resp.aiter_bytes(1024):
+                        await f.write(chunk)
+                        bar.update(len(chunk))
 
-async def merge_file_to_mp4(v_name: str, a_name: str, output_file_name: str, log_output: bool = False):
+async def merge_file_to_mp4(v_name: str, a_name: str, output_file_name: str, log_output: bool = False) -> Path:
     """
     合并视频文件和音频文件
     :param v_full_file_name: 视频文件路径
@@ -263,15 +280,16 @@ async def merge_file_to_mp4(v_name: str, a_name: str, output_file_name: str, log
     :return:
     """
     logger.info(f'正在合并：{output_file_name}')
-
+    video_path = plugin_cache_dir / output_file_name
     # 构建 ffmpeg 命令
-    command = f'ffmpeg -y -i "{plugin_cache_dir / v_name}" -i "{plugin_cache_dir / a_name}" -c copy "{plugin_cache_dir / output_file_name}"'
+    command = f'ffmpeg -y -i "{plugin_cache_dir / v_name}" -i "{plugin_cache_dir / a_name}" -c copy "{video_path}"'
     stdout = None if log_output else subprocess.DEVNULL
     stderr = None if log_output else subprocess.DEVNULL
     await asyncio.get_event_loop().run_in_executor(
         None,
         lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
     )
+    return video_path
     
 
 def extra_bili_info(video_info):

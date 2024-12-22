@@ -1,19 +1,31 @@
-import os, httpx, re, json, asyncio
+import os
+import re
+import json
+import httpx
+import asyncio
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import (
+    Message,
+    MessageEvent,
+    Bot,
+    MessageSegment
+)
 from .utils import get_file_seg
 from .filter import is_not_in_disable_group
 
 from ..data_source.common import download_audio
 from ..constant import COMMON_HEADER
-from ..config import *
+from ..config import NICKNAME
 
 # KG临时接口
 KUGOU_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={}&n=1&type=json"
 
-kugou = on_keyword(keywords={"kugou.com"}, rule = Rule(is_not_in_disable_group))
+kugou = on_keyword(
+    keywords={"kugou.com"},
+    rule = Rule(is_not_in_disable_group)
+)
 
 @kugou.handle()
 async def _(bot: Bot, event: MessageEvent):
@@ -56,15 +68,16 @@ async def _(bot: Bot, event: MessageEvent):
         kugou_cover = kugou_vip_data.get('cover')
         kugou_name = kugou_vip_data.get('title')
         kugou_singer = kugou_vip_data.get('singer')
-        await kugou.send(Message(
-            [MessageSegment.image(kugou_cover),
-                MessageSegment.text(f'{NICKNAME}解析 | 酷狗音乐 - 歌曲：{kugou_name}-{kugou_singer}')]))
+        await kugou.send(
+            f'{NICKNAME}解析 | 酷狗音乐 - 歌曲：{kugou_name}-{kugou_singer}'
+            + MessageSegment.image(kugou_cover)
+        )
         # 下载音频文件后会返回一个下载路径
-        file_name = await download_audio(kugou_url)
+        audio_path = await download_audio(kugou_url)
         # 发送语音
-        await kugou.send(MessageSegment.record(store.get_plugin_cache_file(file_name)))
+        await kugou.send(MessageSegment.record(audio_path))
         # 发送群文件
-        await kugou.finish(get_file_seg(file_name, f'{kugou_name}-{kugou_singer}.{file_name.split(".")[-1]}'))
+        await kugou.finish(get_file_seg(audio_path, f'{kugou_name}-{kugou_singer}.{audio_path.name.split(".")[-1]}'))
     else:
         await kugou.send(f"{NICKNAME}解析 | 酷狗音乐 - 不支持当前外链，请重新分享再试")
 

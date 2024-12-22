@@ -11,8 +11,9 @@ keywords = ["nonebot", "nonebot2", "resolver", "bilibili", "youtube", "tiktok", 
 [tool.poetry.dependencies]
 python = ">=3.10"
 httpx = "<0.28.0"
+tqdm = ">=4.66.5"
 fake-useragent = "1.5.1"
-bilibili-api-python = ">=16.2.0"
+bilibili-api-python = ">=16.3.0"
 aiofiles = ">=0.8.0"
 yt-dlp = ">=2024.12.13"
 nonebot2 = ">=2.3.0"

@@ -9,7 +9,7 @@ from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegme
 from urllib.parse import parse_qs, urlparse
 
 from .filter import is_not_in_disable_group
-from .utils import get_video_seg, make_node_segment
+from .utils import get_video_seg, construct_nodes
 
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_video, download_img
@@ -61,8 +61,7 @@ async def _(bot: Bot, event: MessageEvent):
     type = note_data['type']
     note_title = note_data['title']
     note_desc = note_data['desc']
-    await xiaohongshu.send(Message(
-        f"{NICKNAME}解析 | 小红书 - {note_title}\n{note_desc}"))
+    await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - {note_title}\n{note_desc}")
 
     aio_task = []
     if type == 'normal':
@@ -71,19 +70,16 @@ async def _(bot: Bot, event: MessageEvent):
         for index, item in enumerate(image_list):
             aio_task.append(asyncio.create_task(
                 download_img(item['urlDefault'], img_name=f'{index}.jpg')))
-        links_path = await asyncio.gather(*aio_task)
+        img_path_list = await asyncio.gather(*aio_task)
+        # 发送图片
+        segs = construct_nodes(bot.self_id, [MessageSegment.image(img_path) for img_path in img_path_list])
+        await xiaohongshu.finish(segs)
     elif type == 'video':
         # 这是一条解析有水印的视频
         logger.info(note_data['video'])
         video_url = note_data['video']['media']['stream']['h264'][0]['masterUrl']
-        # ⚠️ 废弃，解析无水印视频video.consumer.originVideoKey
         # video_url = f"http://sns-video-bd.xhscdn.com/{note_data['video']['consumer']['originVideoKey']}"
-        video_name = await download_video(video_url)
-
-        await xiaohongshu.finish(await get_video_seg(video_name))
-    # 发送图片
-    segs = make_node_segment(bot.self_id, [MessageSegment.image(plugin_cache_dir / img) for img in links_path])
-    # 发送异步后的数据
-    await xiaohongshu.finish(segs)
+        await xiaohongshu.finish(await get_video_seg(url = video_url))
+    
 
 

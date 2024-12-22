@@ -4,7 +4,12 @@ import asyncio
 
 from nonebot import on_message
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import (
+    Message,
+    MessageEvent,
+    Bot,
+    MessageSegment
+)
 
 from .filter import is_not_in_disable_group
 from .utils import get_file_seg
@@ -18,7 +23,7 @@ NETEASE_API_CN = 'https://www.markingchen.ink'
 # NCM临时接口
 NETEASE_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_wyymusic.php?id={}&br=7&type=json"
 
-async def is_ncm(event: MessageEvent) -> bool:
+def is_ncm(event: MessageEvent) -> bool:
     message = str(event.message).strip()
     return any(key in message for key in {"music.163.com", "163cn.tv"})
 
@@ -38,22 +43,26 @@ async def ncm_handler(bot: Bot, event: MessageEvent):
         
     if match := re.search(r"id=(\d+)", message):
         ncm_id = match.group(1)
-    if ncm_id is None:
+    else:
         await ncm.finish(f"{NICKNAME}解析 | 网易云 - 获取链接失败")
 
     # 对接临时接口
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER)
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER)
         ncm_vip_data = resp.json()
-    ncm_url = ncm_vip_data['music_url']
-    ncm_cover = ncm_vip_data['cover']
-    ncm_singer = ncm_vip_data['singer']
-    ncm_title = ncm_vip_data['title']
-    await ncm.send(Message(
-        [MessageSegment.image(ncm_cover), MessageSegment.text(f'{NICKNAME}解析 | 网易云音乐 - {ncm_title}-{ncm_singer}')]))
+        ncm_music_url, ncm_cover, ncm_singer, ncm_title = (
+            ncm_vip_data.get(key) for key in ['music_url', 'cover', 'singer', 'title']
+        )
+    except Exception as e:
+        await ncm.finish(f'{NICKNAME}解析 | 网易云 - 错误: {e}')
+    await ncm.send(f'{NICKNAME}解析 | 网易云 - {ncm_title} {ncm_singer}' + MessageSegment.image(ncm_cover))
     # 下载音频文件后会返回一个下载路径
-    file_name = await download_audio(ncm_url)
+    try:
+        audio_path = await download_audio(ncm_music_url)
+    except Exception as e:
+        await ncm.finish(f'音频下载失败')
     # 发送语音
-    await ncm.send(Message(MessageSegment.record(plugin_cache_dir / file_name)))
+    await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件
-    await ncm.finish(get_file_seg(file_name, f'{ncm_title}-{ncm_singer}.{file_name.split(".")[-1]}'))
+    await ncm.send(get_file_seg(audio_path, f'{ncm_title}-{ncm_singer}.{audio_path.name.split(".")[-1]}'))
