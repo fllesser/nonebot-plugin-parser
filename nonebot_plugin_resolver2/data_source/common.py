@@ -114,7 +114,7 @@ async def merge_av(
     合并视频文件和音频文件
     """
     logger.info(f'正在合并: {output_path.name}')
-    # 构建 ffmpeg 命令
+    # 构建 ffmpeg 命令, localstore already path.resolve()
     command = f'ffmpeg -y -i {v_path} -i "{a_path}" -c copy "{output_path}"'
     stdout = None if log_output else subprocess.DEVNULL
     stderr = None if log_output else subprocess.DEVNULL
