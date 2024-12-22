@@ -13,7 +13,7 @@ from tqdm.asyncio import tqdm
 from urllib.parse import urlparse
 
 from ..constant import COMMON_HEADER
-from ..config import store, plugin_cache_dir
+from ..config import plugin_cache_dir
 
 
 client_base_config = {
@@ -24,12 +24,13 @@ client_base_config = {
 
 async def download_video(
     url: str,
+    video_name: str = None
     proxy: str = None,
     ext_headers: dict[str, str] = None
 ) -> Path:
     if not url:
         raise EmptyURLError("video url cannot be empty")
-    video_name = parse_url_resource_name(url).split(".")[0] + ".mp4"
+    video_name = video_name if video_name else parse_url_resource_name(url).split(".")[0] + ".mp4"
     video_path = plugin_cache_dir / video_name
     if not video_path.exists():
         await download_file_by_stream(url, video_path, proxy, ext_headers)
@@ -65,12 +66,18 @@ async def download_img(
     return img_path
 
 
-async def download_audio(url: str) -> Path:
+async def download_audio(
+    url: str,
+    audio_name: str = None,
+    proxy: str = None,
+    ext_headers: dict[str, str] = None
+) -> Path:
     if not url:
         raise EmptyURLError("audii url cannot be empty")
-    audio_path = plugin_cache_dir / parse_url_resource_name(url)
+    audio_name = audio_name if audio_name else parse_url_resource_name(url)
+    audio_path = plugin_cache_dir / audio_name
     if not audio_path.exists():
-        await download_file_by_stream(url, audio_path)
+        await download_file_by_stream(url, audio_path, proxy, ext_headers)
     return audio_path
 
 async def download_file_by_stream(
