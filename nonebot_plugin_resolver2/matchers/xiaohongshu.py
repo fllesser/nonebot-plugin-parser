@@ -76,7 +76,7 @@ async def _(bot: Bot, event: MessageEvent):
         await xiaohongshu.finish(segs)
     elif type == 'video':
         # 这是一条解析有水印的视频
-        logger.info(note_data['video'])
+        # logger.info(note_data['video'])
         video_url = note_data['video']['media']['stream']['h264'][0]['masterUrl']
         # video_url = f"http://sns-video-bd.xhscdn.com/{note_data['video']['consumer']['originVideoKey']}"
         await xiaohongshu.finish(await get_video_seg(url = video_url))
