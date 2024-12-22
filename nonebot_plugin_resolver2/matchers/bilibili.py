@@ -260,13 +260,15 @@ async def download_b_file(url, file_name, progress_callback):
     """
     async with httpx.AsyncClient() as client:
         async with client.stream("GET", url, headers=BILIBILI_HEADER) as resp:
-            current_len = 0
-            total_len = int(resp.headers.get('content-length', 0))
-            async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
-                async for chunk in resp.aiter_bytes():
-                    current_len += len(chunk)
-                    await f.write(chunk)
-                    progress_callback(f'下载进度：{round(current_len / total_len, 3)}')
+            # current_len = 0
+            total_size = int(resp.headers.get('content-length', 0))
+            with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024) as bar:
+                async with aiofiles.open(plugin_cache_dir / file_name, "wb") as f:
+                    async for chunk in resp.aiter_bytes(1024):
+                        # current_len += len(chunk)
+                        await f.write(chunk)
+                        bar.update(len(chunk))
+                        #progress_callback(f'下载进度：{round(current_len / total_len, 3)}')
 
 async def merge_file_to_mp4(v_name: str, a_name: str, output_file_name: str, log_output: bool = False) -> Path:
     """
