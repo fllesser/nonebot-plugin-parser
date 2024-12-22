@@ -27,7 +27,7 @@ async def download_video(url, proxy: str = None, ext_headers: dict[str, str] = {
     }
     # 配置代理
     if proxy:
-        client_config['proxies'] = { 'http://': proxy }
+        client_config['proxies'] = { 'http://': proxy, 'https://': proxy }
 
     # 下载文件
     async with httpx.AsyncClient(**client_config) as client:
@@ -57,7 +57,7 @@ async def download_img(url: str, img_name: str = "", proxy: str = None, ext_head
     }
     # 配置代理
     if proxy:
-        client_config['proxies'] = { 'http://': proxy }
+        client_config['proxies'] = { 'http://': proxy, 'https://': proxy }
 
     # 下载文件
     async with httpx.AsyncClient(**client_config) as client:
