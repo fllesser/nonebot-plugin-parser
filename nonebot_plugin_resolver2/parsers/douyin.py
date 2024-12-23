@@ -28,7 +28,7 @@ class DouYin(BaseParser):
             return await self.parse_video(share_url, app_url)
         return await self.parse_dynamic_images(video_id)
     
-    async parse_video(self, share_url: str, app_url: str) -> VideoInfo:
+    async def parse_video(self, share_url: str, app_url: str) -> VideoInfo:
         async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(share_url, headers=self.get_default_headers())
             response.raise_for_status()
