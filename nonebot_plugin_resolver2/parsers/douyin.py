@@ -25,10 +25,10 @@ class DouYin(BaseParser):
                 video_id = share_url.split("?")[0].strip("/").split("/")[-1]
                 # share_url = self._get_request_url_by_video_id(video_id)
         if "share/video" in share_url:
-            return await parse_video(share_url, app_url)
-        return await parse_dynamic_images(video_id)
+            return await self.parse_video(share_url, app_url)
+        return await self.parse_dynamic_images(video_id)
     
-    async parse_video(share_url: str, app_url: str):
+    async parse_video(self, share_url: str, app_url: str):
         async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(share_url, headers=self.get_default_headers())
             response.raise_for_status()
