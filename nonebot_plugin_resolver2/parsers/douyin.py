@@ -154,6 +154,8 @@ class DouYin(BaseParser):
         
         return VideoInfo(
             title=title,
+            video_url="",
+            cover_url="",
             images = images,
             dynamic_images=dynamic_images
         )
