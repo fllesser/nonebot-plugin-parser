@@ -141,7 +141,7 @@ class DouYin(BaseParser):
             resp = await client.get(url, params=params, headers=headers)
             resp.raise_for_status()
             
-        data = response.json()['aweme_details'][0]
+        data = resp.json()['aweme_details'][0]
         info = data['cha_list'][0]['share_info']
         title = info.get('share_desc') if info.get('share_desc').strip() else info.get("share_desc_info")
         images = []
