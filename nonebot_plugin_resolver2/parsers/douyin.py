@@ -137,7 +137,7 @@ class DouYin(BaseParser):
           'User-Agent': "Mozilla/5.0 (Linux; Android 10; VOG-AL00 Build/HUAWEIVOG-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",
           'Accept': "application/json, text/plain, */*",
         }
-        async with httpx.AsyncClient as client:
+        async with httpx.AsyncClient() as client:
             resp = await client.get(url, params=params, headers=headers)
             resp.raise_for_status()
             
