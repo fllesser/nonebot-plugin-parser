@@ -17,7 +17,6 @@ from ..config import plugin_cache_dir
 
 
 client_base_config = {
-    'headers': COMMON_HEADER,
     'timeout': httpx.Timeout(60, connect=5.0),
     'follow_redirects': True
 }
@@ -26,7 +25,7 @@ async def download_video(
     url: str,
     video_name: str = None,
     proxy: str = None,
-    ext_headers: dict[str, str] = None
+    ext_headers: dict[str, str] = {}
 ) -> Path:
     if not url:
         raise EmptyURLError("video url cannot be empty")
@@ -40,7 +39,7 @@ async def download_img(
     url: str,
     img_name: str = None,
     proxy: str = None,
-    ext_headers = None
+    ext_headers: dict[str, str] = {}
 ) -> Path:
     if not url:
         raise EmptyURLError("image url cannot be empty")
@@ -50,8 +49,7 @@ async def download_img(
         return img_path
     # client config
     client_config = client_base_config.copy()
-    if ext_headers:
-        client_config['headers'].update(ext_headers)
+    client_config['headers'] = COMMON_HEADER | ext_headers
     if proxy:
         client_config['proxies'] = { 
             'http://': proxy,
@@ -70,7 +68,7 @@ async def download_audio(
     url: str,
     audio_name: str = None,
     proxy: str = None,
-    ext_headers: dict[str, str] = None
+    ext_headers: dict[str, str] = {}
 ) -> Path:
     if not url:
         raise EmptyURLError("audii url cannot be empty")
@@ -84,11 +82,10 @@ async def download_file_by_stream(
     url: str,
     file_path: Path, 
     proxy: str = None, 
-    ext_headers: dict[str, str] = None
+    ext_headers: dict[str, str] = {}
 ):
     client_config = client_base_config.copy()
-    if ext_headers:
-        client_config['headers'].update(ext_headers)
+    client_config['headers'] = COMMON_HEADER | ext_headers
     # 配置代理
     if proxy:
         client_config['proxies'] = { 
