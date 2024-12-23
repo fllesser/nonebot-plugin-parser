@@ -49,7 +49,7 @@ from ..cookie import cookies_str_to_dict
 credential: Credential = Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck)) if rconfig.r_bili_ck else None
 
 # 哔哩哔哩的头请求
-BILIBILI_HEADER = {
+BILIBILI_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87',
     'referer': 'https://www.bilibili.com'
 }
@@ -78,7 +78,7 @@ async def _(bot: Bot, event: MessageEvent):
         if match := re.search(b_short_reg, message.replace("\\", "")):
             b_short_url = match.group(0)
             async with httpx.AsyncClient() as client:
-                resp = await client.get(b_short_url, headers=BILIBILI_HEADER, follow_redirects=True)
+                resp = await client.get(b_short_url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
     else:
         url_reg = r"(http:|https:)\/\/(space|www|live).bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
@@ -222,8 +222,8 @@ async def _(bot: Bot, event: MessageEvent):
                 v_path = plugin_cache_dir / f"{video_id}-video.m4s"
                 a_path = plugin_cache_dir / f"{video_id}-audio.m4s"
                 await asyncio.gather(
-                    download_file_by_stream(video_url, v_path, ext_headers=BILIBILI_HEADER),
-                    download_file_by_stream(audio_url, a_path, ext_headers=BILIBILI_HEADER)
+                    download_file_by_stream(video_url, v_path, ext_headers=BILIBILI_HEADERS),
+                    download_file_by_stream(audio_url, a_path, ext_headers=BILIBILI_HEADERS)
                 )
                 await merge_av(v_path, a_path, video_path)
             await bilibili.send(await get_video_seg(video_path))
@@ -251,7 +251,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
             audio_url = streams[1].url
-            await download_file_by_stream(audio_url, audio_path, ext_headers=BILIBILI_HEADER)
+            await download_file_by_stream(audio_url, audio_path, ext_headers=BILIBILI_HEADERS)
     except Exception as e:
         await bili_music.finish(f'download audio excepted err: {e}')
     await bili_music.send(MessageSegment.record(audio_path))
