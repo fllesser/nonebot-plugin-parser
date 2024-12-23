@@ -142,8 +142,7 @@ class DouYin(BaseParser):
             resp.raise_for_status()
             
         data = resp.json()['aweme_details'][0]
-        info = data['cha_list'][0]['share_info']
-        title = info.get('share_desc') if info.get('share_desc').strip() else info.get("share_desc_info")
+        title = data.get('share_info').get("share_desc_info")
         images = []
         dynamic_images = []
         for image in data.get('images'):
