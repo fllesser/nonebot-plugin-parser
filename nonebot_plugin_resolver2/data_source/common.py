@@ -16,101 +16,87 @@ from ..constant import COMMON_HEADER
 from ..config import plugin_cache_dir
 
 
-client_base_config = {
-    'timeout': httpx.Timeout(60, connect=5.0),
-    'follow_redirects': True
-}
+class Downloader:
+    
+    def __init__(
+        self,
+        url: str,
+        file_name: str = "",
+        proxy: str = "",
+        ext_headers: dict[str, str] = {}
+    ):
+        if not url:
+            raise EmptyURLError("url cannot be empty")
+        self.url = url
+        self.file_name = file_name
+        self.client_config = self.get_client_base_config()
+        self.client_config['headers'] = COMMON_HEADER | ext_headers
+        if proxy:
+            self.client_config['proxies'] = { 
+                'http://': proxy,
+                'https://': proxy 
+            }
+    
+    def get_client_base_config(self) -> dict[str, str]:
+        return {
+            'timeout': httpx.Timeout(60, connect=5.0),
+            'follow_redirects': True
+        }
+      
+    def parse_url_resource_name(self) -> str:
+        url_paths = urlparse(self.url).path.split('/')
+        # 过滤掉空字符串并去除两端空白
+        filtered_paths = [segment.strip() for segment in url_paths if segment.strip()]
+        # 获取最后一个非空路径段
+        return filtered_paths[-1] if filtered_paths else str(time.time())
 
-async def download_video(
-    url: str,
-    video_name: str = None,
-    proxy: str = None,
-    ext_headers: dict[str, str] = {}
-) -> Path:
-    if not url:
-        raise EmptyURLError("video url cannot be empty")
-    video_name = video_name if video_name else parse_url_resource_name(url).split(".")[0] + ".mp4"
-    video_path = plugin_cache_dir / video_name
-    if not video_path.exists():
-        await download_file_by_stream(url, video_path, proxy, ext_headers)
-    return video_path
-
-async def download_img(
-    url: str,
-    img_name: str = None,
-    proxy: str = None,
-    ext_headers: dict[str, str] = {}
-) -> Path:
-    if not url:
-        raise EmptyURLError("image url cannot be empty")
-    img_name = img_name if img_name else parse_url_resource_name(url)
-    img_path = plugin_cache_dir / img_name
-    if img_path.exists():
+    async def video(self) -> Path:
+        if not self.file_name:
+            self.file_name = self.parse_url_resource_name().split(".")[0] + ".mp4"
+        return await self.download_file_by_stream()
+    
+    async def audio(self) -> Path:
+        if not self.file_name:
+            self.file_name = self.parse_url_resource_name()
+        return await self.download_file_by_stream()
+    
+    async def img(self) -> Path:
+        if not self.file_name:
+            self.file_name = self.parse_url_resource_name()
+        img_path = plugin_cache_dir / self.file_name
+        if img_path.exists():
+            return img_path
+        # 下载文件
+        async with httpx.AsyncClient(**self.client_config) as client:
+            resp = await client.get(self.url)
+            resp.raise_for_status()
+        async with aiofiles.open(img_path, "wb") as f:
+            await f.write(resp.content)
         return img_path
-    # client config
-    client_config = client_base_config.copy()
-    client_config['headers'] = COMMON_HEADER | ext_headers
-    if proxy:
-        client_config['proxies'] = { 
-            'http://': proxy,
-            'https://': proxy 
-        }
-    # 下载文件
-    async with httpx.AsyncClient(**client_config) as client:
-        response = await client.get(url)
-        response.raise_for_status()
-    async with aiofiles.open(img_path, "wb") as f:
-        await f.write(response.content)
-    return img_path
-
-
-async def download_audio(
-    url: str,
-    audio_name: str = None,
-    proxy: str = None,
-    ext_headers: dict[str, str] = {}
-) -> Path:
-    if not url:
-        raise EmptyURLError("audii url cannot be empty")
-    audio_name = audio_name if audio_name else parse_url_resource_name(url)
-    audio_path = plugin_cache_dir / audio_name
-    if not audio_path.exists():
-        await download_file_by_stream(url, audio_path, proxy, ext_headers)
-    return audio_path
-
-async def download_file_by_stream(
-    url: str,
-    file_path: Path, 
-    proxy: str = None, 
-    ext_headers: dict[str, str] = {}
-):
-    client_config = client_base_config.copy()
-    client_config['headers'] = COMMON_HEADER | ext_headers
-    # 配置代理
-    if proxy:
-        client_config['proxies'] = { 
-            'http://': proxy,
-            'https://': proxy 
-        }
-    # download
-    async with httpx.AsyncClient(**client_config) as client:
-        async with client.stream("GET", url) as resp:
-            if resp.status_code >= 400:
-                resp.raise_for_status()
-            with tqdm(
-                total=int(resp.headers.get('content-length', 0)),
-                unit='B',
-                unit_scale=True,
-                unit_divisor=1024,
-                dynamic_ncols=True,
-                colour='green'
-            ) as bar:
-                # 设置前缀信息
-                bar.set_description(file_path.name)
-                async with aiofiles.open(file_path, "wb") as f:
-                    async for chunk in resp.aiter_bytes():
-                        await f.write(chunk)
-                        bar.update(len(chunk))
+    
+    async def download_file_by_stream(self) -> Path:
+        file_path = plugin_cache_dir / self.file_name
+        if file_path.exists():
+            return file_path
+        async with httpx.AsyncClient(**self.client_config) as client:
+            async with client.stream("GET", self.url) as resp:
+                if resp.status_code >= 400:
+                    resp.raise_for_status()
+                with tqdm(
+                    total=int(resp.headers.get('content-length', 0)),
+                    unit='B',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    dynamic_ncols=True,
+                    colour='green'
+                ) as bar:
+                    # 设置前缀信息
+                    bar.set_description(self.file_name)
+                    async with aiofiles.open(file_path, "wb") as f:
+                        async for chunk in resp.aiter_bytes():
+                            await f.write(chunk)
+                            bar.update(len(chunk))
+        return file_path
     
 async def merge_av(
     v_path: Path,
@@ -131,13 +117,6 @@ async def merge_av(
         lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
     )
 
-
-def parse_url_resource_name(url: str) -> str:
-    url_paths = urlparse(url).path.split('/')
-    # 过滤掉空字符串并去除两端空白
-    filtered_paths = [segment.strip() for segment in url_paths if segment.strip()]
-    # 获取最后一个非空路径段
-    return filtered_paths[-1] if filtered_paths else str(time.time())
 
 def delete_boring_characters(sentence: str) -> str:
     """
