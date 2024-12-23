@@ -50,7 +50,7 @@ credential: Credential = Credential.from_cookies(cookies_str_to_dict(rconfig.r_b
 
 # 哔哩哔哩的头请求
 BILIBILI_HEADER = {
-    'headers': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87',
     'referer': 'https://www.bilibili.com'
 }
 
