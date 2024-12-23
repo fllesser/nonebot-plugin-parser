@@ -98,6 +98,11 @@ async def download_file_by_stream(
     # download
     async with httpx.AsyncClient(**client_config) as client:
         async with client.stream("GET", url) as resp:
+
+            if resp.status_code >= 400:
+                resp.raise_for_status()
+
+
             with tqdm(
                 total=int(resp.headers.get('content-length', 0)),
                 unit='B',

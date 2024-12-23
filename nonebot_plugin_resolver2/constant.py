@@ -1,9 +1,4 @@
 """
-通用解析
-"""
-GENERAL_REQ_LINK = "http://47.99.158.118/video-crack/v2/parse?content={}"
-
-"""
 通用头请求
 """
 COMMON_HEADER = {
@@ -18,5 +13,3 @@ VIDEO_MAX_MB = 100
 
 # 解析列表文件名
 DISABLE_GROUPS = "disable_group_list.json"
-
-############################################################################
