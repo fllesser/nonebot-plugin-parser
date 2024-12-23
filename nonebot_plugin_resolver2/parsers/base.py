@@ -41,6 +41,8 @@ class VideoInfo:
 
     # 图集图片地址列表
     images: List[str] = dataclasses.field(default_factory=list)
+    
+    dynamic_images: List[str] = dataclasses.field(default_factory=list)
 
     # 视频作者信息
     author: VideoAuthor = dataclasses.field(default_factory=VideoAuthor)
