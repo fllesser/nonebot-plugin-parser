@@ -43,9 +43,14 @@ async def _(bot: Bot, event: Event):
         await douyin.finish(f"{NICKNAME}解析 | 抖音 - {e}")
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
     if len(video_info.images) > 0:
-        tasks = [asyncio.create_task(download_img(url)) for url in video_info.images]
-        img_path_list = await asyncio.gather(*tasks)
+        img_tasks = [asyncio.create_task(download_img(url)) for url in video_info.images]
+        img_path_list = await asyncio.gather(*img_tasks)
         segs = [MessageSegment.image(img_path) for img_path in img_path_list]
+        if len(video_info.dynamic_images) > 0:
+            video_tasks = [asyncio.create_task(get_video_seg(url = url) for url in video_info.dynamic_images]
+            video_seg_list = await asyncio.gather(*video_url)
+            segs.extend(video_seg_list)
         await douyin.finish(construct_nodes(bot.self_id, segs))
+    
     if video_url := video_info.video_url:
         await douyin.finish(await get_video_seg(url = video_url))
