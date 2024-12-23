@@ -218,12 +218,11 @@ async def _(bot: Bot, event: MessageEvent):
                 detecter = VideoDownloadURLDataDetecter(download_url_data)
                 streams = detecter.detect_best_streams()
                 video_url, audio_url = streams[0].url, streams[1].url
+    
                 # 下载视频和音频
-                v_path = plugin_cache_dir / f"{video_id}-video.m4s"
-                a_path = plugin_cache_dir / f"{video_id}-audio.m4s"
-                await asyncio.gather(
-                    download_file_by_stream(video_url, v_path, ext_headers=BILIBILI_HEADERS),
-                    download_file_by_stream(audio_url, a_path, ext_headers=BILIBILI_HEADERS)
+                v_path, a_path = await asyncio.gather(
+                    download_file_by_stream(video_url, f"{video_id}-video.m4s", ext_headers=BILIBILI_HEADERS),
+                    download_file_by_stream(audio_url, f"{video_id}-audio.m4s", ext_headers=BILIBILI_HEADERS)
                 )
                 await merge_av(v_path, a_path, video_path)
             await bilibili.send(await get_video_seg(video_path))
@@ -242,16 +241,16 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
         video_info = await v.get_info()
         #if video_info.get('pages'):
             # todo
-            #return 
-        video_title = video_info.get('title')
-        video_title = delete_boring_characters(video_title)
-        audio_path = plugin_cache_dir / f"{video_title}.mp3"
+            #return
+        video_title = delete_boring_characters(video_info.get('title'))
+        audio_name = f"{video_title}.mp3"
+        audio_path = plugin_cache_dir / audio_name
         if not audio_path.exists():
             download_url_data = await v.get_download_url(page_index=0)
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
             audio_url = streams[1].url
-            await download_file_by_stream(audio_url, audio_path, ext_headers=BILIBILI_HEADERS)
+            await download_file_by_stream(audio_url, audio_name, ext_headers=BILIBILI_HEADERS)
     except Exception as e:
         await bili_music.finish(f'download audio excepted err: {e}')
     await bili_music.send(MessageSegment.record(audio_path))
