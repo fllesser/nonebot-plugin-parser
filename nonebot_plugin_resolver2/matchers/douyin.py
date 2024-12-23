@@ -14,6 +14,7 @@ from nonebot.adapters.onebot.v11 import (
 from .utils import get_video_seg, construct_nodes
 from .filter import is_not_in_disable_group
 
+from ..data_source.common import download_img
 from ..parsers.base import VideoInfo
 from ..parsers.douyin import DouYin
 from ..config import NICKNAME
@@ -42,8 +43,9 @@ async def _(bot: Bot, event: Event):
         await douyin.finish(f"{NICKNAME}解析 | 抖音 - {e}")
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
     if len(video_info.images) > 0:
-        segs = [MessageSegment.image(img_url) for img_url in video_info.images]
+        tasks = [asyncio.create_task(download_img(url) for url in video_info.images]
+        img_path_list = await asyncio.gather(*tasks)
+        segs = [MessageSegment.image(img_path) for img_path in img_path_list]
         await douyin.finish(construct_nodes(bot.self_id, segs))
     if video_url := video_info.video_url:
         await douyin.finish(await get_video_seg(url = video_url))
-         
