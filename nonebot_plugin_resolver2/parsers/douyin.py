@@ -144,15 +144,16 @@ class DouYin(BaseParser):
         data = response.json()['aweme_details'][0]
         info = data['cha_list'][0]['share_info']
         title = info.get('share_desc') if info.get('share_desc').strip() else info.get("share_desc_info")
-        
+        images = []
         dynamic_images = []
         for image in data.get('images'):
             if video := image.get('video'):
                 dynamic_images.append(video['play_addr']['url_list'][0])
             else:
-                dynamic_images.append(image['url_list'][0])
+                images.append(image['url_list'][0])
         
         return VideoInfo(
-            title=title
+            title=title,
+            images = images,
             dynamic_images=dynamic_images
         )
