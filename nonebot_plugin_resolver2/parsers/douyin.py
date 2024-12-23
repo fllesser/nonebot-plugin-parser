@@ -21,13 +21,18 @@ class DouYin(BaseParser):
             app_url = share_url
             async with httpx.AsyncClient(follow_redirects=False) as client:
                 share_response = await client.get(share_url, headers=self.get_default_headers())
-                video_id = share_response.headers.get("location").split("?")[0].strip("/").split("/")[-1]
-                share_url = self._get_request_url_by_video_id(video_id)
-
+                share_url = share_response.headers.get("location")
+                video_id = share_url.split("?")[0].strip("/").split("/")[-1]
+                # share_url = self._get_request_url_by_video_id(video_id)
+        if "share/video" in share_url:
+            return await parse_video(share_url, app_url)
+        return await parse_dynamic_images(video_id)
+    
+    async parse_video(share_url: str, app_url: str):
         async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(share_url, headers=self.get_default_headers())
             response.raise_for_status()
-
+    
         try:
             data = self.format_response(response)
         except Exception as e1:
@@ -121,3 +126,33 @@ class DouYin(BaseParser):
             raise Exception(err_detail_msg)
 
         return original_video_info["item_list"][0]
+        
+    async def parse_dynamic_images(self, video_id: str) -> VideoInfo:
+        url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
+        params = {
+          'aweme_ids': f"[{video_id}]",
+          'request_source': "200",
+        }
+        headers = {
+          'User-Agent': "Mozilla/5.0 (Linux; Android 10; VOG-AL00 Build/HUAWEIVOG-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",
+          'Accept': "application/json, text/plain, */*",
+        }
+        async with httpx.AsyncClient as client:
+            resp = await client.get(url, params=params, headers=headers)
+            resp.raise_for_status()
+            
+        data = response.json()['aweme_details'][0]
+        info = data['cha_list'][0]['share_info']
+        title = info.get('share_desc') if info.get('share_desc').strip() else info.get("share_desc_info")
+        
+        dynamic_images = []
+        for image in data.get('images'):
+            if video := image.get('video'):
+                dynamic_images.append(video['play_addr']['url_list'][0])
+            else:
+                dynamic_images.append(image['url_list'][0])
+        
+        return VideoInfo(
+            title=title
+            dynamic_images=dynamic_images
+        )
