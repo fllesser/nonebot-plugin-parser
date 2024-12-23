@@ -47,7 +47,7 @@ async def _(bot: Bot, event: Event):
         img_path_list = await asyncio.gather(*img_tasks)
         segs = [MessageSegment.image(img_path) for img_path in img_path_list]
         if len(video_info.dynamic_images) > 0:
-            video_tasks = [asyncio.create_task(get_video_seg(url = url) for url in video_info.dynamic_images]
+            video_tasks = [asyncio.create_task(get_video_seg(url = url)) for url in video_info.dynamic_images]
             video_seg_list = await asyncio.gather(*video_url)
             segs.extend(video_seg_list)
         await douyin.finish(construct_nodes(bot.self_id, segs))
