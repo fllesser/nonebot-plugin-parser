@@ -42,37 +42,6 @@ class Downloader:
             'timeout': httpx.Timeout(60, connect=5.0),
             'follow_redirects': True
         }
-      
-    def parse_url_resource_name(self) -> str:
-        url_paths = urlparse(self.url).path.split('/')
-        # 过滤掉空字符串并去除两端空白
-        filtered_paths = [segment.strip() for segment in url_paths if segment.strip()]
-        # 获取最后一个非空路径段
-        return filtered_paths[-1] if filtered_paths else str(time.time())
-
-    async def video(self) -> Path:
-        if not self.file_name:
-            self.file_name = self.parse_url_resource_name().split(".")[0] + ".mp4"
-        return await self.download_file_by_stream()
-    
-    async def audio(self) -> Path:
-        if not self.file_name:
-            self.file_name = self.parse_url_resource_name()
-        return await self.download_file_by_stream()
-    
-    async def img(self) -> Path:
-        if not self.file_name:
-            self.file_name = self.parse_url_resource_name()
-        img_path = plugin_cache_dir / self.file_name
-        if img_path.exists():
-            return img_path
-        # 下载文件
-        async with httpx.AsyncClient(**self.client_config) as client:
-            resp = await client.get(self.url)
-            resp.raise_for_status()
-        async with aiofiles.open(img_path, "wb") as f:
-            await f.write(resp.content)
-        return img_path
     
     async def download_file_by_stream(self) -> Path:
         file_path = plugin_cache_dir / self.file_name
@@ -98,6 +67,47 @@ class Downloader:
                             bar.update(len(chunk))
         return file_path
     
+    
+def parse_url_resource_name(url: str) -> str:
+    url_paths = urlparse(url).path.split('/')
+    # 过滤掉空字符串并去除两端空白
+    filtered_paths = [segment.strip() for segment in url_paths if segment.strip()]
+    # 获取最后一个非空路径段
+    return filtered_paths[-1] if filtered_paths else str(time.time())
+
+async def download_video(
+    url: str,
+    video_name: str = "",
+    proxy: str = "",
+    ext_headers: dict[str, str] = {}
+) -> Path:
+    if not video_name:
+        video_name = parse_url_resource_name(url).split(".")[0] + ".mp4"
+    downer = Downloader(url, video_name, proxy, ext_headers)
+    return await downer.download_file_by_stream()
+
+async def download_audio(
+    url: str,
+    audio_name: str = "",
+    proxy: str = "",
+    ext_headers: dict[str, str] = {}
+) -> Path:
+    if not audio_name:
+        audio_name = parse_url_resource_name(url)
+    downer = Downloader(url, audio_name, proxy, ext_headers)
+    return await self.download_file_by_stream()
+
+async def download_img(
+    url: str,
+    img_name: str = "",
+    proxy: str = "",
+    ext_headers: dict[str, str] = {}
+) -> Path:
+    if not img_name:
+        img_name = parse_url_resource_name(url)
+    downer = Downloader(url, img_name, proxy, ext_headers)
+    return await self.download_file_by_stream()
+    
 async def merge_av(
     v_path: Path,
     a_path: Path,
@@ -116,7 +126,6 @@ async def merge_av(
         None,
         lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
     )
-
 
 def delete_boring_characters(sentence: str) -> str:
     """
