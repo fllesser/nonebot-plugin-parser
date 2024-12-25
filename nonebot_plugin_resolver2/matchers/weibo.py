@@ -37,7 +37,7 @@ async def _(bot: Bot, event: MessageEvent):
     weibo_id = None
     
     # fid
-    if match := re.search(r"https://video\.weibo\.com/show\?fid=[^\s]+"):
+    if match := re.search(r"https://video\.weibo\.com/show\?fid=[^\s]+", message):
         video_info = await weibo_parser.parse_share_url(match.group())
         await weibo.send(f"{NICKNAME}解析 | 微博 - {video_info.title} - {video_info.author.name}")
         await weibo.finish(await get_video_seg(url=video_info.video_url))
