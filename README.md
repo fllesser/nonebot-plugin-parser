@@ -132,4 +132,5 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 
 
 ## 致谢
-大部分解析代码来自 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
+[nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
+[parse-video-py](https://github.com/wujunwei928/parse-video-py)
