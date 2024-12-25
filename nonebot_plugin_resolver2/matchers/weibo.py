@@ -19,9 +19,12 @@ from .filter import is_not_in_disable_group
 from .utils import construct_nodes, get_video_seg
 from ..constant import COMMON_HEADER
 from ..data_source.common import download_img, download_video
+from ..parsers.weibo import WeiBo
 from ..config import NICKNAME
+
 # WEIBO_SINGLE_INFO
 WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
+weibo_parser = WeiBo()
 
 weibo = on_keyword(
     keywords={"weibo.com", "m.weibo.cn"},
@@ -33,6 +36,12 @@ async def _(bot: Bot, event: MessageEvent):
     message = event.message.extract_plain_text().strip()
     weibo_id = None
     
+    # fid
+    if match := re.search(r"https://video\.weibo\.com/show\?fid=[^\s]+"):
+        video_info = await weibo_parser.parse_share_url(match.group())
+        await weibo.send(f"{NICKNAME}解析 | 微博 - {video_info.title} - {video_info.author.name}")
+        await weibo.finish(await get_video_seg(url=video_info.video_url))
+        
     # 判断是否包含 "m.weibo.cn"
     # https://m.weibo.cn/detail/4976424138313924
     if match := re.search(r'm\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)', message):
@@ -40,11 +49,6 @@ async def _(bot: Bot, event: MessageEvent):
     # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934    
     elif match := re.search(r'mid=([A-Za-z\d]+)', message):
         weibo_id = mid2id(match.group(1))
-    # 判断是否包含 "weibo.com/show" 且包含 "fid="
-    # https://weibo.com/show?fid=1034:5007449447661594
-    elif match := re.search(r'(?<=fid=)[\d]+:[\d]+', message):
-        logger.info("来个人写写解析fid的（bushi")
-        return # 懒得写了
     # 判断是否包含 "weibo.com"
     # https://weibo.com/1707895270/5006106478773472
     elif match := re.search(r'(?<=weibo.com/)[A-Za-z\d]+/[A-Za-z\d]+', message):

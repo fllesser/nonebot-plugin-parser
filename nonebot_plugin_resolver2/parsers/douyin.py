@@ -1,6 +1,5 @@
-import json
 import re
-
+import json
 import httpx
 
 from .base import BaseParser, VideoAuthor, VideoInfo
@@ -15,33 +14,31 @@ class DouYin(BaseParser):
         if share_url.startswith("https://www.douyin.com/video/"):
             # 支持电脑网页版链接 https://www.douyin.com/video/xxxxxx
             video_id = share_url.strip("/").split("/")[-1]
-            share_url = self._get_request_url_by_video_id(video_id)
+            iesdouyin_url = self._get_request_url_by_video_id(video_id)
         else:
             # 支持app分享链接 https://v.douyin.com/xxxxxx
-            app_url = share_url
             async with httpx.AsyncClient(follow_redirects=False) as client:
-                share_response = await client.get(share_url, headers=self.get_default_headers())
-                share_url = share_response.headers.get("location")
-                video_id = share_url.split("?")[0].strip("/").split("/")[-1]
-                # share_url = self._get_request_url_by_video_id(video_id)
-        if "share/slides" in share_url:
-            return await self.parse_dynamic_images(video_id)
-        return await self.parse_video(share_url, app_url)
+                resp = await client.get(share_url, headers=self.get_default_headers())
+                iesdouyin_url = resp.headers.get("location")
+                video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
+        if "share/slides" in iesdouyin_url:
+            return await self.parse_slides(video_id)
+        return await self.parse_video(iesdouyin_url, share_url)
         
-    async def parse_video(self, share_url: str, app_url: str) -> VideoInfo:
+    async def parse_video(self, iesdouyin_url: str, share_url: str) -> VideoInfo:
         async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.get(share_url, headers=self.get_default_headers())
-            response.raise_for_status()
-    
+            response = await client.get(iesdouyin_url, headers=self.get_default_headers())
+            
         try:
+            response.raise_for_status()
             data = self.format_response(response)
         except Exception as e1:
             try:
                 async with httpx.AsyncClient(follow_redirects=True) as client:
-                    response = await client.get(app_url, headers=self.get_default_headers())
+                    response = await client.get(share_url, headers=self.get_default_headers())
                 data = self.format_response(response)
             except Exception as e2:
-                raise Exception(f"req iesdouyin:{e1}, req app_url: {e2}")
+                raise Exception(f"\nreq iesdouyin: {e1}\nreq app_url: {e2}")
         # 获取图集图片地址
         images = []
         # 如果data含有 images，并且 images 是一个列表
@@ -127,7 +124,7 @@ class DouYin(BaseParser):
 
         return original_video_info["item_list"][0]
         
-    async def parse_dynamic_images(self, video_id: str) -> VideoInfo:
+    async def parse_slides(self, video_id: str) -> VideoInfo:
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
         params = {
           'aweme_ids': f"[{video_id}]",
