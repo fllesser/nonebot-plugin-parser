@@ -57,7 +57,9 @@ _✨ NoneBot2 链接分享解析器重制版 ✨_
 在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
 
     nb plugin install nonebot-plugin-resolver2 --upgrade
+使用 pypi 源更新
 
+    nb plugin install nonebot-plugin-resolver2 --upgrade -i https://pypi.org/simple
 </details>
 
 <details>
