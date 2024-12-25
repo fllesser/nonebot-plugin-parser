@@ -8,7 +8,6 @@ from pathlib import Path
 
 class Config(BaseModel):
     r_xhs_ck: str = ''
-    # r_douyin_ck: str = ''
     r_bili_ck: str = ''
     r_ytb_ck: str = ''
     r_is_oversea: bool = False
