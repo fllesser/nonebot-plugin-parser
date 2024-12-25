@@ -10,7 +10,6 @@ import subprocess
 from pathlib import Path
 from nonebot.log import logger
 from tqdm.asyncio import tqdm
-from urllib.parse import urlparse
 
 from ..constant import COMMON_HEADER
 from ..config import plugin_cache_dir
@@ -23,8 +22,14 @@ def parse_url_resource_name(url: str) -> str:
     # 过滤掉空字符串并去除两端空白
     filtered_paths = [segment.strip() for segment in url_paths if segment.strip()]
     # 获取最后一个非空路径段
-    return filtered_paths[-1] if filtered_paths else str(time.time())
+    last_path = filtered_paths[-1] if filtered_paths else str(time.time())
+    pattern = r'[a-zA-Z0-9-]+(?:\.[a-zA-Z]+)?'
 
+    if matches := re.findall(pattern, last_path):
+        return ''.join(matches)
+    else:
+        return str(time.time())
+    
 async def download_file_by_stream(
     url: str,
     file_name: str = "",
