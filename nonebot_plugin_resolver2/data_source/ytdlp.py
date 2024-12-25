@@ -82,13 +82,13 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> Path:
 async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> Path:
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
-    audio_path = plugin_cache_dir / f'{title}.flac'
+    audio_path = plugin_cache_dir / f'{title}.mp3'
     if audio_path.exists():
         return audio_path
     ydl_opts = {
         'outtmpl': f'{plugin_cache_dir / title}.%(ext)s',
-        'format': 'bestaudio',
-        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'flac', 'preferredquality': '0', }]
+        'format': 'bestaudio/best',
+        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '0'}]
     } | ydl_download_base_opts
     
     if cookiefile:
