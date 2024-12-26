@@ -42,7 +42,7 @@ xiaohongshu = on_message(
 @xiaohongshu.handle()
 async def _(bot: Bot, event: MessageEvent):
     # message: str = event.message.extract_plain_text().replace("&amp;", "&").strip()
-    message: str = str(event.message).strip()
+    message: str = str(event.message).replace("&amp;", "&").strip()
     if match := re.search(r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",message):
         msg_url = match.group(0)
     # 请求头
@@ -81,10 +81,10 @@ async def _(bot: Bot, event: MessageEvent):
     type = note_data['type']
     note_title = note_data['title']
     note_desc = note_data['desc']
-    await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - {note_title}\n{note_desc}")
+    title_msg = f"{NICKNAME}解析 | 小红书 - {note_title}\n{note_desc}"
 
-    aio_task = []
     if type == 'normal':
+        aio_task = []
         image_list = note_data['imageList']
         # 批量
         for index, item in enumerate(image_list):
@@ -92,9 +92,11 @@ async def _(bot: Bot, event: MessageEvent):
                 download_img(item['urlDefault'], img_name=f'{index}.jpg')))
         img_path_list = await asyncio.gather(*aio_task)
         # 发送图片
-        segs = construct_nodes(bot.self_id, [MessageSegment.image(img_path) for img_path in img_path_list])
-        await xiaohongshu.finish(segs)
+        segs = [title_msg] + [MessageSegment.image(img_path) for img_path in img_path_list]
+        nodes = construct_nodes(bot.self_id, segs)
+        await xiaohongshu.finish(nodes)
     elif type == 'video':
+        await xiaohongshu.send(title_msg)
         # 这是一条解析有水印的视频
         # logger.info(note_data['video'])
         video_url = note_data['video']['media']['stream']['h264'][0]['masterUrl']
