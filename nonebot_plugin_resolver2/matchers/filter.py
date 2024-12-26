@@ -54,7 +54,7 @@ disable_all_resolve = on_command(
 )
 check_resolve = on_command(
     '查看关闭解析', 
-    permission=SUPERUSER
+    permission=SUPERUSER,
     block = True
 )
 
