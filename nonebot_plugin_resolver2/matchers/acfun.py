@@ -25,13 +25,9 @@ acfun = on_keyword(
 @acfun.handle()
 async def _(event: MessageEvent) -> None:
     message: str = event.message.extract_plain_text().strip()
-
-    # 短号处理
-    if "m.acfun.cn" in message:
-        if match := re.search(r'ac=([a-zA-Z0-9]+)', message):
-            message = f"https://www.acfun.cn/v/ac{match.group(1)}"
-
-    url_m3u8s, video_name = await parse_url(message)
+    if match := re.search(r"(?:ac=|/ac)(\d+)", message):
+        url = f"https://www.acfun.cn/v/ac{match.group(1)}"
+    url_m3u8s, video_name = await parse_url(url)
     await acfun.send(Message(f"{NICKNAME}解析 | 猴山 - {video_name}"))
     m3u8_full_urls, ts_names, output_file_name = await parse_m3u8(url_m3u8s)
     # logger.info(output_folder_name, output_file_name)
@@ -154,7 +150,7 @@ async def merge_ac_file_to_mp4(ts_names, file_name):
 
 def parse_video_name_fixed(video_info: json):
     """
-        校准文件名
+    校准文件名
     :param video_info:
     :return:
     """
