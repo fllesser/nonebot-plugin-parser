@@ -3,9 +3,15 @@ import httpx
 import json
 import asyncio
 
-from nonebot import on_keyword, logger
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
+from nonebot.log import logger
+from nonebot.plugin.on import on_keyword, on_message
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    Message,
+    MessageEvent,
+    MessageSegment
+)
 from urllib.parse import parse_qs, urlparse
 
 from .filter import is_not_in_disable_group
@@ -18,11 +24,25 @@ from ..config import *
 # 小红书下载链接
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"
 
-xiaohongshu = on_keyword(keywords={"xiaohongshu.com", "xhslink.com"}, rule = Rule(is_not_in_disable_group))
+def is_xhs(event: MessageEvent) -> bool:
+    message = str(event.message).strip()
+    return any(key in message for key in {"xiaohongshu.com", "xhslink.com"})
+
+# xiaohongshu = on_keyword(
+#     keywords={"xiaohongshu.com", "xhslink.com"},
+#     rule = Rule(is_not_in_disable_group),
+#     block = True
+# )
+
+xiaohongshu = on_message(
+    rule = Rule(is_not_in_disable_group, is_xhs),
+    block = True
+)
 
 @xiaohongshu.handle()
 async def _(bot: Bot, event: MessageEvent):
-    message: str = event.message.extract_plain_text().replace("&amp;", "&").strip()
+    # message: str = event.message.extract_plain_text().replace("&amp;", "&").strip()
+    message: str = str(event.message).strip()
     if match := re.search(r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",message):
         msg_url = match.group(0)
     # 请求头

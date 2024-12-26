@@ -21,7 +21,8 @@ from ..config import NICKNAME
 
 douyin = on_keyword(
     keywords={"douyin.com"},
-    rule = Rule(is_not_in_disable_group)
+    rule = Rule(is_not_in_disable_group),
+    block = True
 )
 
 douyin_parser = DouYin()

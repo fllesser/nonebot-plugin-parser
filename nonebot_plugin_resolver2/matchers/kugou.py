@@ -23,8 +23,9 @@ from ..config import NICKNAME
 KUGOU_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={}&n=1&type=json"
 
 kugou = on_keyword(
-    keywords={"kugou.com"},
-    rule = Rule(is_not_in_disable_group)
+    keywords = {"kugou.com"},
+    rule = Rule(is_not_in_disable_group),
+    block = True
 )
 
 @kugou.handle()

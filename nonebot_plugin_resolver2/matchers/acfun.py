@@ -16,7 +16,11 @@ from .filter import is_not_in_disable_group
 from .utils import get_video_seg
 from ..config import plugin_cache_dir, NICKNAME
 
-acfun = on_keyword(keywords={"acfun.cn"}, rule = Rule(is_not_in_disable_group))
+acfun = on_keyword(
+    keywords={"acfun.cn"},
+    rule = Rule(is_not_in_disable_group),
+    block = True
+)
 
 @acfun.handle()
 async def _(event: MessageEvent) -> None:

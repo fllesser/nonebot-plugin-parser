@@ -34,6 +34,10 @@ async def get_video_seg(video_path: Path = None, url: str = None, proxy: str = N
         seg = MessageSegment.text(f"视频获取失败\n{e}")
     finally:
         return seg
+ 
+async get_audio_and_file_seg(audio_path: Path, url: str = None, proxy: str = None) -＞ (MessageSegment, MessageSegment):
+    pass
+ 
     
 def get_file_seg(file_path: Path, name: str = "") -> MessageSegment:
     return MessageSegment("file", data = {
