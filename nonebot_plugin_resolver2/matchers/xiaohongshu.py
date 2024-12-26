@@ -3,9 +3,15 @@ import httpx
 import json
 import asyncio
 
-from nonebot import on_keyword, logger
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, Bot, MessageSegment
+from nonebot.log import logger
+from nonebot.plugin.on import on_keyword, on_message
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    Message,
+    MessageEvent,
+    MessageSegment
+)
 from urllib.parse import parse_qs, urlparse
 
 from .filter import is_not_in_disable_group
@@ -18,11 +24,24 @@ from ..config import *
 # 小红书下载链接
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"
 
-xiaohongshu = on_keyword(keywords={"xiaohongshu.com", "xhslink.com"}, rule = Rule(is_not_in_disable_group))
+def is_xhs(event: MessageEvent) -> bool:
+    message = str(event.message).strip()
+    return any(key in message for key in {"xiaohongshu.com", "xhslink.com"})
+
+# xiaohongshu = on_keyword(
+#     keywords={"xiaohongshu.com", "xhslink.com"},
+#     rule = Rule(is_not_in_disable_group),
+#     block = True
+# )
+
+xiaohongshu = on_message(
+    rule = Rule(is_not_in_disable_group, is_xhs)
+)
 
 @xiaohongshu.handle()
 async def _(bot: Bot, event: MessageEvent):
-    message: str = event.message.extract_plain_text().replace("&amp;", "&").strip()
+    # message: str = event.message.extract_plain_text().replace("&amp;", "&").strip()
+    message: str = str(event.message).replace("&amp;", "&").strip()
     if match := re.search(r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",message):
         msg_url = match.group(0)
     # 请求头
@@ -61,10 +80,10 @@ async def _(bot: Bot, event: MessageEvent):
     type = note_data['type']
     note_title = note_data['title']
     note_desc = note_data['desc']
-    await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - {note_title}\n{note_desc}")
+    title_msg = f"{NICKNAME}解析 | 小红书 - {note_title}\n{note_desc}"
 
-    aio_task = []
     if type == 'normal':
+        aio_task = []
         image_list = note_data['imageList']
         # 批量
         for index, item in enumerate(image_list):
@@ -72,9 +91,11 @@ async def _(bot: Bot, event: MessageEvent):
                 download_img(item['urlDefault'], img_name=f'{index}.jpg')))
         img_path_list = await asyncio.gather(*aio_task)
         # 发送图片
-        segs = construct_nodes(bot.self_id, [MessageSegment.image(img_path) for img_path in img_path_list])
-        await xiaohongshu.finish(segs)
+        segs = [title_msg] + [MessageSegment.image(img_path) for img_path in img_path_list]
+        nodes = construct_nodes(bot.self_id, segs)
+        await xiaohongshu.finish(nodes)
     elif type == 'video':
+        await xiaohongshu.send(title_msg)
         # 这是一条解析有水印的视频
         # logger.info(note_data['video'])
         video_url = note_data['video']['media']['stream']['h264'][0]['masterUrl']

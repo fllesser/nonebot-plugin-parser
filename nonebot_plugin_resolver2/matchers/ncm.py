@@ -27,7 +27,9 @@ def is_ncm(event: MessageEvent) -> bool:
     message = str(event.message).strip()
     return any(key in message for key in {"music.163.com", "163cn.tv"})
 
-ncm = on_message(rule = Rule(is_ncm, is_not_in_disable_group))
+ncm = on_message(
+    rule = Rule(is_ncm, is_not_in_disable_group)
+)
 
 @ncm.handle()
 async def ncm_handler(bot: Bot, event: MessageEvent):

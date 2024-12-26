@@ -20,6 +20,7 @@ url_info: dict[str, dict[str, str]] = {}
     "cron",
     hour=2,
     minute=0,
+    id = "resolver2-clean-url-info"
 )
 async def _():
     url_info.clear()
@@ -85,9 +86,9 @@ async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> Path:
     if audio_path.exists():
         return audio_path
     ydl_opts = {
-        'outtmpl': f'{ plugin_cache_dir / title}.%(ext)s',
-        'format': 'bestaudio',
-        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '0', }]
+        'outtmpl': f'{plugin_cache_dir / title}.%(ext)s',
+        'format': 'bestaudio/best',
+        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '0'}]
     } | ydl_download_base_opts
     
     if cookiefile:

@@ -19,6 +19,7 @@ from ..parsers.base import VideoInfo
 from ..parsers.douyin import DouYin
 from ..config import NICKNAME
 
+
 douyin = on_keyword(
     keywords={"douyin.com"},
     rule = Rule(is_not_in_disable_group)

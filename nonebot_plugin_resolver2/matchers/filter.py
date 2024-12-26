@@ -1,15 +1,22 @@
 import json
 
-from typing import Set
-from nonebot import logger, on_command
+from nonebot.log import logger
 from nonebot.rule import to_me
+from nonebot.plugin import on_command
 from nonebot.permission import SUPERUSER
-from nonebot.adapters.onebot.v11 import GROUP_ADMIN, GROUP_OWNER, Bot
-from nonebot.adapters.onebot.v11.event import PrivateMessageEvent, MessageEvent, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import (
+    Bot,
+    MessageEvent,
+    GroupMessageEvent,
+    PrivateMessageEvent,
+    GROUP_ADMIN, 
+    GROUP_OWNER
+)
+
 from ..config import store
 from ..constant import DISABLE_GROUPS
 
-def load_or_initialize_set() -> Set[int]:
+def load_or_initialize_set() -> set[int]:
     data_file = store.get_plugin_data_file(DISABLE_GROUPS)
     # 判断是否存在
     if not data_file.exists():
@@ -21,13 +28,35 @@ def save_disabled_groups():
     data_file.write_text(json.dumps(list(disabled_group_set)))
 
 # 内存中关闭解析的名单，第一次先进行初始化
-disabled_group_set: Set[int] = load_or_initialize_set()
+disabled_group_set: set[int] = load_or_initialize_set()
 
-enable_resolve = on_command('开启解析', rule=to_me(), permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
-disable_resolve = on_command('关闭解析', rule=to_me(), permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER)
-enable_all_resolve = on_command('开启所有解析', permission=SUPERUSER)
-disable_all_resolve = on_command('关闭所有解析', permission=SUPERUSER)
-check_resolve = on_command('查看关闭解析', permission=SUPERUSER)
+enable_resolve = on_command(
+    '开启解析', 
+    rule=to_me(),
+    permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER,
+    block = True
+)
+disable_resolve = on_command(
+    '关闭解析', 
+    rule=to_me(), 
+    permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER,
+    block = True
+)
+enable_all_resolve = on_command(
+    '开启所有解析', 
+    permission=SUPERUSER,
+    block = True
+)
+disable_all_resolve = on_command(
+    '关闭所有解析',
+    permission=SUPERUSER,
+    block = True
+)
+check_resolve = on_command(
+    '查看关闭解析', 
+    permission=SUPERUSER,
+    block = True
+)
 
 
 # Rule

@@ -15,7 +15,7 @@ from ..config import *
 
 
 tiktok = on_keyword(
-    keywords={"tiktok.com", "vt.tiktok.com", "vm.tiktok.com"},
+    keywords={"tiktok.com"},
     rule = Rule(is_not_in_disable_group)
 )
 

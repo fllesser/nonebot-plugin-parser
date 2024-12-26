@@ -22,34 +22,23 @@ async def _():
         pass
     if rconfig.r_ytb_ck:
         save_cookies_to_netscape(rconfig.r_ytb_ck, YTB_COOKIES_FILE, 'youtube.com')
-    # if not rconfig.r_douyin_ck:
-    #     if douyin := resolvers.pop("douyin", None):
-    #         douyin.destroy()
-    #         logger.info("检测到未配置抖音 cookie, 抖音解析器已销毁")
     if not rconfig.r_xhs_ck:
         if xiaohongshu := resolvers.pop("xiaohongshu", None):
             xiaohongshu.destroy()
-            logger.info("检测到未配置小红书 cookie, 小红书解析器已销毁")
+            logger.warning("检测到未配置小红书 cookie, 小红书解析器已销毁")
     # 处理黑名单 resovler
     for resolver in rconfig.r_disable_resolvers:
         if matcher := resolvers.get(resolver, None):
             matcher.destroy()
-            logger.info(f"解析器 {resolver} 已销毁")
+            logger.warning(f"解析器 {resolver} 已销毁")
 
 @scheduler.scheduled_job(
     "cron",
     hour=1,
     minute=0,
+    id = "resolver2-clean-local-cache"
 )
 async def _():
-    import os
-    # 清理缓存目录中的文件
-    for filename in os.listdir(plugin_cache_dir):
-        file_path = os.path.join(plugin_cache_dir, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.unlink(file_path)  # 删除文件或符号链接
-            elif os.path.isdir(file_path):
-                os.rmdir(file_path)  # 删除空目录
-        except Exception as e:
-            print(f"Failed to delete {file_path}. Reason: {e}")
+    for file in plugin_cache_dir.iterdir():
+        if file.is_file():
+            file.unlink()
