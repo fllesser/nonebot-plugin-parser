@@ -28,7 +28,7 @@ async def _(event: MessageEvent) -> None:
 
     # 短号处理
     if "m.acfun.cn" in message:
-        if match := re.search(r'ac=([^&?]*)', message):
+        if match := re.search(r'ac=([a-zA-Z0-9]+)', message):
             message = f"https://www.acfun.cn/v/ac{match.group(1)}"
 
     url_m3u8s, video_name = await parse_url(message)
