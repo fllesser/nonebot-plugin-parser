@@ -18,8 +18,7 @@ from ..config import plugin_cache_dir, NICKNAME
 
 acfun = on_keyword(
     keywords={"acfun.cn"},
-    rule = Rule(is_not_in_disable_group),
-    block = True
+    rule = Rule(is_not_in_disable_group)
 )
 
 @acfun.handle()

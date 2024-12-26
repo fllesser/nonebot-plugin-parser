@@ -35,8 +35,7 @@ def is_xhs(event: MessageEvent) -> bool:
 # )
 
 xiaohongshu = on_message(
-    rule = Rule(is_not_in_disable_group, is_xhs),
-    block = True
+    rule = Rule(is_not_in_disable_group, is_xhs)
 )
 
 @xiaohongshu.handle()

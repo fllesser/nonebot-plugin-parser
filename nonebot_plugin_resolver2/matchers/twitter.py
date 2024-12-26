@@ -22,8 +22,7 @@ from ..config import PROXY, NICKNAME
 
 twitter = on_keyword(
     keywords={"x.com"},
-    rule = Rule(is_not_in_disable_group),
-    block = True
+    rule = Rule(is_not_in_disable_group)
 )
 
 @twitter.handle()

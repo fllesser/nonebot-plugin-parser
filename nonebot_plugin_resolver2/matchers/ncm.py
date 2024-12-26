@@ -28,8 +28,7 @@ def is_ncm(event: MessageEvent) -> bool:
     return any(key in message for key in {"music.163.com", "163cn.tv"})
 
 ncm = on_message(
-    rule = Rule(is_ncm, is_not_in_disable_group),
-    block = True
+    rule = Rule(is_ncm, is_not_in_disable_group)
 )
 
 @ncm.handle()

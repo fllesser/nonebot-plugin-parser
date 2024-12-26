@@ -16,8 +16,7 @@ from ..config import *
 
 tiktok = on_keyword(
     keywords={"tiktok.com"},
-    rule = Rule(is_not_in_disable_group),
-    block = True
+    rule = Rule(is_not_in_disable_group)
 )
 
 @tiktok.handle()

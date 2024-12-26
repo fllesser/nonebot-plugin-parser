@@ -30,8 +30,7 @@ from ..config import (
 
 ytb = on_keyword(
     keywords = {"youtube.com", "youtu.be"},
-    rule = Rule(is_not_in_disable_group),
-    block = True
+    rule = Rule(is_not_in_disable_group)
 )
 
 # update_yt = on_command(

@@ -28,8 +28,7 @@ weibo_parser = WeiBo()
 
 weibo = on_keyword(
     keywords={"weibo.com", "m.weibo.cn"},
-    rule = Rule(is_not_in_disable_group),
-    block = True
+    rule = Rule(is_not_in_disable_group)
 )
 
 @weibo.handle()

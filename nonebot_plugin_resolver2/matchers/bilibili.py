@@ -59,8 +59,10 @@ def is_bilibili(event: MessageEvent) -> bool:
     return any(key in message for key in {"bilibili.com", "b23.tv", "BV"})
 
 bilibili = on_message(
-    rule = Rule(is_not_in_disable_group, is_bilibili),
-    block = True
+    rule = Rule(
+        is_not_in_disable_group,
+        is_bilibili
+    )
 )
 bili_music = on_command(
     cmd="bm",

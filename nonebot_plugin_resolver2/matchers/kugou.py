@@ -24,8 +24,7 @@ KUGOU_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={}&n=1&type
 
 kugou = on_keyword(
     keywords = {"kugou.com"},
-    rule = Rule(is_not_in_disable_group),
-    block = True
+    rule = Rule(is_not_in_disable_group)
 )
 
 @kugou.handle()
