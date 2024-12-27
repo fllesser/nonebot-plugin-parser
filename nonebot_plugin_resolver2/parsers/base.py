@@ -2,7 +2,6 @@ import dataclasses
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict, List
-from ..constant import COMMON_HEADER
 
 import fake_useragent
 
@@ -53,8 +52,7 @@ class BaseParser(ABC):
     @staticmethod
     def get_default_headers() -> Dict[str, str]:
         return {
-            #"User-Agent": fake_useragent.UserAgent(os=["ios"]).random,
-            'User-Agent': COMMON_HEADER
+            "User-Agent": fake_useragent.UserAgent(os=["ios"]).random
         }
 
     @abstractmethod
