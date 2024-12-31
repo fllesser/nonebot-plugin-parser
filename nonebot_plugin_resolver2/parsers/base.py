@@ -52,7 +52,7 @@ class BaseParser(ABC):
     @staticmethod
     def get_default_headers() -> Dict[str, str]:
         return {
-            "User-Agent": fake_useragent.UserAgent(os=["ios"]).random,
+            "User-Agent": fake_useragent.UserAgent(os=["ios"]).random
         }
 
     @abstractmethod

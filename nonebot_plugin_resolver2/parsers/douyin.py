@@ -1,6 +1,13 @@
 import re
 import json
 import httpx
+import asyncio
+from tenacity import (
+    retry,
+    stop_after_attempt, 
+    wait_fixed,
+    AsyncRetrying
+)
 
 from .base import BaseParser, VideoAuthor, VideoInfo
 
@@ -11,7 +18,7 @@ class DouYin(BaseParser):
     """
 
     async def parse_share_url(self, share_url: str) -> VideoInfo:
-        if share_url.startswith("https://www.douyin.com/video/"):
+        if share_url.startswith("https://www.douyin.com/video"):
             # 支持电脑网页版链接 https://www.douyin.com/video/xxxxxx
             video_id = share_url.strip("/").split("/")[-1]
             iesdouyin_url = self._get_request_url_by_video_id(video_id)
@@ -24,7 +31,8 @@ class DouYin(BaseParser):
         if "share/slides" in iesdouyin_url:
             return await self.parse_slides(video_id)
         return await self.parse_video(iesdouyin_url, share_url)
-        
+    
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))    
     async def parse_video(self, iesdouyin_url: str, share_url: str) -> VideoInfo:
         async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.get(iesdouyin_url, headers=self.get_default_headers())
@@ -36,9 +44,10 @@ class DouYin(BaseParser):
             try:
                 async with httpx.AsyncClient(follow_redirects=True) as client:
                     response = await client.get(share_url, headers=self.get_default_headers())
+                response.raise_for_status()
                 data = self.format_response(response)
             except Exception as e2:
-                raise Exception(f"\nreq iesdouyin: {e1}\nreq app_url: {e2}")
+                raise Exception(f"\nreq iesdouyin_url: {e1}\nreq share_url: {e2}")
         # 获取图集图片地址
         images = []
         # 如果data含有 images，并且 images 是一个列表
