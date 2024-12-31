@@ -27,8 +27,6 @@ class DouYin(BaseParser):
             async with httpx.AsyncClient(follow_redirects=False) as client:
                 resp = await client.get(share_url, headers=self.get_default_headers())
                 iesdouyin_url = resp.headers.get("location")
-                if not iesdouyin_url.startswith("https://www.iesdouyin.com"): 
-                    return None
                 video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
         if "share/slides" in iesdouyin_url:
             return await self.parse_slides(video_id)

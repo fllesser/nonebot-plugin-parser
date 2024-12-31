@@ -40,8 +40,6 @@ async def _(bot: Bot, event: Event):
         return
     try:
         video_info: VideoInfo = await douyin_parser.parse_share_url(share_url)
-        if not video_info:
-            return
     except Exception as e:
         await douyin.finish(f"{NICKNAME}解析 | 抖音 - {e}")
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
