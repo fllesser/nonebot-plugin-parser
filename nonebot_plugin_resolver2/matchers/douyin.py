@@ -14,7 +14,7 @@ from nonebot.adapters.onebot.v11 import (
 from .utils import get_video_seg, construct_nodes
 from .filter import is_not_in_disable_group
 
-from ..data_source.common import download_img
+from ..download.common import download_img
 from ..parsers.base import VideoInfo
 from ..parsers.douyin import DouYin
 from ..config import NICKNAME

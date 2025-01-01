@@ -14,7 +14,7 @@ from nonebot.adapters.onebot.v11 import (
 from .filter import is_not_in_disable_group
 from .utils import get_file_seg
 from ..constant import COMMON_HEADER
-from ..data_source.common import download_audio
+from ..download.common import download_audio
 from ..config import *
 
 # NCM获取歌曲信息链接

@@ -17,7 +17,7 @@ from nonebot.adapters.onebot.v11 import (
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg, get_file_seg
-from ..data_source.ytdlp import (
+from ..download.ytdlp import (
     get_video_info,
     ytdlp_download_audio,
     ytdlp_download_video
@@ -108,13 +108,13 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
 #             del sys.modules['yt_dlp']
 #             logger.warning('delete cache of yt_dlp')
 #         import yt_dlp
-#         if 'nonebot_plugin_resolver2.data_source.ytdlp' in sys.modules:
-#             del sys.modules['nonebot_plugin_resolver2.data_source.ytdlp']
-#             logger.warning('delete cache of nonebot_plugin_resolver2.data_source.ytdlp')
-#         from ..data_source import ytdlp
+#         if 'nonebot_plugin_resolver2.download.ytdlp' in sys.modules:
+#             del sys.modules['nonebot_plugin_resolver2.download.ytdlp']
+#             logger.warning('delete cache of nonebot_plugin_resolver2.download.ytdlp')
+#         from ..download import ytdlp
 #         importlib.reload(yt_dlp)
 #         importlib.reload(ytdlp)
-#         from ..data_source.ytdlp import (
+#         from ..download.ytdlp import (
 #             get_video_info,
 #             ytdlp_download_audio,
 #             ytdlp_download_video

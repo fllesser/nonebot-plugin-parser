@@ -18,7 +18,7 @@ from .filter import is_not_in_disable_group
 from .utils import get_video_seg, construct_nodes
 
 from ..constant import COMMON_HEADER
-from ..data_source.common import download_video, download_img
+from ..download.common import download_video, download_img
 from ..config import *
 
 # 小红书下载链接

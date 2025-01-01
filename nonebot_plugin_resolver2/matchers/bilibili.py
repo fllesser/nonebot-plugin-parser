@@ -37,7 +37,7 @@ from .preprocess import (
     R_KEYWORD_KEY,
     R_EXTRACT_KEY
 )
-from ..data_source.common import (
+from ..download.common import (
     delete_boring_characters,
     download_file_by_stream,
     merge_av
