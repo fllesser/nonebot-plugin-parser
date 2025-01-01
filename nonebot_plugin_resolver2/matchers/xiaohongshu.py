@@ -3,9 +3,8 @@ import httpx
 import json
 import asyncio
 
-from nonebot.rule import Rule
 from nonebot.log import logger
-from nonebot.plugin.on import on_keyword, on_message
+from nonebot.plugin.on import on_message
 from nonebot.adapters.onebot.v11 import (
     Bot,
     Message,
@@ -16,6 +15,11 @@ from urllib.parse import parse_qs, urlparse
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg, construct_nodes
+from .preprocess import (
+    r_keywords,
+    R_KEYWORD_KEY,
+    R_EXTRACT_KEY
+)
 
 from ..constant import COMMON_HEADER
 from ..download.common import download_video, download_img
@@ -24,44 +28,37 @@ from ..config import *
 # 小红书下载链接
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"
 
-def is_xhs(event: MessageEvent) -> bool:
-    message = str(event.message).strip()
-    return any(key in message for key in {"xiaohongshu.com", "xhslink.com"})
-
-# xiaohongshu = on_keyword(
-#     keywords={"xiaohongshu.com", "xhslink.com"},
-#     rule = Rule(is_not_in_disable_group),
-#     block = True
-# )
-
 xiaohongshu = on_message(
-    rule = Rule(is_not_in_disable_group, is_xhs)
+    rule = is_not_in_disable_group & r_keywords("xiaohongshu.com", "xhslink.com")
 )
 
 @xiaohongshu.handle()
 async def _(bot: Bot, event: MessageEvent):
-    # message: str = event.message.extract_plain_text().replace("&amp;", "&").strip()
-    message: str = str(event.message).replace("&amp;", "&").strip()
-    if match := re.search(r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",message):
-        msg_url = match.group(0)
+    text = state.get(R_EXTRACT_KEY)
+    
+    if match := re.search(r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*", text):
+        url = match.group(0)
+    else:
+        logger.info(f'{text} ignored')
+        return
     # 请求头
     headers = {
                   'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,'
                             'application/signed-exchange;v=b3;q=0.9',
                   'cookie': rconfig.r_xhs_ck,
               } | COMMON_HEADER
-    if "xhslink" in msg_url:
+    if "xhslink" in url:
         async with httpx.AsyncClient() as client:
-            resp = await client.get(msg_url, headers=headers, follow_redirects=True)
-            msg_url = str(resp.url)
+            resp = await client.get(url, headers=headers, follow_redirects=True)
+            url = str(resp.url)
     # ?: 非捕获组
     pattern = r'(?:/explore/|/discovery/item/|source=note&noteId=)(\w+)'
-    if match := re.search(pattern, msg_url):
+    if match := re.search(pattern, url):
         xhs_id = match.group(1)
     else:
         return
     # 解析 URL 参数
-    parsed_url = urlparse(msg_url)
+    parsed_url = urlparse(url)
     params = parse_qs(parsed_url.query)
     # 提取 xsec_source 和 xsec_token
     xsec_source = params.get('xsec_source', [None])[0] or "pc_feed"

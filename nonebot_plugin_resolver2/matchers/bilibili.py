@@ -4,7 +4,6 @@ import asyncio
 
 from tqdm.asyncio import tqdm
 from nonebot.log import logger
-from nonebot.rule import Rule
 from nonebot.typing import T_State
 from nonebot.params import CommandArg
 from nonebot.exception import ActionFailed

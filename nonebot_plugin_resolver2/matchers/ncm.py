@@ -2,17 +2,21 @@ import re
 import httpx
 import asyncio
 
-from nonebot import on_message
-from nonebot.rule import Rule
+from nonebot.plugin import on_message
+from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import (
     Message,
-    MessageEvent,
     Bot,
     MessageSegment
 )
 
 from .filter import is_not_in_disable_group
 from .utils import get_file_seg
+from .preprocess import (
+    r_keywords,
+    R_KEYWORD_KEY,
+    R_EXTRACT_KEY
+)
 from ..constant import COMMON_HEADER
 from ..download.common import download_audio
 from ..config import *
@@ -23,27 +27,23 @@ NETEASE_API_CN = 'https://www.markingchen.ink'
 # NCM临时接口
 NETEASE_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_wyymusic.php?id={}&br=7&type=json"
 
-def is_ncm(event: MessageEvent) -> bool:
-    message = str(event.message).strip()
-    return any(key in message for key in {"music.163.com", "163cn.tv"})
-
 ncm = on_message(
-    rule = Rule(is_ncm, is_not_in_disable_group)
+    rule = is_not_in_disable_group & r_keywords("music.163.com", "163cn.tv")
 )
 
 @ncm.handle()
-async def ncm_handler(bot: Bot, event: MessageEvent):
-    message = str(event.message).strip()
+async def _(bot: Bot, state: T_State):
+    text, keyword = state.get(R_EXTRACT_KEY), state.get(R_KEYWORD_KEY)
     # 解析短链接
-    if "163cn.tv" in message:
-        if match := re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", message):
-            message = match.group(0)
-        # message = str(httpx.head(message, follow_redirects=True).url)
+    if keyword == "163cn.tv":
+        if match := re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", text):
+            url = match.group(0)
         async with httpx.AsyncClient() as client:
-            resp = await client.head(message, follow_redirects=True)
-            message = str(resp.url)
-        
-    if match := re.search(r"id=(\d+)", message):
+            resp = await client.head(url, follow_redirects=True)
+        url = str(resp.url)
+    else:
+        url = text
+    if match := re.search(r"id=(\d+)", url):
         ncm_id = match.group(1)
     else:
         await ncm.finish(f"{NICKNAME}解析 | 网易云 - 获取链接失败")

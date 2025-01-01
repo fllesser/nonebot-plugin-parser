@@ -18,13 +18,14 @@ def _(event: MessageEvent, state: T_State):
     if json_seg := [seg for seg in message if seg.type == 'json']:
         try:
             data_str = json_seg[0].data.get('data')
-            data_str = data_str.replace('&#44;', ',').replace('\\', '')
+            data_str = data_str.replace('&#44;', ',')
             data = json.loads(data_str)
             meta = data.get('meta')
             if detail := meta.get('detail_1'):
                 text = detail.get('qqdocurl')
             elif news := meta.get('news'):
                 text = news.get('jumpUrl')
+            text = text.replace('\\', '').replace("&amp;", "&")
         except Exception:
             pass
     state[R_EXTRACT_KEY] = text
