@@ -1,7 +1,7 @@
 from nonebot import get_driver, logger
 
 from nonebot.plugin import PluginMetadata
-from .matchers import resolvers, commands
+from .matchers import resolvers
 from .config import *
 from .cookie import *
 

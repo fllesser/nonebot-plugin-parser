@@ -5,6 +5,7 @@ import asyncio
 from tqdm.asyncio import tqdm
 from nonebot.log import logger
 from nonebot.rule import Rule
+from nonebot.typing import T_State
 from nonebot.params import CommandArg
 from nonebot.exception import ActionFailed
 from nonebot.plugin.on import on_message, on_command
@@ -31,6 +32,11 @@ from .utils import (
     get_file_seg
 )
 from .filter import is_not_in_disable_group
+from .preprocess import (
+    r_keywords,
+    R_KEYWORD_KEY,
+    R_EXTRACT_KEY
+)
 from ..data_source.common import (
     delete_boring_characters,
     download_file_by_stream,
@@ -54,52 +60,46 @@ BILIBILI_HEADERS = {
     'referer': 'https://www.bilibili.com'
 }
 
-def is_bilibili(event: MessageEvent) -> bool:
-    message = str(event.message).strip()
-    return any(key in message for key in {"bilibili.com", "b23.tv", "bili2233.cn", "BV"})
-
 bilibili = on_message(
     rule = Rule(
         is_not_in_disable_group,
-        is_bilibili
+        r_keywords("bilibili", "b23", "bili2233", "BV")
     )
 )
+
 bili_music = on_command(
     cmd="bm",
     block = True
 )
 
 @bilibili.handle()
-async def _(bot: Bot, event: MessageEvent):
+async def _(bot: Bot, state: T_State):
     # 消息
-    message: str = str(event.message).strip()
+    text, keyword = state.get(R_EXTRACT_KEY), state.get(R_KEYWORD_KEY)
+    url, video_id = '', ''
     
-    url: str = ""
-    video_id: str = ""
-    # BV处理
-    if re.match(r'^BV[1-9a-zA-Z]{10}$', message):
-        # url = 'https://www.bilibili.com/video/' + message
-        video_id = message
-    # 处理短号、小程序问题
-    elif 'b23.tv' in message:
+    if keyword == 'BV':
+        if re.match(r'^BV[1-9a-zA-Z]{10}$', text):
+            video_id = text
+    elif keyword == 'b23':
+        # 处理短号、小程序
         b_short_reg = r"(http:|https:)\/\/b23.tv\/[A-Za-z\d._?%&+\-=\/#]*"
-        if match := re.search(b_short_reg, message.replace("\\", "")):
+        if match := re.search(b_short_reg, text):
             b_short_url = match.group(0)
             async with httpx.AsyncClient() as client:
                 resp = await client.get(b_short_url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
-    elif 'bili2233' in message:
+    elif keyword == 'bili2233':
+        # 处理新域名、小程序
         b_new_reg = r"(http:|https:)\/\/bili2233.cn\/[A-Za-z\d._?%&+\-=\/#]*"
-        #await bilibili.send(message.replace("\\", ""))
-        if match := re.search(b_new_reg, message.replace("\\", "")):
+        if match := re.search(b_new_reg, text):
             b_new_url = match.group(0)
             async with httpx.AsyncClient() as client:
                 resp = await client.get(b_new_url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
-            
     else:
         url_reg = r"(http:|https:)\/\/(space|www|live).bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
-        if match := re.search(url_reg, message):
+        if match := re.search(url_reg, text):
             url = match.group(0)
     if url:
         # ===============发现解析的是动态，转移一下===============
