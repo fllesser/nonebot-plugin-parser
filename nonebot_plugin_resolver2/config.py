@@ -1,4 +1,8 @@
-from nonebot import get_driver, require, get_plugin_config
+from nonebot import (
+    get_driver, 
+    require, 
+    get_plugin_config
+)
 require("nonebot_plugin_localstore")
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
@@ -30,6 +34,6 @@ BILI_COOKIES_FILE = plugin_config_dir / 'bili_cookies.txt' if rconfig.r_bili_ck 
 # 全局名称
 NICKNAME: str = next(iter(get_driver().config.nickname), "")
 # 根据是否为国外机器声明代理
-PROXY: str = None if rconfig.r_is_oversea else rconfig.r_proxy
+PROXY: str = "" if rconfig.r_is_oversea else rconfig.r_proxy
 # 哔哩哔哩限制的最大视频时长（默认8分钟）单位：秒
 DURATION_MAXIMUM: int = rconfig.r_video_duration_maximum

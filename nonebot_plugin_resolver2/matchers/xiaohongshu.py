@@ -100,5 +100,3 @@ async def _(bot: Bot, state: T_State):
         # video_url = f"http://sns-video-bd.xhscdn.com/{note_data['video']['consumer']['originVideoKey']}"
         await xiaohongshu.finish(await get_video_seg(url = video_url))
     
-
-
