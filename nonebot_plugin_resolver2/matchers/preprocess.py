@@ -32,7 +32,7 @@ def _(event: MessageEvent, state: T_State):
 class RKeywordsRule:
     """检查消息是否含有关键词 增强版"""
 
-    __slots__ = ("r_keywords",)
+    __slots__ = ("keywords",)
 
     def __init__(self, *keywords: str):
         self.keywords = keywords
@@ -59,4 +59,4 @@ class RKeywordsRule:
         
         
 def r_keywords(*keywords: str) -> Rule:
-    return Rule(RKeywordsRule(keywords))
+    return Rule(RKeywordsRule(*keywords))
