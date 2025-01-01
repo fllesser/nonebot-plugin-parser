@@ -185,7 +185,7 @@ async def _(bot: Bot, state: T_State):
         if not video_info:
             raise Exception("video_info is None")
     except Exception as e:
-        await bilibili.finish(f"{NICKNAME}解析 | 哔哩哔哩 - 出错 {e}"))
+        await bilibili.finish(f"{NICKNAME}解析 | 哔哩哔哩 - 出错 {e}")
     await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频')
     video_title, video_cover, video_desc, video_duration = video_info['title'], video_info['pic'], video_info['desc'], video_info['duration']
     # 校准 分 p 的情况
