@@ -70,5 +70,3 @@ async def _(bot: Bot, state: T_State):
         await kugou.finish(get_file_seg(audio_path, f'{kugou_name}-{kugou_singer}.{audio_path.name.split(".")[-1]}'))
     else:
         await kugou.send(f"{NICKNAME}解析 | 酷狗音乐 - 不支持当前外链，请重新分享再试")
-
-        
