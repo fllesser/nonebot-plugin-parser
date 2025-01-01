@@ -94,7 +94,7 @@ async def _(bot: Bot, state: T_State):
                 resp = await client.get(b_new_url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
     else:
-        url_reg = r"(http:|https:)\/\/(space|www|live).bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
+        url_reg = r"(http:|https:)\/\/(space|www|live|m)?.bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
         if match := re.search(url_reg, text):
             url = match.group(0)
     if url:
@@ -170,8 +170,8 @@ async def _(bot: Bot, state: T_State):
    
     if video_id:
         v = video.Video(bvid = video_id, credential=credential)
-    elif match := re.search(r"video\/[^\?\/ ]+", url):
-        video_id = match.group(0).split('/')[1]
+    elif match := re.search(r"(av\d+|BV[A-Za-z0-9]{10})", url):
+        video_id = match.group(1)
         if "av" in video_id:
             v = video.Video(aid=int(video_id.split("av")[1]), credential=credential)
         else:
