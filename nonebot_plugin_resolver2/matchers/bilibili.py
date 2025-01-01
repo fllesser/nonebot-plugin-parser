@@ -56,7 +56,7 @@ BILIBILI_HEADERS = {
 
 def is_bilibili(event: MessageEvent) -> bool:
     message = str(event.message).strip()
-    return any(key in message for key in {"bilibili.com", "b23.tv", "BV"})
+    return any(key in message for key in {"bilibili.com", "b23.tv", "bili2233.cn", "BV"})
 
 bilibili = on_message(
     rule = Rule(
@@ -73,7 +73,7 @@ bili_music = on_command(
 async def _(bot: Bot, event: MessageEvent):
     # 消息
     message: str = str(event.message).strip()
-    # 正则匹配
+    
     url: str = ""
     video_id: str = ""
     # BV处理
@@ -81,13 +81,22 @@ async def _(bot: Bot, event: MessageEvent):
         # url = 'https://www.bilibili.com/video/' + message
         video_id = message
     # 处理短号、小程序问题
-    elif 'b23.tv' in message or ('b23.tv' and 'QQ小程序' in message):
+    elif 'b23.tv' in message:
         b_short_reg = r"(http:|https:)\/\/b23.tv\/[A-Za-z\d._?%&+\-=\/#]*"
         if match := re.search(b_short_reg, message.replace("\\", "")):
             b_short_url = match.group(0)
             async with httpx.AsyncClient() as client:
                 resp = await client.get(b_short_url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
+    elif 'bili2233' in message:
+        b_new_reg = r"(http:|https:)\/\/bili2233.cn\/[A-Za-z\d._?%&+\-=\/#]*"
+        #await bilibili.send(message.replace("\\", ""))
+        if match := re.search(b_new_reg, message.replace("\\", "")):
+            b_new_url = match.group(0)
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(b_new_url, headers=BILIBILI_HEADERS, follow_redirects=True)
+            url = str(resp.url)
+            
     else:
         url_reg = r"(http:|https:)\/\/(space|www|live).bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
         if match := re.search(url_reg, message):
