@@ -17,7 +17,7 @@ from .utils import get_video_seg
 
 from ..constant import COMMON_HEADER
 
-from ..data_source.common import download_img
+from ..download.common import download_img
 from ..config import PROXY, NICKNAME
 
 twitter = on_keyword(

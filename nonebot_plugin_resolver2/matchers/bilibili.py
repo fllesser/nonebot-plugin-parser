@@ -4,7 +4,7 @@ import asyncio
 
 from tqdm.asyncio import tqdm
 from nonebot.log import logger
-from nonebot.rule import Rule
+from nonebot.typing import T_State
 from nonebot.params import CommandArg
 from nonebot.exception import ActionFailed
 from nonebot.plugin.on import on_message, on_command
@@ -31,7 +31,12 @@ from .utils import (
     get_file_seg
 )
 from .filter import is_not_in_disable_group
-from ..data_source.common import (
+from .preprocess import (
+    r_keywords,
+    R_KEYWORD_KEY,
+    R_EXTRACT_KEY
+)
+from ..download.common import (
     delete_boring_characters,
     download_file_by_stream,
     merge_av
@@ -54,52 +59,43 @@ BILIBILI_HEADERS = {
     'referer': 'https://www.bilibili.com'
 }
 
-def is_bilibili(event: MessageEvent) -> bool:
-    message = str(event.message).strip()
-    return any(key in message for key in {"bilibili.com", "b23.tv", "bili2233.cn", "BV"})
-
 bilibili = on_message(
-    rule = Rule(
-        is_not_in_disable_group,
-        is_bilibili
-    )
+    rule = is_not_in_disable_group & r_keywords("bilibili", "b23", "bili2233", "BV")
 )
+
 bili_music = on_command(
     cmd="bm",
     block = True
 )
 
 @bilibili.handle()
-async def _(bot: Bot, event: MessageEvent):
+async def _(bot: Bot, state: T_State):
     # 消息
-    message: str = str(event.message).strip()
+    text, keyword = state.get(R_EXTRACT_KEY), state.get(R_KEYWORD_KEY)
+    url, video_id = '', ''
     
-    url: str = ""
-    video_id: str = ""
-    # BV处理
-    if re.match(r'^BV[1-9a-zA-Z]{10}$', message):
-        # url = 'https://www.bilibili.com/video/' + message
-        video_id = message
-    # 处理短号、小程序问题
-    elif 'b23.tv' in message:
+    if keyword == 'BV':
+        if re.match(r'^BV[1-9a-zA-Z]{10}$', text):
+            video_id = text
+    elif keyword == 'b23':
+        # 处理短号、小程序
         b_short_reg = r"(http:|https:)\/\/b23.tv\/[A-Za-z\d._?%&+\-=\/#]*"
-        if match := re.search(b_short_reg, message.replace("\\", "")):
+        if match := re.search(b_short_reg, text):
             b_short_url = match.group(0)
             async with httpx.AsyncClient() as client:
                 resp = await client.get(b_short_url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
-    elif 'bili2233' in message:
+    elif keyword == 'bili2233':
+        # 处理新域名、小程序
         b_new_reg = r"(http:|https:)\/\/bili2233.cn\/[A-Za-z\d._?%&+\-=\/#]*"
-        #await bilibili.send(message.replace("\\", ""))
-        if match := re.search(b_new_reg, message.replace("\\", "")):
+        if match := re.search(b_new_reg, text):
             b_new_url = match.group(0)
             async with httpx.AsyncClient() as client:
                 resp = await client.get(b_new_url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
-            
     else:
-        url_reg = r"(http:|https:)\/\/(space|www|live).bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
-        if match := re.search(url_reg, message):
+        url_reg = r"(http:|https:)\/\/(space|www|live|m)?.?bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
+        if match := re.search(url_reg, text):
             url = match.group(0)
     if url:
         # ===============发现解析的是动态，转移一下===============
@@ -174,8 +170,8 @@ async def _(bot: Bot, event: MessageEvent):
    
     if video_id:
         v = video.Video(bvid = video_id, credential=credential)
-    elif match := re.search(r"video\/[^\?\/ ]+", url):
-        video_id = match.group(0).split('/')[1]
+    elif match := re.search(r"(av\d+|BV[A-Za-z0-9]{10})", url):
+        video_id = match.group(1)
         if "av" in video_id:
             v = video.Video(aid=int(video_id.split("av")[1]), credential=credential)
         else:
@@ -186,11 +182,11 @@ async def _(bot: Bot, event: MessageEvent):
     segs: list[MessageSegment | str] = []
     try:
         video_info = await v.get_info()
-        if video_info is None:
-            await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩 - 出错，无法获取数据！"))
-        await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频')
+        if not video_info:
+            raise Exception("video_info is None")
     except Exception as e:
-        await bilibili.finish(Message(f"{NICKNAME}解析 | 哔哩哔哩 - 出错\n{e}"))
+        await bilibili.finish(f"{NICKNAME}解析 | 哔哩哔哩 - 出错 {e}")
+    await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频')
     video_title, video_cover, video_desc, video_duration = video_info['title'], video_info['pic'], video_info['desc'], video_info['duration']
     # 校准 分 p 的情况
     page_num = 0

@@ -5,7 +5,7 @@ from nonebot.adapters.onebot.v11 import (
     MessageSegment
 )
 from ..constant import VIDEO_MAX_MB
-from ..data_source.common import download_video
+from ..download.common import download_video
 from ..config import NICKNAME
 
 def construct_nodes(user_id, segments: MessageSegment | list) -> Message:

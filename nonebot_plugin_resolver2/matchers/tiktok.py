@@ -10,7 +10,7 @@ from nonebot.exception import ActionFailed
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg
-from ..data_source.ytdlp import get_video_info, ytdlp_download_video
+from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..config import *
 
 
