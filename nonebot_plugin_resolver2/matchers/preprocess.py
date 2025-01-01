@@ -58,5 +58,5 @@ class RKeywordsRule:
         return False
         
         
-def r_keywords(*keyword: str) -> Rule:
+def r_keywords(*keywords: str) -> Rule:
     return Rule(RKeywordsRule(*keywords))
