@@ -61,10 +61,7 @@ BILIBILI_HEADERS = {
 }
 
 bilibili = on_message(
-    rule = Rule(
-        is_not_in_disable_group,
-        r_keywords("bilibili", "b23", "bili2233", "BV")
-    )
+    rule = is_not_in_disable_group & r_keywords("bilibili", "b23", "bili2233", "BV")
 )
 
 bili_music = on_command(
