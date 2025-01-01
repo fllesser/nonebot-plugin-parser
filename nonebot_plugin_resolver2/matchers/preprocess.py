@@ -44,8 +44,8 @@ def _(event: MessageEvent, state: T_State):
             elif news := meta.get('news'):
                 text = news.get('jumpUrl')
             else:
-                text = find_https_links(meta)
-                    
+                pass
+                # text = find_https_links(meta)
             text = text.replace('\\', '').replace("&amp;", "&")
         except Exception:
             pass
