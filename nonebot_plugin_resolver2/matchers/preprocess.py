@@ -59,4 +59,4 @@ class RKeywordsRule:
         
         
 def r_keywords(*keywords: str) -> Rule:
-    return Rule(RKeywordsRule(*keywords))
+    return Rule(RKeywordsRule(keywords))
