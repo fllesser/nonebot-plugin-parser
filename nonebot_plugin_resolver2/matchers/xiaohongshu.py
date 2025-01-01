@@ -85,8 +85,7 @@ async def _(bot: Bot, state: T_State):
         image_list = note_data['imageList']
         # 批量
         for index, item in enumerate(image_list):
-            aio_task.append(asyncio.create_task(
-                download_img(item['urlDefault'], img_name=f'{index}.jpg')))
+            aio_task.append(asyncio.create_task(download_img(item['urlDefault'])))
         img_path_list = await asyncio.gather(*aio_task)
         # 发送图片
         segs = [title_msg] + [MessageSegment.image(img_path) for img_path in img_path_list]
