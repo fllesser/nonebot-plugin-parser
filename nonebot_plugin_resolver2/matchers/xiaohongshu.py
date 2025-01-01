@@ -4,6 +4,7 @@ import json
 import asyncio
 
 from nonebot.log import logger
+from nonebot.typing import T_State
 from nonebot.plugin.on import on_message
 from nonebot.adapters.onebot.v11 import (
     Bot,
@@ -33,7 +34,7 @@ xiaohongshu = on_message(
 )
 
 @xiaohongshu.handle()
-async def _(bot: Bot, event: MessageEvent):
+async def _(bot: Bot, state: T_State):
     text = state.get(R_EXTRACT_KEY)
     
     if match := re.search(r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*", text):
