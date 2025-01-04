@@ -52,7 +52,7 @@ async def download_file_by_stream(
 ) -> Path:
     if not url:
         raise EmptyURLError("url cannot be empty")
-    file_name = file_name if file_name else parse_url_resource_name(url)
+    file_name = file_name if file_name else parse_url_file_name(url)
     file_path = plugin_cache_dir / file_name
     if file_path.exists():
         return file_path
@@ -127,7 +127,7 @@ async def merge_av(
     # 构建 ffmpeg 命令, localstore already path.resolve()
     command = f'ffmpeg -y -i {v_path} -i "{a_path}" -c copy "{output_path}"'
     stdout = None if log_output else subprocess.DEVNULL
-    stderr = None if log_output else subprocess.DEVNULL
+    stderr = subprocess.DEVNULL
     await asyncio.get_event_loop().run_in_executor(
         None,
         lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
