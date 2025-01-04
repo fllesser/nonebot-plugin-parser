@@ -98,13 +98,13 @@ async def _(bot: Bot, state: T_State):
             if match := re.search(r'[^/]+(?!.*/)', url):
                 dynamic_id = int(match.group(0))
             else:
-                logger.info(f"{NICKNAME}解析 | B站动态 - 没有获取到动态 id, 忽略")
+                logger.info(f"{NICKNAME}解析 | 哔哩哔哩 - 没有获取到动态 id, 忽略")
                 return
             dynamic_info = await Opus(dynamic_id, credential).get_info()
             
             if dynamic_info:
                 title = dynamic_info['item']['basic']['title']
-                await bilibili.send(f"{NICKNAME}解析 | B站动态 - {title}")
+                await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - {title}")
                 paragraphs = []
                 for module in dynamic_info['item']['modules']:
                     if 'module_content' in module:
@@ -114,9 +114,9 @@ async def _(bot: Bot, state: T_State):
                 for node in paragraphs[0]['text']['nodes']:
                     text_type = node.get('type')
                     if text_type == 'TEXT_NODE_TYPE_RICH':
-                        segs += node['rich']['text']
+                        segs.append(node['rich']['text'])
                     elif text_type == 'TEXT_NODE_TYPE_WORD':
-                        segs += node['word']['words']
+                        segs.append(node['word']['words'])
                 if len(paragraphs) > 1:
                     pics = paragraphs[1]['pic']['pics']
                     segs += [MessageSegment.image(pic['url']) for pic in pics]
@@ -139,6 +139,7 @@ async def _(bot: Bot, state: T_State):
             if match := re.search(r'read/cv(\d+)', url):
                 read_id = match.group(1)
             else:
+                logger.info(f"{NICKNAME}解析 | 哔哩哔哩 - 没有获取到专栏 id, 忽略")
                 return
             ar = article.Article(read_id)
             # 如果专栏为公开笔记，则转换为笔记类
@@ -158,6 +159,7 @@ async def _(bot: Bot, state: T_State):
             if match := re.search(r'favlist\?fid=(\d+)', url):
                 fav_id = match.group(1)
             else:
+                logger.info(f"{NICKNAME}解析 | 哔哩哔哩 - 没有获取到收藏夹 id, 忽略")
                 return
             fav_list = (await get_video_favorite_list_content(fav_id))['medias'][:10]
             favs = []
