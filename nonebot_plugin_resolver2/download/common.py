@@ -130,7 +130,7 @@ async def merge_av(
     stderr = subprocess.DEVNULL
     await asyncio.get_event_loop().run_in_executor(
         None,
-        lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
+        lambda: subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
     )
 
 def delete_boring_characters(sentence: str) -> str:
