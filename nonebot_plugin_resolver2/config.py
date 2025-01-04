@@ -3,12 +3,16 @@ from nonebot import (
     require, 
     get_plugin_config
 )
+from pydantic import BaseModel
+from pathlib import Path
+from typing import List, Literal
+
+from .constant import MatcherNames
+
 require("nonebot_plugin_localstore")
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 import nonebot_plugin_localstore as store
-from pydantic import BaseModel
-from pathlib import Path
 
 class Config(BaseModel):
     r_xhs_ck: str = ''
@@ -17,8 +21,7 @@ class Config(BaseModel):
     r_is_oversea: bool = False
     r_proxy: str = 'http://127.0.0.1:7890'
     r_video_duration_maximum: int = 480
-    r_disable_resolvers: list[str] = []
-
+    r_disable_resolvers: List[MatcherNames] = []
 
 plugin_cache_dir: Path = store.get_plugin_cache_dir()
 plugin_config_dir: Path = store.get_plugin_config_dir()

@@ -3,6 +3,7 @@ import re
 import json
 import time
 import httpx
+import hashlib
 import asyncio
 import aiofiles
 import subprocess
@@ -30,6 +31,18 @@ def parse_url_resource_name(url: str) -> str:
         return ''.join(matches)
     else:
         return str(time.time())
+
+def parse_url_file_name(url: str) -> str:
+    parsed_url = urlparse(url)
+    file_name = os.path.basename(parsed_url.path)
+    file_suffix = os.path.splitext(file_name)[1]
+    return f'{hash16url(url)}{file_suffix}'
+
+def hash16url(url: str) -> str:
+    # 使用SHA-256哈希函数生成文件名
+    hash_object = hashlib.sha256(url.encode())
+    filename = hash_object.hexdigest()[-16:]
+    return filename
     
 async def download_file_by_stream(
     url: str,
