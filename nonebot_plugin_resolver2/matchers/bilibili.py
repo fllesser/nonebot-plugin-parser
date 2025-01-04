@@ -182,6 +182,7 @@ async def _(bot: Bot, state: T_State):
         else:
             v = video.Video(bvid=video_id, credential=credential)
     else:
+        logger.info(f"链接 {url} 无效，忽略")
         return
     # 合并转发消息 list
     segs: list[MessageSegment | str] = []
