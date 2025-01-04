@@ -52,7 +52,7 @@ async def download_file_by_stream(
 ) -> Path:
     if not url:
         raise EmptyURLError("url cannot be empty")
-    file_name = file_name if file_name else parse_url_file_name(url)
+    file_name = file_name if file_name else parse_url_resource_name(url)
     file_path = plugin_cache_dir / file_name
     if file_path.exists():
         return file_path
