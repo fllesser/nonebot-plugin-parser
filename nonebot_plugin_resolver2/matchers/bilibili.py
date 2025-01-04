@@ -90,7 +90,7 @@ async def _(bot: Bot, state: T_State):
         if match := re.search(pattern, text):
             url = match.group(0)
     if url:
-        # ===============发现解析的是动态，转移一下===============
+        # 动态
         if ('t.bilibili.com' in url or '/opus' in url) and credential:
             # 去除多余的参数
             if '?' in url:
@@ -101,20 +101,26 @@ async def _(bot: Bot, state: T_State):
                 logger.info(f"{NICKNAME}解析 | B站动态 - 没有获取到动态 id, 忽略")
                 return
             dynamic_info = await Opus(dynamic_id, credential).get_info()
-            # 这里比较复杂，暂时不用管，使用下面这个算法即可实现哔哩哔哩动态转发
-            if dynamic_info is not None:
+            
+            if dynamic_info:
                 title = dynamic_info['item']['basic']['title']
+                await bilibili.send(f"{NICKNAME}解析 | B站动态 - {title}")
                 paragraphs = []
                 for module in dynamic_info['item']['modules']:
                     if 'module_content' in module:
                         paragraphs = module['module_content']['paragraphs']
                         break
-                await bilibili.send(f"{paragraphs}")
-                desc = paragraphs[0]['text']['nodes'][0]['word']['words']
-                pics = paragraphs[1]['pic']['pics']
-                await bilibili.send(Message(f"{NICKNAME}解析 | B站动态 - {title}\n{desc}"))
-                segs = [MessageSegment.image(pic['url']) for pic in pics]
-                # 发送异步后的数据
+                segs = []
+                for node in paragraphs[0]['text']['nodes']:
+                    text_type = node.get('type')
+                    if text_type == 'TEXT_NODE_TYPE_RICH':
+                        segs += node['rich']['text']
+                    elif text_type == 'TEXT_NODE_TYPE_WORD':
+                        segs += node['word']['words']
+                if len(paragraphs) > 1:
+                    pics = paragraphs[1]['pic']['pics']
+                    segs += [MessageSegment.image(pic['url']) for pic in pics]
+                
                 await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
         if 'live' in url:
