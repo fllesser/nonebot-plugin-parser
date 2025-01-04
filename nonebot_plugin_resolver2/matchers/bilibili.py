@@ -94,12 +94,9 @@ async def _(bot: Bot, state: T_State):
             url = match.group(0)
     if url:
         # 动态
-        if ('t.bilibili.com' in url or '/opus' in url) and credential:
-            # 去除多余的参数
-            if '?' in url:
-                url = url[:url.index('?')]
-            if match := re.search(r'[^/]+(?!.*/)', url):
-                dynamic_id = int(match.group(0))
+        if ('t.bilibili.com' in url or 'opus' in url) and credential:
+            if match := re.search(r'/(\d+)', url):
+                dynamic_id = int(match.group(1))
             else:
                 logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
                 return
