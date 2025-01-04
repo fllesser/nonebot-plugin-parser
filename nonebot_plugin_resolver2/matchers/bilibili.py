@@ -85,6 +85,9 @@ async def _(bot: Bot, state: T_State):
             async with httpx.AsyncClient() as client:
                 resp = await client.get(b23url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
+            if url == b23url:
+                logger.info(f"链接 {url} 无效，忽略")
+                return
     else:
         pattern = r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+"
         if match := re.search(pattern, text):
@@ -98,7 +101,7 @@ async def _(bot: Bot, state: T_State):
             if match := re.search(r'[^/]+(?!.*/)', url):
                 dynamic_id = int(match.group(0))
             else:
-                logger.info(f"{NICKNAME}解析 | 哔哩哔哩 - 没有获取到动态 id, 忽略")
+                logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
                 return
             dynamic_info = await Opus(dynamic_id, credential).get_info()
             
@@ -110,7 +113,7 @@ async def _(bot: Bot, state: T_State):
                     if 'module_content' in module:
                         paragraphs = module['module_content']['paragraphs']
                         break
-                await bilibili.send(f'{paragraphs}')
+                    
                 segs = []
                 for node in paragraphs[0]['text']['nodes']:
                     text_type = node.get('type')
@@ -129,7 +132,7 @@ async def _(bot: Bot, state: T_State):
             if match := re.search(r'/(\d+)', url):
                 room_id = match.group(1)
             else:
-                logger.info(f"{NICKNAME}解析 | 哔哩哔哩 - 没有获取到直播间 id, 忽略")
+                logger.info(f"链接 {url} 无效 - 没有获取到直播间 id, 忽略")
                 return
             room = live.LiveRoom(room_display_id=int(room_id))
             room_info = (await room.get_room_info())['room_info']
@@ -140,7 +143,7 @@ async def _(bot: Bot, state: T_State):
             if match := re.search(r'read/cv(\d+)', url):
                 read_id = match.group(1)
             else:
-                logger.info(f"{NICKNAME}解析 | 哔哩哔哩 - 没有获取到专栏 id, 忽略")
+                logger.info(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
                 return
             ar = article.Article(read_id)
             # 如果专栏为公开笔记，则转换为笔记类
@@ -160,7 +163,7 @@ async def _(bot: Bot, state: T_State):
             if match := re.search(r'favlist\?fid=(\d+)', url):
                 fav_id = match.group(1)
             else:
-                logger.info(f"{NICKNAME}解析 | 哔哩哔哩 - 没有获取到收藏夹 id, 忽略")
+                logger.info(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
                 return
             fav_list = (await get_video_favorite_list_content(fav_id))['medias'][:10]
             favs = []
