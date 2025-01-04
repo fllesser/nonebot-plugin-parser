@@ -110,6 +110,7 @@ async def _(bot: Bot, state: T_State):
                     if 'module_content' in module:
                         paragraphs = module['module_content']['paragraphs']
                         break
+                await bilibili.send(f'{paragraphs}')
                 segs = []
                 for node in paragraphs[0]['text']['nodes']:
                     text_type = node.get('type')
