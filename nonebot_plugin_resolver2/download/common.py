@@ -127,7 +127,7 @@ async def merge_av(
     command = f'ffmpeg -y -i "{v_path}" -i "{a_path}" -c copy "{output_path}"'
     result = await asyncio.get_event_loop().run_in_executor(
         None,
-        lambda: subprocess.call(command, shell=True)
+        lambda: subprocess.call(command, shell=True, stdout=None, stderr=None)
     )
     if result.returncode != 0:
         raise RuntimeError("ffmpeg未安装或命令执行失败")
