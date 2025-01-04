@@ -117,21 +117,20 @@ async def download_img(
 async def merge_av(
     v_path: Path,
     a_path: Path,
-    output_path: Path,
-    log_output: bool = False
+    output_path: Path
 ):
     """
     合并视频文件和音频文件
     """
-    logger.info(f'正在合并: {output_path.name}')
+    logger.info(f'Start merging {v_path.name} and {a_path.name} to {output_path.name}')
     # 构建 ffmpeg 命令, localstore already path.resolve()
-    command = f'ffmpeg -y -i {v_path} -i "{a_path}" -c copy "{output_path}"'
-    stdout = None if log_output else subprocess.DEVNULL
-    stderr = subprocess.DEVNULL
-    await asyncio.get_event_loop().run_in_executor(
+    command = f'ffmpeg -y -i "{v_path}" -i "{a_path}" -c copy "{output_path}"'
+    result = await asyncio.get_event_loop().run_in_executor(
         None,
-        lambda: subprocess.run(command, shell=True, stdout=stdout, stderr=stderr)
+        lambda: subprocess.call(command, shell=True)
     )
+    if result.returncode != 0:
+        raise RuntimeError("ffmpeg未安装或命令执行失败")
 
 def delete_boring_characters(sentence: str) -> str:
     """
