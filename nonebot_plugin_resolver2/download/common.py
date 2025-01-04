@@ -122,7 +122,7 @@ async def merge_av(
     """
     合并视频文件和音频文件
     """
-    logger.info(f'Start merging {v_path.name} and {a_path.name} to {output_path.name}')
+    logger.info(f'Merging {v_path.name} and {a_path.name} to {output_path.name}')
     # 构建 ffmpeg 命令, localstore already path.resolve()
     command = f'ffmpeg -y -i "{v_path}" -i "{a_path}" -c copy "{output_path}"'
     result = await asyncio.get_event_loop().run_in_executor(

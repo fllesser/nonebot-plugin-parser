@@ -77,25 +77,17 @@ async def _(bot: Bot, state: T_State):
     if keyword == 'BV':
         if re.match(r'^BV[1-9a-zA-Z]{10}$', text):
             video_id = text
-    elif keyword == 'b23':
+    elif keyword in ('b23', 'bili2233'):
         # 处理短号、小程序
-        b_short_reg = r"(http:|https:)\/\/b23.tv\/[A-Za-z\d._?%&+\-=\/#]*"
-        if match := re.search(b_short_reg, text):
-            b_short_url = match.group(0)
+        pattern = r"https:?//(?:b23\.tv|bili2233\.cn)/[A-Za-z\d]*"
+        if match := re.search(pattern, text):
+            b23url = match.group(0)
             async with httpx.AsyncClient() as client:
-                resp = await client.get(b_short_url, headers=BILIBILI_HEADERS, follow_redirects=True)
-            url = str(resp.url)
-    elif keyword == 'bili2233':
-        # 处理新域名、小程序
-        b_new_reg = r"(http:|https:)\/\/bili2233.cn\/[A-Za-z\d._?%&+\-=\/#]*"
-        if match := re.search(b_new_reg, text):
-            b_new_url = match.group(0)
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(b_new_url, headers=BILIBILI_HEADERS, follow_redirects=True)
+                resp = await client.get(b23url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
     else:
-        url_reg = r"(http:|https:)\/\/(space|www|live|m)?.?bilibili.com\/[A-Za-z\d._?%&+\-=\/#]*"
-        if match := re.search(url_reg, text):
+        pattern = r"https:?//(?:space|www|live|m)?\.?bilibili.com/[A-Za-z\d\._?%&+\-=/#]*"
+        if match := re.search(pattern, text):
             url = match.group(0)
     if url:
         # ===============发现解析的是动态，转移一下===============
@@ -137,7 +129,10 @@ async def _(bot: Bot, state: T_State):
             await bilibili.finish(MessageSegment.image(cover) + MessageSegment.image(keyframe) + f"{NICKNAME}解析 | 哔哩哔哩 - 直播 - {title}")
         # 专栏解析
         if 'read' in url:
-            read_id = re.search(r'read\/cv(\d+)', url).group(1)
+            if match := re.search(r'read\/cv(\d+)', url):
+                read_id = match.group(1)
+            else:
+                return
             ar = article.Article(read_id)
             # 如果专栏为公开笔记，则转换为笔记类
             # NOTE: 笔记类的函数与专栏类的函数基本一致
@@ -145,11 +140,11 @@ async def _(bot: Bot, state: T_State):
                 ar = ar.turn_to_note()
             # 加载内容
             await ar.fetch_content()
-            markdown_path = plugin_cache_dir / 'article.md'
+            markdown_path = plugin_cache_dir / f'{read_id}-article.md'
             with open(markdown_path, 'w', encoding='utf8') as f:
                 f.write(ar.markdown())
-            await bilibili.send(Message(f"{NICKNAME}解析 | 哔哩哔哩 - 专栏"))
-            await bilibili.finish(Message(MessageSegment(type="file", data={ "file": markdown_path })))
+            await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - 专栏")
+            await bilibili.finish(get_file_seg(markdown_path))
         # 收藏夹解析
         if 'favlist' in url and credential:
             # https://space.bilibili.com/22990202/favlist?fid=2344812202
