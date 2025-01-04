@@ -169,7 +169,7 @@ async def _(bot: Bot, state: T_State):
                 avid = re.search(r'\d+', link).group(0)
                 favs.append(
                     MessageSegment.image(cover) + 
-                    f'🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：https://bilibili.com/video/av{avid}'
+                    f'🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}'
                 )
             await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 收藏夹\n正在为你找出相关链接请稍等...')
             await bilibili.finish(construct_nodes(bot.self_id, favs))
