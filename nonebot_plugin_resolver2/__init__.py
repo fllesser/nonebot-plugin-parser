@@ -18,14 +18,14 @@ __plugin_meta__ = PluginMetadata(
 
 @get_driver().on_startup
 async def _():
-    if rconfig.r_bili_ck:
-        pass
+    if not rconfig.r_bili_ck:
+        logger.warning('未配置哔哩哔哩 cookie，无法使用哔哩哔哩AI总结，可能无法解析 720p 以上画质视频')
     if rconfig.r_ytb_ck:
         save_cookies_to_netscape(rconfig.r_ytb_ck, YTB_COOKIES_FILE, 'youtube.com')
     if not rconfig.r_xhs_ck:
         if xiaohongshu := resolvers.pop("xiaohongshu", None):
             xiaohongshu.destroy()
-            logger.warning("检测到未配置小红书 cookie, 小红书解析器已销毁")
+            logger.warning("未配置小红书 cookie, 小红书解析器已销毁")
     # 处理黑名单 resovler
     for resolver in rconfig.r_disable_resolvers:
         if matcher := resolvers.get(resolver, None):

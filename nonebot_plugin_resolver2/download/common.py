@@ -3,6 +3,7 @@ import re
 import json
 import time
 import httpx
+import hashlib
 import asyncio
 import aiofiles
 import subprocess
@@ -30,6 +31,18 @@ def parse_url_resource_name(url: str) -> str:
         return ''.join(matches)
     else:
         return str(time.time())
+
+def parse_url_file_name(url: str) -> str:
+    parsed_url = urlparse(url)
+    file_name = os.path.basename(parsed_url.path)
+    file_suffix = os.path.splitext(file_name)[1]
+    return f'{hash16url(url)}{file_suffix}'
+
+def hash16url(url: str) -> str:
+    # 使用SHA-256哈希函数生成文件名
+    hash_object = hashlib.sha256(url.encode())
+    filename = hash_object.hexdigest()[-16:]
+    return filename
     
 async def download_file_by_stream(
     url: str,
@@ -104,21 +117,20 @@ async def download_img(
 async def merge_av(
     v_path: Path,
     a_path: Path,
-    output_path: Path,
-    log_output: bool = False
+    output_path: Path
 ):
     """
     合并视频文件和音频文件
     """
-    logger.info(f'正在合并: {output_path.name}')
+    logger.info(f'Merging {v_path.name} and {a_path.name} to {output_path.name}')
     # 构建 ffmpeg 命令, localstore already path.resolve()
-    command = f'ffmpeg -y -i {v_path} -i "{a_path}" -c copy "{output_path}"'
-    stdout = None if log_output else subprocess.DEVNULL
-    stderr = None if log_output else subprocess.DEVNULL
-    await asyncio.get_event_loop().run_in_executor(
+    command = f'ffmpeg -y -i "{v_path}" -i "{a_path}" -c copy "{output_path}"'
+    result = await asyncio.get_event_loop().run_in_executor(
         None,
-        lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
+        lambda: subprocess.call(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     )
+    if result != 0:
+        raise RuntimeError("ffmpeg未安装或命令执行失败")
 
 def delete_boring_characters(sentence: str) -> str:
     """
