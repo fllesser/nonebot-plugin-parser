@@ -127,9 +127,9 @@ async def merge_av(
     command = f'ffmpeg -y -i "{v_path}" -i "{a_path}" -c copy "{output_path}"'
     result = await asyncio.get_event_loop().run_in_executor(
         None,
-        lambda: subprocess.call(command, shell=True, stdout=None, stderr=None)
+        lambda: subprocess.call(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     )
-    if result.returncode != 0:
+    if result != 0:
         raise RuntimeError("ffmpeg未安装或命令执行失败")
 
 def delete_boring_characters(sentence: str) -> str:
