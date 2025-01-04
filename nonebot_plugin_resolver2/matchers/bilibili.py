@@ -79,14 +79,14 @@ async def _(bot: Bot, state: T_State):
             video_id = text
     elif keyword in ('b23', 'bili2233'):
         # 处理短号、小程序
-        pattern = r"https:?//(?:b23\.tv|bili2233\.cn)/[A-Za-z\d]*"
+        pattern = r"https?://(?:b23\.tv|bili2233\.cn)/[A-Za-z\d\._?%&+\-=/#]+"
         if match := re.search(pattern, text):
             b23url = match.group(0)
             async with httpx.AsyncClient() as client:
                 resp = await client.get(b23url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
     else:
-        pattern = r"https:?//(?:space|www|live|m)?\.?bilibili.com/[A-Za-z\d\._?%&+\-=/#]*"
+        pattern = r"https?://(?:space|www|live|m)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+"
         if match := re.search(pattern, text):
             url = match.group(0)
     if url:
@@ -118,7 +118,7 @@ async def _(bot: Bot, state: T_State):
         # 直播间解析
         if 'live' in url:
             # https://live.bilibili.com/30528999?hotRank=0
-            if match := re.search(r'\/(\d+)', url):
+            if match := re.search(r'/(\d+)', url):
                 room_id = match.group(1)
             else:
                 logger.info(f"{NICKNAME}解析 | 哔哩哔哩 - 没有获取到直播间 id, 忽略")
@@ -129,7 +129,7 @@ async def _(bot: Bot, state: T_State):
             await bilibili.finish(MessageSegment.image(cover) + MessageSegment.image(keyframe) + f"{NICKNAME}解析 | 哔哩哔哩 - 直播 - {title}")
         # 专栏解析
         if 'read' in url:
-            if match := re.search(r'read\/cv(\d+)', url):
+            if match := re.search(r'read/cv(\d+)', url):
                 read_id = match.group(1)
             else:
                 return
