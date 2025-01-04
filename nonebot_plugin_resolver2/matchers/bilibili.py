@@ -86,7 +86,7 @@ async def _(bot: Bot, state: T_State):
                 resp = await client.get(b23url, headers=BILIBILI_HEADERS, follow_redirects=True)
             url = str(resp.url)
     else:
-        pattern = r"https?://(?:space|www|live|m)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+"
+        pattern = r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+"
         if match := re.search(pattern, text):
             url = match.group(0)
     if url:
@@ -109,6 +109,7 @@ async def _(bot: Bot, state: T_State):
                     if 'module_content' in module:
                         paragraphs = module['module_content']['paragraphs']
                         break
+                await bilibili.send(f"{paragraphs}")
                 desc = paragraphs[0]['text']['nodes'][0]['word']['words']
                 pics = paragraphs[1]['pic']['pics']
                 await bilibili.send(Message(f"{NICKNAME}解析 | B站动态 - {title}\n{desc}"))
