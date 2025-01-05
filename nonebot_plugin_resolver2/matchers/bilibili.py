@@ -101,6 +101,7 @@ async def _(bot: Bot, state: T_State):
     # 链接中是否包含BV，av号
     if url and (id_type := next((i for i in ('/BV', '/av') if i in url), None)):
         if match := patterns[id_type].search(url):
+            keyword = id_type
             video_id = match.group(1)
     
     # 如果不是视频
@@ -204,7 +205,7 @@ async def _(bot: Bot, state: T_State):
             logger.warning(f"unsupported url: {url}")
             return
     # 视频   
-    if keyword == '/av':
+    if keyword in ('av', '/av'):
         v = video.Video(aid=int(video_id), credential=credential)
     else:
         v = video.Video(bvid = video_id, credential=credential)
