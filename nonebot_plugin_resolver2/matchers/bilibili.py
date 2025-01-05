@@ -39,6 +39,7 @@ from .preprocess import (
 from ..download.common import (
     delete_boring_characters,
     download_file_by_stream,
+    download_img,
     merge_av
 )
 
@@ -94,7 +95,7 @@ async def _(bot: Bot, state: T_State):
             url = match.group(0)
     if url:
         # 动态
-        if ('t.bilibili.com' in url or '/opus' in url) and credential:
+        if 't.bilibili.com' in url or '/opus' in url:
             if match := re.search(r'/(\d+)', url):
                 dynamic_id = int(match.group(1))
             else:
@@ -143,19 +144,34 @@ async def _(bot: Bot, state: T_State):
                 logger.info(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
                 return
             ar = article.Article(read_id)
-            # 如果专栏为公开笔记，则转换为笔记类
-            # NOTE: 笔记类的函数与专栏类的函数基本一致
-            if ar.is_note():
-                ar = ar.turn_to_note()
+            await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - 专栏")
+
             # 加载内容
             await ar.fetch_content()
-            markdown_path = plugin_cache_dir / f'{read_id}-article.md'
-            with open(markdown_path, 'w', encoding='utf8') as f:
-                f.write(ar.markdown())
-            await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - 专栏")
-            await bilibili.finish(get_file_seg(markdown_path))
+            data = ar.json()
+            segs: list[MessageSegment | str] = []
+            def accumulate_text(node):
+                text = ""
+                if 'children' in node:
+                    for child in node['children']:
+                        text += accumulate_text(child) + " "
+                if _text := node.get('text'):
+                    text += _text if isinstance(_text, str) else str(_text) + node.get('url')
+                return text
+            for node in data.get("children"):
+                node_type = node.get('type')
+                if node_type == "ImageNode":
+                    if img_url := node.get('url'):
+                        segs.append(MessageSegment.image(await download_img(img_url)))
+                elif node_type == "ParagraphNode":
+                    if text := accumulate_text(node).strip():
+                        segs.append(text)
+                elif node_type == 'TextNode':
+                    segs.append(node.get("text"))
+            if segs:
+                await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 收藏夹解析
-        if '/favlist' in url and credential:
+        if '/favlist' in url:
             # https://space.bilibili.com/22990202/favlist?fid=2344812202
             if match := re.search(r'favlist\?fid=(\d+)', url):
                 fav_id = match.group(1)
