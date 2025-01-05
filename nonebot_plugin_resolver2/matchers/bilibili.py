@@ -60,7 +60,8 @@ BILIBILI_HEADERS = {
 }
 
 bilibili = on_message(
-    rule = is_not_in_disable_group & r_keywords("bilibili", "bili2233", "b23", "BV", 'av')
+    rule = is_not_in_disable_group & r_keywords("bilibili", "bili2233", "b23", "BV", 'av'),
+    priority = 5
 )
 
 bili_music = on_command(
