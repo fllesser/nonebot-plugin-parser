@@ -24,7 +24,7 @@ nonebot-plugin-apscheduler = ">=0.5.0,<1.0.0"
 bilibili-api-python = "^16.3.0"
 
 [tool.poetry.overrides]
-"conflicting-package" = { httpx = ">=0.27.2,<0.28.0", yarl = "^1.8.3" }
+"bilibili-api-python" = { httpx = ">=0.27.2,<0.28.0", yarl = "^1.8.3" }
 
 [build-system]
 requires = ["poetry-core"]
