@@ -34,19 +34,19 @@ def find_https_links(data):
 def _(event: MessageEvent, state: T_State): 
     message = event.get_message()
     text = message.extract_plain_text().strip()
-    if json_seg := [seg for seg in message if seg.type == 'json']:
+    if json_seg := next((seg for seg in message if seg.type == 'json'), None):
         try:
-            data_str = json_seg[0].data.get('data').replace('&#44;', ',')
+            data_str = json_seg.data.get('data').replace('&#44;', ',')
             data = json.loads(data_str)
-            meta = data.get('meta')
-            if detail := meta.get('detail_1'):
-                text = detail.get('qqdocurl')
-            elif news := meta.get('news'):
-                text = news.get('jumpUrl')
-            else:
-                pass
-                # text = find_https_links(meta)
-            text = text.replace('\\', '').replace("&amp;", "&")
+            if meta := data.get('meta'):
+                if detail := meta.get('detail_1'):
+                    text = detail.get('qqdocurl')
+                elif news := meta.get('news'):
+                    text = news.get('jumpUrl')
+                else:
+                    pass
+                    # text = find_https_links(meta)
+                text = text.replace('\\', '').replace("&amp;", "&")
         except Exception:
             pass
     state[R_EXTRACT_KEY] = text
