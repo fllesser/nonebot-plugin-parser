@@ -94,7 +94,7 @@ async def _(bot: Bot, state: T_State):
             url = match.group(0)
     if url:
         # 动态
-        if ('t.bilibili.com' in url or 'opus' in url) and credential:
+        if ('t.bilibili.com' in url or '/opus' in url) and credential:
             if match := re.search(r'/(\d+)', url):
                 dynamic_id = int(match.group(1))
             else:
@@ -124,7 +124,7 @@ async def _(bot: Bot, state: T_State):
                 
                 await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
-        if 'live' in url:
+        if '/live' in url:
             # https://live.bilibili.com/30528999?hotRank=0
             if match := re.search(r'/(\d+)', url):
                 room_id = match.group(1)
@@ -136,7 +136,7 @@ async def _(bot: Bot, state: T_State):
             title, cover, keyframe = room_info['title'], room_info['cover'], room_info['keyframe']
             await bilibili.finish(MessageSegment.image(cover) + MessageSegment.image(keyframe) + f"{NICKNAME}解析 | 哔哩哔哩 - 直播 - {title}")
         # 专栏解析
-        if 'read' in url:
+        if '/read' in url:
             if match := re.search(r'read/cv(\d+)', url):
                 read_id = match.group(1)
             else:
@@ -155,7 +155,7 @@ async def _(bot: Bot, state: T_State):
             await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - 专栏")
             await bilibili.finish(get_file_seg(markdown_path))
         # 收藏夹解析
-        if 'favlist' in url and credential:
+        if '/favlist' in url and credential:
             # https://space.bilibili.com/22990202/favlist?fid=2344812202
             if match := re.search(r'favlist\?fid=(\d+)', url):
                 fav_id = match.group(1)
