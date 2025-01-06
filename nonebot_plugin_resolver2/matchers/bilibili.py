@@ -70,8 +70,8 @@ bili_music = on_command(
 )
 
 patterns: dict[str, re.Pattern] = {
-    'BV': re.compile(r'(BV[1-9a-zA-Z]{10})(:?\s)?(\d{1,2})?'),
-    'av': re.compile(r'av(\d{6,})(:?\s)?(\d{1,2})?'),
+    'BV': re.compile(r'(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,2})?'),
+    'av': re.compile(r'av(\d{6,})(?:\s)?(\d{1,2})?'),
     '/BV': re.compile(r'/(BV[1-9a-zA-Z]{10})()'),
     '/av': re.compile(r'/av(\d{6,})()'),
     'b23': re.compile(r'https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()'),
