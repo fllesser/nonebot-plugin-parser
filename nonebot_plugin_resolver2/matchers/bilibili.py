@@ -282,21 +282,21 @@ async def _(bot: Bot, state: T_State):
 
 @bili_music.handle()
 async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
-    bvid = args.extract_plain_text().strip()
-    if not re.match(r'^BV[1-9a-zA-Z]{10}$', bvid):
-        await bili_music.finish("格式: bm BV...")
+    text = args.extract_plain_text().strip()
+    match = re.match(r'^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,2})?$', text)
+    if not match:
+        await bili_music.finish("格式: bm BV1LpD3YsETa [集数](中括号表示可选)")
     await bot.call_api("set_msg_emoji_like", message_id = event.message_id, emoji_id = '282')
+    bvid, p_num = match.group(1), match.group(2)
+    p_num = int(p_num) - 1 if p_num else 0
     v = video.Video(bvid = bvid, credential=credential)
     try:
         video_info = await v.get_info()
-        #if video_info.get('pages'):
-            # todo
-            #return
         video_title = delete_boring_characters(video_info.get('title'))
         audio_name = f"{video_title}.mp3"
         audio_path = plugin_cache_dir / audio_name
         if not audio_path.exists():
-            download_url_data = await v.get_download_url(page_index=0)
+            download_url_data = await v.get_download_url(page_index=p_num)
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
             audio_url = streams[1].url
