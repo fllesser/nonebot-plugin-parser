@@ -223,11 +223,11 @@ async def _(bot: Bot, state: T_State):
         await bilibili.finish(f"{NICKNAME}解析 | 哔哩哔哩 - 出错 {e}")
     await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频')
     video_title, video_cover, video_desc, video_duration = (
-        video_info['title'], video_info['pic'], video_info['desc'], video_info['duration'])
+        video_info['title'], video_info['pic'], video_info['desc'], video_info['duration']
+    )
     # 校准 分 p 的情况
+    page_num = (int(page_num) - 1) if page_num else 0 
     if 'pages' in video_info:
-        if page_num:
-            page_num = int(page_num) - 1
         # 解析URL
         if url:
             parsed_url = urlparse(url)
@@ -237,9 +237,7 @@ async def _(bot: Bot, state: T_State):
                 query_params = parse_qs(parsed_url.query)
                 # 获取指定参数的值，如果参数不存在，则返回None
                 page_num = int(query_params.get('p', [1])[0]) - 1
-            else:
-                page_num = 0
-        if p_video := video_info['pages'].get(page_num):
+        if p_video := video_info['pages'][page_num]:
             video_duration = p_video.get('duration', video_duration)
             segs.append(f'{p_video}')
     # 删除特殊字符
