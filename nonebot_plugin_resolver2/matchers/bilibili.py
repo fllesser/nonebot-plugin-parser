@@ -227,21 +227,15 @@ async def _(bot: Bot, state: T_State):
     )
     # 校准 分 p 的情况
     page_num = (int(page_num) - 1) if page_num else 0 
-    if 'pages' in video_info:
+    if pages := video_info.get('pages'):
         # 解析URL
-        if url:
-            parsed_url = urlparse(url)
-            # 检查是否有查询字符串
-            if parsed_url.query:
-                # 解析查询字符串中的参数
-                query_params = parse_qs(parsed_url.query)
-                # 获取指定参数的值，如果参数不存在，则返回None
-                page_num = int(query_params.get('p', [1])[0]) - 1
-        if p_video := video_info['pages'][page_num]:
-            video_duration = p_video.get('duration', video_duration)
-            if p_name := p_video.get('part').strip():
-                segs.append(f'分集标题: {p_name}')
-            video_cover = p_video.get('first_frame', video_cover)
+        if url and (match := re.search(r'&p=(\d)&')):
+            page_num = int(match.group(1)) - 1
+        p_video = pages[page_num % len(pages)]
+        video_duration = p_video.get('duration', video_duration)
+        if p_name := p_video.get('part').strip():
+            segs.append(f'分集标题: {p_name}')
+        video_cover = p_video.get('first_frame', video_cover)
     # 删除特殊字符
     # video_title = delete_boring_characters(video_title)
     online = await v.get_online()
@@ -261,7 +255,8 @@ async def _(bot: Bot, state: T_State):
         return
     # 下载视频和音频
     try:
-        video_name = video_id + ".mp4"
+        prefix = f'{video_id}-{page_num}'
+        video_name = f'{prefix}.mp4'
         video_path = plugin_cache_dir / video_name
         if not video_path.exists():
             download_url_data = await v.get_download_url(page_index=page_num)
@@ -271,8 +266,8 @@ async def _(bot: Bot, state: T_State):
 
             # 下载视频和音频
             v_path, a_path = await asyncio.gather(
-                download_file_by_stream(video_url, f"{video_id}-video.m4s", ext_headers=BILIBILI_HEADERS),
-                download_file_by_stream(audio_url, f"{video_id}-audio.m4s", ext_headers=BILIBILI_HEADERS)
+                download_file_by_stream(video_url, f"{prefix}-video.m4s", ext_headers=BILIBILI_HEADERS),
+                download_file_by_stream(audio_url, f"{prefix}-audio.m4s", ext_headers=BILIBILI_HEADERS)
             )
             await merge_av(v_path, a_path, video_path)
         await bilibili.send(await get_video_seg(video_path))
@@ -292,7 +287,13 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     v = video.Video(bvid = bvid, credential=credential)
     try:
         video_info = await v.get_info()
-        video_title = delete_boring_characters(video_info.get('title'))
+        video_title = video_info.get('title')
+        if pages := video_info.get('pages'):
+            p_video = pages[p_num % len(pages)]
+            # video_duration = p_video.get('duration', video_duration)
+            if p_name := p_video.get('part').strip():
+                video_title = p_name
+        video_title = delete_boring_characters(video_title)
         audio_name = f"{video_title}.mp3"
         audio_path = plugin_cache_dir / audio_name
         if not audio_path.exists():
