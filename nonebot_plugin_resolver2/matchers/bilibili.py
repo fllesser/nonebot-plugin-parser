@@ -239,8 +239,8 @@ async def _(bot: Bot, state: T_State):
                 page_num = int(query_params.get('p', [1])[0]) - 1
         if p_video := video_info['pages'][page_num]:
             video_duration = p_video.get('duration', video_duration)
-            p_name = p_video.get('part')
-            segs.append(f'分集标题: {p_name}')
+            if p_name := p_video.get('part').strip():
+                segs.append(f'分集标题: {p_name}')
             video_cover = p_video.get('first_frame', video_cover)
     # 删除特殊字符
     # video_title = delete_boring_characters(video_title)
