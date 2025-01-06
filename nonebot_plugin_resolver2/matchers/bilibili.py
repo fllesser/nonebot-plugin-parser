@@ -240,7 +240,7 @@ async def _(bot: Bot, state: T_State):
         if p_video := video_info['pages'][page_num]:
             video_duration = p_video.get('duration', video_duration)
             p_name = p_video.get('part')
-            segs.append(f'分集名称: {p_name}')
+            segs.append(f'分集标题: {p_name}')
     # 删除特殊字符
     # video_title = delete_boring_characters(video_title)
     online = await v.get_online()
