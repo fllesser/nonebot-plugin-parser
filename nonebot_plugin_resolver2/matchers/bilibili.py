@@ -70,13 +70,13 @@ bili_music = on_command(
 )
 
 patterns: dict[str, re.Pattern] = {
-    'BV': re.compile(r'(BV[1-9a-zA-Z]{10})'),
-    '/BV': re.compile(r'/(BV[1-9a-zA-Z]{10})'),
-    '/av': re.compile(r'/av(\d{6,})'),
-    'av': re.compile(r'av(\d{6,})'),
-    'b23': re.compile(r'https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()'),
-    'bili2233': re.compile(r'https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()'),
-    'bilibili': re.compile(r'https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()')
+    'BV': re.compile(r'(BV[1-9a-zA-Z]{10})(:?\s)?(\d{1,2})?'),
+    'av': re.compile(r'av(\d{6,})(:?\s)?(\d{1,2})?'),
+    '/BV': re.compile(r'/(BV[1-9a-zA-Z]{10})()'),
+    '/av': re.compile(r'/av(\d{6,})()'),
+    'b23': re.compile(r'https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()'),
+    'bili2233': re.compile(r'https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()()'),
+    'bilibili': re.compile(r'https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()')
 }
 
 @bilibili.handle()
@@ -87,7 +87,7 @@ async def _(bot: Bot, state: T_State):
     if not match:
         logger.info(f"{text} 中的链接或id无效, 忽略")
         return
-    url, video_id = match.group(0), match.group(1)
+    url, video_id, page_num = match.group(0), match.group(1), match.group(2)
     
     # 短链重定向地址
     if keyword in ('b23', 'bili2233'):
@@ -222,25 +222,28 @@ async def _(bot: Bot, state: T_State):
     except Exception as e:
         await bilibili.finish(f"{NICKNAME}解析 | 哔哩哔哩 - 出错 {e}")
     await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频')
-    video_title, video_cover, video_desc, video_duration = video_info['title'], video_info['pic'], video_info['desc'], video_info['duration']
+    video_title, video_cover, video_desc, video_duration = (
+        video_info['title'], video_info['pic'], video_info['desc'], video_info['duration'])
     # 校准 分 p 的情况
-    page_num = 0
     if 'pages' in video_info:
+        if page_num:
+            page_num = int(page_num) - 1
         # 解析URL
-        parsed_url = urlparse(url)
-        # 检查是否有查询字符串
-        if parsed_url.query:
-            # 解析查询字符串中的参数
-            query_params = parse_qs(parsed_url.query)
-            # 获取指定参数的值，如果参数不存在，则返回None
-            page_num = int(query_params.get('p', [1])[0]) - 1
-        else:
-            page_num = 0
-        if 'duration' in video_info['pages'][page_num]:
-            video_duration = video_info['pages'][page_num].get('duration', video_info.get('duration'))
-        else:
-            # 如果索引超出范围，使用 video_info['duration'] 或者其他默认值
-            video_duration = video_info.get('duration', 0)
+        if url:
+            parsed_url = urlparse(url)
+            # 检查是否有查询字符串
+            if parsed_url.query:
+                # 解析查询字符串中的参数
+                query_params = parse_qs(parsed_url.query)
+                # 获取指定参数的值，如果参数不存在，则返回None
+                page_num = int(query_params.get('p', [1])[0]) - 1
+            else:
+                page_num = 0
+            if 'duration' in video_info['pages'][page_num]:
+                video_duration = video_info['pages'][page_num].get('duration', video_info.get('duration'))
+            else:
+                # 如果索引超出范围，使用 video_info['duration'] 或者其他默认值
+                video_duration = video_info.get('duration', 0)
     # 删除特殊字符
     # video_title = delete_boring_characters(video_title)
     online = await v.get_online()
