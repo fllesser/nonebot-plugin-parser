@@ -45,7 +45,7 @@ _✨ NoneBot2 链接分享自动解析插件 ✨_
 | tiktok   | 链接 | ✔️ | ❌️ | ❌️ |
 | twitter  | 链接 | ✔️ | ✔️ | ❌️ |
 
-
+支持的链接，可参考 [测试链接](https://github.com/fllesser/nonebot-plugin-resolver2/blob/master/test_url.md)
 
 ## 💿 安装
 > [!Warning]
