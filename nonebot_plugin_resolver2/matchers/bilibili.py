@@ -9,9 +9,9 @@ from nonebot.params import CommandArg
 from nonebot.exception import ActionFailed
 from nonebot.plugin.on import on_message, on_command
 from nonebot.adapters.onebot.v11 import (
+    Bot,
     Message,
     MessageEvent,
-    Bot,
     MessageSegment
 )
 from bilibili_api import (
@@ -42,7 +42,6 @@ from ..download.common import (
     download_img,
     merge_av
 )
-
 from ..config import (
     rconfig,
     NICKNAME,
@@ -61,7 +60,8 @@ BILIBILI_HEADERS = {
 }
 
 bilibili = on_message(
-    rule = is_not_in_disable_group & r_keywords("bilibili", "b23", "bili2233", "BV")
+    rule = is_not_in_disable_group & r_keywords("bilibili", "bili2233", "b23", "BV", 'av'),
+    priority = 5
 )
 
 bili_music = on_command(
@@ -69,31 +69,44 @@ bili_music = on_command(
     block = True
 )
 
+patterns: dict[str, re.Pattern] = {
+    'BV': re.compile(r'(BV[1-9a-zA-Z]{10})'),
+    '/BV': re.compile(r'/(BV[1-9a-zA-Z]{10})'),
+    '/av': re.compile(r'/av(\d{6,})'),
+    'av': re.compile(r'av(\d{6,})'),
+    'b23': re.compile(r'https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()'),
+    'bili2233': re.compile(r'https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()'),
+    'bilibili': re.compile(r'https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()')
+}
+
 @bilibili.handle()
 async def _(bot: Bot, state: T_State):
     # 消息
     text, keyword = state.get(R_EXTRACT_KEY), state.get(R_KEYWORD_KEY)
-    url, video_id = '', ''
+    match = patterns[keyword].search(text)
+    if not match:
+        logger.info(f"{text} 中的链接或id无效, 忽略")
+        return
+    url, video_id = match.group(0), match.group(1)
     
-    if keyword == 'BV':
-        if re.match(r'^BV[1-9a-zA-Z]{10}$', text):
-            video_id = text
-    elif keyword in ('b23', 'bili2233'):
-        # 处理短号、小程序
-        pattern = r"https?://(?:b23\.tv|bili2233\.cn)/[A-Za-z\d\._?%&+\-=/#]+"
-        if match := re.search(pattern, text):
-            b23url = match.group(0)
-            async with httpx.AsyncClient() as client:
-                resp = await client.get(b23url, headers=BILIBILI_HEADERS, follow_redirects=True)
-            url = str(resp.url)
-            if url == b23url:
-                logger.info(f"链接 {url} 无效，忽略")
-                return
-    else:
-        pattern = r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+"
-        if match := re.search(pattern, text):
-            url = match.group(0)
-    if url:
+    # 短链重定向地址
+    if keyword in ('b23', 'bili2233'):
+        b23url = url
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(b23url, headers=BILIBILI_HEADERS, follow_redirects=True)
+        url = str(resp.url)
+        if url == b23url:
+            logger.info(f"链接 {url} 无效，忽略")
+            return
+    
+    # 链接中是否包含BV，av号
+    if url and (id_type := next((i for i in ('/BV', '/av') if i in url), None)):
+        if match := patterns[id_type].search(url):
+            keyword = id_type
+            video_id = match.group(1)
+    
+    # 如果不是视频
+    if not video_id:
         # 动态
         if 't.bilibili.com' in url or '/opus' in url:
             if match := re.search(r'/(\d+)', url):
@@ -102,30 +115,30 @@ async def _(bot: Bot, state: T_State):
                 logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
                 return
             dynamic_info = await Opus(dynamic_id, credential).get_info()
+            if not dynamic_info:
+                return
+            title = dynamic_info['item']['basic']['title']
+            await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - {title}")
             
-            if dynamic_info:
-                title = dynamic_info['item']['basic']['title']
-                await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - {title}")
-                paragraphs = []
-                for module in dynamic_info['item']['modules']:
-                    if 'module_content' in module:
-                        paragraphs = module['module_content']['paragraphs']
-                        break
-                    
-                segs = []
-                for node in paragraphs[0]['text']['nodes']:
-                    text_type = node.get('type')
-                    if text_type == 'TEXT_NODE_TYPE_RICH':
-                        segs.append(node['rich']['text'])
-                    elif text_type == 'TEXT_NODE_TYPE_WORD':
-                        segs.append(node['word']['words'])
-                if len(paragraphs) > 1:
-                    pics = paragraphs[1]['pic']['pics']
-                    segs += [MessageSegment.image(pic['url']) for pic in pics]
-                
-                await bilibili.finish(construct_nodes(bot.self_id, segs))
+            paragraphs = []
+            for module in dynamic_info['item']['modules']:
+                if 'module_content' in module:
+                    paragraphs = module['module_content']['paragraphs']
+                    break
+            segs = []
+            for node in paragraphs[0]['text']['nodes']:
+                text_type = node.get('type')
+                if text_type == 'TEXT_NODE_TYPE_RICH':
+                    segs.append(node['rich']['text'])
+                elif text_type == 'TEXT_NODE_TYPE_WORD':
+                    segs.append(node['word']['words'])
+            if len(paragraphs) > 1:
+                pics = paragraphs[1]['pic']['pics']
+                segs += [MessageSegment.image(pic['url']) for pic in pics]
+            
+            await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
-        if '/live' in url:
+        elif '/live' in url:
             # https://live.bilibili.com/30528999?hotRank=0
             if match := re.search(r'/(\d+)', url):
                 room_id = match.group(1)
@@ -135,9 +148,14 @@ async def _(bot: Bot, state: T_State):
             room = live.LiveRoom(room_display_id=int(room_id))
             room_info = (await room.get_room_info())['room_info']
             title, cover, keyframe = room_info['title'], room_info['cover'], room_info['keyframe']
-            await bilibili.finish(MessageSegment.image(cover) + MessageSegment.image(keyframe) + f"{NICKNAME}解析 | 哔哩哔哩 - 直播 - {title}")
+            res = f"{NICKNAME}解析 | 哔哩哔哩 - 直播 内容获取失败"
+            if title:
+                res = f"{NICKNAME}解析 | 哔哩哔哩 - 直播 - {title}"
+                res += MessageSegment.image(cover) if cover else ''
+                res += MessageSegment.image(keyframe) if keyframe else ''
+            await bilibili.finish(res)
         # 专栏解析
-        if '/read' in url:
+        elif '/read' in url:
             if match := re.search(r'read/cv(\d+)', url):
                 read_id = match.group(1)
             else:
@@ -171,7 +189,7 @@ async def _(bot: Bot, state: T_State):
             if segs:
                 await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 收藏夹解析
-        if '/favlist' in url:
+        elif '/favlist' in url:
             # https://space.bilibili.com/22990202/favlist?fid=2344812202
             if match := re.search(r'favlist\?fid=(\d+)', url):
                 fav_id = match.group(1)
@@ -189,24 +207,18 @@ async def _(bot: Bot, state: T_State):
                 )
             await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 收藏夹\n正在为你找出相关链接请稍等...')
             await bilibili.finish(construct_nodes(bot.self_id, favs))
-   
-    if video_id:
-        v = video.Video(bvid = video_id, credential=credential)
-    elif match := re.search(r"(av\d+|BV[A-Za-z0-9]{10})", url):
-        video_id = match.group(1)
-        if "av" in video_id:
-            v = video.Video(aid=int(video_id.split("av")[1]), credential=credential)
         else:
-            v = video.Video(bvid=video_id, credential=credential)
+            logger.warning(f"unsupported url: {url}")
+            return
+    # 视频   
+    if keyword in ('av', '/av'):
+        v = video.Video(aid=int(video_id), credential=credential)
     else:
-        logger.info(f"链接[{url}]或BV号[{video_id}]无效，忽略")
-        return
+        v = video.Video(bvid = video_id, credential=credential)
     # 合并转发消息 list
     segs: list[MessageSegment | str] = []
     try:
         video_info = await v.get_info()
-        if not video_info:
-            raise Exception("video_info is None")
     except Exception as e:
         await bilibili.finish(f"{NICKNAME}解析 | 哔哩哔哩 - 出错 {e}")
     await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频')
@@ -231,7 +243,6 @@ async def _(bot: Bot, state: T_State):
             video_duration = video_info.get('duration', 0)
     # 删除特殊字符
     # video_title = delete_boring_characters(video_title)
-    # 截断下载时间比较长的视频
     online = await v.get_online()
     online_str = f'🏄‍♂️ 总共 {online["total"]} 人在观看，{online["count"]} 人在网页端观看'
     segs.append(MessageSegment.image(video_cover))
@@ -244,27 +255,29 @@ async def _(bot: Bot, state: T_State):
     if video_duration > DURATION_MAXIMUM:
         segs.append(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
     await bilibili.send(construct_nodes(bot.self_id, segs))
-    if video_duration < DURATION_MAXIMUM:
-        # 下载视频和音频
-        try:
-            video_name = video_id + ".mp4"
-            video_path = plugin_cache_dir / video_name
-            if not video_path.exists():
-                download_url_data = await v.get_download_url(page_index=page_num)
-                detecter = VideoDownloadURLDataDetecter(download_url_data)
-                streams = detecter.detect_best_streams()
-                video_url, audio_url = streams[0].url, streams[1].url
-    
-                # 下载视频和音频
-                v_path, a_path = await asyncio.gather(
-                    download_file_by_stream(video_url, f"{video_id}-video.m4s", ext_headers=BILIBILI_HEADERS),
-                    download_file_by_stream(audio_url, f"{video_id}-audio.m4s", ext_headers=BILIBILI_HEADERS)
-                )
-                await merge_av(v_path, a_path, video_path)
-            await bilibili.send(await get_video_seg(video_path))
-        except Exception as e:
-            if not isinstance(e, ActionFailed):
-                await bilibili.send(f"下载视频失败 | {e}")
+    if video_duration > DURATION_MAXIMUM:
+        logger.info(f"video duration > {DURATION_MAXIMUM}, do not download")
+        return
+    # 下载视频和音频
+    try:
+        video_name = video_id + ".mp4"
+        video_path = plugin_cache_dir / video_name
+        if not video_path.exists():
+            download_url_data = await v.get_download_url(page_index=page_num)
+            detecter = VideoDownloadURLDataDetecter(download_url_data)
+            streams = detecter.detect_best_streams()
+            video_url, audio_url = streams[0].url, streams[1].url
+
+            # 下载视频和音频
+            v_path, a_path = await asyncio.gather(
+                download_file_by_stream(video_url, f"{video_id}-video.m4s", ext_headers=BILIBILI_HEADERS),
+                download_file_by_stream(audio_url, f"{video_id}-audio.m4s", ext_headers=BILIBILI_HEADERS)
+            )
+            await merge_av(v_path, a_path, video_path)
+        await bilibili.send(await get_video_seg(video_path))
+    except Exception as e:
+        if not isinstance(e, ActionFailed):
+            await bilibili.send(f"下载视频失败 | {e}")
 
 @bili_music.handle()
 async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
