@@ -239,11 +239,9 @@ async def _(bot: Bot, state: T_State):
                 page_num = int(query_params.get('p', [1])[0]) - 1
             else:
                 page_num = 0
-            if 'duration' in video_info['pages'][page_num]:
-                video_duration = video_info['pages'][page_num].get('duration', video_info.get('duration'))
-            else:
-                # 如果索引超出范围，使用 video_info['duration'] 或者其他默认值
-                video_duration = video_info.get('duration', 0)
+        if p_video := video_info['pages'].get(page_num):
+            video_duration = p_video.get('duration', video_duration)
+            segs.append(f'{p_video}')
     # 删除特殊字符
     # video_title = delete_boring_characters(video_title)
     online = await v.get_online()
