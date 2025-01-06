@@ -231,7 +231,9 @@ async def _(bot: Bot, state: T_State):
         # 解析URL
         if url and (match := re.search(r'p=(\d{1,2})', url)):
             page_num = int(match.group(1)) - 1
-        p_video = pages[page_num % len(pages)]
+        # 取模防止数组越界
+        page_num = page_num % len(pages)
+        p_video = pages[page_num]
         video_duration = p_video.get('duration', video_duration)
         if p_name := p_video.get('part').strip():
             segs.append(f'分集标题: {p_name}')
@@ -289,7 +291,8 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
         video_info = await v.get_info()
         video_title = video_info.get('title')
         if pages := video_info.get('pages'):
-            p_video = pages[p_num % len(pages)]
+            p_num = p_num % len(pages)
+            p_video = pages[p_num]
             # video_duration = p_video.get('duration', video_duration)
             if p_name := p_video.get('part').strip():
                 video_title = p_name
