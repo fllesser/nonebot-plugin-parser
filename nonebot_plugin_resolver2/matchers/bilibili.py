@@ -148,7 +148,12 @@ async def _(bot: Bot, state: T_State):
             room = live.LiveRoom(room_display_id=int(room_id))
             room_info = (await room.get_room_info())['room_info']
             title, cover, keyframe = room_info['title'], room_info['cover'], room_info['keyframe']
-            await bilibili.finish(MessageSegment.image(cover) + MessageSegment.image(keyframe) + f"{NICKNAME}解析 | 哔哩哔哩 - 直播 - {title}")
+            res = f"{NICKNAME}解析 | 哔哩哔哩 - 直播 内容获取失败"
+            if title:
+                res = f"{NICKNAME}解析 | 哔哩哔哩 - 直播 - {title}"
+                res += MessageSegment.image(cover) if cover else ''
+                res += MessageSegment.image(keyframe) if keyframe else ''
+            await bilibili.finish(res)
         # 专栏解析
         elif '/read' in url:
             if match := re.search(r'read/cv(\d+)', url):
