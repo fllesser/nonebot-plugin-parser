@@ -70,8 +70,8 @@ bili_music = on_command(
 )
 
 patterns: dict[str, re.Pattern] = {
-    'BV': re.compile(r'(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,2})?'),
-    'av': re.compile(r'av(\d{6,})(?:\s)?(\d{1,2})?'),
+    'BV': re.compile(r'(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?'),
+    'av': re.compile(r'av(\d{6,})(?:\s)?(\d{1,3})?'),
     '/BV': re.compile(r'/(BV[1-9a-zA-Z]{10})()'),
     '/av': re.compile(r'/av(\d{6,})()'),
     'b23': re.compile(r'https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()'),
@@ -229,7 +229,7 @@ async def _(bot: Bot, state: T_State):
     page_num = (int(page_num) - 1) if page_num else 0 
     if pages := video_info.get('pages'):
         # 解析URL
-        if url and (match := re.search(r'p=(\d{1,2})', url)):
+        if url and (match := re.search(r'p=(\d{1,3})', url)):
             page_num = int(match.group(1)) - 1
         # 取模防止数组越界
         page_num = page_num % len(pages)
@@ -280,7 +280,7 @@ async def _(bot: Bot, state: T_State):
 @bili_music.handle()
 async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     text = args.extract_plain_text().strip()
-    match = re.match(r'^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,2})?$', text)
+    match = re.match(r'^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?$', text)
     if not match:
         await bili_music.finish("格式: bm BV1LpD3YsETa [集数](中括号表示可选)")
     await bot.call_api("set_msg_emoji_like", message_id = event.message_id, emoji_id = '282')
