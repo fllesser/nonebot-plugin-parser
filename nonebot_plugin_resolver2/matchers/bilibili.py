@@ -229,7 +229,7 @@ async def _(bot: Bot, state: T_State):
     page_num = (int(page_num) - 1) if page_num else 0 
     if pages := video_info.get('pages'):
         # 解析URL
-        if url and (match := re.search(r'&p=(\d)&')):
+        if url and (match := re.search(r'&p=(\d)&', url)):
             page_num = int(match.group(1)) - 1
         p_video = pages[page_num % len(pages)]
         video_duration = p_video.get('duration', video_duration)
