@@ -3,7 +3,7 @@ name: Run Nonebot Plugin Resolver2
 on:
   push:
     branches:
-      - master
+      - workflow
 
 jobs:
   build:
