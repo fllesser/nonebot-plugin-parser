@@ -1,4 +1,4 @@
-name: Run Nonebot Plugin Resolver2
+name: Test Load Nonebot Plugin
 
 on:
   push:
@@ -30,10 +30,11 @@ jobs:
     - name: Install dependencies
       run: |
         source .venv/bin/activate
-        export POETRY_ENV=test ENVIRONMENT=dev
+        export POETRY_ENV=test
         poetry install
 
     - name: Run Nonebot
       run: |
         source .venv/bin/activate
+        export POETRY_ENV=test ENVIRONMENT=dev
         timeout 60s poetry run nb run
