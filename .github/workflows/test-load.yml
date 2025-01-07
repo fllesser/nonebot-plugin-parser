@@ -3,7 +3,7 @@ name: Test Load Nonebot Plugin
 on:
   push:
     branches:
-      - master
+      - uv
 
 jobs:
   build:
@@ -12,22 +12,24 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+      
+      
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        # Install a specific version of uv.
+        version: "0.5.15"
 
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.12'
 
-    - name: Install UV
-      run: |
-        pip install --upgrade pip
-        pip install uv
-        uv venv .venv
-        echo "uv version:"
-        uv --version
-
     - name: Install dependencies and Run Nonebot
       run: |
+        echo "uv version:"
+        uv version
+        uv venv .venv
         source .venv/bin/activate
         export ENVIRONMENT=dev
         uv pip install -r pyproject.toml nb-cli==1.4.2 nonebot2[fastapi]==2.4.0
@@ -37,10 +39,6 @@ jobs:
         while ! grep -q "Uvicorn running on" output.log; do sleep 1; done
         kill $PID
         trap - EXIT
-        
-    - name: Check Load Plugin Failure
-      run: |
-        cat output.log
         if grep -q 'Failed to import' output.log; then
           echo "Import failure detected"
           exit 1

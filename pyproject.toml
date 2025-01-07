@@ -8,6 +8,7 @@ packages = [{include = "nonebot_plugin_resolver2"}]
 repository = "https://github.com/fllesser/nonebot-plugin-resolver2"
 keywords = ["nonebot", "nonebot2", "resolver", "bilibili", "youtube", "tiktok", "twitter"]
 
+
 [tool.poetry.dependencies]
 python = "^3.10"
 httpx = ">=0.26.0,<0.28.0"
