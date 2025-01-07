@@ -5,7 +5,7 @@ kugou:
 - https://www.kugou.com/mixsong/j3pry11.html
 
 bilibili:
-- https://www.bilibili.com/opus/998440765151510535
+https://www.bilibili.com/opus/998440765151510535
 - https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
 - https://live.bilibili.com/23585383
 - https://b23.tv/YTg9oSw
@@ -15,9 +15,14 @@ bilibili:
 - https://bilibili.com/BV1uCzoYEEir
 - BV1uCzoYEEir
 - av113706574811958
+
+分p视频支持，未指定集数默认第一集
 - BV1584y167sD 40
 - av605821754 40
 - https://www.bilibili.com/video/BV1584y167sD?p=40
+
+分p音频，仅BV号
+- bm BV1584y167sD 40
 
 tiktok:
 - https://www.tiktok.com/@xwc1897/video/7436010419002608928?is_from_webapp=1&sender_device=pc
