@@ -2,7 +2,6 @@ import re
 import httpx
 import asyncio
 
-from tqdm.asyncio import tqdm
 from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.params import CommandArg
@@ -20,10 +19,10 @@ from bilibili_api import (
     article,
     Credential
 )
-from bilibili_api.favorite_list import get_video_favorite_list_content
+
 from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
-from urllib.parse import parse_qs, urlparse
+from bilibili_api.favorite_list import get_video_favorite_list_content
 
 from .utils import (
     construct_nodes,
@@ -70,13 +69,13 @@ bili_music = on_command(
 )
 
 patterns: dict[str, re.Pattern] = {
-    'BV': re.compile(r'(BV[1-9a-zA-Z]{10})'),
-    '/BV': re.compile(r'/(BV[1-9a-zA-Z]{10})'),
-    '/av': re.compile(r'/av(\d{6,})'),
-    'av': re.compile(r'av(\d{6,})'),
-    'b23': re.compile(r'https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()'),
-    'bili2233': re.compile(r'https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()'),
-    'bilibili': re.compile(r'https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()')
+    'BV': re.compile(r'(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?'),
+    'av': re.compile(r'av(\d{6,})(?:\s)?(\d{1,3})?'),
+    '/BV': re.compile(r'/(BV[1-9a-zA-Z]{10})()'),
+    '/av': re.compile(r'/av(\d{6,})()'),
+    'b23': re.compile(r'https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()'),
+    'bili2233': re.compile(r'https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()()'),
+    'bilibili': re.compile(r'https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()')
 }
 
 @bilibili.handle()
@@ -87,7 +86,7 @@ async def _(bot: Bot, state: T_State):
     if not match:
         logger.info(f"{text} 中的链接或id无效, 忽略")
         return
-    url, video_id = match.group(0), match.group(1)
+    url, video_id, page_num = match.group(0), match.group(1), match.group(2)
     
     # 短链重定向地址
     if keyword in ('b23', 'bili2233'):
@@ -222,25 +221,25 @@ async def _(bot: Bot, state: T_State):
     except Exception as e:
         await bilibili.finish(f"{NICKNAME}解析 | 哔哩哔哩 - 出错 {e}")
     await bilibili.send(f'{NICKNAME}解析 | 哔哩哔哩 - 视频')
-    video_title, video_cover, video_desc, video_duration = video_info['title'], video_info['pic'], video_info['desc'], video_info['duration']
+    video_title, video_cover, video_desc, video_duration = (
+        video_info['title'], video_info['pic'], video_info['desc'], video_info['duration']
+    )
     # 校准 分 p 的情况
-    page_num = 0
-    if 'pages' in video_info:
+    page_num = (int(page_num) - 1) if page_num else 0 
+    if (pages := video_info.get('pages')) and len(pages) > 1:
         # 解析URL
-        parsed_url = urlparse(url)
-        # 检查是否有查询字符串
-        if parsed_url.query:
-            # 解析查询字符串中的参数
-            query_params = parse_qs(parsed_url.query)
-            # 获取指定参数的值，如果参数不存在，则返回None
-            page_num = int(query_params.get('p', [1])[0]) - 1
-        else:
-            page_num = 0
-        if 'duration' in video_info['pages'][page_num]:
-            video_duration = video_info['pages'][page_num].get('duration', video_info.get('duration'))
-        else:
-            # 如果索引超出范围，使用 video_info['duration'] 或者其他默认值
-            video_duration = video_info.get('duration', 0)
+        if url and (match := re.search(r'(?:&|\?)p=(\d{1,3})', url)):
+            page_num = int(match.group(1)) - 1
+        # 取模防止数组越界
+        page_num = page_num % len(pages)
+        p_video = pages[page_num]
+        video_duration = p_video.get('duration', video_duration)
+        if p_name := p_video.get('part').strip():
+            segs.append(f'分集标题: {p_name}')
+        if first_frame := p_video.get('first_frame'):
+            segs.append(MessageSegment.image(first_frame))
+    else:
+        page_num = 0
     # 删除特殊字符
     # video_title = delete_boring_characters(video_title)
     online = await v.get_online()
@@ -260,7 +259,8 @@ async def _(bot: Bot, state: T_State):
         return
     # 下载视频和音频
     try:
-        video_name = video_id + ".mp4"
+        prefix = f'{video_id}-{page_num}'
+        video_name = f'{prefix}.mp4'
         video_path = plugin_cache_dir / video_name
         if not video_path.exists():
             download_url_data = await v.get_download_url(page_index=page_num)
@@ -270,8 +270,8 @@ async def _(bot: Bot, state: T_State):
 
             # 下载视频和音频
             v_path, a_path = await asyncio.gather(
-                download_file_by_stream(video_url, f"{video_id}-video.m4s", ext_headers=BILIBILI_HEADERS),
-                download_file_by_stream(audio_url, f"{video_id}-audio.m4s", ext_headers=BILIBILI_HEADERS)
+                download_file_by_stream(video_url, f"{prefix}-video.m4s", ext_headers=BILIBILI_HEADERS),
+                download_file_by_stream(audio_url, f"{prefix}-audio.m4s", ext_headers=BILIBILI_HEADERS)
             )
             await merge_av(v_path, a_path, video_path)
         await bilibili.send(await get_video_seg(video_path))
@@ -281,21 +281,28 @@ async def _(bot: Bot, state: T_State):
 
 @bili_music.handle()
 async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
-    bvid = args.extract_plain_text().strip()
-    if not re.match(r'^BV[1-9a-zA-Z]{10}$', bvid):
-        await bili_music.finish("格式: bm BV...")
+    text = args.extract_plain_text().strip()
+    match = re.match(r'^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?$', text)
+    if not match:
+        await bili_music.finish("格式: bm BV1LpD3YsETa [集数](中括号表示可选)")
     await bot.call_api("set_msg_emoji_like", message_id = event.message_id, emoji_id = '282')
+    bvid, p_num = match.group(1), match.group(2)
+    p_num = int(p_num) - 1 if p_num else 0
     v = video.Video(bvid = bvid, credential=credential)
     try:
         video_info = await v.get_info()
-        #if video_info.get('pages'):
-            # todo
-            #return
-        video_title = delete_boring_characters(video_info.get('title'))
+        video_title = video_info.get('title')
+        if pages := video_info.get('pages'):
+            p_num = p_num % len(pages)
+            p_video = pages[p_num]
+            # video_duration = p_video.get('duration', video_duration)
+            if p_name := p_video.get('part').strip():
+                video_title = p_name
+        video_title = delete_boring_characters(video_title)
         audio_name = f"{video_title}.mp3"
         audio_path = plugin_cache_dir / audio_name
         if not audio_path.exists():
-            download_url_data = await v.get_download_url(page_index=0)
+            download_url_data = await v.get_download_url(page_index=p_num)
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
             audio_url = streams[1].url
