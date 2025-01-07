@@ -227,7 +227,7 @@ async def _(bot: Bot, state: T_State):
     )
     # 校准 分 p 的情况
     page_num = (int(page_num) - 1) if page_num else 0 
-    if pages := video_info.get('pages'):
+    if (pages := video_info.get('pages')) and len(pages) > 1:
         # 解析URL
         if url and (match := re.search(r'p=(\d{1,3})', url)):
             page_num = int(match.group(1)) - 1
@@ -237,7 +237,10 @@ async def _(bot: Bot, state: T_State):
         video_duration = p_video.get('duration', video_duration)
         if p_name := p_video.get('part').strip():
             segs.append(f'分集标题: {p_name}')
-        video_cover = p_video.get('first_frame', video_cover)
+        if first_frame := p_video.get('first_frame'):
+            segs.append(MessageSegment.image(first_frame))
+    else:
+        page_num = 0
     # 删除特殊字符
     # video_title = delete_boring_characters(video_title)
     online = await v.get_online()
