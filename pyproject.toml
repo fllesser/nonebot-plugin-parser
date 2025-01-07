@@ -22,6 +22,20 @@ nonebot-plugin-localstore = ">=0.7.0,<1.0.0"
 nonebot-plugin-apscheduler = ">=0.5.0,<1.0.0"
 bilibili-api-python = "^16.3.0"
 
+[tool.poetry.group.test.dependencies]
+nb-cli = "^1.4.2"
+nonebug = "^0.4.3"
+pytest-asyncio = "^0.25.1"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+
+[tool.nonebot]
+adapters = [{name="Onebot", module_name="nonebot.adapters.onebot.v11"}]
+plugins = ["nonebot_plugin_resolver2"]
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
