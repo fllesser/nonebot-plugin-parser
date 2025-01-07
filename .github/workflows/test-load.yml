@@ -27,15 +27,13 @@ jobs:
         echo "Poetry version:"
         poetry --version
 
-    - name: Add Poetry to PATH
-      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
-
     - name: Install dependencies
       run: |
         source .venv/bin/activate
-        export POETRY_ENV=dev ENVIRONMENT=dev
+        export POETRY_ENV=test ENVIRONMENT=test
         poetry install
 
     - name: Run Nonebot
       run: |
-        timeout 60s poetry run nb run
+        source .venv/bin/activate
+        poetry run nb run
