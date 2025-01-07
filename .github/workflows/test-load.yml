@@ -3,7 +3,7 @@ name: Test Load Nonebot Plugin
 on:
   push:
     branches:
-      - workflow
+      - master
 
 jobs:
   build:
