@@ -30,7 +30,7 @@ jobs:
       run: |
         source .venv/bin/activate
         export ENVIRONMENT=dev
-        uv pip install -r pyproject.toml[test]
+        uv install --group test
         (nb run | tee output.log) &
         PID=$!
         trap "kill $PID" EXIT
