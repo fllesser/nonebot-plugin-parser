@@ -18,12 +18,21 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Install dependencies
+    - name: Install Poetry
       run: |
         python -m venv .venv
         source .venv/bin/activate
         pip install --upgrade pip
         pip install poetry
+        echo "Poetry version:"
+        poetry --version
+
+    - name: Add Poetry to PATH
+      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        source .venv/bin/activate
         export POETRY_ENV=dev ENVIRONMENT=dev
         poetry install
 
