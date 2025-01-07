@@ -43,3 +43,10 @@ jobs:
         while ! grep -q "Uvicorn running on http://127.0.0.1:8888" output.log; do sleep 1; done
         kill $PID
         trap - EXIT
+        
+    - name: Check for import failures
+      run: |
+        if grep -q 'Failed to import' output.log; then
+          echo "Import failure detected"
+          exit 1
+        fi
