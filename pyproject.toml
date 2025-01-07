@@ -28,7 +28,7 @@ nb-cli = "^1.4.2"
 nonebot2 = {version = "^2.4.0", extras = ["fastapi"]}
 
 [tool.nonebot]
-adapters = [{name="Onebot", module_name="nonebot.adapters.onebot.v11"}]
+adapters = [{name="OnebotAdapterV11", module_name="nonebot.adapters.onebot.v11"}]
 plugins = ["nonebot_plugin_resolver2"]
 
 [build-system]
