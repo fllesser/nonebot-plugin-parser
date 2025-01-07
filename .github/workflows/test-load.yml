@@ -44,8 +44,9 @@ jobs:
         kill $PID
         trap - EXIT
         
-    - name: Check for import failures
+    - name: Check Load Plugin Failure
       run: |
+        cat output.log
         if grep -q 'Failed to import' output.log; then
           echo "Import failure detected"
           exit 1
