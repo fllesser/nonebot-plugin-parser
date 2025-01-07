@@ -30,10 +30,10 @@ jobs:
     - name: Install dependencies
       run: |
         source .venv/bin/activate
-        export POETRY_ENV=test ENVIRONMENT=test
+        export POETRY_ENV=test ENVIRONMENT=dev
         poetry install
 
     - name: Run Nonebot
       run: |
         source .venv/bin/activate
-        poetry run nb run
+        timeout 60s poetry run nb run
