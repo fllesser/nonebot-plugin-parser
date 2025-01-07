@@ -22,10 +22,10 @@ nonebot-plugin-localstore = ">=0.7.0,<1.0.0"
 nonebot-plugin-apscheduler = ">=0.5.0,<1.0.0"
 bilibili-api-python = "^16.3.0"
 
-[tool.poetry.group.test.dependencies]
+[tool.poetry.group.dev.dependencies]
 nb-cli = "^1.4.2"
-nonebug = "^0.4.3"
-pytest-asyncio = "^0.25.1"
+fastapi = { version = ">=0.93.0,<1.0.0", optional = true }
+
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
