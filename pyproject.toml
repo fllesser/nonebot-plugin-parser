@@ -24,7 +24,7 @@ bilibili-api-python = "^16.3.0"
 
 [tool.poetry.group.dev.dependencies]
 nb-cli = "^1.4.2"
-fastapi = { version = ">=0.93.0,<1.0.0", optional = true }
+nonebot2[fastapi] = "^2.4.0"
 
 
 [tool.pytest.ini_options]
