@@ -18,23 +18,24 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Install UV
+    - name: Install Poetry
       run: |
+        python -m venv .venv
+        source .venv/bin/activate
         pip install --upgrade pip
-        pip install uv
-        uv venv .venv
-        echo "uv version:"
-        uv --version
+        pip install poetry==2.0.0
+        echo "Poetry version:"
+        poetry --version
 
     - name: Install dependencies and Run Nonebot
       run: |
         source .venv/bin/activate
-        export ENVIRONMENT=dev
-        uv pip install -r pyproject.toml nb-cli==1.4.2 nonebot2[fastapi]==2.4.0
-        (nb run | tee output.log) &
+        export POETRY_ENV=test ENVIRONMENT=dev
+        poetry install
+        (poetry run nb run | tee output.log) &
         PID=$!
         trap "kill $PID" EXIT
-        while ! grep -q "Uvicorn running on" output.log; do sleep 1; done
+        while ! grep -q "Uvicorn running" output.log; do sleep 1; done
         kill $PID
         trap - EXIT
         
