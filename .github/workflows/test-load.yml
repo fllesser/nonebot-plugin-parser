@@ -37,6 +37,9 @@ jobs:
       run: |
         source .venv/bin/activate
         export POETRY_ENV=test ENVIRONMENT=dev
-        (poetry run nb run | tee output.log) & 
-        while ! grep -q "Uvicorn running on http://127.0.0.1" output.log; do sleep 1; done
-        pkill -f "poetry run nb run"
+        (poetry run nb run | tee output.log) &
+        PID=$!
+        trap "kill $PID" EXIT
+        while ! grep -q "Uvicorn running on http://127.0.0.1:8888" output.log; do sleep 1; done
+        kill $PID
+        trap - EXIT
