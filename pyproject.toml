@@ -24,12 +24,8 @@ bilibili-api-python = "^16.3.0"
 
 [tool.poetry.group.dev.dependencies]
 nb-cli = "^1.4.2"
-nonebot2[fastapi] = "^2.4.0"
+nonebot2 = {version = "^2.4.0", extras = ["fastapi"]}
 
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "session"
 
 [tool.nonebot]
 adapters = [{name="Onebot", module_name="nonebot.adapters.onebot.v11"}]
