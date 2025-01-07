@@ -130,6 +130,36 @@ _✨ NoneBot2 链接分享自动解析插件 ✨_
 | bm BV... | USER | 否 | - | 下载 b站 音乐 |
 
 
+## 历史更新
+v1.6.4
+1. 重写B站解析逻辑，预编译正则，并支持解析av号(之前是av号链接)
+2. 事件预处理逻辑优化
+3. 支持的链接，可参考 [测试链接](https://github.com/fllesser/nonebot-plugin-resolver2/blob/master/test_url.md)
+
+v1.6.x
+1. 添加 B站专栏(article) 解析
+2. 更新一些依赖
+3. 优化 B站 解析正则，修复动态和收藏夹解析的潜藏错误
+4. 配置项 r_disable_resolvers 使用字面量限制，防止用户填错
+5. 添加 ffmpeg 未正确配置报错
+6. 修复小红书图集名称问题
+7. 添加事件预处理，用于提取小程序链接
+8. 优化 B站，小红书，酷狗，网易云，acfun链接/资源ID 提取逻辑
+
+v1.5.x
+1. 适配 B 站新域名 bili2233.cn
+2. 支持解析微博带 fid 的视频链接
+3. 抖音解析添加重试
+4. 优化 acfun 解析的逻辑
+5. 支持解析小红书分享卡片
+6. 支持解析抖音图集中的视频
+7. 缓存，避免重复下载同一资源
+8. 添加下载进度条
+9. 修复windows环境特殊字符导致的路径问题
+10. 优化历史遗留逻辑
+
+
+
 ## 致谢
 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
 [parse-video-py](https://github.com/wujunwei928/parse-video-py)
