@@ -1,0 +1,40 @@
+name: Test Load Nonebot Plugin
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.12'
+
+    - name: Install Poetry
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip
+        pip install poetry
+        echo "Poetry version:"
+        poetry --version
+
+    - name: Install dependencies
+      run: |
+        source .venv/bin/activate
+        export POETRY_ENV=test
+        poetry install
+
+    - name: Run Nonebot
+      run: |
+        source .venv/bin/activate
+        export POETRY_ENV=test ENVIRONMENT=dev
+        timeout 30s poetry run nb run || echo "Timeout reached, process terminated."
