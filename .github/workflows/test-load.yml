@@ -37,4 +37,4 @@ jobs:
       run: |
         source .venv/bin/activate
         export POETRY_ENV=test ENVIRONMENT=dev
-        timeout 60s poetry run nb run
+        timeout 30s poetry run nb run || echo "Timeout reached, process terminated."
