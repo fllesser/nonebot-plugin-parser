@@ -37,4 +37,4 @@ jobs:
       run: |
         source .venv/bin/activate
         export POETRY_ENV=test ENVIRONMENT=dev
-        timeout 30s poetry run nb run || echo "Timeout reached, process terminated."
+        (poetry run nb run &) | grep -m 1 "Uvicorn running on http://127.0.0.1" && pkill -f "poetry run nb run"
