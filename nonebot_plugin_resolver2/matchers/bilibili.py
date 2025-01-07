@@ -2,7 +2,6 @@ import re
 import httpx
 import asyncio
 
-from tqdm.asyncio import tqdm
 from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.params import CommandArg
@@ -20,10 +19,10 @@ from bilibili_api import (
     article,
     Credential
 )
-from bilibili_api.favorite_list import get_video_favorite_list_content
+
 from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
-from urllib.parse import parse_qs, urlparse
+from bilibili_api.favorite_list import get_video_favorite_list_content
 
 from .utils import (
     construct_nodes,
@@ -229,7 +228,7 @@ async def _(bot: Bot, state: T_State):
     page_num = (int(page_num) - 1) if page_num else 0 
     if (pages := video_info.get('pages')) and len(pages) > 1:
         # 解析URL
-        if url and (match := re.search(r'p=(\d{1,3})', url)):
+        if url and (match := re.search(r'(?:&|\?)p=(\d{1,3})', url)):
             page_num = int(match.group(1)) - 1
         # 取模防止数组越界
         page_num = page_num % len(pages)
