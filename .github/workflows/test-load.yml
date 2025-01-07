@@ -30,7 +30,7 @@ jobs:
       run: |
         source .venv/bin/activate
         export ENVIRONMENT=dev
-        uv pip install pyproject.toml -- --group test
+        uv pip install -r pyproject.toml nb-cli==1.4.2 nonebot2[fastapi]==2.4.0
         (nb run | tee output.log) &
         PID=$!
         trap "kill $PID" EXIT
