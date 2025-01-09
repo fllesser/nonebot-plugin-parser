@@ -29,7 +29,8 @@ def _(event: MessageEvent, state: T_State) -> None:
                 text = news.get('jumpUrl')
             else:
                 return
-            text = text.replace('\\', '').replace("&amp;", "&")
+            if text:
+                text = text.replace('\\', '').replace("&amp;", "&")
     state[R_EXTRACT_KEY] = text
 
 
