@@ -46,13 +46,11 @@ def hash16url(url: str) -> str:
     
 async def download_file_by_stream(
     url: str,
-    file_name: str = "",
-    proxy: str = "",
-    ext_headers: dict[str, str] = {}
+    file_name: str = None,
+    proxy: str = None,
+    ext_headers: dict[str, str] = None
 ) -> Path:
-    if not url:
-        raise EmptyURLError("url cannot be empty")
-    file_name = file_name if file_name else parse_url_resource_name(url)
+    file_name = file_name if file_name is not None else parse_url_resource_name(url)
     file_path = plugin_cache_dir / file_name
     if file_path.exists():
         return file_path
@@ -61,8 +59,9 @@ async def download_file_by_stream(
         'timeout': httpx.Timeout(60, connect=5.0),
         'follow_redirects': True
     }
-    client_config['headers'] = COMMON_HEADER | ext_headers
-    if proxy:
+    if ext_headers is not None:
+        client_config['headers'] = COMMON_HEADER | ext_headers
+    if proxy is not None:
         client_config['proxies'] = { 
             'http://': proxy,
             'https://': proxy 
@@ -90,27 +89,27 @@ async def download_file_by_stream(
     
 async def download_video(
     url: str,
-    video_name: str = "",
-    proxy: str = "",
-    ext_headers: dict[str, str] = {}
+    video_name: str = None,
+    proxy: str = None,
+    ext_headers: dict[str, str] = None
 ) -> Path:
-    if not video_name:
+    if video_name is not None:
         video_name = parse_url_resource_name(url).split(".")[0] + ".mp4"
     return await download_file_by_stream(url, video_name, proxy, ext_headers)
 
 async def download_audio(
     url: str,
-    audio_name: str = "",
-    proxy: str = "",
-    ext_headers: dict[str, str] = {}
+    audio_name: str = None,
+    proxy: str = None,
+    ext_headers: dict[str, str] = None
 ) -> Path:
     return await download_file_by_stream(url, audio_name, proxy, ext_headers)
 
 async def download_img(
     url: str,
-    img_name: str = "",
-    proxy: str = "",
-    ext_headers: dict[str, str] = {}
+    img_name: str = None,
+    proxy: str = None,
+    ext_headers: dict[str, str] = None
 ) -> Path:
     return await download_file_by_stream(url, img_name, proxy, ext_headers)
     

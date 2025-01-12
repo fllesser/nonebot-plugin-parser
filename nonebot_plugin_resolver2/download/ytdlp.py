@@ -37,7 +37,7 @@ ydl_download_base_opts = {
 
 }
 
-if PROXY:
+if PROXY is not None:
     ydl_download_base_opts['proxy'] = PROXY
     ydl_extract_base_opts['proxy'] = PROXY
 

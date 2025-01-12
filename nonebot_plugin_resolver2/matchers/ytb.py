@@ -24,7 +24,7 @@ from ..download.ytdlp import (
 )
 from ..config import (
     NICKNAME,
-    YTB_COOKIES_FILE,
+    ytb_cookies_file,
     scheduler
 )
 
@@ -41,13 +41,13 @@ ytb = on_keyword(
 @ytb.handle()
 async def _(event: MessageEvent, state: T_State):
     message = event.message.extract_plain_text().strip()
-    pattern = r"(https?://)?(www\.)?(youtube\.com|youtu\.be)/[A-Za-z\d._?%&+\-=/#]*"
+    pattern = r"(?:https?://)?(?:www\.)?(?:youtube\.com|youtu\.be)/[A-Za-z\d._?%&+\-=/#]*"
     if match := re.search(pattern, message):
         url = match.group(0)
     else:
-        return
+        await ytb.finish()
     try:
-        info_dict = await get_video_info(url, YTB_COOKIES_FILE)
+        info_dict = await get_video_info(url, ytb_cookies_file)
         title = info_dict.get('title', "未知")
         await ytb.send(f"{NICKNAME}解析 | 油管 - {title}")
     except Exception as e:
@@ -60,10 +60,10 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
     await bot.call_api("set_msg_emoji_like", message_id = event.message_id, emoji_id = '282')
     try:
         if type.extract_plain_text().strip() == '1':
-            video_path = await ytdlp_download_video(url = url, cookiefile = YTB_COOKIES_FILE)
+            video_path = await ytdlp_download_video(url = url, cookiefile = ytb_cookies_file)
             await ytb.send(await get_video_seg(video_path))
         else: 
-            audio_path = await ytdlp_download_audio(url = url, cookiefile = YTB_COOKIES_FILE)
+            audio_path = await ytdlp_download_audio(url = url, cookiefile = ytb_cookies_file)
             await ytb.send(MessageSegment.record(audio_path))
             await ytb.send(get_file_seg(audio_path))
     except Exception as e:

@@ -101,7 +101,7 @@ async def parse_m3u8(m3u8_url: str):
 
 async def download_m3u8_videos(m3u8_full_url, i):
     """
-        批量下载m3u8
+    批量下载m3u8
     :param m3u8_full_urls:
     :return:
     """
@@ -118,7 +118,7 @@ def escape_special_chars(str_json):
 
 def parse_video_name(video_info: json):
     """
-        获取视频信息
+    获取视频信息
     :param video_info:
     :return:
     """
