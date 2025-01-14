@@ -249,8 +249,8 @@ async def _(bot: Bot, state: T_State):
     # 这里是总结内容，如果写了 cookie 就可以
     if credential:
         ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
-        if ai_summary := ai_conclusion.get("model_result", {"summary": ""}).get("summary", "该视频暂不支持AI总结"):
-            segs.append(f"AI总结: {ai_summary}")
+        ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "该视频暂不支持AI总结")
+        segs.append(f"AI总结: {ai_summary}")
     if video_duration > DURATION_MAXIMUM:
         segs.append(f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!")
     await bilibili.send(construct_nodes(bot.self_id, segs))
