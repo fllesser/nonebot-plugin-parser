@@ -1,0 +1,48 @@
+name: Test Load Nonebot Plugin
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.12'
+
+    - name: Install Poetry
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip
+        pip install poetry==2.0.0
+        echo "Poetry version:"
+        poetry --version
+
+    - name: Install dependencies and Run Nonebot
+      run: |
+        source .venv/bin/activate
+        export POETRY_ENV=test ENVIRONMENT=dev
+        poetry install
+        (poetry run nb run | tee output.log) &
+        PID=$!
+        trap "kill $PID" EXIT
+        while ! grep -q "Uvicorn running" output.log; do sleep 1; done
+        kill $PID
+        trap - EXIT
+        
+    - name: Check Load Plugin Failure
+      run: |
+        cat output.log
+        if grep -q 'Failed to import' output.log; then
+          echo "Import failure detected"
+          exit 1
+        fi

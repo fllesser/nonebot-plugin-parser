@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "nonebot-plugin-resolver2"
+version = "1.6.5"
+description = "NoneBot2 链接分享解析器插件, 支持的解析(BV号/链接/小程序/卡片),支持平台(b站，抖音，网易云，微博，小红书，youtube，tiktok，twitter...)"
+authors = ["fllesser <fllessive@gmail.com>"]
+readme = "README.md"
+packages = [{include = "nonebot_plugin_resolver2"}]
+repository = "https://github.com/fllesser/nonebot-plugin-resolver2"
+keywords = ["nonebot", "nonebot2", "resolver", "bilibili", "youtube", "tiktok", "twitter"]
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+httpx = ">=0.26.0,<0.28.0"
+tqdm = "^4.66.5"
+fake-useragent = "1.5.1"
+tenacity = "^9.0.0"
+aiofiles = "^24.1.0"
+yt-dlp = ">=2025.1.15"
+nonebot2 = "^2.4.0"
+nonebot-adapter-onebot = "^2.4.6"
+nonebot-plugin-localstore = ">=0.7.0,<1.0.0"
+nonebot-plugin-apscheduler = ">=0.5.0,<1.0.0"
+bilibili-api-python = "^16.3.0"
+
+[tool.poetry.group.test.dependencies]
+nb-cli = "^1.4.2"
+nonebot2 = {version = "^2.4.0", extras = ["fastapi"]}
+
+[tool.nonebot]
+adapters = [{name="OnebotAdapterV11", module_name="nonebot.adapters.onebot.v11"}]
+plugins = ["nonebot_plugin_resolver2"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
