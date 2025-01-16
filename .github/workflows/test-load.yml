@@ -8,25 +8,27 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    
+    - name: Install uv and set the python version
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: '3.12'
+        python-version: ${{ matrix.python-version }}
 
-    - name: Install uv
-      run: |
-        pip3 install uv
-        uv venv .venv
-        source .venv/bin/activate
-        uv sync --group dev
 
     - name: Run Nonebot
       run: |
+        uv venv
         source .venv/bin/activate
+        uv sync --group dev
         export ENVIRONMENT=dev
         python -c "import nonebot; nonebot.init(); nonebot.load_from_toml('pyproject.toml')"
