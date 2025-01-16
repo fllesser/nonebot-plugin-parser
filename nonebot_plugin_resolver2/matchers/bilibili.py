@@ -167,6 +167,7 @@ async def _(bot: Bot, state: T_State):
             await ar.fetch_content()
             data = ar.json()
             segs: list[MessageSegment | str] = []
+            
             def accumulate_text(node):
                 text = ""
                 if 'children' in node:
@@ -175,16 +176,23 @@ async def _(bot: Bot, state: T_State):
                 if _text := node.get('text'):
                     text += _text if isinstance(_text, str) else str(_text) + node.get('url')
                 return text
+            
             for node in data.get("children"):
                 node_type = node.get('type')
                 if node_type == "ImageNode":
-                    if img_url := node.get('url'):
-                        segs.append(MessageSegment.image(await download_img(img_url)))
+                    if img_url := node.get('url', '').strip():
+                        try:
+                            img_path = await download_img(img_url)
+                        except Exception as e:
+                            logger.warning(f"下载图片失败: img_url: {img_url} err: {e}")
+                            continue
+                        segs.append(MessageSegment.image(img_path))
                 elif node_type == "ParagraphNode":
                     if text := accumulate_text(node).strip():
                         segs.append(text)
                 elif node_type == 'TextNode':
                     segs.append(node.get("text"))
+                    
             if segs:
                 await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 收藏夹解析
