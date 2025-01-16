@@ -182,7 +182,7 @@ async def _(bot: Bot, state: T_State):
                 if node_type == "ImageNode":
                     if img_url := node.get('url', '').strip():
                         if img_url.startswith("https:https"):
-                            img_url.replace("https:https", "https")
+                            img_url = img_url.replace("https:", "", 1)
                         try:
                             img_path = await download_img(img_url)
                         except Exception as e:
