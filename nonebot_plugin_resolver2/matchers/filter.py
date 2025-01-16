@@ -1,6 +1,5 @@
 import json
 
-from nonebot.log import logger
 from nonebot.rule import to_me
 from nonebot.plugin import on_command
 from nonebot.permission import SUPERUSER

@@ -1,8 +1,7 @@
-import fake_useragent
 import httpx
+import fake_useragent
 
 from .utils import get_val_from_url_by_query_key
-
 from .base import BaseParser, VideoAuthor, VideoInfo
 
 

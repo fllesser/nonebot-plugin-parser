@@ -1,17 +1,15 @@
-import re, httpx, asyncio
+import re
+import httpx
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import (
-    MessageEvent,
-    Message
-)
+from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.exception import ActionFailed
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg
 from ..download.ytdlp import get_video_info, ytdlp_download_video
-from ..config import *
+from ..config import PROXY, NICKNAME
 
 
 tiktok = on_keyword(

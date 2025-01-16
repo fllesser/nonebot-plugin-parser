@@ -2,8 +2,6 @@ import asyncio
 import yt_dlp
 
 from pathlib import Path
-from nonebot import get_bot, get_driver
-from nonebot.log import logger
 
 from .common import delete_boring_characters
 from ..config import (
@@ -37,7 +35,7 @@ ydl_download_base_opts = {
 
 }
 
-if PROXY:
+if PROXY is not None:
     ydl_download_base_opts['proxy'] = PROXY
     ydl_extract_base_opts['proxy'] = PROXY
 

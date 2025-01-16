@@ -1,15 +1,11 @@
-import os
 import re
-import json
 import math
 import httpx
 import asyncio
 
-from nonebot import on_keyword
 from nonebot.rule import Rule
-from nonebot.log import logger
+from nonebot.plugin.on import on_keyword
 from nonebot.adapters.onebot.v11 import (
-    Message,
     MessageEvent,
     Bot,
     MessageSegment
@@ -17,9 +13,10 @@ from nonebot.adapters.onebot.v11 import (
 
 from .filter import is_not_in_disable_group
 from .utils import construct_nodes, get_video_seg
-from ..constant import COMMON_HEADER
+
 from ..download.common import download_img, download_video
 from ..parsers.weibo import WeiBo
+from ..constant import COMMON_HEADER
 from ..config import NICKNAME
 
 # WEIBO_SINGLE_INFO

@@ -1,15 +1,10 @@
-import os
 import re
-import json
 import httpx
-import asyncio
 
 from nonebot.log import logger
 from nonebot.typing import T_State
-from nonebot.plugin import on_message
+from nonebot.plugin.on import on_message
 from nonebot.adapters.onebot.v11 import (
-    Message,
-    MessageEvent,
     Bot,
     MessageSegment
 )
@@ -17,7 +12,6 @@ from .utils import get_file_seg
 from .filter import is_not_in_disable_group
 from .preprocess import (
     r_keywords,
-    R_KEYWORD_KEY,
     R_EXTRACT_KEY
 )
 from ..download.common import download_audio

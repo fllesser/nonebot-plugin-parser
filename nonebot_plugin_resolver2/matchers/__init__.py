@@ -1,6 +1,5 @@
 from typing import (
     List,
-    Literal,
     get_args
 )
 from ..constant import MatcherNames

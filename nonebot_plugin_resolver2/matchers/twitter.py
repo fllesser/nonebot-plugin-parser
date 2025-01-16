@@ -1,12 +1,9 @@
 import re
 import httpx
-import asyncio
 
-from nonebot.log import logger
 from nonebot.rule import Rule
 from nonebot.plugin.on import on_keyword
 from nonebot.adapters.onebot.v11 import (
-    Message, 
     MessageEvent, 
     Bot, 
     MessageSegment

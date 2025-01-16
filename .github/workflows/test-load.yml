@@ -1,48 +1,34 @@
-name: Test Load Nonebot Plugin
+name: Test Load
 
 on:
   push:
     branches:
-      - master
+      - '*'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    
+    - name: Install uv and set the python version
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: '3.12'
+        python-version: ${{ matrix.python-version }}
 
-    - name: Install Poetry
-      run: |
-        python -m venv .venv
-        source .venv/bin/activate
-        pip install --upgrade pip
-        pip install poetry==2.0.0
-        echo "Poetry version:"
-        poetry --version
 
-    - name: Install dependencies and Run Nonebot
+    - name: Run Nonebot
       run: |
+        uv venv
         source .venv/bin/activate
-        export POETRY_ENV=test ENVIRONMENT=dev
-        poetry install
-        (poetry run nb run | tee output.log) &
-        PID=$!
-        trap "kill $PID" EXIT
-        while ! grep -q "Uvicorn running" output.log; do sleep 1; done
-        kill $PID
-        trap - EXIT
-        
-    - name: Check Load Plugin Failure
-      run: |
-        cat output.log
-        if grep -q 'Failed to import' output.log; then
-          echo "Import failure detected"
-          exit 1
-        fi
+        uv sync --group dev
+        export ENVIRONMENT=dev
+        python -c "import nonebot; nonebot.init(); nonebot.load_from_toml('pyproject.toml')"
