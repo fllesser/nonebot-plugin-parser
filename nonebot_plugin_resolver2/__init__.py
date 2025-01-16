@@ -2,8 +2,14 @@ from nonebot import get_driver, logger
 
 from nonebot.plugin import PluginMetadata
 from .matchers import resolvers
-from .config import *
-from .cookie import *
+from .config import (
+    Config,
+    rconfig,
+    scheduler,
+    plugin_cache_dir,
+    ytb_cookies_file,
+)
+from .cookie import save_cookies_to_netscape
 
 
 __plugin_meta__ = PluginMetadata(

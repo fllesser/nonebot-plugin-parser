@@ -1,5 +1,4 @@
 from pathlib import Path
-from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import (
     Message,
     MessageSegment

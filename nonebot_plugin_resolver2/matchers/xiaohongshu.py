@@ -8,8 +8,6 @@ from nonebot.typing import T_State
 from nonebot.plugin.on import on_message
 from nonebot.adapters.onebot.v11 import (
     Bot,
-    Message,
-    MessageEvent,
     MessageSegment
 )
 from urllib.parse import parse_qs, urlparse
@@ -18,13 +16,12 @@ from .filter import is_not_in_disable_group
 from .utils import get_video_seg, construct_nodes
 from .preprocess import (
     r_keywords,
-    R_KEYWORD_KEY,
     R_EXTRACT_KEY
 )
 
 from ..constant import COMMON_HEADER
-from ..download.common import download_video, download_img
-from ..config import *
+from ..download.common import download_img
+from ..config import rconfig, NICKNAME
 
 # 小红书下载链接
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"

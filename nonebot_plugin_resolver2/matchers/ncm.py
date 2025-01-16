@@ -1,11 +1,9 @@
 import re
 import httpx
-import asyncio
 
 from nonebot.plugin import on_message
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import (
-    Message,
     Bot,
     MessageSegment
 )
@@ -19,7 +17,7 @@ from .preprocess import (
 )
 from ..constant import COMMON_HEADER
 from ..download.common import download_audio
-from ..config import *
+from ..config import NICKNAME
 
 # NCM获取歌曲信息链接
 NETEASE_API_CN = 'https://www.markingchen.ink'
@@ -63,7 +61,7 @@ async def _(bot: Bot, state: T_State):
     try:
         audio_path = await download_audio(ncm_music_url)
     except Exception as e:
-        await ncm.finish(f'音频下载失败')
+        await ncm.finish(f'音频下载失败 {e}')
     # 发送语音
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件

@@ -1,12 +1,11 @@
 import re
 import json
 import httpx
-import asyncio
+
 from tenacity import (
     retry,
-    stop_after_attempt, 
     wait_fixed,
-    AsyncRetrying
+    stop_after_attempt
 )
 
 from .base import BaseParser, VideoAuthor, VideoInfo

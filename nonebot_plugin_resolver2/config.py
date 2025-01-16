@@ -5,14 +5,13 @@ from nonebot import (
 )
 from pydantic import BaseModel
 from pathlib import Path
-from typing import List, Literal, Optional
+from typing import List, Optional
 
 from .constant import MatcherNames
 
 require("nonebot_plugin_localstore")
 require("nonebot_plugin_apscheduler")
-from nonebot_plugin_apscheduler import scheduler
-import nonebot_plugin_localstore as store
+import nonebot_plugin_localstore as store  # noqa: E402
 
 class Config(BaseModel):
     r_xhs_ck: str = ''

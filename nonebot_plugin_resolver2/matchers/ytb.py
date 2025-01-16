@@ -1,18 +1,15 @@
 import re
-import asyncio
 
-from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.params import Arg
 from nonebot.rule import Rule
 from nonebot.exception import ActionFailed
-from nonebot.permission import SUPERUSER
-from nonebot.plugin.on import on_keyword, on_command
+from nonebot.plugin.on import on_keyword
 from nonebot.adapters.onebot.v11 import (
-    MessageEvent,
+    Bot,
     Message,
-    MessageSegment,
-    Bot
+    MessageEvent,
+    MessageSegment
 )
 
 from .filter import is_not_in_disable_group
@@ -25,7 +22,6 @@ from ..download.ytdlp import (
 from ..config import (
     NICKNAME,
     ytb_cookies_file,
-    scheduler
 )
 
 ytb = on_keyword(
@@ -33,10 +29,6 @@ ytb = on_keyword(
     rule = Rule(is_not_in_disable_group)
 )
 
-# update_yt = on_command(
-#     cmd="update yt", 
-#     permission=SUPERUSER
-# )
 
 @ytb.handle()
 async def _(event: MessageEvent, state: T_State):
@@ -70,70 +62,3 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
         if not isinstance(e, ActionFailed):
             await ytb.send(f"下载失败 | {e}")
         
-# @update_yt.handle()
-# async def _(event: MessageEvent):
-#     get_video_info, ytdlp_download_video, ytdlp_download_audio = await update_ytdlp()
-#     version = await get_yt_dlp_version()
-#     await update_yt.finish(f"Successfully updated {version}")
-
-# @scheduler.scheduled_job(
-#     "cron",
-#     hour=3,
-#     minute=0,
-# )
-# async def _():
-#     get_video_info, ytdlp_download_video, ytdlp_download_audio = await update_ytdlp()
-#     version = await get_yt_dlp_version()
-#     success_info = f"Successfully updated {version}"
-#     try:
-#         bot = get_bot()
-#         if superuser_id := int(next(iter(get_driver().config.superusers), None)):
-#             await bot.send_private_msg(user_id = superuser_id, message = success_info)
-#     except Exception:
-#         pass
-        
-
-# async def update_ytdlp() -> str:
-#     import subprocess
-#     import importlib
-#     import sys
-#     process = await asyncio.create_subprocess_exec(
-#         'pip', 'install', '--upgrade', 'yt-dlp',
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE
-#     )
-#     stdout, stderr = await process.communicate()
-#     if process.returncode == 0:
-#         if 'yt_dlp' in sys.modules:
-#             del sys.modules['yt_dlp']
-#             logger.warning('delete cache of yt_dlp')
-#         import yt_dlp
-#         if 'nonebot_plugin_resolver2.download.ytdlp' in sys.modules:
-#             del sys.modules['nonebot_plugin_resolver2.download.ytdlp']
-#             logger.warning('delete cache of nonebot_plugin_resolver2.download.ytdlp')
-#         from ..download import ytdlp
-#         importlib.reload(yt_dlp)
-#         importlib.reload(ytdlp)
-#         from ..download.ytdlp import (
-#             get_video_info,
-#             ytdlp_download_audio,
-#             ytdlp_download_video
-#         )
-#         return get_video_info, ytdlp_download_audio, ytdlp_download_video
-#     else:
-#         logger.error(f"Failed to update yt-dlp: {stderr.decode()}")
-        
-# async def get_yt_dlp_version():
-#     import subprocess
-#     process = await asyncio.create_subprocess_exec(
-#         'yt-dlp', '--version',
-#         stdout=subprocess.PIPE,
-#         stderr=subprocess.PIPE
-#     )
-#     stdout, stderr = await process.communicate()
-#     if process.returncode == 0:
-#         version = stdout.decode().strip()
-#         return f"yt-dlp {version}"
-#     else:
-#         error_message = stderr.decode().strip()
-#         return f"Failed to get yt-dlp version: {error_message}"

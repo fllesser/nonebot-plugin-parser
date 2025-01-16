@@ -1,9 +1,8 @@
 import dataclasses
+import fake_useragent
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Dict, List
 
-import fake_useragent
 
 @dataclasses.dataclass
 class VideoAuthor:

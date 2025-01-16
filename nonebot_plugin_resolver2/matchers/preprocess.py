@@ -1,10 +1,9 @@
 import json
 
 from typing import Literal
-from nonebot.log import logger
+from nonebot.rule import Rule
 from nonebot.message import event_preprocessor
 from nonebot.typing import T_State
-from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import MessageEvent
 
 
