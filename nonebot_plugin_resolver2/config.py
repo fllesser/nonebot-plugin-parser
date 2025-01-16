@@ -12,6 +12,7 @@ from .constant import MatcherNames
 require("nonebot_plugin_localstore")
 require("nonebot_plugin_apscheduler")
 import nonebot_plugin_localstore as store  # noqa: E402
+from nonebot_plugin_apscheduler import scheduler  # noqa: E402, F401
 
 class Config(BaseModel):
     r_xhs_ck: str = ''
