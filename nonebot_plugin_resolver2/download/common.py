@@ -1,8 +1,6 @@
-import os
 import re
 import time
 import httpx
-import hashlib
 import asyncio
 import aiofiles
 import subprocess
@@ -19,6 +17,14 @@ class EmptyURLError(Exception):
     pass
 
 def parse_url_resource_name(url: str) -> str:
+    """parse url to get resource name
+
+    Args:
+        url (str): resource url address
+
+    Returns:
+        str: resource name
+    """
     url_paths = urlparse(url).path.split('/')
     # 过滤掉空字符串并去除两端空白
     filtered_paths = [segment.strip() for segment in url_paths if segment.strip()]
@@ -31,24 +37,24 @@ def parse_url_resource_name(url: str) -> str:
     else:
         return str(time.time())
 
-def parse_url_file_name(url: str) -> str:
-    parsed_url = urlparse(url)
-    file_name = os.path.basename(parsed_url.path)
-    file_suffix = os.path.splitext(file_name)[1]
-    return f'{hash16url(url)}{file_suffix}'
-
-def hash16url(url: str) -> str:
-    # 使用SHA-256哈希函数生成文件名
-    hash_object = hashlib.sha256(url.encode())
-    filename = hash_object.hexdigest()[-16:]
-    return filename
     
 async def download_file_by_stream(
     url: str,
-    file_name: str = None,
-    proxy: str = None,
-    ext_headers: dict[str, str] = None
+    file_name: str | None = None,
+    proxy: str | None = None,
+    ext_headers: dict[str, str] | None = None
 ) -> Path:
+    """download file by url with stream
+
+    Args:
+        url (str): url address 
+        file_name (str | None, optional): file name. Defaults to get name by parse_url_resource_name.
+        proxy (str | None, optional): proxy url. Defaults to None.
+        ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
+
+    Returns:
+        Path: file path
+    """
     file_name = file_name if file_name is not None else parse_url_resource_name(url)
     file_path = plugin_cache_dir / file_name
     if file_path.exists():
@@ -88,28 +94,61 @@ async def download_file_by_stream(
     
 async def download_video(
     url: str,
-    video_name: str = None,
-    proxy: str = None,
-    ext_headers: dict[str, str] = None
+    video_name: str | None = None,
+    proxy: str | None = None,
+    ext_headers: dict[str, str] | None = None
 ) -> Path:
+    """download video file by url with stream
+
+    Args:
+        url (str): url address
+        video_name (str | None, optional): video name. Defaults to get name by parse url.
+        proxy (str | None, optional): proxy url. Defaults to None.
+        ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
+
+    Returns:
+        Path: video file path
+    """
     if video_name is not None:
         video_name = parse_url_resource_name(url).split(".")[0] + ".mp4"
     return await download_file_by_stream(url, video_name, proxy, ext_headers)
 
 async def download_audio(
     url: str,
-    audio_name: str = None,
-    proxy: str = None,
-    ext_headers: dict[str, str] = None
+    audio_name: str | None = None,
+    proxy: str | None = None,
+    ext_headers: dict[str, str] | None = None
 ) -> Path:
+    """download audio file by url with stream
+
+    Args:
+        url (str): url address
+        audio_name (str | None, optional): audio name. Defaults to get name by parse_url_resource_name.
+        proxy (str | None, optional): proxy url. Defaults to None.
+        ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
+
+    Returns:
+        Path: audio file path
+    """
     return await download_file_by_stream(url, audio_name, proxy, ext_headers)
 
 async def download_img(
     url: str,
-    img_name: str = None,
-    proxy: str = None,
-    ext_headers: dict[str, str] = None
+    img_name: str | None = None,
+    proxy: str | None = None,
+    ext_headers: dict[str, str] | None = None
 ) -> Path:
+    """download image file by url with stream
+
+    Args:
+        url (str): url
+        img_name (str, optional): image name. Defaults to None.
+        proxy (str, optional): proxry url. Defaults to None.
+        ext_headers (dict[str, str], optional): ext headers. Defaults to None.
+
+    Returns:
+        Path: image file path
+    """
     return await download_file_by_stream(url, img_name, proxy, ext_headers)
     
 async def merge_av(
@@ -117,8 +156,15 @@ async def merge_av(
     a_path: Path,
     output_path: Path
 ):
-    """
-    合并视频文件和音频文件
+    """helper function to merge video and audio
+
+    Args:
+        v_path (Path): video path
+        a_path (Path): audio path
+        output_path (Path): ouput path
+
+    Raises:
+        RuntimeError: ffmpeg未安装或命令执行失败
     """
     logger.info(f'Merging {v_path.name} and {a_path.name} to {output_path.name}')
     # 构建 ffmpeg 命令, localstore already path.resolve()
@@ -132,7 +178,7 @@ async def merge_av(
 
 def delete_boring_characters(sentence: str) -> str:
     """
-        去除标题的特殊字符
+    去除标题的特殊字符
     :param sentence:
     :return:
     """

@@ -40,7 +40,16 @@ if PROXY is not None:
     ydl_extract_base_opts['proxy'] = PROXY
 
 
-async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
+async def get_video_info(url: str, cookiefile: Path | None = None) -> dict[str, str]:
+    """get video info by url
+
+    Args:
+        url (str): url address
+        cookiefile (Path | None, optional): cookie file path. Defaults to None.
+
+    Returns:
+        dict[str, str]: video info
+    """
     info_dict = url_info.get(url, None)
     if info_dict: 
         return info_dict
@@ -55,7 +64,16 @@ async def get_video_info(url: str, cookiefile: Path = None) -> dict[str, str]:
         return info_dict
 
         
-async def ytdlp_download_video(url: str, cookiefile: Path = None) -> Path:
+async def ytdlp_download_video(url: str, cookiefile: Path | None = None) -> Path:
+    """download video by yt-dlp
+
+    Args:
+        url (str): url address
+        cookiefile (Path | None, optional): cookie file path. Defaults to None.
+
+    Returns:
+        Path: video file path
+    """
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
     duration = info_dict.get('duration', 600)
@@ -77,7 +95,16 @@ async def ytdlp_download_video(url: str, cookiefile: Path = None) -> Path:
     return video_path
         
 
-async def ytdlp_download_audio(url: str, cookiefile: Path = None) -> Path:
+async def ytdlp_download_audio(url: str, cookiefile: Path | None = None) -> Path:
+    """download audio by yt-dlp
+
+    Args:
+        url (str): url address
+        cookiefile (Path | None, optional): cookie file path. Defaults to None.
+
+    Returns:
+        Path: audio file path
+    """
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get('title', 'titleless')[:50])
     audio_path = plugin_cache_dir / f'{title}.mp3'

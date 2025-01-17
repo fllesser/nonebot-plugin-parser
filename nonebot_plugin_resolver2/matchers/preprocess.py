@@ -13,24 +13,46 @@ R_EXTRACT_KEY: Literal["_r_extract"] = "_r_extract"
 
 @event_preprocessor
 def _(event: MessageEvent, state: T_State) -> None: 
-    message = event.get_message()
-    text = message.extract_plain_text().strip()
-    if json_seg := next((seg for seg in message if seg.type == 'json'), None):
-        try:
-            data_str = json_seg.data.get('data').replace('&#44;', ',')
-            data = json.loads(data_str)
-        except Exception:
-            return
-        if meta := data.get('meta'):
-            if detail := meta.get('detail_1'):
-                text = detail.get('qqdocurl')
-            elif news := meta.get('news'):
-                text = news.get('jumpUrl')
-            else:
-                return
-            if text:
-                text = text.replace('\\', '').replace("&amp;", "&")
-    state[R_EXTRACT_KEY] = text
+    message = event.get_message()   
+    text: str | None = None
+    
+    # 提取纯文本
+    if text := message.extract_plain_text().strip():
+        state[R_EXTRACT_KEY] = text
+        return
+    
+    # 提取json数据
+    json_seg = next((seg for seg in message if seg.type == 'json'), None)
+    if json_seg is None:
+        return
+    
+    data_str: str | None = json_seg.data.get('data')
+    if not data_str:
+        return
+    # 处理转义字符
+    data_str = data_str.replace('&#44;', ',')
+    
+    try:
+        data = json.loads(data_str)
+    except json.JSONDecodeError:
+        return
+    
+    meta = data.get('meta')
+    if meta is None:
+        return
+    
+    # 提取链接
+    if detail := meta.get('detail_1'):
+        text = detail.get('qqdocurl')
+    elif news := meta.get('news'):
+        text = news.get('jumpUrl')
+    else:
+        return
+    
+    if not text:
+        return
+    
+    state[R_EXTRACT_KEY] = text.replace('\\', '').replace("&amp;", "&")
 
 
 class RKeywordsRule:
