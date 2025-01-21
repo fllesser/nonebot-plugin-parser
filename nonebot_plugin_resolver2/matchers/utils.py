@@ -1,19 +1,23 @@
 from pathlib import Path
-from nonebot.adapters.onebot.v11 import (
-    Message,
-    MessageSegment
-)
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 from ..constant import VIDEO_MAX_MB
 from ..download.common import download_video
 from ..config import NICKNAME
 
+
 def construct_nodes(user_id, segments: MessageSegment | list) -> Message:
     def node(content):
-        return MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=content)
+        return MessageSegment.node_custom(
+            user_id=user_id, nickname=NICKNAME, content=content
+        )
+
     segments = segments if isinstance(segments, list) else [segments]
     return Message([node(seg) for seg in segments])
 
-async def get_video_seg(video_path: Path = None, url: str = None, proxy: str = None) -> MessageSegment:
+
+async def get_video_seg(
+    video_path: Path | None = None, url: str | None = None, proxy: str | None = None
+) -> MessageSegment:
     seg: MessageSegment = None
     try:
         # 如果data以"http"开头，先下载视频
@@ -33,10 +37,13 @@ async def get_video_seg(video_path: Path = None, url: str = None, proxy: str = N
         seg = MessageSegment.text(f"视频获取失败\n{e}")
     finally:
         return seg
- 
-    
+
+
 def get_file_seg(file_path: Path, name: str = "") -> MessageSegment:
-    return MessageSegment("file", data = {
-        "name": name if name else file_path.name,
-        "file": file_path.resolve().as_uri()
-    })
+    return MessageSegment(
+        "file",
+        data={
+            "name": name if name else file_path.name,
+            "file": file_path.resolve().as_uri(),
+        },
+    )

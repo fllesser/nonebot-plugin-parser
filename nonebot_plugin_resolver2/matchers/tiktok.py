@@ -4,7 +4,6 @@ import httpx
 from nonebot import on_keyword
 from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import MessageEvent
-from nonebot.exception import ActionFailed
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg
@@ -12,10 +11,8 @@ from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..config import PROXY, NICKNAME
 
 
-tiktok = on_keyword(
-    keywords={"tiktok.com"},
-    rule = Rule(is_not_in_disable_group)
-)
+tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disable_group))
+
 
 @tiktok.handle()
 async def _(event: MessageEvent):
@@ -28,18 +25,22 @@ async def _(event: MessageEvent):
     else:
         # not match, return
         return
+    client_config = {}
+    if PROXY:
+        client_config["proxies"] = {"http": PROXY, "https": PROXY}
     if prefix == "vt":
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(url, follow_redirects=True, proxies=PROXY)
+        async with httpx.AsyncClient(**client_config) as client:
+            resp = await client.get(url, follow_redirects=True)
+        resp.raise_for_status()
         url = str(resp.url)
     elif prefix == "vm":
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(**client_config) as client:
             resp = await client.get(
                 url,
-                headers={ "User-Agent": "facebookexternalhit/1.1" },
-                follow_redirects=True,
-                proxies=PROXY
+                headers={"User-Agent": "facebookexternalhit/1.1"},
+                follow_redirects=True
             )
+        resp.raise_for_status()
         url = str(resp.url)
     try:
         info = await get_video_info(url)
@@ -47,10 +48,9 @@ async def _(event: MessageEvent):
     except Exception as e:
         await tiktok.send(f"{NICKNAME}解析 | TikTok - 标题获取出错: {e}")
     try:
-        video_path = await ytdlp_download_video(url = url)
-        await tiktok.send(await get_video_seg(video_path))
+        video_path = await ytdlp_download_video(url=url)
+        res = await get_video_seg(video_path)
     except Exception as e:
-        if not isinstance(e, ActionFailed):
-            await tiktok.send(f"下载失败 | {e}")
-
-
+        res = f"下载视频失败 | {e}"
+    finally:
+        await tiktok.send(res)

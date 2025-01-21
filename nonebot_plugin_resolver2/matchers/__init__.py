@@ -1,12 +1,24 @@
-from typing import (
-    List,
-    get_args
-)
-from ..constant import MatcherNames
-# MatcherNames = Literal["bilibili", "douyin", "kugou", "twitter", "ncm", "ytb", "acfun", "tiktok", "weibo", "xiaohongshu"]
+from nonebot.matcher import Matcher
+from .bilibili import bilibili
+from .acfun import acfun
+from .douyin import douyin
+from .ytb import ytb
+from .kugou import kugou
+from .ncm import ncm
+from .twitter import twitter
+from .tiktok import tiktok
+from .weibo import weibo
+from .xiaohongshu import xiaohongshu
 
-modules: List[MatcherNames] = list(get_args(MatcherNames))
-for module in modules:
-    exec(f"from .{module} import {module}")
-    
-resolvers = {module: eval(module) for module in modules}
+resolvers: dict[str, Matcher] = {
+    "bilibili": bilibili,
+    "acfun": acfun,
+    "douyin": douyin,
+    "ytb": ytb,
+    "kugou": kugou,
+    "ncm": ncm,
+    "twitter": twitter,
+    "tiktok": tiktok,
+    "weibo": weibo,
+    "xiaohongshu": xiaohongshu,
+}

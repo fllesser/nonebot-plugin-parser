@@ -49,5 +49,3 @@ class WeiBo(BaseParser):
             ),
         )
         return video_info
-    
-        

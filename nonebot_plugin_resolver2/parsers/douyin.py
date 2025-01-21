@@ -2,11 +2,7 @@ import re
 import json
 import httpx
 
-from tenacity import (
-    retry,
-    wait_fixed,
-    stop_after_attempt
-)
+from tenacity import retry, wait_fixed, stop_after_attempt
 
 from .base import BaseParser, VideoAuthor, VideoInfo
 
@@ -30,19 +26,23 @@ class DouYin(BaseParser):
         if "share/slides" in iesdouyin_url:
             return await self.parse_slides(video_id)
         return await self.parse_video(iesdouyin_url, share_url)
-    
-    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))    
+
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, iesdouyin_url: str, share_url: str) -> VideoInfo:
         async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.get(iesdouyin_url, headers=self.get_default_headers())
-            
+            response = await client.get(
+                iesdouyin_url, headers=self.get_default_headers()
+            )
+
         try:
             response.raise_for_status()
             data = self.format_response(response)
         except Exception as e1:
             try:
                 async with httpx.AsyncClient(follow_redirects=True) as client:
-                    response = await client.get(share_url, headers=self.get_default_headers())
+                    response = await client.get(
+                        share_url, headers=self.get_default_headers()
+                    )
                 response.raise_for_status()
                 data = self.format_response(response)
             except Exception as e2:
@@ -98,7 +98,7 @@ class DouYin(BaseParser):
 
     def _get_request_url_by_video_id(self, video_id) -> str:
         return f"https://www.iesdouyin.com/share/video/{video_id}/"
-        
+
     def format_response(self, response):
         pattern = re.compile(
             pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
@@ -113,13 +113,17 @@ class DouYin(BaseParser):
 
         # 获取链接返回json数据进行视频和图集判断,如果指定类型不存在，抛出异常
         # 返回的json数据中，视频字典类型为 video_(id)/page
-        VIDEO_ID_PAGE_KEY  = "video_(id)/page"
+        VIDEO_ID_PAGE_KEY = "video_(id)/page"
         # 返回的json数据中，视频字典类型为 note_(id)/page
         NOTE_ID_PAGE_KEY = "note_(id)/page"
-        if VIDEO_ID_PAGE_KEY  in json_data["loaderData"]:
-            original_video_info = json_data["loaderData"][VIDEO_ID_PAGE_KEY]["videoInfoRes"]
+        if VIDEO_ID_PAGE_KEY in json_data["loaderData"]:
+            original_video_info = json_data["loaderData"][VIDEO_ID_PAGE_KEY][
+                "videoInfoRes"
+            ]
         elif NOTE_ID_PAGE_KEY in json_data["loaderData"]:
-            original_video_info = json_data["loaderData"][NOTE_ID_PAGE_KEY]["videoInfoRes"]
+            original_video_info = json_data["loaderData"][NOTE_ID_PAGE_KEY][
+                "videoInfoRes"
+            ]
         else:
             raise Exception("failed to parse Videos or Photo Gallery info from json")
 
@@ -131,35 +135,38 @@ class DouYin(BaseParser):
             raise Exception(err_detail_msg)
 
         return original_video_info["item_list"][0]
-        
+
     async def parse_slides(self, video_id: str) -> VideoInfo:
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
         params = {
-          'aweme_ids': f"[{video_id}]",
-          'request_source': "200",
+            "aweme_ids": f"[{video_id}]",
+            "request_source": "200",
         }
         headers = {
-          'User-Agent': "Mozilla/5.0 (Linux; Android 10; VOG-AL00 Build/HUAWEIVOG-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",
-          'Accept': "application/json, text/plain, */*",
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; VOG-AL00 Build/HUAWEIVOG-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
         }
         async with httpx.AsyncClient() as client:
             resp = await client.get(url, params=params, headers=headers)
             resp.raise_for_status()
-            
-        data = resp.json()['aweme_details'][0]
-        title = data.get('share_info').get("share_desc_info")
+
+        detail = resp.json().get("aweme_details")
+        if not detail:
+            raise ValueError("链接作品不存在")
+        data = detail[0]
+        title = data.get("share_info").get("share_desc_info")
         images = []
         dynamic_images = []
-        for image in data.get('images'):
-            if video := image.get('video'):
-                dynamic_images.append(video['play_addr']['url_list'][0])
+        for image in data.get("images"):
+            if video := image.get("video"):
+                dynamic_images.append(video["play_addr"]["url_list"][0])
             else:
-                images.append(image['url_list'][0])
-        
+                images.append(image["url_list"][0])
+
         return VideoInfo(
             title=title,
             video_url="",
             cover_url="",
-            images = images,
-            dynamic_images=dynamic_images
+            images=images,
+            dynamic_images=dynamic_images,
         )

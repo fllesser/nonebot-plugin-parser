@@ -8,46 +8,20 @@ import subprocess
 from pathlib import Path
 from nonebot.log import logger
 from tqdm.asyncio import tqdm
-from urllib.parse import urlparse
 
 from ..constant import COMMON_HEADER
 from ..config import plugin_cache_dir
 
-class EmptyURLError(Exception):
-    pass
-
-def parse_url_resource_name(url: str) -> str:
-    """parse url to get resource name
-
-    Args:
-        url (str): resource url address
-
-    Returns:
-        str: resource name
-    """
-    url_paths = urlparse(url).path.split('/')
-    # 过滤掉空字符串并去除两端空白
-    filtered_paths = [segment.strip() for segment in url_paths if segment.strip()]
-    # 获取最后一个非空路径段
-    last_path = filtered_paths[-1] if filtered_paths else ""
-    pattern = r'[a-zA-Z0-9-]+(?:\.[a-zA-Z]+)?'
-
-    if matches := re.findall(pattern, last_path):
-        return ''.join(matches)
-    else:
-        return str(time.time())
-
-    
 async def download_file_by_stream(
     url: str,
     file_name: str | None = None,
     proxy: str | None = None,
-    ext_headers: dict[str, str] | None = None
+    ext_headers: dict[str, str] | None = None,
 ) -> Path:
     """download file by url with stream
 
     Args:
-        url (str): url address 
+        url (str): url address
         file_name (str | None, optional): file name. Defaults to get name by parse_url_resource_name.
         proxy (str | None, optional): proxy url. Defaults to None.
         ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
@@ -55,34 +29,33 @@ async def download_file_by_stream(
     Returns:
         Path: file path
     """
-    file_name = file_name if file_name is not None else parse_url_resource_name(url)
+    # file_name = file_name if file_name is not None else parse_url_resource_name(url)
+    if not file_name:
+        file_name = generate_file_name(url, "file")
     file_path = plugin_cache_dir / file_name
     if file_path.exists():
         return file_path
     # httpx client config
-    client_config =  {
-        'timeout': httpx.Timeout(60, connect=5.0),
-        'follow_redirects': True
+    client_config = {
+        "timeout": httpx.Timeout(60, connect=5.0),
+        "follow_redirects": True,
     }
     if ext_headers is not None:
-        client_config['headers'] = COMMON_HEADER | ext_headers
+        client_config["headers"] = COMMON_HEADER | ext_headers
     if proxy is not None:
-        client_config['proxies'] = { 
-            'http://': proxy,
-            'https://': proxy 
-        }
-        
+        client_config["proxies"] = {"http://": proxy, "https://": proxy}
+
     async with httpx.AsyncClient(**client_config) as client:
         async with client.stream("GET", url) as resp:
             if resp.status_code >= 400:
                 resp.raise_for_status()
             with tqdm(
-                total=int(resp.headers.get('content-length', 0)),
-                unit='B',
+                total=int(resp.headers.get("content-length", 0)),
+                unit="B",
                 unit_scale=True,
                 unit_divisor=1024,
                 dynamic_ncols=True,
-                colour='green'
+                colour="green",
             ) as bar:
                 # 设置前缀信息
                 bar.set_description(file_name)
@@ -91,12 +64,13 @@ async def download_file_by_stream(
                         await f.write(chunk)
                         bar.update(len(chunk))
     return file_path
-    
+
+
 async def download_video(
     url: str,
     video_name: str | None = None,
     proxy: str | None = None,
-    ext_headers: dict[str, str] | None = None
+    ext_headers: dict[str, str] | None = None,
 ) -> Path:
     """download video file by url with stream
 
@@ -109,15 +83,15 @@ async def download_video(
     Returns:
         Path: video file path
     """
-    if video_name is not None:
-        video_name = parse_url_resource_name(url).split(".")[0] + ".mp4"
+    if video_name is None:
+        video_name = generate_file_name(url, "video")
     return await download_file_by_stream(url, video_name, proxy, ext_headers)
 
 async def download_audio(
     url: str,
     audio_name: str | None = None,
     proxy: str | None = None,
-    ext_headers: dict[str, str] | None = None
+    ext_headers: dict[str, str] | None = None,
 ) -> Path:
     """download audio file by url with stream
 
@@ -130,13 +104,16 @@ async def download_audio(
     Returns:
         Path: audio file path
     """
+    if audio_name is None:
+        audio_name = generate_file_name(url, "audio")
     return await download_file_by_stream(url, audio_name, proxy, ext_headers)
+
 
 async def download_img(
     url: str,
     img_name: str | None = None,
     proxy: str | None = None,
-    ext_headers: dict[str, str] | None = None
+    ext_headers: dict[str, str] | None = None,
 ) -> Path:
     """download image file by url with stream
 
@@ -149,13 +126,12 @@ async def download_img(
     Returns:
         Path: image file path
     """
+    if img_name is None:
+        img_name = generate_file_name(url, "image")
     return await download_file_by_stream(url, img_name, proxy, ext_headers)
-    
-async def merge_av(
-    v_path: Path,
-    a_path: Path,
-    output_path: Path
-):
+
+
+async def merge_av(v_path: Path, a_path: Path, output_path: Path):
     """helper function to merge video and audio
 
     Args:
@@ -166,15 +142,38 @@ async def merge_av(
     Raises:
         RuntimeError: ffmpeg未安装或命令执行失败
     """
-    logger.info(f'Merging {v_path.name} and {a_path.name} to {output_path.name}')
+    logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
     # 构建 ffmpeg 命令, localstore already path.resolve()
     command = f'ffmpeg -y -i "{v_path}" -i "{a_path}" -c copy "{output_path}"'
     result = await asyncio.get_event_loop().run_in_executor(
         None,
-        lambda: subprocess.call(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        lambda: subprocess.call(
+            command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        ),
     )
     if result != 0:
         raise RuntimeError("ffmpeg未安装或命令执行失败")
+
+url_file_mapping: dict[str, str] = {}
+
+def generate_file_name(url: str, type: str) -> str:
+    global url_file_mapping
+    if file_name := url_file_mapping.get(url):
+        return file_name
+    suffix = ""
+    match type:
+        case "audio":
+            suffix = ".mp3"
+        case "image":
+            suffix = ".jpg"
+        case "video":
+            suffix = ".mp4"
+        case _: 
+            if match := re.search(r"(\.[a-zA-Z0-9]+)\?", url):
+                suffix = match.group(1) if match else ""
+    file_name = f"{type}_{int(time.time())}_{hash(url)}{suffix}"
+    url_file_mapping[url] = file_name
+    return file_name
 
 def delete_boring_characters(sentence: str) -> str:
     """
@@ -182,4 +181,8 @@ def delete_boring_characters(sentence: str) -> str:
     :param sentence:
     :return:
     """
-    return re.sub(r'[’!"∀〃\$%&\'\(\)\*\+,\./:;<=>\?@，。?★、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～]+', "", sentence)
+    return re.sub(
+        r'[’!"∀〃\$%&\'\(\)\*\+,\./:;<=>\?@，。?★、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～]+',
+        "",
+        sentence,
+    )

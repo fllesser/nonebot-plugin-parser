@@ -8,19 +8,14 @@ import subprocess
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import (
-    Message,
-    MessageEvent
-)
+from nonebot.adapters.onebot.v11 import Message, MessageEvent
 
 from .filter import is_not_in_disable_group
 from .utils import get_video_seg
 from ..config import plugin_cache_dir, NICKNAME
 
-acfun = on_keyword(
-    keywords={"acfun.cn"},
-    rule = Rule(is_not_in_disable_group)
-)
+acfun = on_keyword(keywords={"acfun.cn"}, rule=Rule(is_not_in_disable_group))
+
 
 @acfun.handle()
 async def _(event: MessageEvent) -> None:
@@ -31,13 +26,16 @@ async def _(event: MessageEvent) -> None:
     await acfun.send(Message(f"{NICKNAME}解析 | 猴山 - {video_name}"))
     m3u8_full_urls, ts_names, output_file_name = await parse_m3u8(url_m3u8s)
     # logger.info(output_folder_name, output_file_name)
-    await asyncio.gather(*[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)])
+    await asyncio.gather(
+        *[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)]
+    )
     await merge_ac_file_to_mp4(ts_names, output_file_name)
     await acfun.send(await get_video_seg(plugin_cache_dir / output_file_name))
 
+
 headers = {
-    'referer': 'https://www.acfun.cn/',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83'
+    "referer": "https://www.acfun.cn/",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83",
 }
 
 
@@ -60,11 +58,11 @@ async def parse_url(url: str):
     video_info = json.loads(str_json_escaped)
     # print(video_info)
     video_name = parse_video_name_fixed(video_info)
-    ks_play_json = video_info['currentVideoInfo']['ksPlayJson']
+    ks_play_json = video_info["currentVideoInfo"]["ksPlayJson"]
     ks_play = json.loads(ks_play_json)
-    representations = ks_play['adaptationSet'][0]['representation']
+    representations = ks_play["adaptationSet"][0]["representation"]
     # 这里[d['url'] for d in representations]，从4k~360，此处默认720p
-    url_m3u8s = [d['url'] for d in representations][3]
+    url_m3u8s = [d["url"] for d in representations][3]
     # print([d['url'] for d in representations])
     return url_m3u8s, video_name
 
@@ -123,30 +121,34 @@ def parse_video_name(video_info: json):
     :param video_info:
     :return:
     """
-    ac_id = "ac" + video_info['dougaId'] if video_info['dougaId'] is not None else ""
-    title = video_info['title'] if video_info['title'] is not None else ""
-    author = video_info['user']['name'] if video_info['user']['name'] is not None else ""
-    upload_time = video_info['createTime'] if video_info['createTime'] is not None else ""
-    desc = video_info['description'] if video_info['description'] is not None else ""
+    ac_id = "ac" + video_info["dougaId"] if video_info["dougaId"] is not None else ""
+    title = video_info["title"] if video_info["title"] is not None else ""
+    author = (
+        video_info["user"]["name"] if video_info["user"]["name"] is not None else ""
+    )
+    upload_time = (
+        video_info["createTime"] if video_info["createTime"] is not None else ""
+    )
+    desc = video_info["description"] if video_info["description"] is not None else ""
 
-    raw = '_'.join([ac_id, title, author, upload_time, desc])[:101]
+    raw = "_".join([ac_id, title, author, upload_time, desc])[:101]
     return raw
 
 
 async def merge_ac_file_to_mp4(ts_names, file_name):
-    concat_str = '\n'.join([f"file {i}.ts" for i, d in enumerate(ts_names)])
+    concat_str = "\n".join([f"file {i}.ts" for i, d in enumerate(ts_names)])
 
-    filetxt = plugin_cache_dir / 'file.txt'
+    filetxt = plugin_cache_dir / "file.txt"
     filepath = plugin_cache_dir / file_name
-    async with aiofiles.open(filetxt, 'w') as f:
+    async with aiofiles.open(filetxt, "w") as f:
         await f.write(concat_str)
     command = f'ffmpeg -y -f concat -safe 0 -i {filetxt} -c copy "{filepath}"'
     stdout = subprocess.DEVNULL
     stderr = subprocess.DEVNULL
     await asyncio.get_event_loop().run_in_executor(
-        None,
-        lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
+        None, lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
     )
+
 
 def parse_video_name_fixed(video_info: json):
     """

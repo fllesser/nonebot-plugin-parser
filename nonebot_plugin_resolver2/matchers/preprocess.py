@@ -1,6 +1,6 @@
 import json
 
-from typing import Literal
+from typing import Literal, Any
 from nonebot.rule import Rule
 from nonebot.message import event_preprocessor
 from nonebot.typing import T_State
@@ -12,47 +12,47 @@ R_EXTRACT_KEY: Literal["_r_extract"] = "_r_extract"
 
 
 @event_preprocessor
-def _(event: MessageEvent, state: T_State) -> None: 
-    message = event.get_message()   
+def _(event: MessageEvent, state: T_State) -> None:
+    message = event.get_message()
     text: str | None = None
-    
+
     # 提取纯文本
     if text := message.extract_plain_text().strip():
         state[R_EXTRACT_KEY] = text
         return
-    
+
     # 提取json数据
-    json_seg = next((seg for seg in message if seg.type == 'json'), None)
+    json_seg = next((seg for seg in message if seg.type == "json"), None)
     if json_seg is None:
         return
-    
-    data_str: str | None = json_seg.data.get('data')
+
+    data_str: str | None = json_seg.data.get("data")
     if not data_str:
         return
     # 处理转义字符
-    data_str = data_str.replace('&#44;', ',')
-    
+    data_str = data_str.replace("&#44;", ",")
+
     try:
-        data = json.loads(data_str)
+        data: dict[str, Any] = json.loads(data_str)
     except json.JSONDecodeError:
         return
-    
-    meta = data.get('meta')
+
+    meta: dict[str, Any] = data.get("meta")
     if meta is None:
         return
-    
+
     # 提取链接
-    if detail := meta.get('detail_1'):
-        text = detail.get('qqdocurl')
-    elif news := meta.get('news'):
-        text = news.get('jumpUrl')
+    if detail := meta.get("detail_1"):
+        text = detail.get("qqdocurl")
+    elif news := meta.get("news"):
+        text = news.get("jumpUrl")
     else:
         return
-    
+
     if not text:
         return
-    
-    state[R_EXTRACT_KEY] = text.replace('\\', '').replace("&amp;", "&")
+
+    state[R_EXTRACT_KEY] = text.replace("\\", "").replace("&amp;", "&")
 
 
 class RKeywordsRule:
@@ -82,7 +82,7 @@ class RKeywordsRule:
             state[R_KEYWORD_KEY] = key
             return True
         return False
-        
-        
+
+
 def r_keywords(*keywords: str) -> Rule:
     return Rule(RKeywordsRule(*keywords))

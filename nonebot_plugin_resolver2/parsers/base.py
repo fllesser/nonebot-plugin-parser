@@ -40,7 +40,7 @@ class VideoInfo:
 
     # 图集图片地址列表
     images: List[str] = dataclasses.field(default_factory=list)
-    
+
     dynamic_images: List[str] = dataclasses.field(default_factory=list)
 
     # 视频作者信息
@@ -50,9 +50,7 @@ class VideoInfo:
 class BaseParser(ABC):
     @staticmethod
     def get_default_headers() -> Dict[str, str]:
-        return {
-            "User-Agent": fake_useragent.UserAgent(os=["ios"]).random
-        }
+        return {"User-Agent": fake_useragent.UserAgent(os=["ios"]).random}
 
     @abstractmethod
     async def parse_share_url(self, share_url: str) -> VideoInfo:
