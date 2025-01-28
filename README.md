@@ -109,7 +109,8 @@ _✨ NoneBot2 链接分享自动解析插件 ✨_
 
 | 配置项 | 必填 | 默认值 | 说明 |
 |:-----:|:----:|:----:|:----:|
-| NICKNAME | 否 | [""] | nonebot2内置配置，可作为解析结果消息的前缀 |
+| NICKNAME | 否 | [""] | nonebot2 内置配置，可作为解析结果消息的前缀 |
+| API_TIMEOUT | 否 | 30.0 | nonebot2 内置配置，若服务器上传带宽太低，建议调高，防止超时 |
 | r_xhs_ck | 否 | "" | 小红书 cookie，想要解析小红书必填|
 | r_bili_ck | 否 | "" | B站 cookie, 可不填，若填写，必须含有 SESSDATA 项，可附加 B 站 AI 总结功能 |
 | r_ytb_ck | 否 | "" | Youtube cookie, Youtube 视频因人机检测下载失败，需填 |
