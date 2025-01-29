@@ -29,7 +29,7 @@ jobs:
       run: |
         uv venv
         source .venv/bin/activate
-        uv sync --group dev  --prerelease=allow
+        uv sync --group dev
         export ENVIRONMENT=dev
         set -e
         python -c "import nonebot; nonebot.init(); nonebot.load_from_toml('pyproject.toml')"
