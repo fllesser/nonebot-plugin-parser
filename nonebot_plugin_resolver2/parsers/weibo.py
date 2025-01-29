@@ -1,4 +1,4 @@
-import httpx
+import aiohttp
 import fake_useragent
 
 from .utils import get_val_from_url_by_query_key
@@ -25,11 +25,10 @@ class WeiBo(BaseParser):
             "User-Agent": fake_useragent.UserAgent(os=["ios"]).random,
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + video_id + '"}}'
-        async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.post(req_url, headers=headers, content=post_content)
-            response.raise_for_status()
-
-        json_data = response.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.post(req_url, headers=headers, data=post_content) as response:
+                response.raise_for_status()
+                json_data = await response.json()
         data = json_data["data"]["Component_Play_Playinfo"]
 
         video_url = data["stream_url"]

@@ -1,5 +1,5 @@
 import re
-import httpx
+import aiohttp
 
 from nonebot.plugin import on_message
 from nonebot.typing import T_State
@@ -30,9 +30,9 @@ async def _(bot: Bot, state: T_State):
     if keyword == "163cn.tv":
         if match := re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", text):
             url = match.group(0)
-        async with httpx.AsyncClient() as client:
-            resp = await client.head(url, follow_redirects=True)
-        url = str(resp.url)
+        async with aiohttp.ClientSession() as session:
+            async with session.head(url, allow_redirects=False) as resp:
+                url = resp.headers.get("Location")
     else:
         url = text
     if match := re.search(r"id=(\d+)", url):
@@ -42,11 +42,11 @@ async def _(bot: Bot, state: T_State):
 
     # 对接临时接口
     try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
                 f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER
-            )
-        ncm_vip_data = resp.json()
+            ) as resp:
+                ncm_vip_data = await resp.json()
         ncm_music_url, ncm_cover, ncm_singer, ncm_title = (
             ncm_vip_data.get(key) for key in ["music_url", "cover", "singer", "title"]
         )

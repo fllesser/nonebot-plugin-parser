@@ -1,5 +1,5 @@
 import re
-import httpx
+import aiohttp
 import asyncio
 
 from nonebot.log import logger
@@ -73,11 +73,9 @@ async def _(bot: Bot, state: T_State):
     # 短链重定向地址
     if keyword in ("b23", "bili2233"):
         b23url = url
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
-                b23url, headers=BILIBILI_HEADERS, follow_redirects=True
-            )
-        url = str(resp.url)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(b23url, headers=BILIBILI_HEADERS, allow_redirects=False) as resp:
+                url = resp.headers.get("Location", b23url)
         if url == b23url:
             logger.info(f"链接 {url} 无效，忽略")
             return

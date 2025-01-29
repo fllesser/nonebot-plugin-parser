@@ -1,5 +1,5 @@
 import re
-import httpx
+import aiohttp
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
@@ -18,30 +18,18 @@ tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disable_group))
 async def _(event: MessageEvent):
     # 消息
     message: str = event.message.extract_plain_text().strip()
-    url_reg = r"(http:|https:)\/\/(www|vt|vm).tiktok.com\/[A-Za-z\d._?%&+\-=\/#@]*"
+    url_reg = r"(?:http:|https:)\/\/(www|vt|vm).tiktok.com\/[A-Za-z\d._?%&+\-=\/#@]*"
     if match := re.search(url_reg, message):
         url = match.group(0)
-        prefix = match.group(2)
+        prefix = match.group(1)
     else:
-        # not match, return
         return
-    client_config = {}
-    if PROXY:
-        client_config["proxies"] = {"http": PROXY, "https": PROXY}
-    if prefix == "vt":
-        async with httpx.AsyncClient(**client_config) as client:
-            resp = await client.get(url, follow_redirects=True)
-        resp.raise_for_status()
-        url = str(resp.url)
-    elif prefix == "vm":
-        async with httpx.AsyncClient(**client_config) as client:
-            resp = await client.get(
-                url,
-                headers={"User-Agent": "facebookexternalhit/1.1"},
-                follow_redirects=True
-            )
-        resp.raise_for_status()
-        url = str(resp.url)
+
+    if prefix == "vt" or prefix == "vm":
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, allow_redirects=False, proxy=PROXY) as resp:
+                url = resp.headers.get("Location")
+
     try:
         info = await get_video_info(url)
         await tiktok.send(f"{NICKNAME}解析 | TikTok - {info['title']}")

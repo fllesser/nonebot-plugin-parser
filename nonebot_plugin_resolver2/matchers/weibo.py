@@ -1,6 +1,6 @@
 import re
 import math
-import httpx
+import aiohttp
 import asyncio
 
 from nonebot.rule import Rule
@@ -57,12 +57,12 @@ async def _(bot: Bot, event: MessageEvent):
     }
 
     # 请求数据
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            WEIBO_SINGLE_INFO.replace("{}", weibo_id), headers=headers
-        )
-        resp.raise_for_status()
-    resp = resp.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            WEIBO_SINGLE_INFO.format(weibo_id), headers=headers
+        ) as resp:
+            resp.raise_for_status()
+            resp = await resp.json()
     weibo_data = resp["data"]
     # logger.info(weibo_data)
     text, status_title, source, region_name, pics, page_info = (

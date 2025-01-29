@@ -1,16 +1,18 @@
 import re
 import time
-import httpx
+import aiohttp
 import asyncio
 import aiofiles
 import subprocess
 
 from pathlib import Path
+from collections import deque
 from nonebot.log import logger
 from tqdm.asyncio import tqdm
 
 from ..constant import COMMON_HEADER
 from ..config import plugin_cache_dir
+
 
 async def download_file_by_stream(
     url: str,
@@ -35,22 +37,19 @@ async def download_file_by_stream(
     file_path = plugin_cache_dir / file_name
     if file_path.exists():
         return file_path
-    # httpx client config
-    client_config = {
-        "timeout": httpx.Timeout(60, connect=5.0),
-        "follow_redirects": True,
-    }
-    if ext_headers is not None:
-        client_config["headers"] = COMMON_HEADER | ext_headers
-    if proxy is not None:
-        client_config["proxies"] = {"http://": proxy, "https://": proxy}
 
-    async with httpx.AsyncClient(**client_config) as client:
-        async with client.stream("GET", url) as resp:
-            if resp.status_code >= 400:
-                resp.raise_for_status()
+    headers = COMMON_HEADER.copy()
+    if ext_headers is not None:
+        headers.update(ext_headers)
+    # 禁用 https？
+    connector = aiohttp.TCPConnector(ssl=False)
+    async with aiohttp.ClientSession(headers=headers, connector=connector) as session:
+        async with session.get(
+            url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=60, connect=5.0)
+        ) as resp:
+            resp.raise_for_status()
             with tqdm(
-                total=int(resp.headers.get("content-length", 0)),
+                total=int(resp.headers.get("Content-Length", 0)),
                 unit="B",
                 unit_scale=True,
                 unit_divisor=1024,
@@ -60,7 +59,7 @@ async def download_file_by_stream(
                 # 设置前缀信息
                 bar.set_description(file_name)
                 async with aiofiles.open(file_path, "wb") as f:
-                    async for chunk in resp.aiter_bytes():
+                    async for chunk in resp.content.iter_chunked(1024):
                         await f.write(chunk)
                         bar.update(len(chunk))
     return file_path
@@ -86,6 +85,7 @@ async def download_video(
     if video_name is None:
         video_name = generate_file_name(url, "video")
     return await download_file_by_stream(url, video_name, proxy, ext_headers)
+
 
 async def download_audio(
     url: str,
@@ -154,11 +154,16 @@ async def merge_av(v_path: Path, a_path: Path, output_path: Path):
     if result != 0:
         raise RuntimeError("ffmpeg未安装或命令执行失败")
 
-url_file_mapping: dict[str, str] = {}
+
+# A deque to store the URL to file name mapping
+url_file_mapping: deque[tuple[str, str]] = deque(maxlen=100)
+
 
 def generate_file_name(url: str, type: str) -> str:
-    global url_file_mapping
-    if file_name := url_file_mapping.get(url):
+    if file_name := next(
+        (f for u, f in url_file_mapping if u == url),
+        None,
+    ):
         return file_name
     suffix = ""
     match type:
@@ -168,12 +173,13 @@ def generate_file_name(url: str, type: str) -> str:
             suffix = ".jpg"
         case "video":
             suffix = ".mp4"
-        case _: 
+        case _:
             if match := re.search(r"(\.[a-zA-Z0-9]+)\?", url):
                 suffix = match.group(1) if match else ""
     file_name = f"{type}_{int(time.time())}_{hash(url)}{suffix}"
-    url_file_mapping[url] = file_name
+    url_file_mapping.append((url, file_name))
     return file_name
+
 
 def delete_boring_characters(sentence: str) -> str:
     """

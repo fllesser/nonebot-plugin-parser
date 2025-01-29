@@ -1,6 +1,7 @@
 import re
-import httpx
+import aiohttp
 
+from typing import Any
 from nonebot.rule import Rule
 from nonebot.plugin.on import on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent, Bot, MessageSegment
@@ -29,7 +30,7 @@ async def _(bot: Bot, event: MessageEvent):
     x_url = f"http://47.99.158.118/video-crack/v2/parse?content={x_url}"
 
     # 内联一个请求
-    async def x_req(url: str) -> httpx.Response:
+    async def x_req(url: str) -> dict[str, Any]:
         headers = {
             "Accept": "ext/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,"
             "application/signed-exchange;v=b3;q=0.7",
@@ -41,11 +42,12 @@ async def _(bot: Bot, event: MessageEvent):
             "Sec-Fetch-User": "?1",
             **COMMON_HEADER,
         }
-        async with httpx.AsyncClient() as client:
-            return await client.get(url, headers=headers)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                return await response.json()
 
     resp = await x_req(x_url)
-    x_data = resp.json().get("data")
+    x_data = resp.get("data")
 
     await twitter.send(f"{NICKNAME}解析 | 小蓝鸟")
 
@@ -54,6 +56,6 @@ async def _(bot: Bot, event: MessageEvent):
         await twitter.send(await get_video_seg(url=x_video_url, proxy=PROXY))
     else:
         resp = await x_req(f"{x_url}/photo")
-        x_pic_url = resp.json()["data"]["url"]
+        x_pic_url = resp["data"]["url"]
         img_path = await download_img(url=x_pic_url, proxy=PROXY)
         await twitter.send(MessageSegment.image(img_path))

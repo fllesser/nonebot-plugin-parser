@@ -1,5 +1,5 @@
 import re
-import httpx
+import aiohttp
 
 from nonebot.log import logger
 from nonebot.typing import T_State
@@ -28,20 +28,19 @@ async def _(bot: Bot, state: T_State):
     else:
         logger.info(f"无效链接，忽略 - {text}")
         return
-    # 使用 httpx 获取 URL 的标题
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, follow_redirects=True)
-    if response.status_code != 200:
-        await kugou.finish(f"{NICKNAME}解析 | 酷狗音乐 - 获取链接失败")
-    title = response.text
-    pattern = r"<title>(.*?)_高音质在线试听"
-    if match := re.search(pattern, title):
+    # 获取 URL 的标题
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            response.raise_for_status()
+            title = await response.text()
+
+    if match := re.search(r"<title>(.*?)_高音质在线试听", title):
         kugou_title = match.group(1)  # 只输出歌曲名和歌手名的部分
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
                 f"{KUGOU_TEMP_API.replace('{}', kugou_title)}", headers=COMMON_HEADER
-            )
-            kugou_vip_data = resp.json()
+            ) as resp:
+                kugou_vip_data = await resp.json()
         # logger.info(kugou_vip_data)
         kugou_url = kugou_vip_data.get("music_url")
         kugou_cover = kugou_vip_data.get("cover")

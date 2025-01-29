@@ -1,6 +1,6 @@
 import re
 import json
-import httpx
+import aiohttp
 
 from tenacity import retry, wait_fixed, stop_after_attempt
 
@@ -19,34 +19,30 @@ class DouYin(BaseParser):
             iesdouyin_url = self._get_request_url_by_video_id(video_id)
         else:
             # 支持app分享链接 https://v.douyin.com/xxxxxx
-            async with httpx.AsyncClient(follow_redirects=False) as client:
-                resp = await client.get(share_url, headers=self.get_default_headers())
-                iesdouyin_url = resp.headers.get("location")
-                video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
+            async with aiohttp.ClientSession() as session:
+                async with session.get(share_url, headers=self.get_default_headers(), allow_redirects=False) as resp:
+                    iesdouyin_url = resp.headers.get("Location")
+                    video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
         if "share/slides" in iesdouyin_url:
             return await self.parse_slides(video_id)
         return await self.parse_video(iesdouyin_url, share_url)
 
     @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, iesdouyin_url: str, share_url: str) -> VideoInfo:
-        async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.get(
-                iesdouyin_url, headers=self.get_default_headers()
-            )
-
-        try:
-            response.raise_for_status()
-            data = self.format_response(response)
-        except Exception as e1:
-            try:
-                async with httpx.AsyncClient(follow_redirects=True) as client:
-                    response = await client.get(
-                        share_url, headers=self.get_default_headers()
-                    )
-                response.raise_for_status()
-                data = self.format_response(response)
-            except Exception as e2:
-                raise Exception(f"\nreq iesdouyin_url: {e1}\nreq share_url: {e2}")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(iesdouyin_url, headers=self.get_default_headers()) as response:
+                try:
+                    response.raise_for_status()
+                    text = await response.text()
+                    data = self.format_response(text)
+                except Exception as e1:
+                    try:
+                        async with session.get(share_url, headers=self.get_default_headers()) as response:
+                            response.raise_for_status()
+                            text = await response.text()
+                            data = self.format_response(text)
+                    except Exception as e2:
+                        raise Exception(f"\nreq iesdouyin_url: {e1}\nreq share_url: {e2}")
         # 获取图集图片地址
         images = []
         # 如果data含有 images，并且 images 是一个列表
@@ -87,10 +83,10 @@ class DouYin(BaseParser):
         return video_info
 
     async def get_video_redirect_url(self, video_url: str) -> str:
-        async with httpx.AsyncClient(follow_redirects=False) as client:
-            response = await client.get(video_url, headers=self.get_default_headers())
-        # 返回重定向后的地址，如果没有重定向则返回原地址(抖音中的西瓜视频,重定向地址为空)
-        return response.headers.get("location") or video_url
+        async with aiohttp.ClientSession() as session:
+            async with session.get(video_url, headers=self.get_default_headers(), allow_redirects=False) as response:
+            # 返回重定向后的地址，如果没有重定向则返回原地址(抖音中的西瓜视频,重定向地址为空)
+                return response.headers.get("Location", video_url)
 
     async def parse_video_id(self, video_id: str) -> VideoInfo:
         req_url = self._get_request_url_by_video_id(video_id)
@@ -99,12 +95,12 @@ class DouYin(BaseParser):
     def _get_request_url_by_video_id(self, video_id) -> str:
         return f"https://www.iesdouyin.com/share/video/{video_id}/"
 
-    def format_response(self, response):
+    def format_response(self, text: str) -> dict:
         pattern = re.compile(
             pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
             flags=re.DOTALL,
         )
-        find_res = pattern.search(response.text)
+        find_res = pattern.search(text)
 
         if not find_res or not find_res.group(1):
             raise ValueError("parse video json info from html fail")
@@ -146,11 +142,11 @@ class DouYin(BaseParser):
             "User-Agent": "Mozilla/5.0 (Linux; Android 10; VOG-AL00 Build/HUAWEIVOG-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",
             "Accept": "application/json, text/plain, */*",
         }
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(url, params=params, headers=headers)
-            resp.raise_for_status()
-
-        detail = resp.json().get("aweme_details")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params, headers=headers) as resp:
+                resp.raise_for_status()
+                resp = await resp.json()
+        detail = resp.get("aweme_details")
         if not detail:
             raise ValueError("链接作品不存在")
         data = detail[0]

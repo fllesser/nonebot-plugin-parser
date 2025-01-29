@@ -1,6 +1,6 @@
 import re
 import json
-import httpx
+import aiohttp
 import asyncio
 import aiofiles
 import subprocess
@@ -48,9 +48,9 @@ async def parse_url(url: str):
     url_suffix = "?quickViewId=videoInfo_new&ajaxpipe=1"
     url = url + url_suffix
     # print(url)
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url, headers=headers)
-        raw = resp.text
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as resp:
+            raw = await resp.text()
     strs_remove_header = raw.split("window.pageInfo = window.videoInfo =")
     strs_remove_tail = strs_remove_header[1].split("</script>")
     str_json = strs_remove_tail[0]
@@ -73,10 +73,9 @@ async def parse_m3u8(m3u8_url: str):
     :param m3u8_url:
     :return:
     """
-    # m3u8_file = httpx.get(m3u8_url, headers=headers).text
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(m3u8_url, headers=headers)
-        m3u8_file = resp.text
+    async with aiohttp.ClientSession() as session:
+        async with session.get(m3u8_url, headers=headers) as resp:
+            m3u8_file = await resp.text()
     # 分离ts文件链接
     raw_pieces = re.split(r"\n#EXTINF:.{8},\n", m3u8_file)
     # print(raw_pieces)
@@ -104,10 +103,10 @@ async def download_m3u8_videos(m3u8_full_url, i):
     :param m3u8_full_urls:
     :return:
     """
-    async with httpx.AsyncClient() as client:
-        async with client.stream("GET", m3u8_full_url, headers=headers) as resp:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(m3u8_full_url, headers=headers) as resp:
             with open(plugin_cache_dir / f"{i}.ts", "wb") as f:
-                async for chunk in resp.aiter_bytes():
+                async for chunk in resp.content.iter_chunked(1024):
                     f.write(chunk)
 
 

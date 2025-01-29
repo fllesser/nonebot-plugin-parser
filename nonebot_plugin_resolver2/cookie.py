@@ -1,8 +1,6 @@
 from http import cookiejar
 from pathlib import Path
 from typing import Dict
-from nonebot.log import logger
-
 
 def save_cookies_to_netscape(cookies_str: str, file: Path, domain: str):
     # 创建 MozillaCookieJar 对象
@@ -35,7 +33,6 @@ def save_cookies_to_netscape(cookies_str: str, file: Path, domain: str):
 
     # 保存 cookies 到文件
     cj.save(ignore_discard=True, ignore_expires=True)
-    logger.info(f"{file} saved sucessfully")
 
 
 def cookies_str_to_dict(cookies_str: str) -> Dict[str, str]:

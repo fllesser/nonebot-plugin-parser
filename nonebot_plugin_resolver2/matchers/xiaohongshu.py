@@ -1,7 +1,7 @@
 import re
-import httpx
 import json
 import asyncio
+import aiohttp
 
 from nonebot.log import logger
 from nonebot.typing import T_State
@@ -44,9 +44,9 @@ async def _(bot: Bot, state: T_State):
         "cookie": rconfig.r_xhs_ck,
     } | COMMON_HEADER
     if "xhslink" in url:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(url, headers=headers, follow_redirects=True)
-            url = str(resp.url)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, allow_redirects=False) as resp:
+                url = resp.headers.get("Location")
     # ?: 非捕获组
     pattern = r"(?:/explore/|/discovery/item/|source=note&noteId=)(\w+)"
     if match := re.search(pattern, url):
@@ -59,12 +59,12 @@ async def _(bot: Bot, state: T_State):
     # 提取 xsec_source 和 xsec_token
     xsec_source = params.get("xsec_source", [None])[0] or "pc_feed"
     xsec_token = params.get("xsec_token", [None])[0]
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
             f"{XHS_REQ_LINK}{xhs_id}?xsec_source={xsec_source}&xsec_token={xsec_token}",
             headers=headers,
-        )
-        html = resp.text
+        ) as resp:
+            html = await resp.text()
     pattern = r"window.__INITIAL_STATE__=(.*?)</script>"
     if match := re.search(pattern, html):
         json_str = match.group(1)
