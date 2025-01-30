@@ -59,6 +59,9 @@ _✨ NoneBot2 链接分享自动解析插件 ✨_
 使用 pypi 源更新
 
     nb plugin install nonebot-plugin-resolver2 --upgrade -i https://pypi.org/simple
+安装仓库 dev 分支
+
+    uv pip install git+https://github.com/fllesser/nonebot-plugin-resolver2.git@dev
 </details>
 
 <details>
