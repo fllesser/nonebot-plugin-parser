@@ -50,7 +50,6 @@ async def _(bot: Bot, event: MessageEvent):
         await weibo.finish("解析失败：无法获取到微博的 id")
 
     headers = {
-        # "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "accept": "application/json",
         "cookie": "_T_WM=40835919903; WEIBOCN_FROM=1110006030; MLOGIN=0; XSRF-TOKEN=4399c8",
         "Referer": f"https://m.weibo.cn/detail/{weibo_id}",
