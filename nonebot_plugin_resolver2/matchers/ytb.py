@@ -24,7 +24,9 @@ ytb = on_keyword(
 async def _(event: MessageEvent, state: T_State):
     message = event.message.extract_plain_text().strip()
     pattern = (
-        r"(?:https?://)?(?:www\.)?(?:youtube\.com|youtu\.be)/[A-Za-z\d._?%&+\-=/#]*"
+        # https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz
+        # https://www.youtube.com/watch?v=1LnPnmKALL8&list=RD8AxpdwegNKc&index=2
+        r"(?:https?://)?(?:www\.)?(?:youtube\.com|youtu\.be)/[A-Za-z\d._\?%&\+\-=/#]+"
     )
     if match := re.search(pattern, message):
         url = match.group(0)
