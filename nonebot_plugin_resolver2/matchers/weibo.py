@@ -64,6 +64,8 @@ async def _(bot: Bot, event: MessageEvent):
         ) as resp:
             if resp.status != 200:
                 await weibo.finish(f"{NICKNAME}解析 | 微博 - 获取数据失败 {resp.status} {resp.reason}")
+            if "application/json" not in resp.headers.get("content-type", ""):
+                await weibo.finish(f"{NICKNAME}解析 | 微博 - 获取数据失败 content-type is not application/json")
             resp = await resp.json()
 
     weibo_data = resp["data"]
