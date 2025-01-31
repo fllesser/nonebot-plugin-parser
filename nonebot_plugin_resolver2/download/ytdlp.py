@@ -2,7 +2,7 @@ import asyncio
 import yt_dlp
 
 from pathlib import Path
-
+from typing import Any
 from .common import delete_boring_characters
 from ..config import plugin_cache_dir, scheduler, PROXY
 
@@ -17,14 +17,14 @@ async def _():
 
 
 # 获取视频信息的 基础 opts
-ydl_extract_base_opts = {
+ydl_extract_base_opts: dict[str, Any] = {
     "quiet": True,
     "skip_download": True,
     "force_generic_extractor": True,
 }
 
 # 下载视频的 基础 opts
-ydl_download_base_opts = {}
+ydl_download_base_opts: dict[str, Any] = {}
 
 if PROXY is not None:
     ydl_download_base_opts["proxy"] = PROXY
@@ -51,6 +51,7 @@ async def get_video_info(url: str, cookiefile: Path | None = None) -> dict[str, 
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info_dict = await asyncio.to_thread(ydl.extract_info, url, download=False)
+        assert info_dict, "获取视频信息失败"
         url_info[url] = info_dict
         return info_dict
 
@@ -67,7 +68,7 @@ async def ytdlp_download_video(url: str, cookiefile: Path | None = None) -> Path
     """
     info_dict = await get_video_info(url, cookiefile)
     title = delete_boring_characters(info_dict.get("title", "titleless")[:50])
-    duration = info_dict.get("duration", 600)
+    duration = int(info_dict.get("duration", 600))
     video_path = plugin_cache_dir / f"{title}.mp4"
     if video_path.exists():
         return video_path

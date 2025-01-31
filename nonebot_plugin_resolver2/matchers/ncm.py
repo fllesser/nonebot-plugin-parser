@@ -25,14 +25,15 @@ ncm = on_message(rule=is_not_in_disable_group & r_keywords("music.163.com", "163
 
 @ncm.handle()
 async def _(bot: Bot, state: T_State):
-    text, keyword = state.get(R_EXTRACT_KEY), state.get(R_KEYWORD_KEY)
+    text, keyword = state.get(R_EXTRACT_KEY, ""), state.get(R_KEYWORD_KEY, "")
     # 解析短链接
+    url: str = ""
     if keyword == "163cn.tv":
         if match := re.search(r"(http:|https:)\/\/163cn\.tv\/([a-zA-Z0-9]+)", text):
             url = match.group(0)
-        async with aiohttp.ClientSession() as session:
-            async with session.head(url, allow_redirects=False) as resp:
-                url = resp.headers.get("Location")
+            async with aiohttp.ClientSession() as session:
+                async with session.head(url, allow_redirects=False) as resp:
+                    url = resp.headers.get("Location", "")
     else:
         url = text
     if match := re.search(r"id=(\d+)", url):

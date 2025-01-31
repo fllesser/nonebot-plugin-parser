@@ -26,7 +26,7 @@ def save_cookies_to_netscape(cookies_str: str, file: Path, domain: str):
                 discard=True,
                 comment=None,
                 comment_url=None,
-                rest={"HttpOnly": None},
+                rest={"HttpOnly": ""},
                 rfc2109=False,
             )
         )

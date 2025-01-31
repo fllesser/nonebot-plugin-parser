@@ -8,6 +8,7 @@ import subprocess
 
 from nonebot import on_keyword
 from nonebot.rule import Rule
+from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Message, MessageEvent
 
 from .filter import is_not_in_disable_group
@@ -20,8 +21,11 @@ acfun = on_keyword(keywords={"acfun.cn"}, rule=Rule(is_not_in_disable_group))
 @acfun.handle()
 async def _(event: MessageEvent) -> None:
     message: str = event.message.extract_plain_text().strip()
-    if match := re.search(r"(?:ac=|/ac)(\d+)", message):
-        url = f"https://www.acfun.cn/v/ac{match.group(1)}"
+    match = re.search(r"(?:ac=|/ac)(\d+)", message)
+    if not match:
+        logger.info("acfun url is incomplete, ignored")
+        return
+    url = f"https://www.acfun.cn/v/ac{match.group(1)}"
     url_m3u8s, video_name = await parse_url(url)
     await acfun.send(Message(f"{NICKNAME}解析 | 猴山 - {video_name}"))
     m3u8_full_urls, ts_names, output_file_name = await parse_m3u8(url_m3u8s)
@@ -114,7 +118,7 @@ def escape_special_chars(str_json):
     return str_json.replace('\\\\"', '\\"').replace('\\"', '"')
 
 
-def parse_video_name(video_info: json):
+def parse_video_name(video_info: dict):
     """
     获取视频信息
     :param video_info:
@@ -149,7 +153,7 @@ async def merge_ac_file_to_mp4(ts_names, file_name):
     )
 
 
-def parse_video_name_fixed(video_info: json):
+def parse_video_name_fixed(video_info: dict):
     """
     校准文件名
     :param video_info:

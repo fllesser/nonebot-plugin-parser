@@ -20,7 +20,7 @@ kugou = on_message(rule=is_not_in_disable_group & r_keywords("kugou.com"))
 
 @kugou.handle()
 async def _(bot: Bot, state: T_State):
-    text = state.get(R_EXTRACT_KEY)
+    text = state.get(R_EXTRACT_KEY, "")
     pattern = r"https?://.*?kugou\.com.*?(?=\s|$|\n)"
     # 处理卡片问题
     if match := re.search(pattern, text):

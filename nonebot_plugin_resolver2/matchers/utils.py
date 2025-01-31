@@ -18,12 +18,13 @@ def construct_nodes(user_id, segments: MessageSegment | list) -> Message:
 async def get_video_seg(
     video_path: Path | None = None, url: str | None = None, proxy: str | None = None
 ) -> MessageSegment:
-    seg: MessageSegment = None
+    seg: MessageSegment | None = None
     try:
         # 如果data以"http"开头，先下载视频
         if not video_path:
             if url and url.startswith("http"):
                 video_path = await download_video(url, proxy=proxy)
+        assert video_path, "视频路径为空"
         # 检测文件大小
         file_size_bytes = int(video_path.stat().st_size)
         if file_size_bytes == 0:
@@ -35,8 +36,8 @@ async def get_video_seg(
             seg = MessageSegment.video(video_path)
     except Exception as e:
         seg = MessageSegment.text(f"视频获取失败\n{e}")
-    finally:
-        return seg
+
+    return seg
 
 
 def get_file_seg(file_path: Path, name: str = "") -> MessageSegment:

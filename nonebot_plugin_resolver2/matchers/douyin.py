@@ -4,7 +4,7 @@ import asyncio
 from nonebot import on_keyword
 from nonebot.log import logger
 from nonebot.rule import Rule
-from nonebot.adapters.onebot.v11 import Event, Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import Bot, MessageSegment, MessageEvent
 from .utils import get_video_seg, construct_nodes
 from .filter import is_not_in_disable_group
 
@@ -20,7 +20,7 @@ douyin_parser = DouYin()
 
 
 @douyin.handle()
-async def _(bot: Bot, event: Event):
+async def _(bot: Bot, event: MessageEvent):
     # 消息
     msg: str = event.message.extract_plain_text().strip()
     # 正则匹配
