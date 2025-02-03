@@ -7,7 +7,7 @@ from nonebot.typing import T_State
 from nonebot.params import CommandArg
 from nonebot.plugin.on import on_message, on_command
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
-from bilibili_api import video, live, article, Credential
+from bilibili_api import video, live, article, Credential, select_client
 
 from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
@@ -25,12 +25,14 @@ from ..download.common import (
 from ..config import rconfig, NICKNAME, DURATION_MAXIMUM, plugin_cache_dir
 from ..cookie import cookies_str_to_dict
 
-# format cookie
+# bilibili-api 相关
 credential: Credential | None = (
     Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck))
     if rconfig.r_bili_ck
     else None
 )
+# 选择客户端
+select_client("aiohttp")
 
 # 哔哩哔哩的头请求
 BILIBILI_HEADERS = {
