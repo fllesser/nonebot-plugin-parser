@@ -50,7 +50,7 @@ async def _(bot: Bot, event: MessageEvent):
         await weibo.finish("解析失败：无法获取到微博的 id")
 
     headers = {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "accept": "application/json",
         "cookie": "_T_WM=40835919903; WEIBOCN_FROM=1110006030; MLOGIN=0; XSRF-TOKEN=4399c8",
         "Referer": f"https://m.weibo.cn/detail/{weibo_id}",
         **COMMON_HEADER,
@@ -61,10 +61,13 @@ async def _(bot: Bot, event: MessageEvent):
         async with session.get(
             WEIBO_SINGLE_INFO.format(weibo_id), headers=headers
         ) as resp:
-            resp.raise_for_status()
+            if resp.status != 200:
+                await weibo.finish(f"{NICKNAME}解析 | 微博 - 获取数据失败 {resp.status} {resp.reason}")
+            if "application/json" not in resp.headers.get("content-type", ""):
+                await weibo.finish(f"{NICKNAME}解析 | 微博 - 获取数据失败 content-type is not application/json")
             resp = await resp.json()
+
     weibo_data = resp["data"]
-    # logger.info(weibo_data)
     text, status_title, source, region_name, pics, page_info = (
         weibo_data.get(key)
         for key in [

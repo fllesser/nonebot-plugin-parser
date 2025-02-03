@@ -5,10 +5,9 @@ import asyncio
 from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.params import CommandArg
-from nonebot.exception import ActionFailed
 from nonebot.plugin.on import on_message, on_command
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
-from bilibili_api import video, live, article, Credential
+from bilibili_api import video, live, article, Credential, select_client
 
 from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
@@ -26,12 +25,14 @@ from ..download.common import (
 from ..config import rconfig, NICKNAME, DURATION_MAXIMUM, plugin_cache_dir
 from ..cookie import cookies_str_to_dict
 
-# format cookie
-credential: Credential = (
+# bilibili-api 相关
+credential: Credential | None = (
     Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck))
     if rconfig.r_bili_ck
     else None
 )
+# 选择客户端
+select_client("aiohttp")
 
 # 哔哩哔哩的头请求
 BILIBILI_HEADERS = {
@@ -63,7 +64,7 @@ patterns: dict[str, re.Pattern] = {
 @bilibili.handle()
 async def _(bot: Bot, state: T_State):
     # 消息
-    text, keyword = state.get(R_EXTRACT_KEY), state.get(R_KEYWORD_KEY)
+    text, keyword = state.get(R_EXTRACT_KEY, ""), state.get(R_KEYWORD_KEY, "")
     match = patterns[keyword].search(text)
     if not match:
         logger.info(f"{text} 中的链接或id无效, 忽略")
@@ -74,7 +75,9 @@ async def _(bot: Bot, state: T_State):
     if keyword in ("b23", "bili2233"):
         b23url = url
         async with aiohttp.ClientSession() as session:
-            async with session.get(b23url, headers=BILIBILI_HEADERS, allow_redirects=False) as resp:
+            async with session.get(
+                b23url, headers=BILIBILI_HEADERS, allow_redirects=False
+            ) as resp:
                 url = resp.headers.get("Location", b23url)
         if url == b23url:
             logger.info(f"链接 {url} 无效，忽略")
@@ -96,8 +99,7 @@ async def _(bot: Bot, state: T_State):
                 logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
                 return
             dynamic_info = await Opus(dynamic_id, credential).get_info()
-            if not dynamic_info:
-                return
+            assert isinstance(dynamic_info, dict)
             title = dynamic_info["item"]["basic"]["title"]
             await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - {title}")
 
@@ -142,11 +144,11 @@ async def _(bot: Bot, state: T_State):
         # 专栏解析
         elif "/read" in url:
             if match := re.search(r"read/cv(\d+)", url):
-                read_id = match.group(1)
+                read_id: str = match.group(1)
             else:
                 logger.info(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
                 return
-            ar = article.Article(read_id)
+            ar = article.Article(int(read_id))
             await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - 专栏")
 
             # 加载内容
@@ -167,7 +169,7 @@ async def _(bot: Bot, state: T_State):
                     )
                 return text
 
-            for node in data.get("children"):
+            for node in data.get("children", []):
                 node_type = node.get("type")
                 if node_type == "ImageNode":
                     if img_url := node.get("url", "").strip():
@@ -195,7 +197,9 @@ async def _(bot: Bot, state: T_State):
             else:
                 logger.info(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
                 return
-            fav_list = (await get_video_favorite_list_content(fav_id))["medias"][:10]
+            fav_list = (await get_video_favorite_list_content(int(fav_id)))["medias"][
+                :50
+            ]
             favs = []
             for fav in fav_list:
                 title, cover, intro, link = (
@@ -204,7 +208,9 @@ async def _(bot: Bot, state: T_State):
                     fav["intro"],
                     fav["link"],
                 )
-                avid = re.search(r"\d+", link).group(0)
+                match = re.search(r"\d+", link)
+                avid = match.group(0) if match else ""
+
                 favs.append(
                     MessageSegment.image(cover)
                     + f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}"
@@ -287,7 +293,11 @@ async def _(bot: Bot, state: T_State):
             download_url_data = await v.get_download_url(page_index=page_num)
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
-            video_url, audio_url = streams[0].url, streams[1].url
+            video_stream = streams[0]
+            audio_stream = streams[1]
+            assert video_stream is not None
+            assert audio_stream is not None
+            video_url, audio_url = video_stream.url, audio_stream.url
 
             # 下载视频和音频
             v_path, a_path = await asyncio.gather(
@@ -299,10 +309,9 @@ async def _(bot: Bot, state: T_State):
                 ),
             )
             await merge_av(v_path, a_path, video_path)
-        await bilibili.send(await get_video_seg(video_path))
     except Exception as e:
-        if not isinstance(e, ActionFailed):
-            await bilibili.send(f"下载视频失败 | {e}")
+        await bilibili.finish(f"下载视频失败 | {e}")
+    await bilibili.send(await get_video_seg(video_path))
 
 
 @bili_music.handle()
@@ -318,8 +327,8 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     p_num = int(p_num) - 1 if p_num else 0
     v = video.Video(bvid=bvid, credential=credential)
     try:
-        video_info = await v.get_info()
-        video_title = video_info.get("title")
+        video_info: dict = await v.get_info()
+        video_title: str = video_info.get("title", "")
         if pages := video_info.get("pages"):
             p_num = p_num % len(pages)
             p_video = pages[p_num]
@@ -333,7 +342,9 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             download_url_data = await v.get_download_url(page_index=p_num)
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
-            audio_url = streams[1].url
+            auio_stream = streams[1]
+            assert auio_stream is not None
+            audio_url = auio_stream.url
             await download_file_by_stream(
                 audio_url, audio_name, ext_headers=BILIBILI_HEADERS
             )

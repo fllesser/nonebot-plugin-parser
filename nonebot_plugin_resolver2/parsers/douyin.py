@@ -21,7 +21,7 @@ class DouYin(BaseParser):
             # 支持app分享链接 https://v.douyin.com/xxxxxx
             async with aiohttp.ClientSession() as session:
                 async with session.get(share_url, headers=self.get_default_headers(), allow_redirects=False) as resp:
-                    iesdouyin_url = resp.headers.get("Location")
+                    iesdouyin_url = resp.headers.get("Location", "")
                     video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
         if "share/slides" in iesdouyin_url:
             return await self.parse_slides(video_id)

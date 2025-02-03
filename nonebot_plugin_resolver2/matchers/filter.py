@@ -76,7 +76,7 @@ async def _(bot: Bot, event: PrivateMessageEvent):
 
     """
     gid_list: list[int] = [
-        g["group_id"] for g in await bot.get_group_list(no_cache=True)
+        g["group_id"] for g in await bot.get_group_list()
     ]
     disabled_group_set.update(gid_list)
     save_disabled_groups()

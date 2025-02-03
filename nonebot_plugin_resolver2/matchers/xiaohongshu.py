@@ -27,7 +27,7 @@ xiaohongshu = on_message(
 
 @xiaohongshu.handle()
 async def _(bot: Bot, state: T_State):
-    text = state.get(R_EXTRACT_KEY)
+    text = state.get(R_EXTRACT_KEY, "")
 
     if match := re.search(
         r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",
@@ -46,7 +46,7 @@ async def _(bot: Bot, state: T_State):
     if "xhslink" in url:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, allow_redirects=False) as resp:
-                url = resp.headers.get("Location")
+                url = resp.headers.get("Location", "")
     # ?: 非捕获组
     pattern = r"(?:/explore/|/discovery/item/|source=note&noteId=)(\w+)"
     if match := re.search(pattern, url):

@@ -45,7 +45,7 @@ ytb_cookies_file: Path | None = (
 )
 
 # 全局名称
-NICKNAME: str | None = next(iter(get_driver().config.nickname), None)
+NICKNAME: str = next(iter(get_driver().config.nickname), "")
 # 根据是否为国外机器声明代理
 PROXY: str | None = None if rconfig.r_is_oversea else rconfig.r_proxy
 # 哔哩哔哩限制的最大视频时长（默认8分钟）单位：秒

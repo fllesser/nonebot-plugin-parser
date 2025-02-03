@@ -37,7 +37,7 @@ def _(event: MessageEvent, state: T_State) -> None:
     except json.JSONDecodeError:
         return
 
-    meta: dict[str, Any] = data.get("meta")
+    meta: dict[str, Any] = data.get("meta", None)
     if meta is None:
         return
 
