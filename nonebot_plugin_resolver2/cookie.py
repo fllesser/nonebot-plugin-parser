@@ -2,6 +2,7 @@ from http import cookiejar
 from pathlib import Path
 from typing import Dict
 
+
 def save_cookies_to_netscape(cookies_str: str, file: Path, domain: str):
     # 创建 MozillaCookieJar 对象
     cj = cookiejar.MozillaCookieJar(file)

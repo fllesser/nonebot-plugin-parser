@@ -20,7 +20,9 @@ class DouYin(BaseParser):
         else:
             # 支持app分享链接 https://v.douyin.com/xxxxxx
             async with aiohttp.ClientSession() as session:
-                async with session.get(share_url, headers=self.get_default_headers(), allow_redirects=False) as resp:
+                async with session.get(
+                    share_url, headers=self.get_default_headers(), allow_redirects=False
+                ) as resp:
                     iesdouyin_url = resp.headers.get("Location", "")
                     video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
         if "share/slides" in iesdouyin_url:
@@ -30,19 +32,25 @@ class DouYin(BaseParser):
     @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, iesdouyin_url: str, share_url: str) -> VideoInfo:
         async with aiohttp.ClientSession() as session:
-            async with session.get(iesdouyin_url, headers=self.get_default_headers()) as response:
+            async with session.get(
+                iesdouyin_url, headers=self.get_default_headers()
+            ) as response:
                 try:
                     response.raise_for_status()
                     text = await response.text()
                     data = self.format_response(text)
                 except Exception as e1:
                     try:
-                        async with session.get(share_url, headers=self.get_default_headers()) as response:
+                        async with session.get(
+                            share_url, headers=self.get_default_headers()
+                        ) as response:
                             response.raise_for_status()
                             text = await response.text()
                             data = self.format_response(text)
                     except Exception as e2:
-                        raise Exception(f"\nreq iesdouyin_url: {e1}\nreq share_url: {e2}")
+                        raise Exception(
+                            f"\nreq iesdouyin_url: {e1}\nreq share_url: {e2}"
+                        )
         # 获取图集图片地址
         images = []
         # 如果data含有 images，并且 images 是一个列表
@@ -84,8 +92,10 @@ class DouYin(BaseParser):
 
     async def get_video_redirect_url(self, video_url: str) -> str:
         async with aiohttp.ClientSession() as session:
-            async with session.get(video_url, headers=self.get_default_headers(), allow_redirects=False) as response:
-            # 返回重定向后的地址，如果没有重定向则返回原地址(抖音中的西瓜视频,重定向地址为空)
+            async with session.get(
+                video_url, headers=self.get_default_headers(), allow_redirects=False
+            ) as response:
+                # 返回重定向后的地址，如果没有重定向则返回原地址(抖音中的西瓜视频,重定向地址为空)
                 return response.headers.get("Location", video_url)
 
     async def parse_video_id(self, video_id: str) -> VideoInfo:

@@ -75,9 +75,7 @@ async def _(bot: Bot, event: PrivateMessageEvent):
     关闭所有解析
 
     """
-    gid_list: list[int] = [
-        g["group_id"] for g in await bot.get_group_list()
-    ]
+    gid_list: list[int] = [g["group_id"] for g in await bot.get_group_list()]
     disabled_group_set.update(gid_list)
     save_disabled_groups()
     await disable_all_resolve.finish("所有解析已关闭")
