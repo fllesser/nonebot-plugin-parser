@@ -2,7 +2,7 @@ import re
 import json
 import aiohttp
 
-from tenacity import retry, wait_fixed, stop_after_attempt
+from tenacity import retry, wait_fixed, stop_after_attempt, RetryError
 
 from .base import BaseParser, VideoAuthor, VideoInfo
 
@@ -27,7 +27,10 @@ class DouYin(BaseParser):
                     video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
         if "share/slides" in iesdouyin_url:
             return await self.parse_slides(video_id)
-        return await self.parse_video(iesdouyin_url, share_url)
+        try:
+            return await self.parse_video(iesdouyin_url, share_url)
+        except RetryError as e:
+            raise e.last_attempt.exception() or e
 
     @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, iesdouyin_url: str, share_url: str) -> VideoInfo:
