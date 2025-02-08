@@ -40,9 +40,7 @@ plugin_data_dir: Path = store.get_plugin_data_dir()
 rconfig: Config = get_plugin_config(Config)
 
 # cookie 存储位置
-ytb_cookies_file: Path | None = (
-    plugin_config_dir / "ytb_cookies.txt" if rconfig.r_ytb_ck else None
-)
+ytb_cookies_file: Path = plugin_config_dir / "ytb_cookies.txt"
 
 # 全局名称
 NICKNAME: str = next(iter(get_driver().config.nickname), "")

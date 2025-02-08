@@ -10,7 +10,7 @@ from .tiktok import tiktok
 from .weibo import weibo
 from .xiaohongshu import xiaohongshu
 
-resolvers: dict[str, Matcher] = {
+resolvers: dict[str, type[Matcher]] = {
     "bilibili": bilibili,
     "acfun": acfun,
     "douyin": douyin,

@@ -1,6 +1,7 @@
 import json
 
 from nonebot.rule import to_me
+from nonebot.matcher import Matcher
 from nonebot.plugin import on_command
 from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11 import (
@@ -32,22 +33,6 @@ def save_disabled_groups():
 # 内存中关闭解析的名单，第一次先进行初始化
 disabled_group_set: set[int] = load_or_initialize_set()
 
-enable_resolve = on_command(
-    "开启解析",
-    rule=to_me(),
-    permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER,
-    block=True,
-)
-disable_resolve = on_command(
-    "关闭解析",
-    rule=to_me(),
-    permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER,
-    block=True,
-)
-enable_all_resolve = on_command("开启所有解析", permission=SUPERUSER, block=True)
-disable_all_resolve = on_command("关闭所有解析", permission=SUPERUSER, block=True)
-check_resolve = on_command("查看关闭解析", permission=SUPERUSER, block=True)
-
 
 # Rule
 def is_not_in_disable_group(event: MessageEvent) -> bool:
@@ -58,19 +43,19 @@ def is_not_in_disable_group(event: MessageEvent) -> bool:
     )
 
 
-@enable_all_resolve.handle()
-async def _(bot: Bot, event: PrivateMessageEvent):
+@on_command("开启所有解析", permission=SUPERUSER, block=True).handle()
+async def _(matcher: Matcher, bot: Bot, event: PrivateMessageEvent):
     """
     开启所有解析
 
     """
     disabled_group_set.clear()
     save_disabled_groups()
-    await enable_all_resolve.finish("所有解析已开启")
+    await matcher.finish("所有解析已开启")
 
 
-@disable_all_resolve.handle()
-async def _(bot: Bot, event: PrivateMessageEvent):
+@on_command("关闭所有解析", permission=SUPERUSER, block=True).handle()
+async def _(matcher: Matcher, bot: Bot, event: PrivateMessageEvent):
     """
     关闭所有解析
 
@@ -78,11 +63,16 @@ async def _(bot: Bot, event: PrivateMessageEvent):
     gid_list: list[int] = [g["group_id"] for g in await bot.get_group_list()]
     disabled_group_set.update(gid_list)
     save_disabled_groups()
-    await disable_all_resolve.finish("所有解析已关闭")
+    await matcher.finish("所有解析已关闭")
 
 
-@enable_resolve.handle()
-async def _(bot: Bot, event: GroupMessageEvent):
+@on_command(
+    "开启解析",
+    rule=to_me(),
+    permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER,
+    block=True,
+).handle()
+async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
     """
     开启解析
     :param bot:
@@ -93,13 +83,18 @@ async def _(bot: Bot, event: GroupMessageEvent):
     if gid in disabled_group_set:
         disabled_group_set.remove(gid)
         save_disabled_groups()
-        await enable_resolve.finish("解析已开启")
+        await matcher.finish("解析已开启")
     else:
-        await enable_resolve.finish("解析已开启，无需重复开启")
+        await matcher.finish("解析已开启，无需重复开启")
 
 
-@disable_resolve.handle()
-async def _(bot: Bot, event: GroupMessageEvent):
+@on_command(
+    "关闭解析",
+    rule=to_me(),
+    permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER,
+    block=True,
+).handle()
+async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
     """
     关闭解析
     :param bot:
@@ -110,13 +105,13 @@ async def _(bot: Bot, event: GroupMessageEvent):
     if gid not in disabled_group_set:
         disabled_group_set.add(gid)
         save_disabled_groups()
-        await disable_resolve.finish("解析已关闭")
+        await matcher.finish("解析已关闭")
     else:
-        await disable_resolve.finish("解析已关闭，无需重复关闭")
+        await matcher.finish("解析已关闭，无需重复关闭")
 
 
-@check_resolve.handle()
-async def _(bot: Bot, event: MessageEvent):
+@on_command("查看关闭解析", permission=SUPERUSER, block=True).handle()
+async def _(matcher: Matcher, bot: Bot, event: MessageEvent):
     """
     查看关闭解析
     :param bot:
@@ -129,6 +124,6 @@ async def _(bot: Bot, event: MessageEvent):
     ]
     disable_groups = "\n".join(disable_groups)
     if isinstance(event, GroupMessageEvent):
-        await check_resolve.send("已经发送到私信了~")
+        await matcher.send("已经发送到私信了~")
     message = f"解析关闭的群聊如下：\n{disable_groups} \n🌟 温馨提示：如果想开关解析需要在群聊@我然后输入[开启/关闭解析], 另外还可以私信我发送[开启/关闭所有解析]"
     await bot.send_private_msg(user_id=event.user_id, message=message)
