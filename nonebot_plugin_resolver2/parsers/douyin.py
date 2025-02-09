@@ -19,15 +19,18 @@ class DouYin(BaseParser):
         else:
             # 支持app分享链接 https://v.douyin.com/xxxxxx
             iesdouyin_url = await self.get_redirect_url(share_url)
-            video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
-        # 是否为图集
-        if "share/slides" in iesdouyin_url:
-            return await self.parse_slides(video_id)
+            # https://www.iesdouyin.com/share/video/7468908569061100857/?region=CN&mid=0&u_
+            match = re.search(r"(?:slides|video)/(\d+)", iesdouyin_url)
+            if not match:
+                raise ValueError("failed to parse video id from share url")
+            type, video_id = match.group(1), match.group(2)
+            if type == "slides":
+                return await self.parse_slides(video_id)
         for url in [iesdouyin_url, self._m_douyin_by_video_id(video_id), share_url]:
             try:
                 return await self.parse_video(url)
             except Exception as e:
-                logger.warning(f"failed to parse video info from {url}, {e}")
+                logger.warning(f"failed to parse video url from {url}, error: {e}")
                 continue
         raise Exception("failed to parse video info")
 
