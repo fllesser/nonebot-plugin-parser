@@ -20,7 +20,7 @@ class DouYin(BaseParser):
             # 支持app分享链接 https://v.douyin.com/xxxxxx
             iesdouyin_url = await self.get_redirect_url(share_url)
             # https://www.iesdouyin.com/share/video/7468908569061100857/?region=CN&mid=0&u_
-            match = re.search(r"(?:slides|video)/(\d+)", iesdouyin_url)
+            match = re.search(r"(slides|video)/(\d+)", iesdouyin_url)
             if not match:
                 raise ValueError("failed to parse video id from share url")
             type, video_id = match.group(1), match.group(2)
