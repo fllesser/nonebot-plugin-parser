@@ -2,8 +2,6 @@ import re
 import json
 import aiohttp
 
-from tenacity import retry, wait_fixed, stop_after_attempt, RetryError
-
 from .base import BaseParser, VideoAuthor, VideoInfo
 
 
@@ -16,44 +14,28 @@ class DouYin(BaseParser):
         if share_url.startswith("https://www.douyin.com/video"):
             # 支持电脑网页版链接 https://www.douyin.com/video/xxxxxx
             video_id = share_url.strip("/").split("/")[-1]
-            iesdouyin_url = self._get_request_url_by_video_id(video_id)
+            iesdouyin_url = self._iesdouyin_by_video_id(video_id)
         else:
             # 支持app分享链接 https://v.douyin.com/xxxxxx
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    share_url, headers=self.get_default_headers(), allow_redirects=False
-                ) as resp:
-                    iesdouyin_url = resp.headers.get("Location", "")
-                    video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
+            iesdouyin_url = await self.get_redirect_url(share_url)
+            video_id = iesdouyin_url.split("?")[0].strip("/").split("/")[-1]
+        # 是否为图集
         if "share/slides" in iesdouyin_url:
             return await self.parse_slides(video_id)
-        try:
-            return await self.parse_video(iesdouyin_url, share_url)
-        except RetryError as e:
-            raise e.last_attempt.exception() or e
+        for url in [iesdouyin_url, self._m_douyin_by_video_id(video_id), share_url]:
+            try:
+                return await self.parse_video(url)
+            except Exception:
+                continue
+        raise Exception("failed to parse video info")
 
-    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
-    async def parse_video(self, iesdouyin_url: str, share_url: str) -> VideoInfo:
+    # @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+    async def parse_video(self, url: str) -> VideoInfo:
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                iesdouyin_url, headers=self.get_default_headers()
-            ) as response:
-                try:
-                    response.raise_for_status()
-                    text = await response.text()
-                    data = self.format_response(text)
-                except Exception as e1:
-                    try:
-                        async with session.get(
-                            share_url, headers=self.get_default_headers()
-                        ) as response:
-                            response.raise_for_status()
-                            text = await response.text()
-                            data = self.format_response(text)
-                    except Exception as e2:
-                        raise Exception(
-                            f"\nreq iesdouyin_url: {e1}\nreq share_url: {e2}"
-                        )
+            async with session.get(url, headers=self.get_default_headers()) as response:
+                response.raise_for_status()
+                text = await response.text()
+                data = self.format_response(text)
         # 获取图集图片地址
         images = []
         # 如果data含有 images，并且 images 是一个列表
@@ -78,7 +60,7 @@ class DouYin(BaseParser):
         # 图集时，视频地址为空，不处理
         video_mp4_url = ""
         if len(video_url) > 0:
-            video_mp4_url = await self.get_video_redirect_url(video_url)
+            video_mp4_url = await self.get_redirect_url(video_url)
 
         video_info = VideoInfo(
             video_url=video_mp4_url,
@@ -93,20 +75,15 @@ class DouYin(BaseParser):
         )
         return video_info
 
-    async def get_video_redirect_url(self, video_url: str) -> str:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                video_url, headers=self.get_default_headers(), allow_redirects=False
-            ) as response:
-                # 返回重定向后的地址，如果没有重定向则返回原地址(抖音中的西瓜视频,重定向地址为空)
-                return response.headers.get("Location", video_url)
+    # async def parse_video_id(self, video_id: str) -> VideoInfo:
+    #     req_url = self._iesdouyin_by_video_id(video_id)
+    #     return await self.parse_share_url(req_url)
 
-    async def parse_video_id(self, video_id: str) -> VideoInfo:
-        req_url = self._get_request_url_by_video_id(video_id)
-        return await self.parse_share_url(req_url)
-
-    def _get_request_url_by_video_id(self, video_id) -> str:
+    def _iesdouyin_by_video_id(self, video_id) -> str:
         return f"https://www.iesdouyin.com/share/video/{video_id}/"
+
+    def _m_douyin_by_video_id(self, video_id) -> str:
+        return f"https://m.douyin.com/share/video/{video_id}/"
 
     def format_response(self, text: str) -> dict:
         pattern = re.compile(

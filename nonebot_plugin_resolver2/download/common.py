@@ -45,7 +45,7 @@ async def download_file_by_stream(
     connector = aiohttp.TCPConnector(ssl=False)
     async with aiohttp.ClientSession(headers=headers, connector=connector) as session:
         async with session.get(
-            url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=60, connect=5.0)
+            url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=60, connect=10.0)
         ) as resp:
             resp.raise_for_status()
             with tqdm(
