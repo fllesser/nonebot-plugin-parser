@@ -75,9 +75,9 @@ class DouYin(BaseParser):
         )
         return video_info
 
-    # async def parse_video_id(self, video_id: str) -> VideoInfo:
-    #     req_url = self._iesdouyin_by_video_id(video_id)
-    #     return await self.parse_share_url(req_url)
+    async def parse_video_id(self, video_id: str) -> VideoInfo:
+        req_url = self._iesdouyin_by_video_id(video_id)
+        return await self.parse_share_url(req_url)
 
     def _iesdouyin_by_video_id(self, video_id) -> str:
         return f"https://www.iesdouyin.com/share/video/{video_id}/"
