@@ -13,17 +13,17 @@ class DouYin(BaseParser):
 
     async def parse_share_url(self, share_url: str) -> VideoInfo:
         if share_url.startswith("https://www.douyin.com/video"):
-            # 支持电脑网页版链接 https://www.douyin.com/video/xxxxxx
+            # https://www.douyin.com/video/xxxxxx
             video_id = share_url.strip("/").split("/")[-1]
             iesdouyin_url = self._iesdouyin_by_video_id(video_id)
         else:
-            # 支持app分享链接 https://v.douyin.com/xxxxxx
+            # https://v.douyin.com/xxxxxx
             iesdouyin_url = await self.get_redirect_url(share_url)
             # https://www.iesdouyin.com/share/video/7468908569061100857/?region=CN&mid=0&u_
             match = re.search(r"(slides|video)/(\d+)", iesdouyin_url)
             if not match:
                 raise ValueError(
-                    f"{share_url} redirect {iesdouyin_url}, no video id found"
+                    f"failed to parse video id from iesdouyin url: {iesdouyin_url}, share_url: {share_url}"
                 )
             type, video_id = match.group(1), match.group(2)
             if type == "slides":

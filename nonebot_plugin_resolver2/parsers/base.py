@@ -72,10 +72,10 @@ class BaseParser(ABC):
         """
         pass
 
-    async def get_redirect_url(self, video_url: str) -> str:
+    @classmethod
+    async def get_redirect_url(cls, url: str) -> str:
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                video_url, headers=self.get_default_headers(), allow_redirects=False
+                url, headers=cls.get_default_headers(), allow_redirects=False
             ) as response:
-                # 返回重定向后的地址，如果没有重定向则返回原地址(抖音中的西瓜视频,重定向地址为空)
-                return response.headers.get("Location", video_url)
+                return response.headers.get("Location", url)
