@@ -1,6 +1,7 @@
 import re
 import json
 import aiohttp
+from nonebot.log import logger
 
 from .base import BaseParser, VideoAuthor, VideoInfo
 
@@ -25,7 +26,8 @@ class DouYin(BaseParser):
         for url in [iesdouyin_url, self._m_douyin_by_video_id(video_id), share_url]:
             try:
                 return await self.parse_video(url)
-            except Exception:
+            except Exception as e:
+                logger.warning(f"failed to parse video info from {url}, {e}")
                 continue
         raise Exception("failed to parse video info")
 
@@ -80,10 +82,10 @@ class DouYin(BaseParser):
         return await self.parse_share_url(req_url)
 
     def _iesdouyin_by_video_id(self, video_id) -> str:
-        return f"https://www.iesdouyin.com/share/video/{video_id}/"
+        return f"https://www.iesdouyin.com/share/video/{video_id}"
 
     def _m_douyin_by_video_id(self, video_id) -> str:
-        return f"https://m.douyin.com/share/video/{video_id}/"
+        return f"https://m.douyin.com/share/video/{video_id}"
 
     def format_response(self, text: str) -> dict:
         pattern = re.compile(
