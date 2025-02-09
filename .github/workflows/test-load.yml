@@ -32,4 +32,4 @@ jobs:
         uv sync --group dev
         export ENVIRONMENT=dev
         set -e
-        python -c "import nonebot; nonebot.init(); nonebot.load_from_toml('pyproject.toml')"
+        python -c "import nonebot; nonebot.init(); nonebot.load_from_toml('pyproject.toml'); assert nonebot.get_plugin('nonebot_plugin_resolver2') is not None;"

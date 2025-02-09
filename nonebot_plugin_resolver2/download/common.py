@@ -41,11 +41,10 @@ async def download_file_by_stream(
     headers = COMMON_HEADER.copy()
     if ext_headers is not None:
         headers.update(ext_headers)
-    # 禁用 https？
-    connector = aiohttp.TCPConnector(ssl=False)
-    async with aiohttp.ClientSession(headers=headers, connector=connector) as session:
+
+    async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(
-            url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=60, connect=5.0)
+            url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=60, connect=10.0)
         ) as resp:
             resp.raise_for_status()
             with tqdm(

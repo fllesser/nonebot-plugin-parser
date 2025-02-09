@@ -1,5 +1,4 @@
 import aiohttp
-import fake_useragent
 
 from .utils import get_val_from_url_by_query_key
 from .base import BaseParser, VideoAuthor, VideoInfo
@@ -22,7 +21,7 @@ class WeiBo(BaseParser):
         headers = {
             "Referer": f"https://h5.video.weibo.com/show/{video_id}",
             "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": fake_useragent.UserAgent(os=["ios"]).random,
+            **self.get_default_headers(),
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + video_id + '"}}'
         async with aiohttp.ClientSession() as session:

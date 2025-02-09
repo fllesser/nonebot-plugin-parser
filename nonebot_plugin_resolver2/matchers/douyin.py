@@ -24,7 +24,7 @@ async def _(bot: Bot, event: MessageEvent):
     # 消息
     msg: str = event.message.extract_plain_text().strip()
     # 正则匹配
-    reg = r"https://(v\.douyin\.com/[a-zA-Z0-9]+|www\.douyin\.com/video/[0-9]+)"
+    reg = r"https://(v\.douyin\.com/[a-zA-Z0-9_\-]+|www\.douyin\.com/video/[0-9]+)"
     if match := re.search(reg, msg):
         share_url = match.group(0)
     else:
