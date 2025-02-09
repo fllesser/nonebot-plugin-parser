@@ -1,0 +1,22 @@
+name: Generate Release Notes
+on:
+  release:
+    types: [created]
+jobs:
+  generate-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: release-changelog-builder-action@v2
+        with:
+          configuration: |
+            categories:
+              - title: Features
+                labels: ["feature"]
+              - title: Bug Fixes
+                labels: ["bug"]
+          output: release_notes.md
+      - run: |
+          gh release edit ${{ github.ref_name }} --notes-file release_notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
