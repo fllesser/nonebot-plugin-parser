@@ -38,10 +38,17 @@ X:
 - https://x.com/fortnitegame/status/1864640869900668940?s=46
 
 douyin:
-- https://v.douyin.com/iDHWnyTP
-- https://v.douyin.com/iUrHrruH
-- https://v.douyin.com/iUgEmfAn
-- https://v.douyin.com/CeiJfqyWs
+- 视频
+  - https://v.douyin.com/iDHWnyTP
+  - https://www.douyin.com/video/7440422807663660328
+- 普通图文
+  - https://www.douyin.com/note/7469411074119322899
+  - https://v.douyin.com/iP6Uu1Kh
+- 老视频，网页打开会重定向到 m.ixigua.com
+  - https://v.douyin.com/iUrHrruH
+- 含视频的图集
+  - https://v.douyin.com/CeiJfqyWs # 将会解析出视频
+  - https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
 
 xiaohongshu:
 - https://xhslink.com/a/zGL52ubtpJ20
