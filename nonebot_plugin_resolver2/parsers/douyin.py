@@ -12,29 +12,36 @@ class DouYin(BaseParser):
     """
 
     async def parse_share_url(self, share_url: str) -> VideoInfo:
-        if share_url.startswith("https://www.douyin.com/video"):
+        if match := re.match(r"(video|note)/([0-9]+)", share_url):
             # https://www.douyin.com/video/xxxxxx
-            video_id = share_url.strip("/").split("/")[-1]
-            iesdouyin_url = self._iesdouyin_by_video_id(video_id)
+            _type, video_id = match.group(1), match.group(2)
+            iesdouyin_url = self._iesdouyin_by_video_id(_type, video_id)
         else:
             # https://v.douyin.com/xxxxxx
             iesdouyin_url = await self.get_redirect_url(share_url)
             # https://www.iesdouyin.com/share/video/7468908569061100857/?region=CN&mid=0&u_
-            match = re.search(r"(slides|video)/(\d+)", iesdouyin_url)
+            match = re.search(r"(slides|video|note)/(\d+)", iesdouyin_url)
             if not match:
                 raise ValueError(
                     f"failed to parse video id from iesdouyin url: {iesdouyin_url}, share_url: {share_url}"
                 )
-            type, video_id = match.group(1), match.group(2)
-            if type == "slides":
+            _type, video_id = match.group(1), match.group(2)
+            if _type == "slides":
                 return await self.parse_slides(video_id)
-        for url in [iesdouyin_url, self._m_douyin_by_video_id(video_id), share_url]:
+        all_error = ""
+        for url in [
+            iesdouyin_url,
+            self._m_douyin_by_video_id(_type, video_id),
+            share_url,
+        ]:
             try:
                 return await self.parse_video(url)
             except Exception as e:
-                logger.warning(f"failed to parse video url from {url}, error: {e}")
+                error = f"failed to parse video url from {url}, error: {e}"
+                logger.warning(error)
+                all_error += error + "\n"
                 continue
-        raise Exception("failed to parse video info")
+        raise Exception(all_error)
 
     # @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, url: str) -> VideoInfo:
@@ -83,14 +90,14 @@ class DouYin(BaseParser):
         return video_info
 
     async def parse_video_id(self, video_id: str) -> VideoInfo:
-        req_url = self._iesdouyin_by_video_id(video_id)
+        req_url = self._iesdouyin_by_video_id("video", video_id)
         return await self.parse_share_url(req_url)
 
-    def _iesdouyin_by_video_id(self, video_id) -> str:
-        return f"https://www.iesdouyin.com/share/video/{video_id}"
+    def _iesdouyin_by_video_id(self, _type: str, video_id: str) -> str:
+        return f"https://www.iesdouyin.com/share/{_type}/{video_id}"
 
-    def _m_douyin_by_video_id(self, video_id) -> str:
-        return f"https://m.douyin.com/share/video/{video_id}"
+    def _m_douyin_by_video_id(self, _type: str, video_id: str) -> str:
+        return f"https://m.douyin.com/share/{_type}/{video_id}"
 
     def format_response(self, text: str) -> dict:
         pattern = re.compile(
