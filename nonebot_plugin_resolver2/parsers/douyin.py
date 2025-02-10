@@ -37,7 +37,7 @@ class DouYin(BaseParser):
             try:
                 return await self.parse_video(url)
             except Exception as e:
-                error = f"failed to parse video url from {url}, error: {e}"
+                error = f"failed to parse video url from {url[:60]}, error: {e}"
                 logger.warning(error)
                 all_error += error + "\n"
                 continue
