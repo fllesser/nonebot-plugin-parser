@@ -152,6 +152,9 @@ async def merge_av(v_path: Path, a_path: Path, output_path: Path):
     )
     if result != 0:
         raise RuntimeError("ffmpeg未安装或命令执行失败")
+    # 删除原始文件
+    v_path.unlink()
+    a_path.unlink()
 
 
 # A deque to store the URL to file name mapping
