@@ -1,4 +1,5 @@
 import re
+import json
 import aiohttp
 
 from .base import BaseParser, VideoAuthor, VideoInfo
@@ -21,12 +22,13 @@ class KuGou(BaseParser):
         async with aiohttp.ClientSession() as session:
             async with session.get(api_url, headers=self.default_headers) as response:
                 response.raise_for_status()
-                song_info = await response.json(content_type="text/html")
+                text = await response.text()
+        song_info: dict[str, str] = json.loads(text)
         return VideoInfo(
-            title=song_info.get("title"),
-            cover_url=song_info.get("img"),
-            music_url=song_info.get("url"),
-            author=VideoAuthor(name=song_info.get("singer")),
+            title=song_info["title"],
+            cover_url=song_info["img"],
+            music_url=song_info["url"],
+            author=VideoAuthor(name=song_info["singer"]),
         )
         # 从 html 中获取 hash 值
         # {"hash":"C76E9235868169CABE26D02D521ED90A"
