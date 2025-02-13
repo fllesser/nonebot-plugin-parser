@@ -2,6 +2,7 @@ import json
 
 from typing import Literal, Any
 from nonebot.rule import Rule
+from nonebot.log import logger
 from nonebot.message import event_preprocessor
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent
@@ -27,6 +28,7 @@ def _(event: MessageEvent, state: T_State) -> None:
         return
 
     data_str: str | None = json_seg.data.get("data")
+    logger.debug(f"jsonstr: {data_str}")
     if not data_str:
         return
     # 处理转义字符
@@ -51,7 +53,7 @@ def _(event: MessageEvent, state: T_State) -> None:
 
     if not text:
         return
-
+    logger.debug(f"提取到链接: {text}")
     state[R_EXTRACT_KEY] = text.replace("\\", "").replace("&amp;", "&")
 
 
