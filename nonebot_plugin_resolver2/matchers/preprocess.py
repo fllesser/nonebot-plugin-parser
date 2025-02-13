@@ -56,7 +56,6 @@ def _(event: MessageEvent, state: T_State) -> None:
 
     if not text:
         return
-    logger.debug(f"提取到链接: {text}")
     state[R_EXTRACT_KEY] = text.replace("\\", "").replace("&amp;", "&")
 
 
