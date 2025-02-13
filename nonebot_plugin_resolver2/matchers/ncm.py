@@ -3,14 +3,14 @@ import aiohttp
 
 from nonebot.plugin import on_message
 from nonebot.typing import T_State
-from nonebot.adapters.onebot.v11 import Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageSegment
 
 from .filter import is_not_in_disabled_groups
 from .utils import get_file_seg
 from .preprocess import r_keywords, R_KEYWORD_KEY, R_EXTRACT_KEY
 from ..constant import COMMON_HEADER
 from ..download.common import download_audio
-from ..config import NICKNAME
+from ..config import NICKNAME, NEED_UPLOAD
 
 # NCM获取歌曲信息链接
 NETEASE_API_CN = "https://www.markingchen.ink"
@@ -26,7 +26,7 @@ ncm = on_message(
 
 
 @ncm.handle()
-async def _(bot: Bot, state: T_State):
+async def _(state: T_State):
     text, keyword = state.get(R_EXTRACT_KEY, ""), state.get(R_KEYWORD_KEY, "")
     # 解析短链接
     url: str = ""
@@ -67,8 +67,9 @@ async def _(bot: Bot, state: T_State):
     # 发送语音
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件
-    await ncm.send(
-        get_file_seg(
-            audio_path, f"{ncm_title}-{ncm_singer}.{audio_path.name.split('.')[-1]}"
+    if NEED_UPLOAD:
+        await ncm.send(
+            get_file_seg(
+                audio_path, f"{ncm_title}-{ncm_singer}.{audio_path.name.split('.')[-1]}"
+            )
         )
-    )
