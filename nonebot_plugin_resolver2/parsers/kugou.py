@@ -1,5 +1,4 @@
 import re
-import json
 import aiohttp
 
 from .base import BaseParser, VideoAuthor, VideoInfo
@@ -18,16 +17,20 @@ class KuGou(BaseParser):
             raise ValueError("无法获取歌曲名")
 
         title = match.group(1).replace("_", " ")
-        api_url = f"https://www.hhlqilongzhu.cn/api/dg_kgmusic_lingsheng.php?msg={title}&n=1&type=json"
+        # KG临时接口 ""
+
+        api_url = (
+            f"https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={title}&n=1&type=json"
+        )
         async with aiohttp.ClientSession() as session:
             async with session.get(api_url, headers=self.default_headers) as response:
                 response.raise_for_status()
-                text = await response.text()
-        song_info: dict[str, str] = json.loads(text)
+                song_info = await response.json()
+
         return VideoInfo(
-            title=song_info["title"],
-            cover_url=song_info["img"],
-            music_url=song_info["url"],
+            title=song_info.get("title"),
+            cover_url=song_info.get("cover"),
+            music_url=song_info.get("music_url"),
             author=VideoAuthor(name=song_info["singer"]),
         )
         # 从 html 中获取 hash 值
