@@ -9,7 +9,7 @@ from nonebot.plugin.on import on_message
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 from urllib.parse import parse_qs, urlparse
 
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg, construct_nodes
 from .preprocess import r_keywords, R_EXTRACT_KEY
 
@@ -21,7 +21,7 @@ from ..config import rconfig, NICKNAME
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"
 
 xiaohongshu = on_message(
-    rule=is_not_in_disable_group & r_keywords("xiaohongshu.com", "xhslink.com")
+    rule=is_not_in_disabled_groups & r_keywords("xiaohongshu.com", "xhslink.com")
 )
 
 

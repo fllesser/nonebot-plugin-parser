@@ -5,7 +5,7 @@ from nonebot.plugin import on_message
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 from .utils import get_file_seg
 from .preprocess import r_keywords, R_KEYWORD_KEY, R_EXTRACT_KEY
 from ..constant import COMMON_HEADER
@@ -20,7 +20,9 @@ NETEASE_TEMP_API = (
     "https://www.hhlqilongzhu.cn/api/dg_wyymusic.php?id={}&br=7&type=json"
 )
 
-ncm = on_message(rule=is_not_in_disable_group & r_keywords("music.163.com", "163cn.tv"))
+ncm = on_message(
+    rule=is_not_in_disabled_groups & r_keywords("music.163.com", "163cn.tv")
+)
 
 
 @ncm.handle()

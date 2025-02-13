@@ -6,7 +6,7 @@ from nonebot.typing import T_State
 from nonebot.plugin.on import on_message
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 from .utils import get_file_seg
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 from .preprocess import r_keywords, R_EXTRACT_KEY
 from ..download.common import download_audio
 from ..constant import COMMON_HEADER
@@ -15,7 +15,7 @@ from ..config import NICKNAME
 # KG临时接口
 KUGOU_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={}&n=1&type=json"
 
-kugou = on_message(rule=is_not_in_disable_group & r_keywords("kugou.com"))
+kugou = on_message(rule=is_not_in_disabled_groups & r_keywords("kugou.com"))
 
 
 @kugou.handle()

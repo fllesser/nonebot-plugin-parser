@@ -6,7 +6,7 @@ from nonebot.rule import Rule
 from nonebot.plugin.on import on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent, Bot, MessageSegment
 
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg
 
 from ..constant import COMMON_HEADER
@@ -14,7 +14,7 @@ from ..constant import COMMON_HEADER
 from ..download.common import download_img
 from ..config import PROXY, NICKNAME
 
-twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disable_group))
+twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 
 
 @twitter.handle()

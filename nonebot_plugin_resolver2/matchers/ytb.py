@@ -7,7 +7,7 @@ from nonebot.exception import ActionFailed
 from nonebot.plugin.on import on_keyword
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
 
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg, get_file_seg
 from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 from ..config import (
@@ -16,7 +16,7 @@ from ..config import (
 )
 
 ytb = on_keyword(
-    keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disable_group)
+    keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disabled_groups)
 )
 
 

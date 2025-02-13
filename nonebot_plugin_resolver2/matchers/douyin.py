@@ -6,7 +6,7 @@ from nonebot.log import logger
 from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment, MessageEvent
 from .utils import get_video_seg, construct_nodes
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 
 from ..download.common import download_img
 from ..parsers.base import VideoInfo
@@ -14,7 +14,7 @@ from ..parsers.douyin import DouYin
 from ..config import NICKNAME
 
 
-douyin = on_keyword(keywords={"douyin.com"}, rule=Rule(is_not_in_disable_group))
+douyin = on_keyword(keywords={"douyin.com"}, rule=Rule(is_not_in_disabled_groups))
 
 douyin_parser = DouYin()
 

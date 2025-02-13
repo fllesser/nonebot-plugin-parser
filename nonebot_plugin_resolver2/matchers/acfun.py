@@ -11,11 +11,11 @@ from nonebot.rule import Rule
 from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Message, MessageEvent
 
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg
 from ..config import plugin_cache_dir, NICKNAME
 
-acfun = on_keyword(keywords={"acfun.cn"}, rule=Rule(is_not_in_disable_group))
+acfun = on_keyword(keywords={"acfun.cn"}, rule=Rule(is_not_in_disabled_groups))
 
 
 @acfun.handle()
