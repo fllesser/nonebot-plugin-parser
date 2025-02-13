@@ -9,7 +9,7 @@ from .filter import is_not_in_disabled_groups
 from .preprocess import r_keywords, R_EXTRACT_KEY
 from ..parsers.kugou import KuGou
 from ..download.common import download_audio
-from ..config import NICKNAME
+from ..config import NICKNAME, NEED_UPLOAD
 
 
 kugou = on_message(rule=is_not_in_disabled_groups & r_keywords("kugou.com"))
@@ -25,17 +25,17 @@ async def _(state: T_State):
     if match := re.search(pattern, text):
         url = match.group(0)
     else:
-        logger.info(f"无效链接，忽略 - {text}")
+        logger.info(f"{NICKNAME}解析 | 酷狗音乐 - 无效链接，忽略 - {text}")
         return
     try:
         video_info = await kugou_parser.parse_share_url(url)
     except Exception as e:
-        await kugou.finish(f"{NICKNAME}解析 | 解析失败: {e}")
+        await kugou.finish(f"{NICKNAME}解析 | 酷狗音乐 - {e}")
 
     title_author_name = f"{video_info.title} - {video_info.author.name}"
 
     await kugou.send(
-        f"{NICKNAME}解析 | {title_author_name}"
+        f"{NICKNAME}解析 | 酷狗音乐 - {title_author_name}"
         + MessageSegment.image(video_info.cover_url)
     )
     filename = f"{title_author_name}.mp3"
@@ -43,4 +43,5 @@ async def _(state: T_State):
     # 发送语音
     await kugou.send(MessageSegment.record(audio_path))
     # 发送群文件
-    await kugou.finish(get_file_seg(audio_path, filename))
+    if NEED_UPLOAD:
+        await kugou.finish(get_file_seg(audio_path, filename))

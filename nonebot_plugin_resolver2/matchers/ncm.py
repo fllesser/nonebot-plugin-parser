@@ -10,7 +10,7 @@ from .utils import get_file_seg
 from .preprocess import r_keywords, R_KEYWORD_KEY, R_EXTRACT_KEY
 from ..constant import COMMON_HEADER
 from ..download.common import download_audio
-from ..config import NICKNAME
+from ..config import NICKNAME, NEED_UPLOAD
 
 # NCM获取歌曲信息链接
 NETEASE_API_CN = "https://www.markingchen.ink"
@@ -67,8 +67,9 @@ async def _(state: T_State):
     # 发送语音
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件
-    await ncm.send(
-        get_file_seg(
-            audio_path, f"{ncm_title}-{ncm_singer}.{audio_path.name.split('.')[-1]}"
+    if NEED_UPLOAD:
+        await ncm.send(
+            get_file_seg(
+                audio_path, f"{ncm_title}-{ncm_singer}.{audio_path.name.split('.')[-1]}"
+            )
         )
-    )

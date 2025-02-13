@@ -17,7 +17,6 @@ class KuGou(BaseParser):
         if not match:
             raise ValueError("无法获取歌曲 hash 值")
         hash_value = match.group(1)
-        print(hash_value)
         download_api_url = (
             f"http://m.kugou.com/app/i/getSongInfo.php?cmd=playInfo&hash={hash_value}"
         )

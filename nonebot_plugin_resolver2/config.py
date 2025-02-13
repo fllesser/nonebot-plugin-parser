@@ -23,12 +23,21 @@ MatcherNames = Literal[
 
 
 class Config(BaseModel):
+    # 小红书 cookies
     r_xhs_ck: str = ""
+    # bilibili cookies
     r_bili_ck: str = ""
+    # youtube cookies
     r_ytb_ck: str = ""
+    # 是否为国外机器
     r_is_oversea: bool = False
+    # 代理
     r_proxy: str = "http://127.0.0.1:7890"
+    # 是否需要上传音频文件
+    r_need_upload: bool = False
+    # 视频最大时长
     r_video_duration_maximum: int = 480
+    # 禁止的解析器
     r_disable_resolvers: List[MatcherNames] = []
 
 
@@ -48,3 +57,5 @@ NICKNAME: str = next(iter(get_driver().config.nickname), "")
 PROXY: str | None = None if rconfig.r_is_oversea else rconfig.r_proxy
 # 哔哩哔哩限制的最大视频时长（默认8分钟）单位：秒
 DURATION_MAXIMUM: int = rconfig.r_video_duration_maximum
+# 是否需要上传音频文件
+NEED_UPLOAD: bool = rconfig.r_need_upload
