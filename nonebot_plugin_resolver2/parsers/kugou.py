@@ -8,9 +8,7 @@ class KuGou(BaseParser):
     async def parse_share_url(self, share_url: str) -> VideoInfo:
         # https://t1.kugou.com/song.html?id=1hfw6baEmV3
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                share_url, ssl=False, headers=self.default_headers
-            ) as response:
+            async with session.get(share_url, ssl=False) as response:
                 response.raise_for_status()
                 html_text = await response.text()
         # 从 html 中获取 hash 值
