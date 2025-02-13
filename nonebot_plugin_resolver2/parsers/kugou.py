@@ -21,7 +21,7 @@ class KuGou(BaseParser):
         async with aiohttp.ClientSession() as session:
             async with session.get(api_url, headers=self.default_headers) as response:
                 response.raise_for_status()
-                song_info = await response.json()
+                song_info = await response.json(content_type="text/html")
         return VideoInfo(
             title=song_info.get("title"),
             cover_url=song_info.get("img"),
