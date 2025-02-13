@@ -12,14 +12,12 @@ class KuGou(BaseParser):
                 response.raise_for_status()
                 html_text = await response.text()
         # <title>土坡上的狗尾草_卢润泽_高音质在线
-        match = re.search(r"<title>(.*)_高音质在线", html_text)
+        match = re.search(r"<title>(.+)_高音质在线", html_text)
         if not match:
             raise ValueError("无法获取歌曲名")
 
         title = match.group(1).replace("_", " ")
-        api_url = (
-            f"https://www.hhlqilongzhu.cn/api/dg_kgmusic_lingsheng.php?msg={title}&n=1"
-        )
+        api_url = f"https://www.hhlqilongzhu.cn/api/dg_kgmusic_lingsheng.php?msg={title}&n=1&type=json"
         async with aiohttp.ClientSession() as session:
             async with session.get(api_url, headers=self.default_headers) as response:
                 response.raise_for_status()
