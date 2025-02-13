@@ -17,7 +17,6 @@ class KuGou(BaseParser):
             raise ValueError("无法获取歌曲名")
 
         title = match.group(1).replace("_", " ")
-        # KG临时接口 ""
 
         api_url = (
             f"https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={title}&n=1&type=json"

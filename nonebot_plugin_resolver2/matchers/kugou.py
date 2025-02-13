@@ -8,7 +8,7 @@ from .utils import get_file_seg
 from .filter import is_not_in_disabled_groups
 from .preprocess import r_keywords, R_EXTRACT_KEY
 from ..parsers.kugou import KuGou
-from ..download.common import download_audio
+from ..download.common import delete_boring_characters, download_audio
 from ..config import NICKNAME, NEED_UPLOAD
 
 
@@ -38,7 +38,8 @@ async def _(state: T_State):
         f"{NICKNAME}解析 | 酷狗音乐 - {title_author_name}"
         + MessageSegment.image(video_info.cover_url)
     )
-    filename = f"{title_author_name}.mp3"
+
+    filename = f"{delete_boring_characters(title_author_name)}.flac"
     audio_path = await download_audio(url=video_info.music_url, audio_name=filename)
     # 发送语音
     await kugou.send(MessageSegment.record(audio_path))
