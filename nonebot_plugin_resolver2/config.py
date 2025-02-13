@@ -5,8 +5,8 @@ from typing import List, Literal
 
 require("nonebot_plugin_localstore")
 require("nonebot_plugin_apscheduler")
-import nonebot_plugin_localstore as store  # noqa: E402
-from nonebot_plugin_apscheduler import scheduler  # noqa: E402, F401
+import nonebot_plugin_localstore as store
+from nonebot_plugin_apscheduler import scheduler  # noqa: F401
 
 MatcherNames = Literal[
     "bilibili",

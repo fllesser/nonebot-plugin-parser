@@ -37,6 +37,10 @@ adapters = [
 ]
 plugins = ["nonebot_plugin_resolver2"]
 
-[[tool.uv.index]]
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-default = true
+
+[tool.ruff]
+ignore = ["E402"]
+
+# [[tool.uv.index]]
+# url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+# default = true
