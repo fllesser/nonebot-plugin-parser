@@ -28,7 +28,7 @@ def _(event: MessageEvent, state: T_State) -> None:
         return
 
     data_str: str | None = json_seg.data.get("data")
-    logger.debug(f"jsonstr: {data_str}")
+
     if not data_str:
         return
     # 处理转义字符
@@ -40,7 +40,7 @@ def _(event: MessageEvent, state: T_State) -> None:
         logger.debug("json 卡片解析失败")
         return
 
-    meta: dict[str, Any] = data.get("meta", None)
+    meta: dict[str, Any] | None = data.get("meta", None)
     if meta is None:
         return
 
@@ -49,6 +49,8 @@ def _(event: MessageEvent, state: T_State) -> None:
         text = detail.get("qqdocurl")
     elif news := meta.get("news"):
         text = news.get("jumpUrl")
+    elif music := meta.get("music"):
+        text = music.get("jumpUrl")
     else:
         return
 
