@@ -14,7 +14,7 @@ from bilibili_api.video import VideoDownloadURLDataDetecter
 from bilibili_api.favorite_list import get_video_favorite_list_content
 
 from .utils import construct_nodes, get_video_seg, get_file_seg
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 from .preprocess import r_keywords, R_KEYWORD_KEY, R_EXTRACT_KEY
 from ..download.common import (
     delete_boring_characters,
@@ -41,7 +41,7 @@ BILIBILI_HEADERS = {
 }
 
 bilibili = on_message(
-    rule=is_not_in_disable_group
+    rule=is_not_in_disabled_groups
     & r_keywords("bilibili", "bili2233", "b23", "BV", "av"),
     priority=5,
 )

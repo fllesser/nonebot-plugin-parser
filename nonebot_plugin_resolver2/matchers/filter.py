@@ -35,7 +35,7 @@ disabled_group_set: set[int] = load_or_initialize_set()
 
 
 # Rule
-def is_not_in_disable_group(event: MessageEvent) -> bool:
+def is_not_in_disabled_groups(event: MessageEvent) -> bool:
     return (
         True
         if not isinstance(event, GroupMessageEvent)

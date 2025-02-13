@@ -7,7 +7,7 @@ from nonebot.rule import Rule
 from nonebot.plugin.on import on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent, Bot, MessageSegment
 
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 from .utils import construct_nodes, get_video_seg
 
 from ..download.common import download_img, download_video
@@ -20,7 +20,7 @@ WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
 weibo_parser = WeiBo()
 
 weibo = on_keyword(
-    keywords={"weibo.com", "m.weibo.cn"}, rule=Rule(is_not_in_disable_group)
+    keywords={"weibo.com", "m.weibo.cn"}, rule=Rule(is_not_in_disabled_groups)
 )
 
 

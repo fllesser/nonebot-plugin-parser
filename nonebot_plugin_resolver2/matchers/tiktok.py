@@ -5,13 +5,13 @@ from nonebot import on_keyword
 from nonebot.rule import Rule
 from nonebot.adapters.onebot.v11 import MessageEvent
 
-from .filter import is_not_in_disable_group
+from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg
 from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..config import PROXY, NICKNAME
 
 
-tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disable_group))
+tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disabled_groups))
 
 
 @tiktok.handle()
