@@ -46,7 +46,7 @@ class DouYin(BaseParser):
     # @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, url: str) -> VideoInfo:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.get_default_headers()) as response:
+            async with session.get(url, headers=self.default_headers) as response:
                 response.raise_for_status()
                 text = await response.text()
                 data = self.format_response(text)
@@ -88,10 +88,6 @@ class DouYin(BaseParser):
             ),
         )
         return video_info
-
-    async def parse_video_id(self, video_id: str) -> VideoInfo:
-        req_url = self._iesdouyin_by_video_id("video", video_id)
-        return await self.parse_share_url(req_url)
 
     def _iesdouyin_by_video_id(self, _type: str, video_id: str) -> str:
         return f"https://www.iesdouyin.com/share/{_type}/{video_id}"
@@ -170,3 +166,6 @@ class DouYin(BaseParser):
             images=images,
             dynamic_images=dynamic_images,
         )
+
+    async def parse_video_id(self, video_id: str) -> VideoInfo:
+        raise NotImplementedError

@@ -3,7 +3,7 @@ import aiohttp
 
 from nonebot.plugin import on_message
 from nonebot.typing import T_State
-from nonebot.adapters.onebot.v11 import Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageSegment
 
 from .filter import is_not_in_disabled_groups
 from .utils import get_file_seg
@@ -26,7 +26,7 @@ ncm = on_message(
 
 
 @ncm.handle()
-async def _(bot: Bot, state: T_State):
+async def _(state: T_State):
     text, keyword = state.get(R_EXTRACT_KEY, ""), state.get(R_KEYWORD_KEY, "")
     # 解析短链接
     url: str = ""

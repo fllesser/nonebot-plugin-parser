@@ -21,7 +21,7 @@ class WeiBo(BaseParser):
         headers = {
             "Referer": f"https://h5.video.weibo.com/show/{video_id}",
             "Content-Type": "application/x-www-form-urlencoded",
-            **self.get_default_headers(),
+            **self.default_headers,
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + video_id + '"}}'
         async with aiohttp.ClientSession() as session:
