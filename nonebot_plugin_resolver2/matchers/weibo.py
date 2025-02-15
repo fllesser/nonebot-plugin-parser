@@ -27,13 +27,11 @@ weibo = on_keyword(
 @weibo.handle()
 async def _(bot: Bot, event: MessageEvent):
     message = event.message.extract_plain_text().strip()
-
+    share_prefix = f"{NICKNAME}解析 | 微博 - "
     # fid
     if match := re.search(r"https://video\.weibo\.com/show\?fid=[^\s]+", message):
         video_info = await weibo_parser.parse_share_url(match.group())
-        await weibo.send(
-            f"{NICKNAME}解析 | 微博 - {video_info.title} - {video_info.author.name}"
-        )
+        await weibo.send(f"{share_prefix}{video_info.title} - {video_info.author.name}")
         await weibo.finish(await get_video_seg(url=video_info.video_url))
 
     # https://m.weibo.cn/detail/4976424138313924
@@ -47,7 +45,7 @@ async def _(bot: Bot, event: MessageEvent):
         weibo_id = match.group(1)
     # 无法获取到id则返回失败信息
     else:
-        await weibo.finish("解析失败：无法获取到微博的 id")
+        await weibo.finish(f"{share_prefix}失败：无法获取到微博的 id")
 
     headers = {
         "accept": "application/json",
@@ -63,11 +61,11 @@ async def _(bot: Bot, event: MessageEvent):
         ) as resp:
             if resp.status != 200:
                 await weibo.finish(
-                    f"{NICKNAME}解析 | 微博 - 获取数据失败 {resp.status} {resp.reason}"
+                    f"{share_prefix}获取数据失败 {resp.status} {resp.reason}"
                 )
             if "application/json" not in resp.headers.get("content-type", ""):
                 await weibo.finish(
-                    f"{NICKNAME}解析 | 微博 - 获取数据失败 content-type is not application/json"
+                    f"{share_prefix}获取数据失败 content-type is not application/json"
                 )
             resp = await resp.json()
 
@@ -85,7 +83,7 @@ async def _(bot: Bot, event: MessageEvent):
     )
     # 发送消息
     await weibo.send(
-        f"{NICKNAME}解析 | 微博 - {re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}"
+        f"{share_prefix}{re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}"
     )
     if pics:
         pics = map(lambda x: x["large"]["url"], pics)

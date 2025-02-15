@@ -30,16 +30,17 @@ async def _(event: MessageEvent):
             async with session.get(url, allow_redirects=False, proxy=PROXY) as resp:
                 url = resp.headers.get("Location")
     assert url
+    share_prefix = f"{NICKNAME}解析 | TikTok - "
     try:
         info = await get_video_info(url)
-        await tiktok.send(f"{NICKNAME}解析 | TikTok - {info['title']}")
+        await tiktok.send(f"{share_prefix}{info['title']}")
     except Exception as e:
-        await tiktok.send(f"{NICKNAME}解析 | TikTok - 标题获取出错: {e}")
+        await tiktok.send(f"{share_prefix}标题获取出错: {e}")
 
     try:
         video_path = await ytdlp_download_video(url=url)
         res = await get_video_seg(video_path)
     except Exception as e:
-        res = f"下载视频失败 | {e}"
+        res = f"{share_prefix}下载视频失败 {e}"
 
     await tiktok.send(res)

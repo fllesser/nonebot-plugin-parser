@@ -32,11 +32,13 @@ async def _(bot: Bot, event: MessageEvent):
     else:
         logger.info("douyin url is incomplete, ignored")
         return
+    share_prefix = f"{NICKNAME}解析 | 抖音 - "
     try:
         video_info: VideoInfo = await douyin_parser.parse_share_url(share_url)
     except Exception as e:
-        await douyin.finish(f"{NICKNAME}解析 | 抖音 - {e}")
-    await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
+        logger.error(f"Failed to parse douyin url: {share_url}, {e}")
+        await douyin.finish(f"{share_prefix} 失败")
+    await douyin.send(f"{share_prefix}{video_info.title}")
     if video_info.images or video_info.dynamic_images:
         segs = []
         if video_info.images:

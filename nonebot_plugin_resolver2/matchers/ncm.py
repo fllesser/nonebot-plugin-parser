@@ -28,6 +28,7 @@ ncm = on_message(
 @ncm.handle()
 async def _(state: T_State):
     text, keyword = state.get(R_EXTRACT_KEY, ""), state.get(R_KEYWORD_KEY, "")
+    share_prefix = f"{NICKNAME}解析 | 网易云 - "
     # 解析短链接
     url: str = ""
     if keyword == "163cn.tv":
@@ -41,7 +42,7 @@ async def _(state: T_State):
     if match := re.search(r"id=(\d+)", url):
         ncm_id = match.group(1)
     else:
-        await ncm.finish(f"{NICKNAME}解析 | 网易云 - 获取链接失败")
+        await ncm.finish(f"{share_prefix}获取链接失败")
 
     # 对接临时接口
     try:
@@ -54,16 +55,15 @@ async def _(state: T_State):
             ncm_vip_data.get(key) for key in ["music_url", "cover", "singer", "title"]
         )
     except Exception as e:
-        await ncm.finish(f"{NICKNAME}解析 | 网易云 - 错误: {e}")
+        await ncm.finish(f"{share_prefix}错误: {e}")
     await ncm.send(
-        f"{NICKNAME}解析 | 网易云 - {ncm_title} {ncm_singer}"
-        + MessageSegment.image(ncm_cover)
+        f"{share_prefix}{ncm_title} {ncm_singer}" + MessageSegment.image(ncm_cover)
     )
     # 下载音频文件后会返回一个下载路径
     try:
         audio_path = await download_audio(ncm_music_url)
     except Exception as e:
-        await ncm.finish(f"音频下载失败 {e}")
+        await ncm.finish(f"{share_prefix}音频下载失败 - {e}")
     # 发送语音
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件

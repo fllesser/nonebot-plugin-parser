@@ -65,6 +65,7 @@ patterns: dict[str, re.Pattern] = {
 async def _(bot: Bot, state: T_State):
     # 消息
     text, keyword = state.get(R_EXTRACT_KEY, ""), state.get(R_KEYWORD_KEY, "")
+    share_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
     match = patterns[keyword].search(text)
     if not match:
         logger.info(f"{text} 中的链接或id无效, 忽略")
@@ -101,7 +102,7 @@ async def _(bot: Bot, state: T_State):
             dynamic_info = await Opus(dynamic_id, credential).get_info()
             assert isinstance(dynamic_info, dict)
             title = dynamic_info["item"]["basic"]["title"]
-            await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - {title}")
+            await bilibili.send(f"{share_prefix}{title}")
 
             paragraphs = []
             for module in dynamic_info["item"]["modules"]:
@@ -135,9 +136,9 @@ async def _(bot: Bot, state: T_State):
                 room_info["cover"],
                 room_info["keyframe"],
             )
-            res = f"{NICKNAME}解析 | 哔哩哔哩 - 直播 内容获取失败"
+            res = f"{share_prefix}直播 内容获取失败"
             if title:
-                res = f"{NICKNAME}解析 | 哔哩哔哩 - 直播 - {title}"
+                res = f"{share_prefix}直播 - {title}"
                 res += MessageSegment.image(cover) if cover else ""
                 res += MessageSegment.image(keyframe) if keyframe else ""
             await bilibili.finish(res)
@@ -149,7 +150,7 @@ async def _(bot: Bot, state: T_State):
                 logger.info(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
                 return
             ar = article.Article(int(read_id))
-            await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - 专栏")
+            await bilibili.send(f"{share_prefix}专栏")
 
             # 加载内容
             await ar.fetch_content()
@@ -215,13 +216,12 @@ async def _(bot: Bot, state: T_State):
                     MessageSegment.image(cover)
                     + f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}"
                 )
-            await bilibili.send(
-                f"{NICKNAME}解析 | 哔哩哔哩 - 收藏夹\n正在为你找出相关链接请稍等..."
-            )
+            await bilibili.send(f"{share_prefix}收藏夹\n正在为你找出相关链接请稍等...")
             await bilibili.finish(construct_nodes(bot.self_id, favs))
         else:
             logger.warning(f"unsupported url: {url}")
             return
+
     # 视频
     if keyword in ("av", "/av"):
         v = video.Video(aid=int(video_id), credential=credential)
@@ -232,8 +232,8 @@ async def _(bot: Bot, state: T_State):
     try:
         video_info = await v.get_info()
     except Exception as e:
-        await bilibili.finish(f"{NICKNAME}解析 | 哔哩哔哩 - 出错 {e}")
-    await bilibili.send(f"{NICKNAME}解析 | 哔哩哔哩 - 视频")
+        await bilibili.finish(f"{share_prefix}出错 {e}")
+    await bilibili.send(f"{share_prefix}视频")
     video_title, video_cover, video_desc, video_duration = (
         video_info["title"],
         video_info["pic"],
@@ -295,8 +295,6 @@ async def _(bot: Bot, state: T_State):
             streams = detecter.detect_best_streams()
             video_stream = streams[0]
             audio_stream = streams[1]
-            assert video_stream is not None
-            assert audio_stream is not None
             video_url, audio_url = video_stream.url, audio_stream.url
 
             # 下载视频和音频
@@ -310,7 +308,8 @@ async def _(bot: Bot, state: T_State):
             )
             await merge_av(v_path, a_path, video_path)
     except Exception as e:
-        await bilibili.finish(f"下载视频失败 | {e}")
+        logger.error(f"下载视频失败: {e}", exc_info=True)
+        return await bilibili.finish(f"下载视频失败: {str(e)[:100]}")
     await bilibili.send(await get_video_seg(video_path))
 
 

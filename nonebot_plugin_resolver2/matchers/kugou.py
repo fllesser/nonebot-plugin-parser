@@ -19,23 +19,24 @@ kugou_parser = KuGou()
 @kugou.handle()
 async def _(state: T_State):
     text = state.get(R_EXTRACT_KEY, "")
+    share_prefix = f"{NICKNAME}解析 | 酷狗音乐 - "
     # https://t1.kugou.com/song.html?id=1hfw6baEmV3
     pattern = r"https?://.*kugou\.com.*id=[a-zA-Z0-9]+"
     # pattern = r"https?://.*?kugou\.com.*?(?=\s|$|\n)"
     if match := re.search(pattern, text):
         url = match.group(0)
     else:
-        logger.info(f"{NICKNAME}解析 | 酷狗音乐 - 无效链接，忽略 - {text}")
+        logger.info(f"{share_prefix}无效链接，忽略 - {text}")
         return
     try:
         video_info = await kugou_parser.parse_share_url(url)
     except Exception as e:
-        await kugou.finish(f"{NICKNAME}解析 | 酷狗音乐 - {e}")
+        await kugou.finish(f"{share_prefix}{e}")
 
     title_author_name = f"{video_info.title} - {video_info.author.name}"
 
     await kugou.send(
-        f"{NICKNAME}解析 | 酷狗音乐 - {title_author_name}"
+        f"{share_prefix}{title_author_name}"
         + MessageSegment.image(video_info.cover_url)
     )
 

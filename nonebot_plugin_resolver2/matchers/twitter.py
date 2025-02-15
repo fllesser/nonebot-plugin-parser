@@ -4,7 +4,7 @@ import aiohttp
 from typing import Any
 from nonebot.rule import Rule
 from nonebot.plugin.on import on_keyword
-from nonebot.adapters.onebot.v11 import MessageEvent, Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 
 from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg
@@ -18,7 +18,7 @@ twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 
 
 @twitter.handle()
-async def _(bot: Bot, event: MessageEvent):
+async def _(event: MessageEvent):
     msg: str = event.message.extract_plain_text().strip()
 
     if match := re.search(

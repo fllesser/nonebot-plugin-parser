@@ -28,6 +28,7 @@ xiaohongshu = on_message(
 @xiaohongshu.handle()
 async def _(bot: Bot, state: T_State):
     text = state.get(R_EXTRACT_KEY, "")
+    share_prefix = f"{NICKNAME}解析 | 小红书 - "
 
     if match := re.search(
         r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",
@@ -69,14 +70,14 @@ async def _(bot: Bot, state: T_State):
     if match := re.search(pattern, html):
         json_str = match.group(1)
     else:
-        await xiaohongshu.finish("小红书 cookie 可能已失效")
+        await xiaohongshu.finish(f"{share_prefix} cookies 可能已失效")
     json_str = json_str.replace("undefined", "null")
     json_obj = json.loads(json_str)
     note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
     type = note_data["type"]
     note_title = note_data["title"]
     note_desc = note_data["desc"]
-    title_msg = f"{NICKNAME}解析 | 小红书 - {note_title}\n{note_desc}"
+    title_msg = f"{share_prefix}{note_title}\n{note_desc}"
 
     if type == "normal":
         aio_task = []
