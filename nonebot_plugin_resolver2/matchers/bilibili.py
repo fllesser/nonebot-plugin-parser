@@ -7,7 +7,7 @@ from nonebot.typing import T_State
 from nonebot.params import CommandArg
 from nonebot.plugin.on import on_message, on_command
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
-from bilibili_api import video, live, article, Credential, select_client
+from bilibili_api import video, live, article, Credential  # , select_client
 
 from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
@@ -32,7 +32,7 @@ credential: Credential | None = (
     else None
 )
 # 选择客户端
-select_client("aiohttp")
+# select_client("aiohttp")
 
 # 哔哩哔哩的头请求
 BILIBILI_HEADERS = {
@@ -295,6 +295,8 @@ async def _(bot: Bot, state: T_State):
             streams = detecter.detect_best_streams()
             video_stream = streams[0]
             audio_stream = streams[1]
+            if video_stream is None or audio_stream is None:
+                return await bilibili.finish(f"{share_prefix}未找到视频或音频流")
             video_url, audio_url = video_stream.url, audio_stream.url
 
             # 下载视频和音频
@@ -309,7 +311,7 @@ async def _(bot: Bot, state: T_State):
             await merge_av(v_path, a_path, video_path)
     except Exception as e:
         logger.error(f"下载视频失败: {e}", exc_info=True)
-        return await bilibili.finish(f"下载视频失败: {str(e)[:100]}")
+        return await bilibili.finish(f"{share_prefix}下载视频失败, 错误见后台输出")
     await bilibili.send(await get_video_seg(video_path))
 
 
