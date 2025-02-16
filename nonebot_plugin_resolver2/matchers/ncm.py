@@ -63,8 +63,9 @@ async def _(state: T_State):
     file_name = f"{ncm_title}-{ncm_singer}.flac"
     try:
         audio_path = await download_audio(ncm_music_url, file_name)
-    except Exception as e:
-        await ncm.finish(f"{share_prefix}音频下载失败 - {e}")
+    except Exception:
+        await ncm.send("音频下载失败，请联系机器人管理员", reply_message=True)
+        raise
     # 发送语音
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件

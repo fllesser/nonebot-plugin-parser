@@ -43,24 +43,29 @@ async def download_file_by_stream(
         headers.update(ext_headers)
 
     async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(
-            url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=60, connect=10.0)
-        ) as resp:
-            resp.raise_for_status()
-            with tqdm(
-                total=int(resp.headers.get("Content-Length", 0)),
-                unit="B",
-                unit_scale=True,
-                unit_divisor=1024,
-                dynamic_ncols=True,
-                colour="green",
-            ) as bar:
-                # 设置前缀信息
-                bar.set_description(file_name)
-                async with aiofiles.open(file_path, "wb") as f:
-                    async for chunk in resp.content.iter_chunked(1024):
-                        await f.write(chunk)
-                        bar.update(len(chunk))
+        try:
+            async with session.get(
+                url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=60, connect=10.0)
+            ) as resp:
+                resp.raise_for_status()
+                with tqdm(
+                    total=int(resp.headers.get("Content-Length", 0)),
+                    unit="B",
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    dynamic_ncols=True,
+                    colour="green",
+                ) as bar:
+                    # 设置前缀信息
+                    bar.set_description(file_name)
+                    async with aiofiles.open(file_path, "wb") as f:
+                        async for chunk in resp.content.iter_chunked(1024):
+                            await f.write(chunk)
+                            bar.update(len(chunk))
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常：{e}")
+            raise
+
     return file_path
 
 
