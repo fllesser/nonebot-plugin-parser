@@ -60,16 +60,13 @@ async def _(state: T_State):
         f"{share_prefix}{ncm_title} {ncm_singer}" + MessageSegment.image(ncm_cover)
     )
     # 下载音频文件后会返回一个下载路径
+    file_name = f"{ncm_title}-{ncm_singer}.flac"
     try:
-        audio_path = await download_audio(ncm_music_url)
+        audio_path = await download_audio(ncm_music_url, file_name)
     except Exception as e:
         await ncm.finish(f"{share_prefix}音频下载失败 - {e}")
     # 发送语音
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件
     if NEED_UPLOAD:
-        await ncm.send(
-            get_file_seg(
-                audio_path, f"{ncm_title}-{ncm_singer}.{audio_path.name.split('.')[-1]}"
-            )
-        )
+        await ncm.send(get_file_seg(audio_path, file_name))

@@ -22,7 +22,7 @@ from ..download.common import (
     download_img,
     merge_av,
 )
-from ..config import rconfig, NICKNAME, DURATION_MAXIMUM, plugin_cache_dir
+from ..config import NEED_UPLOAD, NICKNAME, DURATION_MAXIMUM, rconfig, plugin_cache_dir
 from ..cookie import cookies_str_to_dict
 
 # bilibili-api 相关
@@ -352,7 +352,8 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     except Exception as e:
         await bili_music.finish(f"download audio excepted err: {e}")
     await bili_music.send(MessageSegment.record(audio_path))
-    await bili_music.send(get_file_seg(audio_path))
+    if NEED_UPLOAD:
+        await bili_music.send(get_file_seg(audio_path))
 
 
 def extra_bili_info(video_info):

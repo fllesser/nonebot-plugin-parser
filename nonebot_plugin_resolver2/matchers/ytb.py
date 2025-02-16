@@ -1,9 +1,10 @@
 import re
 
+from pathlib import Path
+from nonebot.log import logger
 from nonebot.typing import T_State
 from nonebot.params import Arg
 from nonebot.rule import Rule
-from nonebot.exception import ActionFailed
 from nonebot.plugin.on import on_keyword
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
 
@@ -11,6 +12,7 @@ from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg, get_file_seg
 from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 from ..config import (
+    NEED_UPLOAD,
     NICKNAME,
     ytb_cookies_file,
 )
@@ -47,18 +49,21 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
     await bot.call_api(
         "set_msg_emoji_like", message_id=event.message_id, emoji_id="282"
     )
+    video_path: Path | None = None
+    audio_path: Path | None = None
+    is_video = type.extract_plain_text().strip() == "1"
     try:
-        if type.extract_plain_text().strip() == "1":
-            video_path = await ytdlp_download_video(
-                url=url, cookiefile=ytb_cookies_file
-            )
-            await ytb.send(await get_video_seg(video_path))
+        if is_video:
+            video_path = await ytdlp_download_video(url, ytb_cookies_file)
         else:
-            audio_path = await ytdlp_download_audio(
-                url=url, cookiefile=ytb_cookies_file
-            )
-            await ytb.send(MessageSegment.record(audio_path))
-            await ytb.send(get_file_seg(audio_path))
+            audio_path = await ytdlp_download_audio(url, ytb_cookies_file)
     except Exception as e:
-        if not isinstance(e, ActionFailed):
-            await ytb.send(f"下载失败 | {e}")
+        media_type = "视频" if is_video else "音频"
+        logger.error(f"{media_type}下载失败 | {url} | {e}", exc_info=True)
+        await ytb.send(f"{media_type}下载失败 | 详见日志输出")
+    if video_path:
+        await ytb.send(await get_video_seg(video_path))
+    if audio_path:
+        await ytb.send(MessageSegment.record(audio_path))
+        if NEED_UPLOAD:
+            await ytb.send(get_file_seg(audio_path))
