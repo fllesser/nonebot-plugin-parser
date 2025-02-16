@@ -33,6 +33,7 @@ async def _(event: MessageEvent, state: T_State):
     if match := re.search(pattern, message):
         url = match.group(0)
     else:
+        logger.warning(f"{message} 中的链接不支持，已忽略")
         await ytb.finish()
     try:
         info_dict = await get_video_info(url, ytb_cookies_file)
