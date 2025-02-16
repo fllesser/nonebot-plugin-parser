@@ -31,7 +31,8 @@ async def _(state: T_State):
     try:
         video_info = await kugou_parser.parse_share_url(url)
     except Exception as e:
-        await kugou.finish(f"{share_prefix}{e}")
+        logger.error(f"链接 {url} 资源直链获取失败- {e}", exc_info=True)
+        await kugou.finish("资源直链获取失败, 请联系机器人管理员", reply_message=True)
 
     title_author_name = f"{video_info.title} - {video_info.author.name}"
 
@@ -41,7 +42,11 @@ async def _(state: T_State):
     )
 
     filename = f"{delete_boring_characters(title_author_name)}.flac"
-    audio_path = await download_audio(url=video_info.music_url, audio_name=filename)
+    try:
+        audio_path = await download_audio(url=video_info.music_url, audio_name=filename)
+    except Exception:
+        await kugou.send("音频下载失败, 请联系机器人管理员", reply_message=True)
+        raise
     # 发送语音
     await kugou.send(MessageSegment.record(audio_path))
     # 发送群文件

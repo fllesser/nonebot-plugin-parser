@@ -219,7 +219,7 @@ async def _(bot: Bot, state: T_State):
             await bilibili.send(f"{share_prefix}收藏夹\n正在为你找出相关链接请稍等...")
             await bilibili.finish(construct_nodes(bot.self_id, favs))
         else:
-            logger.warning(f"unsupported url: {url}")
+            logger.warning(f"不支持的链接: {url}")
             return
 
     # 视频
@@ -309,9 +309,9 @@ async def _(bot: Bot, state: T_State):
                 ),
             )
             await merge_av(v_path, a_path, video_path)
-    except Exception as e:
-        logger.error(f"下载视频失败: {e}", exc_info=True)
-        return await bilibili.finish(f"{share_prefix}下载视频失败, 错误见后台输出")
+    except Exception:
+        await bilibili.send("视频下载失败, 请联系机器人管理员", reply_message=True)
+        raise
     await bilibili.send(await get_video_seg(video_path))
 
 
@@ -320,7 +320,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     text = args.extract_plain_text().strip()
     match = re.match(r"^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?$", text)
     if not match:
-        await bili_music.finish("格式: bm BV1LpD3YsETa [集数](中括号表示可选)")
+        await bili_music.finish("命令格式: bm BV1LpD3YsETa [集数](中括号表示可选)")
     await bot.call_api(
         "set_msg_emoji_like", message_id=event.message_id, emoji_id="282"
     )
@@ -349,8 +349,9 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             await download_file_by_stream(
                 audio_url, audio_name, ext_headers=BILIBILI_HEADERS
             )
-    except Exception as e:
-        await bili_music.finish(f"download audio excepted err: {e}")
+    except Exception:
+        await bili_music.send("音频下载失败, 请联系机器人管理员", reply_message=True)
+        raise
     await bili_music.send(MessageSegment.record(audio_path))
     if NEED_UPLOAD:
         await bili_music.send(get_file_seg(audio_path))

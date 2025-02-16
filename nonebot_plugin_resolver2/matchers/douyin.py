@@ -37,7 +37,7 @@ async def _(bot: Bot, event: MessageEvent):
         video_info: VideoInfo = await douyin_parser.parse_share_url(share_url)
     except Exception as e:
         logger.error(f"Failed to parse douyin url: {share_url}, {e}")
-        await douyin.finish(f"{share_prefix} 失败")
+        await douyin.finish("资源直链获取失败, 请联系机器人管理员", reply_message=True)
     await douyin.send(f"{share_prefix}{video_info.title}")
     if video_info.images or video_info.dynamic_images:
         segs = []
