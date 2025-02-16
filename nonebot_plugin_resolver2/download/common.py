@@ -45,7 +45,7 @@ async def download_file_by_stream(
     async with aiohttp.ClientSession(headers=headers) as session:
         try:
             async with session.get(
-                url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=60, connect=10.0)
+                url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=300, connect=10.0)
             ) as resp:
                 resp.raise_for_status()
                 with tqdm(
@@ -63,7 +63,7 @@ async def download_file_by_stream(
                             await f.write(chunk)
                             bar.update(len(chunk))
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-            logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常：{e}")
+            logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常{e}")
             raise
 
     return file_path
