@@ -2,12 +2,11 @@ import re
 import aiohttp
 
 from nonebot.plugin import on_message
-from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageSegment
 
 from .filter import is_not_in_disabled_groups
 from .utils import get_file_seg
-from .preprocess import r_keywords, R_KEYWORD_KEY, R_EXTRACT_KEY
+from .preprocess import r_keywords, ExtractText, Keyword
 from ..constant import COMMON_HEADER
 from ..download.common import download_audio
 from ..config import NICKNAME, NEED_UPLOAD
@@ -26,8 +25,7 @@ ncm = on_message(
 
 
 @ncm.handle()
-async def _(state: T_State):
-    text, keyword = state.get(R_EXTRACT_KEY, ""), state.get(R_KEYWORD_KEY, "")
+async def _(text: str = ExtractText(), keyword: str = Keyword()):
     share_prefix = f"{NICKNAME}解析 | 网易云 - "
     # 解析短链接
     url: str = ""

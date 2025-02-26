@@ -6,10 +6,26 @@ from nonebot.log import logger
 from nonebot.message import event_preprocessor
 from nonebot.typing import T_State
 from nonebot.adapters.onebot.v11 import MessageEvent
-
+from nonebot.params import Depends
 
 R_KEYWORD_KEY: Literal["_r_keyword"] = "_r_keyword"
 R_EXTRACT_KEY: Literal["_r_extract"] = "_r_extract"
+
+
+def ExtractText() -> str:
+    return Depends(_extact_text)
+
+
+def _extact_text(state: T_State) -> str:
+    return state.get(R_EXTRACT_KEY) or ""
+
+
+def Keyword() -> str:
+    return Depends(_keyword)
+
+
+def _keyword(state: T_State) -> str:
+    return state.get(R_KEYWORD_KEY) or ""
 
 
 @event_preprocessor
@@ -78,8 +94,7 @@ class RKeywordsRule:
     def __hash__(self) -> int:
         return hash(frozenset(self.keywords))
 
-    async def __call__(self, state: T_State) -> bool:
-        text = state.get(R_EXTRACT_KEY)
+    async def __call__(self, state: T_State, text: str = ExtractText()) -> bool:
         if not text:
             return False
         if key := next((k for k in self.keywords if k in text), None):

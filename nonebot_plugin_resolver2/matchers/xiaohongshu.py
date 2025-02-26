@@ -4,14 +4,13 @@ import asyncio
 import aiohttp
 
 from nonebot.log import logger
-from nonebot.typing import T_State
 from nonebot.plugin.on import on_message
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 from urllib.parse import parse_qs, urlparse
 
 from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg, construct_nodes
-from .preprocess import r_keywords, R_EXTRACT_KEY
+from .preprocess import r_keywords, ExtractText
 
 from ..constant import COMMON_HEADER
 from ..download.common import download_img
@@ -26,8 +25,7 @@ xiaohongshu = on_message(
 
 
 @xiaohongshu.handle()
-async def _(bot: Bot, state: T_State):
-    text = state.get(R_EXTRACT_KEY, "")
+async def _(bot: Bot, text: str = ExtractText()):
     share_prefix = f"{NICKNAME}解析 | 小红书 - "
 
     if match := re.search(

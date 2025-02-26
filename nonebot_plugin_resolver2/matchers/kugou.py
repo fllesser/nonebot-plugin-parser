@@ -1,12 +1,11 @@
 import re
 
 from nonebot.log import logger
-from nonebot.typing import T_State
 from nonebot.plugin.on import on_message
 from nonebot.adapters.onebot.v11 import MessageSegment
 from .utils import get_file_seg
 from .filter import is_not_in_disabled_groups
-from .preprocess import r_keywords, R_EXTRACT_KEY
+from .preprocess import r_keywords, ExtractText
 from ..parsers.kugou import KuGou
 from ..download.common import delete_boring_characters, download_audio
 from ..config import NICKNAME, NEED_UPLOAD
@@ -17,8 +16,7 @@ kugou_parser = KuGou()
 
 
 @kugou.handle()
-async def _(state: T_State):
-    text = state.get(R_EXTRACT_KEY, "")
+async def _(text: str = ExtractText()):
     share_prefix = f"{NICKNAME}解析 | 酷狗音乐 - "
     # https://t1.kugou.com/song.html?id=1hfw6baEmV3
     pattern = r"https?://.*kugou\.com.*id=[a-zA-Z0-9]+"

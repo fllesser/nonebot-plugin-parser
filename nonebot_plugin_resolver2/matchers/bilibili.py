@@ -3,7 +3,6 @@ import aiohttp
 import asyncio
 
 from nonebot.log import logger
-from nonebot.typing import T_State
 from nonebot.params import CommandArg
 from nonebot.plugin.on import on_message, on_command
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
@@ -15,7 +14,7 @@ from bilibili_api.favorite_list import get_video_favorite_list_content
 
 from .utils import construct_nodes, get_video_seg, get_file_seg
 from .filter import is_not_in_disabled_groups
-from .preprocess import r_keywords, R_KEYWORD_KEY, R_EXTRACT_KEY
+from .preprocess import r_keywords, ExtractText, Keyword
 from ..download.common import (
     delete_boring_characters,
     download_file_by_stream,
@@ -62,9 +61,7 @@ patterns: dict[str, re.Pattern] = {
 
 
 @bilibili.handle()
-async def _(bot: Bot, state: T_State):
-    # 消息
-    text, keyword = state.get(R_EXTRACT_KEY, ""), state.get(R_KEYWORD_KEY, "")
+async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
     share_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
     match = patterns[keyword].search(text)
     if not match:
