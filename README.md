@@ -60,8 +60,10 @@
 在 nonebot2 项目的插件目录下, 打开命令行, 根据你使用的包管理器, 输入相应的安装命令
 <details open>
 <summary>uv</summary>
+使用 uv 安装
 
     uv add nonebot-plugin-resolver2
+安装仓库 dev 分支
 
     uv add git+https://github.com/fllesser/nonebot-plugin-resolver2.git@master
 </details>
