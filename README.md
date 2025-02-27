@@ -5,10 +5,7 @@
 
 <div align="center">
 
-# nonebot-plugin-resolver2
-
-_✨ NoneBot2 链接分享自动解析插件 ✨_
-
+# ✨ NoneBot2 链接分享自动解析插件 ✨
 
 <a href="./LICENSE">
     <img src="https://img.shields.io/github/license/fllesser/nonebot-plugin-resolver2.svg" alt="license">
@@ -61,7 +58,7 @@ _✨ NoneBot2 链接分享自动解析插件 ✨_
 <details>
 <summary>使用包管理器安装</summary>
 在 nonebot2 项目的插件目录下, 打开命令行, 根据你使用的包管理器, 输入相应的安装命令
-<details>
+<details open>
 <summary>uv</summary>
 
     uv add nonebot-plugin-resolver2
