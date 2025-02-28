@@ -114,10 +114,9 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
                     segs.append(node["rich"]["text"])
                 elif text_type == "TEXT_NODE_TYPE_WORD":
                     segs.append(node["word"]["words"])
-            if len(paragraphs) > 1:
-                logger.info(paragraphs)
-                pics = paragraphs[1]["pic"]["pics"]
-                segs += [MessageSegment.image(pic["url"]) for pic in pics]
+            if len(paragraphs) > 1 and (pic := paragraphs[1].get("pic")):
+                if pics := pic.get("pics"):
+                    segs += [MessageSegment.image(pic["url"]) for pic in pics]
 
             await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
