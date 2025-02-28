@@ -6,7 +6,7 @@ from nonebot.log import logger
 from nonebot.params import CommandArg
 from nonebot.plugin.on import on_message, on_command
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
-from bilibili_api import video, live, article, Credential  # , select_client
+from bilibili_api import video, live, article, Credential, select_client
 
 from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
@@ -31,7 +31,7 @@ credential: Credential | None = (
     else None
 )
 # 选择客户端
-# select_client("aiohttp")
+select_client("curl_cffi")
 
 # 哔哩哔哩的头请求
 BILIBILI_HEADERS = {
