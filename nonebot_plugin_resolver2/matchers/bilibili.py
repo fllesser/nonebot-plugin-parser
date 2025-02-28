@@ -97,7 +97,8 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
                 logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
                 return
             dynamic_info = await Opus(dynamic_id, credential).get_info()
-            assert isinstance(dynamic_info, dict)
+            if not isinstance(dynamic_info, dict):
+                raise ValueError("获取动态信息失败")
             title = dynamic_info["item"]["basic"]["title"]
             await bilibili.send(f"{share_prefix}{title}")
 
@@ -114,6 +115,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
                 elif text_type == "TEXT_NODE_TYPE_WORD":
                     segs.append(node["word"]["words"])
             if len(paragraphs) > 1:
+                logger.info(paragraphs)
                 pics = paragraphs[1]["pic"]["pics"]
                 segs += [MessageSegment.image(pic["url"]) for pic in pics]
 
@@ -341,7 +343,8 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
             auio_stream = streams[1]
-            assert auio_stream is not None
+            if auio_stream is None:
+                return await bili_music.finish("没有获取到可用音频流")
             audio_url = auio_stream.url
             await download_file_by_stream(
                 audio_url, audio_name, ext_headers=BILIBILI_HEADERS
