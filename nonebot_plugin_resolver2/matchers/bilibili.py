@@ -96,7 +96,8 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             else:
                 logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
                 return
-            dynamic_info = await Opus(dynamic_id, credential).get_info()
+            opus = Opus(dynamic_id, credential)
+            dynamic_info = await opus.get_info()
             if not isinstance(dynamic_info, dict):
                 raise ValueError("获取动态信息失败")
             title = dynamic_info["item"]["basic"]["title"]
@@ -155,16 +156,14 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             data = ar.json()
             segs: list[MessageSegment | str] = []
 
-            def accumulate_text(node):
+            def accumulate_text(node: dict):
                 text = ""
                 if "children" in node:
                     for child in node["children"]:
                         text += accumulate_text(child) + " "
                 if _text := node.get("text"):
                     text += (
-                        _text
-                        if isinstance(_text, str)
-                        else str(_text) + node.get("url")
+                        _text if isinstance(_text, str) else str(_text) + node["url"]
                     )
                 return text
 
@@ -356,45 +355,30 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
         await bili_music.send(get_file_seg(audio_path))
 
 
-def extra_bili_info(video_info):
+def extra_bili_info(video_info: dict) -> str:
     """
     格式化视频信息
     """
+    # 获取视频统计数据
     video_state = video_info["stat"]
-    (
-        video_like,
-        video_coin,
-        video_favorite,
-        video_share,
-        video_view,
-        video_danmaku,
-        video_reply,
-    ) = (
-        video_state["like"],
-        video_state["coin"],
-        video_state["favorite"],
-        video_state["share"],
-        video_state["view"],
-        video_state["danmaku"],
-        video_state["reply"],
-    )
 
-    video_data_map = {
-        "点赞": video_like,
-        "硬币": video_coin,
-        "收藏": video_favorite,
-        "分享": video_share,
-        "总播放量": video_view,
-        "弹幕数量": video_danmaku,
-        "评论": video_reply,
-    }
+    # 定义需要展示的数据及其显示名称
+    stats_mapping = [
+        ("点赞", "like"),
+        ("硬币", "coin"),
+        ("收藏", "favorite"),
+        ("分享", "share"),
+        ("总播放量", "view"),
+        ("弹幕数量", "danmaku"),
+        ("评论", "reply"),
+    ]
 
-    video_info_result = ""
-    for key, value in video_data_map.items():
-        if int(value) > 10000:
-            formatted_value = f"{value / 10000:.1f}万"
-        else:
-            formatted_value = value
-        video_info_result += f"{key}: {formatted_value} | "
+    # 构建结果字符串
+    result_parts = []
+    for display_name, stat_key in stats_mapping:
+        value = video_state[stat_key]
+        # 数值超过10000时转换为万为单位
+        formatted_value = f"{value / 10000:.1f}万" if value > 10000 else str(value)
+        result_parts.append(f"{display_name}: {formatted_value}")
 
-    return video_info_result
+    return " | ".join(result_parts)
