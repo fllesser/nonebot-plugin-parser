@@ -6,7 +6,14 @@ from nonebot.log import logger
 from nonebot.params import CommandArg
 from nonebot.plugin.on import on_message, on_command
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
-from bilibili_api import video, live, article, Credential, select_client
+from bilibili_api import (
+    video,
+    live,
+    article,
+    Credential,
+    select_client,
+    HEADERS,
+)
 
 from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
@@ -32,12 +39,8 @@ credential: Credential | None = (
 )
 # 选择客户端
 select_client("curl_cffi")
-
-# 哔哩哔哩的头请求
-BILIBILI_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87",
-    "referer": "https://www.bilibili.com",
-}
+# 模仿浏览器
+# request_settings.set("impersonate", "chrome131")
 
 bilibili = on_message(
     rule=is_not_in_disabled_groups
@@ -74,7 +77,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
         b23url = url
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                b23url, headers=BILIBILI_HEADERS, allow_redirects=False
+                b23url, headers=HEADERS, allow_redirects=False
             ) as resp:
                 url = resp.headers.get("Location", b23url)
         if url == b23url:
@@ -299,10 +302,10 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             # 下载视频和音频
             v_path, a_path = await asyncio.gather(
                 download_file_by_stream(
-                    video_url, f"{prefix}-video.m4s", ext_headers=BILIBILI_HEADERS
+                    video_url, f"{prefix}-video.m4s", ext_headers=HEADERS
                 ),
                 download_file_by_stream(
-                    audio_url, f"{prefix}-audio.m4s", ext_headers=BILIBILI_HEADERS
+                    audio_url, f"{prefix}-audio.m4s", ext_headers=HEADERS
                 ),
             )
             await merge_av(v_path, a_path, video_path)
@@ -344,9 +347,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             if auio_stream is None:
                 return await bili_music.finish("没有获取到可用音频流")
             audio_url = auio_stream.url
-            await download_file_by_stream(
-                audio_url, audio_name, ext_headers=BILIBILI_HEADERS
-            )
+            await download_file_by_stream(audio_url, audio_name, ext_headers=HEADERS)
     except Exception:
         await bili_music.send("音频下载失败, 请联系机器人管理员", reply_message=True)
         raise
@@ -368,9 +369,9 @@ def extra_bili_info(video_info: dict) -> str:
         ("硬币", "coin"),
         ("收藏", "favorite"),
         ("分享", "share"),
+        ("评论", "reply"),
         ("总播放量", "view"),
         ("弹幕数量", "danmaku"),
-        ("评论", "reply"),
     ]
 
     # 构建结果字符串
