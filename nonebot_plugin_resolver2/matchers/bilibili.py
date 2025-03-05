@@ -1,3 +1,4 @@
+from pathlib import Path
 import re
 import aiohttp
 import asyncio
@@ -83,12 +84,13 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             opus_id = int(matched.group(1))
             img_lst, text = await parse_opus(opus_id)
             segs: list[MessageSegment | str] = [text]
-            for img in img_lst:
-                try:
-                    img_path = await download_img(img)
-                except Exception:
-                    continue
-                segs.append(MessageSegment.image(img_path))
+            # Concurrent download of all images
+            download_tasks = [download_img(img) for img in img_lst]
+            img_paths = await asyncio.gather(*download_tasks, return_exceptions=True)
+            # Add successful downloads to segs
+            for img_path in img_paths:
+                if isinstance(img_path, Path):
+                    segs.append(MessageSegment.image(img_path))
             await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
         elif "/live" in url:
