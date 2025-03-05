@@ -1,6 +1,6 @@
 import re
 import asyncio
-
+from pathlib import Path
 from nonebot import on_keyword
 from nonebot.log import logger
 from nonebot.rule import Rule
@@ -27,11 +27,11 @@ async def _(bot: Bot, event: MessageEvent):
     reg = (
         r"https://(v\.douyin\.com/[a-zA-Z0-9_\-]+|www\.douyin\.com/(video|note)/[0-9]+)"
     )
-    if match := re.search(reg, msg):
-        share_url = match.group(0)
-    else:
-        logger.info("douyin url is incomplete, ignored")
+    matched = re.search(reg, msg)
+    if not matched:
+        logger.warning("douyin url is incomplete, ignored")
         return
+    share_url = matched.group(0)
     share_prefix = f"{NICKNAME}解析 | 抖音 - "
     try:
         video_info: VideoInfo = await douyin_parser.parse_share_url(share_url)
@@ -45,14 +45,29 @@ async def _(bot: Bot, event: MessageEvent):
             img_tasks = [
                 asyncio.create_task(download_img(url)) for url in video_info.images
             ]
-            img_path_list = await asyncio.gather(*img_tasks)
-            segs.extend([MessageSegment.image(img_path) for img_path in img_path_list])
+            # 使用 return_exceptions=True 忽略单个任务错误
+            img_results = await asyncio.gather(*img_tasks, return_exceptions=True)
+            img_path_list = [
+                img_path
+                for img_path in img_results
+                if not isinstance(img_path, Exception)
+            ]
+            segs.extend(
+                [
+                    MessageSegment.image(item)
+                    for item in img_path_list
+                    if isinstance(item, Path)
+                ]
+            )
         if video_info.dynamic_images:
             video_tasks = [
                 asyncio.create_task(get_video_seg(url=url))
                 for url in video_info.dynamic_images
             ]
-            video_seg_list = await asyncio.gather(*video_tasks)
+            video_results = await asyncio.gather(*video_tasks, return_exceptions=True)
+            video_seg_list = [
+                seg for seg in video_results if isinstance(seg, MessageSegment)
+            ]
             segs.extend(video_seg_list)
         await douyin.finish(construct_nodes(bot.self_id, segs))
 
