@@ -133,6 +133,10 @@ cython_debug/
 # LSP config files
 pyrightconfig.json
 
+# uv
+uv.lock
+
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
