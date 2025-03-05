@@ -8,39 +8,21 @@ from nonebot.plugin.on import on_message, on_command
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
 from bilibili_api import (
     video,
-    live,
-    article,
-    Credential,
-    select_client,
     HEADERS,
 )
-
-from bilibili_api.opus import Opus
 from bilibili_api.video import VideoDownloadURLDataDetecter
 from bilibili_api.favorite_list import get_video_favorite_list_content
-
 from .utils import construct_nodes, get_video_seg, get_file_seg
 from .filter import is_not_in_disabled_groups
 from .preprocess import r_keywords, ExtractText, Keyword
+from ..parsers.bilibili import parse_live, parse_opus, parse_read, CREDENTIAL
 from ..download.common import (
     delete_boring_characters,
     download_file_by_stream,
     download_img,
     merge_av,
 )
-from ..config import NEED_UPLOAD, NICKNAME, DURATION_MAXIMUM, rconfig, plugin_cache_dir
-from ..cookie import cookies_str_to_dict
-
-# bilibili-api 相关
-credential: Credential | None = (
-    Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck))
-    if rconfig.r_bili_ck
-    else None
-)
-# 选择客户端
-select_client("curl_cffi")
-# 模仿浏览器
-# request_settings.set("impersonate", "chrome131")
+from ..config import NEED_UPLOAD, NICKNAME, DURATION_MAXIMUM, plugin_cache_dir
 
 bilibili = on_message(
     rule=is_not_in_disabled_groups
@@ -94,113 +76,64 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
     if not video_id:
         # 动态
         if "t.bilibili.com" in url or "/opus" in url:
-            if match := re.search(r"/(\d+)", url):
-                dynamic_id = int(match.group(1))
-            else:
-                logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
+            matched = re.search(r"/(\d+)", url)
+            if not matched:
+                logger.warning(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
                 return
-            opus = Opus(dynamic_id, credential)
-            dynamic_info = await opus.get_info()
-            if not isinstance(dynamic_info, dict):
-                raise ValueError("获取动态信息失败")
-            title = dynamic_info["item"]["basic"]["title"]
-            await bilibili.send(f"{share_prefix}{title}")
-
-            paragraphs = []
-            for module in dynamic_info["item"]["modules"]:
-                if "module_content" in module:
-                    paragraphs = module["module_content"]["paragraphs"]
-                    break
-            segs = []
-            for node in paragraphs[0]["text"]["nodes"]:
-                text_type = node.get("type")
-                if text_type == "TEXT_NODE_TYPE_RICH":
-                    segs.append(node["rich"]["text"])
-                elif text_type == "TEXT_NODE_TYPE_WORD":
-                    segs.append(node["word"]["words"])
-            if len(paragraphs) > 1 and (pic := paragraphs[1].get("pic")):
-                if pics := pic.get("pics"):
-                    segs += [MessageSegment.image(pic["url"]) for pic in pics]
-
+            opus_id = int(matched.group(1))
+            img_lst, text = await parse_opus(opus_id)
+            segs: list[MessageSegment | str] = [text]
+            for img in img_lst:
+                try:
+                    img_path = await download_img(img)
+                except Exception:
+                    continue
+                segs.append(MessageSegment.image(img_path))
             await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
         elif "/live" in url:
             # https://live.bilibili.com/30528999?hotRank=0
-            if match := re.search(r"/(\d+)", url):
-                room_id = match.group(1)
-            else:
+            matched = re.search(r"/(\d+)", url)
+            if not matched:
                 logger.info(f"链接 {url} 无效 - 没有获取到直播间 id, 忽略")
                 return
-            room = live.LiveRoom(room_display_id=int(room_id))
-            room_info = (await room.get_room_info())["room_info"]
-            title, cover, keyframe = (
-                room_info["title"],
-                room_info["cover"],
-                room_info["keyframe"],
-            )
-            res = f"{share_prefix}直播 内容获取失败"
-            if title:
-                res = f"{share_prefix}直播 - {title}"
-                res += MessageSegment.image(cover) if cover else ""
-                res += MessageSegment.image(keyframe) if keyframe else ""
+            room_id = int(matched.group(1))
+            title, cover, keyframe = await parse_live(room_id)
+            if not title:
+                await bilibili.finish(f"{share_prefix}直播 - 未找到直播间信息")
+            res = f"{share_prefix}直播 - {title}"
+            res += MessageSegment.image(cover) if cover else ""
+            res += MessageSegment.image(keyframe) if keyframe else ""
             await bilibili.finish(res)
         # 专栏解析
         elif "/read" in url:
-            if match := re.search(r"read/cv(\d+)", url):
-                read_id: str = match.group(1)
-            else:
-                logger.info(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
+            matched = re.search(r"read/cv(\d+)", url)
+            if not matched:
+                logger.warning(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
                 return
-            ar = article.Article(int(read_id))
-            await bilibili.send(f"{share_prefix}专栏")
-
-            # 加载内容
-            await ar.fetch_content()
-            data = ar.json()
+            read_id = int(matched.group(1))
+            img_or_text_lst = await parse_read(read_id)
             segs: list[MessageSegment | str] = []
-
-            def accumulate_text(node: dict):
-                text = ""
-                if "children" in node:
-                    for child in node["children"]:
-                        text += accumulate_text(child) + " "
-                if _text := node.get("text"):
-                    text += (
-                        _text if isinstance(_text, str) else str(_text) + node["url"]
-                    )
-                return text
-
-            for node in data.get("children", []):
-                node_type = node.get("type")
-                if node_type == "ImageNode":
-                    if img_url := node.get("url", "").strip():
-                        if img_url.startswith("https:https"):
-                            img_url = img_url.replace("https:", "", 1)
-                        try:
-                            img_path = await download_img(img_url)
-                        except Exception as e:
-                            logger.warning(f"下载图片失败: img_url: {img_url} err: {e}")
-                            continue
-                        segs.append(MessageSegment.image(img_path))
-                elif node_type == "ParagraphNode":
-                    if text := accumulate_text(node).strip():
-                        segs.append(text)
-                elif node_type == "TextNode":
-                    segs.append(node.get("text"))
-
+            for it in img_or_text_lst:
+                if it.startswith("http"):
+                    try:
+                        img_path = await download_img(it)
+                    except Exception:
+                        continue
+                    segs.append(MessageSegment.image(img_path))
+                else:
+                    segs.append(it)
             if segs:
                 await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 收藏夹解析
         elif "/favlist" in url:
             # https://space.bilibili.com/22990202/favlist?fid=2344812202
-            if match := re.search(r"favlist\?fid=(\d+)", url):
-                fav_id = match.group(1)
-            else:
-                logger.info(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
+            matched = re.search(r"favlist\?fid=(\d+)", url)
+            if not matched:
+                logger.warning(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
                 return
-            fav_list = (await get_video_favorite_list_content(int(fav_id)))["medias"][
-                :50
-            ]
+            fav_id = int(matched.group(1))
+            fav_list = (await get_video_favorite_list_content(fav_id))["medias"][:50]
             favs = []
             for fav in fav_list:
                 title, cover, intro, link = (
@@ -224,9 +157,9 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
 
     # 视频
     if keyword in ("av", "/av"):
-        v = video.Video(aid=int(video_id), credential=credential)
+        v = video.Video(aid=int(video_id), credential=CREDENTIAL)
     else:
-        v = video.Video(bvid=video_id, credential=credential)
+        v = video.Video(bvid=video_id, credential=CREDENTIAL)
     # 合并转发消息 list
     segs: list[MessageSegment | str] = []
     try:
@@ -267,7 +200,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
         f"{video_title}\n{extra_bili_info(video_info)}\n📝 简介：{video_desc}\n{online_str}"
     )
     # 这里是总结内容，如果写了 cookie 就可以
-    if credential:
+    if CREDENTIAL:
         ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
         ai_summary = (
             ai_conclusion.get("model_result", {"summary": ""})
@@ -326,7 +259,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     )
     bvid, p_num = match.group(1), match.group(2)
     p_num = int(p_num) - 1 if p_num else 0
-    v = video.Video(bvid=bvid, credential=credential)
+    v = video.Video(bvid=bvid, credential=CREDENTIAL)
     try:
         video_info: dict = await v.get_info()
         video_title: str = video_info.get("title", "")

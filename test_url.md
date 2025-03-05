@@ -6,6 +6,8 @@ kugou:
 
 bilibili:
 - https://www.bilibili.com/opus/998440765151510535
+- https://www.bilibili.com/opus/1040093151889457152
+- https://www.bilibili.com/read/cv523868
 - https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
 - https://live.bilibili.com/23585383
 - https://b23.tv/YTg9oSw
@@ -15,6 +17,7 @@ bilibili:
 - https://bilibili.com/BV1uCzoYEEir
 - BV1uCzoYEEir
 - av113706574811958
+
 
 分p视频支持，未指定集数默认第一集
 - BV1584y167sD 40
