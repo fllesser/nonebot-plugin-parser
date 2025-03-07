@@ -1,5 +1,5 @@
 import pytest
-from nonebot.log import logger
+from loguru import logger
 
 #   bilibili:
 # - https://b23.tv/YTg9oSw

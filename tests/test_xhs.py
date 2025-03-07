@@ -14,11 +14,8 @@ async def test_xiaohongshu():
         "https://www.xiaohongshu.com/discovery/item/67c41945000000002802b2e2?source=webshare&xhsshare=pc_web&xsec_token=ABS6rGbAmdjNtTuLqfAB2aR0oDioMqDezM4Hx5EeDFGSI=&xsec_source=pc_share",
     ]
     for url in urls:
-        try:
-            logger.info(f"开始解析小红书: {url}")
-            title_desc, img_urls, video_url = await parse_url(url)
-            logger.debug(f"title_desc: {title_desc}")
-            logger.debug(f"img_urls: {img_urls}")
-            logger.debug(f"video_url: {video_url}")
-        except Exception:
-            continue
+        logger.info(f"开始解析小红书: {url}")
+        title_desc, img_urls, video_url = await parse_url(url)
+        logger.debug(f"title_desc: {title_desc}")
+        logger.debug(f"img_urls: {img_urls}")
+        logger.debug(f"video_url: {video_url}")

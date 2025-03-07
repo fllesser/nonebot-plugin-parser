@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      LOG_LEVEL: INFO
     strategy:
       matrix:
         python-version:
@@ -30,12 +32,12 @@ jobs:
 
     - name: Run Bilibili Tests
       run: |
-        python -m pytest -v -s tests/test_bilibili.py --log-level=INFO
+        python -m pytest -v -s tests/test_bilibili.py
 
     - name: Run Douyin Tests
       run: |
-        python -m pytest -v -s tests/test_douyin.py --log-level=INFO
+        python -m pytest -v -s tests/test_douyin.py
     
     - name: Run Xiaohongshu Tests
       run: |
-        python -m pytest -v -s tests/test_xhs.py --log-level=INFO
+        python -m pytest -v -s tests/test_xhs.py
