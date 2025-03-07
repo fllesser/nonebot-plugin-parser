@@ -1,7 +1,9 @@
+import re
 from bilibili_api import Credential, select_client
 from bilibili_api.opus import Opus
 from bilibili_api.live import LiveRoom
 from bilibili_api.article import Article
+from bilibili_api.favorite_list import get_video_favorite_list_content
 from ..config import rconfig
 from ..cookie import cookies_str_to_dict
 
@@ -49,7 +51,7 @@ async def parse_opus(opus_id: int) -> tuple[list[str], str]:
         .get("rich_text_nodes", [{}])[0]
         .get("orig_text", "")
     )
-    return (urls, orig_text)
+    return urls, orig_text
 
 
 async def parse_live(room_id: int) -> tuple[str, str, str]:
@@ -60,10 +62,10 @@ async def parse_live(room_id: int) -> tuple[str, str, str]:
         room_info["cover"],
         room_info["keyframe"],
     )
-    return (f"直播 - {title}", cover, keyframe)
+    return (title, cover, keyframe)
 
 
-async def parse_read(read_id: int) -> list[str]:
+async def parse_read(read_id: int) -> tuple[list[str], list[str]]:
     """专栏解析
 
     Args:
@@ -87,27 +89,45 @@ async def parse_read(read_id: int) -> list[str]:
             text += _text if isinstance(_text, str) else str(_text) + node["url"]
         return text
 
-    text_or_url_lst: list[str] = []
+    urls: list[str] = []
+    texts: list[str] = []
     for node in data.get("children", []):
         node_type = node.get("type")
         if node_type == "ImageNode":
             if img_url := node.get("url", "").strip():
-                text_or_url_lst.append(img_url)
+                urls.append(img_url)
+                # 补空串占位符
+                texts.append("")
         elif node_type == "ParagraphNode":
             if text := accumulate_text(node).strip():
-                text_or_url_lst.append(text)
+                texts.append(text)
         elif node_type == "TextNode":
             if text := node.get("text", "").strip():
-                text_or_url_lst.append(text)
-    return text_or_url_lst
+                texts.append(text)
+    return texts, urls
+
+
+async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
+    fav_list = (await get_video_favorite_list_content(fav_id))["medias"][:50]
+    texts = []
+    urls = []
+    for fav in fav_list:
+        title, cover, intro, link = (
+            fav["title"],
+            fav["cover"],
+            fav["intro"],
+            fav["link"],
+        )
+        matched = re.search(r"\d+", link)
+        if not matched:
+            continue
+        avid = matched.group(0) if matched else ""
+        urls.append(cover)
+        texts.append(
+            f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}"
+        )
+    return texts, urls
 
 
 async def parse_video(bvid: str | None = None, avid: int | None = None):
     raise NotImplementedError
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    res = asyncio.run(parse_read(523868))
-    print(res)

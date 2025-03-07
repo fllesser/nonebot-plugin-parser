@@ -1,6 +1,5 @@
 import re
 import json
-import asyncio
 import aiohttp
 
 from nonebot.log import logger
@@ -13,7 +12,7 @@ from .utils import get_video_seg, construct_nodes
 from .preprocess import r_keywords, ExtractText
 
 from ..constant import COMMON_HEADER
-from ..download.common import download_img
+from ..download.common import download_imgs_without_raise
 from ..config import rconfig, NICKNAME
 
 # 小红书下载链接
@@ -78,12 +77,9 @@ async def _(bot: Bot, text: str = ExtractText()):
     title_msg = f"{share_prefix}{note_title}\n{note_desc}"
 
     if type == "normal":
-        aio_task = []
         image_list = note_data["imageList"]
-        # 批量
-        for index, item in enumerate(image_list):
-            aio_task.append(asyncio.create_task(download_img(item["urlDefault"])))
-        img_path_list = await asyncio.gather(*aio_task)
+        urls = [item["urlDefault"] for item in image_list]
+        img_path_list = await download_imgs_without_raise(urls)
         # 发送图片
         segs = [title_msg] + [
             MessageSegment.image(img_path) for img_path in img_path_list

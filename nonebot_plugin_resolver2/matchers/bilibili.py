@@ -12,15 +12,20 @@ from bilibili_api import (
     HEADERS,
 )
 from bilibili_api.video import VideoDownloadURLDataDetecter
-from bilibili_api.favorite_list import get_video_favorite_list_content
 from .utils import construct_nodes, get_video_seg, get_file_seg
 from .filter import is_not_in_disabled_groups
 from .preprocess import r_keywords, ExtractText, Keyword
-from ..parsers.bilibili import parse_live, parse_opus, parse_read, CREDENTIAL
+from ..parsers.bilibili import (
+    parse_live,
+    parse_opus,
+    parse_read,
+    parse_favlist,
+    CREDENTIAL,
+)
 from ..download.common import (
     delete_boring_characters,
     download_file_by_stream,
-    download_img,
+    download_imgs_without_raise,
     merge_av,
 )
 from ..config import NEED_UPLOAD, NICKNAME, DURATION_MAXIMUM, plugin_cache_dir
@@ -83,14 +88,11 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
                 return
             opus_id = int(matched.group(1))
             img_lst, text = await parse_opus(opus_id)
+            await bilibili.send(f"{share_prefix}动态")
             segs: list[MessageSegment | str] = [text]
-            # Concurrent download of all images
-            download_tasks = [download_img(img) for img in img_lst]
-            img_paths = await asyncio.gather(*download_tasks, return_exceptions=True)
-            # Add successful downloads to segs
-            for img_path in img_paths:
-                if isinstance(img_path, Path):
-                    segs.append(MessageSegment.image(img_path))
+            if img_lst:
+                paths: list[Path] = await download_imgs_without_raise(img_lst)
+                segs.extend(MessageSegment.image(path) for path in paths)
             await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
         elif "/live" in url:
@@ -103,7 +105,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             title, cover, keyframe = await parse_live(room_id)
             if not title:
                 await bilibili.finish(f"{share_prefix}直播 - 未找到直播间信息")
-            res = f"{share_prefix}直播 - {title}"
+            res = f"{share_prefix}直播 {title}"
             res += MessageSegment.image(cover) if cover else ""
             res += MessageSegment.image(keyframe) if keyframe else ""
             await bilibili.finish(res)
@@ -114,17 +116,18 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
                 logger.warning(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
                 return
             read_id = int(matched.group(1))
-            img_or_text_lst = await parse_read(read_id)
+            texts, urls = await parse_read(read_id)
+            await bilibili.send(f"{share_prefix}专栏")
+            # 并发下载
+            paths: list[Path] = await download_imgs_without_raise(urls)
+            # 反转路径列表，pop 时，则为原始顺序，提高性能
+            paths.reverse()
             segs: list[MessageSegment | str] = []
-            for it in img_or_text_lst:
-                if it.startswith("http"):
-                    try:
-                        img_path = await download_img(it)
-                    except Exception:
-                        continue
-                    segs.append(MessageSegment.image(img_path))
+            for text in texts:
+                if text:
+                    segs.append(text)
                 else:
-                    segs.append(it)
+                    segs.append(MessageSegment.image(paths.pop()))
             if segs:
                 await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 收藏夹解析
@@ -135,24 +138,15 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
                 logger.warning(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
                 return
             fav_id = int(matched.group(1))
-            fav_list = (await get_video_favorite_list_content(fav_id))["medias"][:50]
-            favs = []
-            for fav in fav_list:
-                title, cover, intro, link = (
-                    fav["title"],
-                    fav["cover"],
-                    fav["intro"],
-                    fav["link"],
-                )
-                match = re.search(r"\d+", link)
-                avid = match.group(0) if match else ""
-
-                favs.append(
-                    MessageSegment.image(cover)
-                    + f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}"
-                )
+            # 获取收藏夹内容，并下载封面
+            texts, urls = await parse_favlist(fav_id)
             await bilibili.send(f"{share_prefix}收藏夹\n正在为你找出相关链接请稍等...")
-            await bilibili.finish(construct_nodes(bot.self_id, favs))
+            paths: list[Path] = await download_imgs_without_raise(urls)
+            segs: list[MessageSegment | str] = []
+            # 组合 text 和 image
+            for path, text in zip(paths, texts):
+                segs.append(MessageSegment.image(path) + text)
+            await bilibili.finish(construct_nodes(bot.self_id, segs))
         else:
             logger.warning(f"不支持的链接: {url}")
             return

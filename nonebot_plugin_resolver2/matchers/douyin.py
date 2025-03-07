@@ -8,7 +8,7 @@ from nonebot.adapters.onebot.v11 import Bot, MessageSegment, MessageEvent
 from .utils import get_video_seg, construct_nodes
 from .filter import is_not_in_disabled_groups
 
-from ..download.common import download_img
+from ..download.common import download_imgs_without_raise
 from ..parsers.base import VideoInfo
 from ..parsers.douyin import DouYin
 from ..config import NICKNAME
@@ -42,34 +42,20 @@ async def _(bot: Bot, event: MessageEvent):
     if video_info.images or video_info.dynamic_images:
         segs = []
         if video_info.images:
-            img_tasks = [
-                asyncio.create_task(download_img(url)) for url in video_info.images
-            ]
-            # 使用 return_exceptions=True 忽略单个任务错误
-            img_results = await asyncio.gather(*img_tasks, return_exceptions=True)
-            img_path_list = [
-                img_path
-                for img_path in img_results
-                if not isinstance(img_path, Exception)
-            ]
-            segs.extend(
-                [
-                    MessageSegment.image(item)
-                    for item in img_path_list
-                    if isinstance(item, Path)
-                ]
-            )
+            paths: list[Path] = await download_imgs_without_raise(video_info.images)
+            segs = [MessageSegment.image(path) for path in paths]
         if video_info.dynamic_images:
             video_tasks = [
                 asyncio.create_task(get_video_seg(url=url))
                 for url in video_info.dynamic_images
             ]
             video_results = await asyncio.gather(*video_tasks, return_exceptions=True)
-            video_seg_list = [
+            video_seg_lst = [
                 seg for seg in video_results if isinstance(seg, MessageSegment)
             ]
-            segs.extend(video_seg_list)
-        await douyin.finish(construct_nodes(bot.self_id, segs))
+            segs = video_seg_lst
+        if segs:
+            await douyin.finish(construct_nodes(bot.self_id, segs))
 
     if video_url := video_info.video_url:
         await douyin.finish(await get_video_seg(url=video_url))
