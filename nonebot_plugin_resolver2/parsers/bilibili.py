@@ -62,7 +62,7 @@ async def parse_live(room_id: int) -> tuple[str, str, str]:
         room_info["cover"],
         room_info["keyframe"],
     )
-    return (f"直播 - {title}", cover, keyframe)
+    return (title, cover, keyframe)
 
 
 async def parse_read(read_id: int) -> tuple[list[str], list[str]]:

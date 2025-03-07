@@ -17,8 +17,38 @@ async def test_douyin_common_video():
     ]
     for url in common_urls:
         video_info = await parser.parse_share_url(url)
-        logger.info(video_info)
-        assert video_info.video_url is not None
+        logger.info(f"title: {video_info.title}")
+        assert video_info.title
+        logger.info(f"author: {video_info.author}")
+        assert video_info.author
+        logger.info(f"cover_url: {video_info.cover_url}")
+        assert video_info.cover_url
+        logger.info(f"video_url: {video_info.video_url}")
+        assert video_info.video_url
+
+
+async def test_douyin_old_video():
+    """
+    老视频，网页打开会重定向到 m.ixigua.com
+    https://v.douyin.com/iUrHrruH
+    """
+    from nonebot_plugin_resolver2.parsers.douyin import DouYin
+
+    parser = DouYin()
+
+    old_video_urls = [
+        "https://v.douyin.com/iUrHrruH",
+    ]
+    for url in old_video_urls:
+        video_info = await parser.parse_share_url(url)
+        logger.info(f"title: {video_info.title}")
+        assert video_info.title
+        logger.info(f"author: {video_info.author}")
+        assert video_info.author
+        logger.info(f"cover_url: {video_info.cover_url}")
+        assert video_info.cover_url
+        logger.info(f"video_url: {video_info.video_url}")
+        assert video_info.video_url
 
 
 async def test_douyin_note():
@@ -37,12 +67,37 @@ async def test_douyin_note():
     ]
     for url in note_urls:
         video_info = await parser.parse_share_url(url)
-        logger.info(video_info)
-        assert video_info.video_url is not None
+        logger.info(f"title: {video_info.title}")
+        assert video_info.title
+        logger.info(f"author: {video_info.author}")
+        assert video_info.author
+        logger.info(f"cover_url: {video_info.cover_url}")
+        assert video_info.cover_url
+        logger.info(f"images: {video_info.images}")
+        assert video_info.images
 
 
-# - 老视频，网页打开会重定向到 m.ixigua.com
-#   - https://v.douyin.com/iUrHrruH
-# - 含视频的图集
-#   - https://v.douyin.com/CeiJfqyWs # 将会解析出视频
-#   - https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
+async def test_douyin_slides():
+    """
+    含视频的图集
+    https://v.douyin.com/CeiJfqyWs # 将会解析出视频
+    https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
+    """
+    from nonebot_plugin_resolver2.parsers.douyin import DouYin
+
+    parser = DouYin()
+
+    dynamic_image_url = "https://v.douyin.com/CeiJfqyWs"
+    static_image_url = "https://www.douyin.com/note/7450744229229235491"
+
+    video_info = await parser.parse_share_url(dynamic_image_url)
+    logger.info(f"title: {video_info.title}")
+    assert video_info.title
+    logger.info(f"dynamic_images: {video_info.dynamic_images}")
+    assert video_info.dynamic_images
+
+    video_info = await parser.parse_share_url(static_image_url)
+    logger.info(f"title: {video_info.title}")
+    assert video_info.title
+    logger.info(f"images: {video_info.images}")
+    assert video_info.images

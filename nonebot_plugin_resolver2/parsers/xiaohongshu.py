@@ -27,10 +27,10 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
                 url = resp.headers.get("Location", "")
     # ?: 非捕获组
     pattern = r"(?:/explore/|/discovery/item/|source=note&noteId=)(\w+)"
-    if match := re.search(pattern, url):
-        xhs_id = match.group(1)
-    else:
-        return
+    matched = re.search(pattern, url)
+    if not matched:
+        raise Exception("没有符合的小红书 URL")
+    xhs_id = matched.group(1)
     # 解析 URL 参数
     parsed_url = urlparse(url)
     params = parse_qs(parsed_url.query)

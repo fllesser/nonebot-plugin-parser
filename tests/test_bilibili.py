@@ -18,8 +18,8 @@ async def test_bilibili_live():
     room_id = 23585383
     title, cover, _ = await parse_live(room_id)
     logger.info(title)
+    assert title
     logger.info(cover)
-    assert title.startswith("直播")
     assert cover.startswith("https://i0.hdslb.com/")
 
 
@@ -30,8 +30,8 @@ async def test_bilibili_read():
     read_id = 523868
     texts, urls = await parse_read(read_id)
     logger.info(texts)
-    logger.info(urls)
     assert texts
+    logger.info(urls)
     assert urls
 
 
@@ -44,8 +44,8 @@ async def test_bilibili_opus():
     for opus_id in opus_ids:
         urls, orig_text = await parse_opus(opus_id)
         logger.info(urls)
-        logger.info(orig_text)
         assert urls
+        logger.info(orig_text)
         assert orig_text
 
 
@@ -57,6 +57,6 @@ async def test_bilibili_favlist():
     fav_id = 311147541
     texts, urls = await parse_favlist(fav_id)
     logger.info(texts)
-    logger.info(urls)
     assert texts
+    logger.info(urls)
     assert urls

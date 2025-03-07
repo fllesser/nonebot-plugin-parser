@@ -105,7 +105,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             title, cover, keyframe = await parse_live(room_id)
             if not title:
                 await bilibili.finish(f"{share_prefix}直播 - 未找到直播间信息")
-            res = f"{share_prefix}直播 - {title}"
+            res = f"{share_prefix}直播 {title}"
             res += MessageSegment.image(cover) if cover else ""
             res += MessageSegment.image(keyframe) if keyframe else ""
             await bilibili.finish(res)
@@ -146,7 +146,6 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             # 组合 text 和 image
             for path, text in zip(paths, texts):
                 segs.append(MessageSegment.image(path) + text)
-            await bilibili.send(f"{share_prefix}收藏夹")
             await bilibili.finish(construct_nodes(bot.self_id, segs))
         else:
             logger.warning(f"不支持的链接: {url}")

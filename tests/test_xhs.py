@@ -1,3 +1,6 @@
+from nonebot.log import logger
+
+
 async def test_xiaohongshu():
     """
     xiaohongshu:
@@ -13,8 +16,8 @@ async def test_xiaohongshu():
     for url in urls:
         try:
             title_desc, urls, video_url = await parse_url(url)
-            print(title_desc)
-            print(urls)
-            print(video_url)
+            logger.debug(f"title_desc: {title_desc}")
+            logger.debug(f"urls: {urls}")
+            logger.debug(f"video_url: {video_url}")
         except Exception:
             continue
