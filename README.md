@@ -5,7 +5,7 @@
 
 <div align="center">
 
-# ✨ NoneBot2 链接分享自动解析插件 ✨
+# ✨ 链接分享自动解析 ✨
 
 <a href="./LICENSE">
     <img src="https://img.shields.io/github/license/fllesser/nonebot-plugin-resolver2.svg" alt="license">
