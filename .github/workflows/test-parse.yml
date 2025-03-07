@@ -1,4 +1,4 @@
-name: pytest
+name: Test Parse Share Url
 
 on:
   push:
@@ -17,19 +17,25 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     
     - name: Install uv and set the python version
       uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install Dependences 
+      run: | 
+        uv sync --all-groups
+
     - name: Run Bilibili Tests
       run: |
-        uv sync --all-groups
         python -m pytest -v -s tests/test_bilibili.py --log-level=DEBUG
 
     - name: Run Douyin Tests
       run: |
-        uv sync --all-groups
         python -m pytest -v -s tests/test_douyin.py --log-level=DEBUG
+    
+    - name: Run Xiaohongshu Tests
+      run: |
+        python -m pytest -v -s tests/test_xhs.py --log-level=DEBUG
