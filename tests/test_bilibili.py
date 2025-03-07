@@ -1,14 +1,5 @@
 import pytest
-from loguru import logger
-
-#   bilibili:
-# - https://b23.tv/YTg9oSw
-# - https://bili2233.cn/rnrwIyU
-# - https://www.bilibili.com/video/BV1VLk9YDEzB
-# - https://bilibili.com/av1234567
-# - https://bilibili.com/BV1uCzoYEEir
-# - BV1uCzoYEEir
-# - av113706574811958
+from nonebot.log import logger
 
 
 async def test_bilibili_live():

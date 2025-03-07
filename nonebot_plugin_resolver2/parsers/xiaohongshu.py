@@ -1,7 +1,6 @@
 import re
 import json
 import aiohttp
-from nonebot.log import logger
 from urllib.parse import urlparse, parse_qs
 
 from ..constant import COMMON_HEADER
@@ -45,7 +44,7 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
             headers=headers,
         ) as resp:
             html = await resp.text()
-    # print(html)
+
     pattern = r"window.__INITIAL_STATE__=(.*?)</script>"
     matched = re.search(pattern, html)
     if not matched:
@@ -55,7 +54,6 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
     json_str = json_str.replace("undefined", "null")
     json_obj = json.loads(json_str)
 
-    logger.debug(f"{json_obj}")
     note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
     # 资源类型 normal 图，video 视频
     resource_type = note_data["type"]
