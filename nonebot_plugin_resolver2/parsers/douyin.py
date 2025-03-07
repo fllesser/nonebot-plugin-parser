@@ -46,7 +46,9 @@ class DouYin(BaseParser):
     # @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, url: str) -> VideoInfo:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.default_headers) as response:
+            async with session.get(
+                url, headers=self.default_headers, ssl=False
+            ) as response:
                 response.raise_for_status()
                 text = await response.text()
                 data = self.format_response(text)
@@ -143,7 +145,9 @@ class DouYin(BaseParser):
             "Accept": "application/json, text/plain, */*",
         }
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params, headers=headers) as resp:
+            async with session.get(
+                url, params=params, headers=headers, ssl=False
+            ) as resp:
                 resp.raise_for_status()
                 resp = await resp.json()
         detail = resp.get("aweme_details")

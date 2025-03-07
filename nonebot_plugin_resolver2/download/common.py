@@ -135,6 +135,21 @@ async def download_img(
     return await download_file_by_stream(url, img_name, proxy, ext_headers)
 
 
+async def download_imgs_without_raise(urls: list[str]) -> list[Path]:
+    """download images without raise
+
+    Args:
+        urls (list[str]): urls
+
+    Returns:
+        list[Path]: image file paths
+    """
+    paths_or_errs = await asyncio.gather(
+        *[download_img(url) for url in urls], return_exceptions=True
+    )
+    return [p for p in paths_or_errs if isinstance(p, Path)]
+
+
 async def merge_av(v_path: Path, a_path: Path, output_path: Path):
     """helper function to merge video and audio
 

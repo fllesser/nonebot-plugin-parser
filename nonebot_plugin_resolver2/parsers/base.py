@@ -68,9 +68,14 @@ class BaseParser(ABC):
         pass
 
     async def get_redirect_url(self, url: str) -> str:
+        """
+        获取重定向后的URL
+        :param url: 原始URL
+        :return: 重定向后的URL
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                url, headers=self.default_headers, allow_redirects=False
+                url, headers=self.default_headers, allow_redirects=False, ssl=False
             ) as response:
                 response.raise_for_status()
                 return response.headers.get("Location", url)
