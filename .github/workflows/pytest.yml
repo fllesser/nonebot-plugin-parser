@@ -1,4 +1,4 @@
-name: Test Load
+name: pytest
 
 on:
   push:
@@ -24,17 +24,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-
-    - name: Run Nonebot
-      run: |
-        uv venv
-        source .venv/bin/activate
-        uv sync --group dev
-        export ENVIRONMENT=dev
-        set -e
-        python -c "import nonebot; nonebot.init(); nonebot.load_from_toml('pyproject.toml');"
-
-    - name: Run Tests
+    - name: Run Bilibili Tests
       run: |
         uv sync --all-groups
-        python -m pytest -v -s --log-level=DEBUG
+        python -m pytest -v -s tests/test_bilibili.py --log-level=DEBUG
+
+    - name: Run Douyin Tests
+      run: |
+        uv sync --all-groups
+        python -m pytest -v -s tests/test_douyin.py --log-level=DEBUG
