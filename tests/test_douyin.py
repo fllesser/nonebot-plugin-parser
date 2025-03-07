@@ -7,6 +7,9 @@ async def test_douyin_common_video():
     https://v.douyin.com/iDHWnyTP
     https://www.douyin.com/video/7440422807663660328
     """
+    logger.info(
+        "尝试解析抖音普通视频, https://v.douyin.com/iDHWnyTP, https://www.douyin.com/video/7440422807663660328"
+    )
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()
@@ -32,6 +35,7 @@ async def test_douyin_old_video():
     老视频，网页打开会重定向到 m.ixigua.com
     https://v.douyin.com/iUrHrruH
     """
+    logger.info("尝试解析抖音老视频(西瓜视频), https://v.douyin.com/iUrHrruH")
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()
@@ -57,6 +61,9 @@ async def test_douyin_note():
     https://www.douyin.com/note/7469411074119322899
     https://v.douyin.com/iP6Uu1Kh
     """
+    logger.info(
+        "尝试解析抖音图文, https://www.douyin.com/note/7469411074119322899, https://v.douyin.com/iP6Uu1Kh"
+    )
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()
@@ -83,6 +90,9 @@ async def test_douyin_slides():
     https://v.douyin.com/CeiJfqyWs # 将会解析出视频
     https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
     """
+    logger.info(
+        "尝试解析抖音含视频的图集, https://v.douyin.com/CeiJfqyWs, https://www.douyin.com/note/7450744229229235491"
+    )
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()

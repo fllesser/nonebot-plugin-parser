@@ -12,6 +12,7 @@ from nonebot.log import logger
 
 
 async def test_bilibili_live():
+    logger.info("尝试解析B站直播, https://live.bilibili.com/23585383")
     from nonebot_plugin_resolver2.parsers.bilibili import parse_live
 
     # https://live.bilibili.com/23585383
@@ -24,6 +25,7 @@ async def test_bilibili_live():
 
 
 async def test_bilibili_read():
+    logger.info("尝试解析B站图文, https://www.bilibili.com/read/cv523868")
     from nonebot_plugin_resolver2.parsers.bilibili import parse_read
 
     # https://www.bilibili.com/read/cv523868
@@ -36,6 +38,9 @@ async def test_bilibili_read():
 
 
 async def test_bilibili_opus():
+    logger.info(
+        "尝试解析B站合集, https://www.bilibili.com/opus/998440765151510535, https://www.bilibili.com/opus/1040093151889457152"
+    )
     from nonebot_plugin_resolver2.parsers.bilibili import parse_opus
 
     # - https://www.bilibili.com/opus/998440765151510535
@@ -51,6 +56,9 @@ async def test_bilibili_opus():
 
 @pytest.mark.asyncio
 async def test_bilibili_favlist():
+    logger.info(
+        "尝试解析B站收藏夹, https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create"
+    )
     from nonebot_plugin_resolver2.parsers.bilibili import parse_favlist
 
     # https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
