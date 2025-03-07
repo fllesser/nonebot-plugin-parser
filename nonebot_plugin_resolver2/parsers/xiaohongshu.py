@@ -64,9 +64,11 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
     # 描述
     note_desc = note_data["desc"]
     title_desc = f"{note_title}\n{note_desc}"
+    img_urls: list[str] = []
+    video_url: str = ""
     if resource_type == "normal":
         image_list = note_data["imageList"]
-        urls = [item["urlDefault"] for item in image_list]
+        img_urls = [item["urlDefault"] for item in image_list]
     elif resource_type == "video":
         video_url = note_data["video"]["media"]["stream"]["h264"][0]["masterUrl"]
-    return title_desc, urls, video_url
+    return title_desc, img_urls, video_url

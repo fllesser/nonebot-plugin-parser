@@ -54,8 +54,8 @@ douyin:
   - https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
 
 xiaohongshu:
-- https://xhslink.com/a/zGL52ubtpJ20
-- https://www.xiaohongshu.com/discovery/item/6469c95c0000000012031f3c?source=webshare&xhsshare=pc_web&xsec_token=ABkMJSd3a0BPMgj5BMkZcggIq1FxU8vYNcNW_-MhfDyq0=&xsec_source=pc_share
+- http://xhslink.com/a/WHdZNpdzwbl7
+- https://www.xiaohongshu.com/discovery/item/67c41945000000002802b2e2?source=webshare&xhsshare=pc_web&xsec_token=ABS6rGbAmdjNtTuLqfAB2aR0oDioMqDezM4Hx5EeDFGSI=&xsec_source=pc_share
 
 weibo:
 - https://weibo.com/7207262816/P5kWdcfDe

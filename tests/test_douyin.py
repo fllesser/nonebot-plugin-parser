@@ -7,9 +7,6 @@ async def test_douyin_common_video():
     https://v.douyin.com/iDHWnyTP
     https://www.douyin.com/video/7440422807663660328
     """
-    logger.info(
-        "尝试解析抖音普通视频, https://v.douyin.com/iDHWnyTP, https://www.douyin.com/video/7440422807663660328"
-    )
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()
@@ -19,14 +16,15 @@ async def test_douyin_common_video():
         "https://www.douyin.com/video/7440422807663660328",
     ]
     for url in common_urls:
+        logger.info(f"开始解析抖音视频 {url}")
         video_info = await parser.parse_share_url(url)
-        logger.info(f"title: {video_info.title}")
+        logger.debug(f"title: {video_info.title}")
         assert video_info.title
-        logger.info(f"author: {video_info.author}")
+        logger.debug(f"author: {video_info.author}")
         assert video_info.author
-        logger.info(f"cover_url: {video_info.cover_url}")
+        logger.debug(f"cover_url: {video_info.cover_url}")
         assert video_info.cover_url
-        logger.info(f"video_url: {video_info.video_url}")
+        logger.debug(f"video_url: {video_info.video_url}")
         assert video_info.video_url
 
 
@@ -40,19 +38,17 @@ async def test_douyin_old_video():
 
     parser = DouYin()
 
-    old_video_urls = [
-        "https://v.douyin.com/iUrHrruH",
-    ]
-    for url in old_video_urls:
-        video_info = await parser.parse_share_url(url)
-        logger.info(f"title: {video_info.title}")
-        assert video_info.title
-        logger.info(f"author: {video_info.author}")
-        assert video_info.author
-        logger.info(f"cover_url: {video_info.cover_url}")
-        assert video_info.cover_url
-        logger.info(f"video_url: {video_info.video_url}")
-        assert video_info.video_url
+    url = "https://v.douyin.com/iUrHrruH"
+    logger.info(f"开始解析抖音西瓜视频 {url}")
+    video_info = await parser.parse_share_url(url)
+    logger.debug(f"title: {video_info.title}")
+    assert video_info.title
+    logger.debug(f"author: {video_info.author}")
+    assert video_info.author
+    logger.debug(f"cover_url: {video_info.cover_url}")
+    assert video_info.cover_url
+    logger.debug(f"video_url: {video_info.video_url}")
+    assert video_info.video_url
 
 
 async def test_douyin_note():
@@ -61,9 +57,6 @@ async def test_douyin_note():
     https://www.douyin.com/note/7469411074119322899
     https://v.douyin.com/iP6Uu1Kh
     """
-    logger.info(
-        "尝试解析抖音图文, https://www.douyin.com/note/7469411074119322899, https://v.douyin.com/iP6Uu1Kh"
-    )
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()
@@ -73,14 +66,15 @@ async def test_douyin_note():
         "https://v.douyin.com/iP6Uu1Kh",
     ]
     for url in note_urls:
+        logger.info(f"开始解析抖音图文 {url}")
         video_info = await parser.parse_share_url(url)
-        logger.info(f"title: {video_info.title}")
+        logger.debug(f"title: {video_info.title}")
         assert video_info.title
-        logger.info(f"author: {video_info.author}")
+        logger.debug(f"author: {video_info.author}")
         assert video_info.author
-        logger.info(f"cover_url: {video_info.cover_url}")
+        logger.debug(f"cover_url: {video_info.cover_url}")
         assert video_info.cover_url
-        logger.info(f"images: {video_info.images}")
+        logger.debug(f"images: {video_info.images}")
         assert video_info.images
 
 
@@ -90,9 +84,6 @@ async def test_douyin_slides():
     https://v.douyin.com/CeiJfqyWs # 将会解析出视频
     https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
     """
-    logger.info(
-        "尝试解析抖音含视频的图集, https://v.douyin.com/CeiJfqyWs, https://www.douyin.com/note/7450744229229235491"
-    )
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()
@@ -100,14 +91,16 @@ async def test_douyin_slides():
     dynamic_image_url = "https://v.douyin.com/CeiJfqyWs"
     static_image_url = "https://www.douyin.com/note/7450744229229235491"
 
+    logger.info(f"开始解析抖音图集(含视频解析出视频) {dynamic_image_url}")
     video_info = await parser.parse_share_url(dynamic_image_url)
-    logger.info(f"title: {video_info.title}")
+    logger.debug(f"title: {video_info.title}")
     assert video_info.title
-    logger.info(f"dynamic_images: {video_info.dynamic_images}")
+    logger.debug(f"dynamic_images: {video_info.dynamic_images}")
     assert video_info.dynamic_images
 
+    logger.info(f"开始解析抖音图集(含视频解析出静态图片) {static_image_url}")
     video_info = await parser.parse_share_url(static_image_url)
-    logger.info(f"title: {video_info.title}")
+    logger.debug(f"title: {video_info.title}")
     assert video_info.title
-    logger.info(f"images: {video_info.images}")
+    logger.debug(f"images: {video_info.images}")
     assert video_info.images

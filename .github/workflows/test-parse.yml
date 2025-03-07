@@ -30,12 +30,12 @@ jobs:
 
     - name: Run Bilibili Tests
       run: |
-        python -m pytest -v -s tests/test_bilibili.py --log-level=DEBUG
+        python -m pytest -v -s tests/test_bilibili.py --log-level=INFO
 
     - name: Run Douyin Tests
       run: |
-        python -m pytest -v -s tests/test_douyin.py --log-level=DEBUG
+        python -m pytest -v -s tests/test_douyin.py --log-level=INFO
     
     - name: Run Xiaohongshu Tests
       run: |
-        python -m pytest -v -s tests/test_xhs.py --log-level=DEBUG
+        python -m pytest -v -s tests/test_xhs.py --log-level=INFO
