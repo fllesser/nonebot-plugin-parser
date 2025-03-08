@@ -13,6 +13,7 @@ async def test_bilibili_live():
     assert title
     logger.debug(cover)
     assert cover.startswith("https://i0.hdslb.com/")
+    logger.success("B站直播解析成功")
 
 
 async def test_bilibili_read():
@@ -26,6 +27,7 @@ async def test_bilibili_read():
     assert texts
     logger.debug(urls)
     assert urls
+    logger.success("B站图文解析成功")
 
 
 async def test_bilibili_opus():
@@ -43,6 +45,7 @@ async def test_bilibili_opus():
         assert urls
         logger.debug(orig_text)
         assert orig_text
+    logger.success("B站动态解析成功")
 
 
 @pytest.mark.asyncio
@@ -59,3 +62,4 @@ async def test_bilibili_favlist():
     assert texts
     logger.debug(urls)
     assert urls
+    logger.success("B站收藏夹解析成功")

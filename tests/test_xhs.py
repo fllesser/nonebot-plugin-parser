@@ -19,3 +19,4 @@ async def test_xiaohongshu():
         logger.debug(f"title_desc: {title_desc}")
         logger.debug(f"img_urls: {img_urls}")
         logger.debug(f"video_url: {video_url}")
+        logger.success(f"小红书解析成功 {url}")

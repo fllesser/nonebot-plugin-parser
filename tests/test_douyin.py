@@ -26,6 +26,7 @@ async def test_douyin_common_video():
         assert video_info.cover_url
         logger.debug(f"video_url: {video_info.video_url}")
         assert video_info.video_url
+        logger.success(f"抖音视频解析成功 {url}")
 
 
 async def test_douyin_old_video():
@@ -49,6 +50,7 @@ async def test_douyin_old_video():
     assert video_info.cover_url
     logger.debug(f"video_url: {video_info.video_url}")
     assert video_info.video_url
+    logger.success(f"抖音西瓜视频解析成功 {url}")
 
 
 async def test_douyin_note():
@@ -76,6 +78,7 @@ async def test_douyin_note():
         assert video_info.cover_url
         logger.debug(f"images: {video_info.images}")
         assert video_info.images
+        logger.success(f"抖音图文解析成功 {url}")
 
 
 async def test_douyin_slides():
@@ -97,10 +100,11 @@ async def test_douyin_slides():
     assert video_info.title
     logger.debug(f"dynamic_images: {video_info.dynamic_images}")
     assert video_info.dynamic_images
-
+    logger.success(f"抖音图集(含视频解析出视频)解析成功 {dynamic_image_url}")
     logger.info(f"开始解析抖音图集(含视频解析出静态图片) {static_image_url}")
     video_info = await parser.parse_share_url(static_image_url)
     logger.debug(f"title: {video_info.title}")
     assert video_info.title
     logger.debug(f"images: {video_info.images}")
     assert video_info.images
+    logger.success(f"抖音图集(含视频解析出静态图片)解析成功 {static_image_url}")
