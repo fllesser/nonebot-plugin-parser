@@ -32,8 +32,8 @@ async def _(bot: Bot, text: str = ExtractText()):
     except Exception as e:
         logger.error(f"解析小红书失败: {e}")
         await xiaohongshu.finish(f"{NICKNAME}解析 | 小红书 - 笔记不存在或 cookie 过期")
-    await xiaohongshu.send(f"{NICKNAME}解析 | 小红书")
     if img_urls:
+        await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 图文")
         img_path_list = await download_imgs_without_raise(img_urls)
         # 发送图片
         segs = [title_desc] + [
@@ -42,4 +42,5 @@ async def _(bot: Bot, text: str = ExtractText()):
         nodes = construct_nodes(bot.self_id, segs)
         await xiaohongshu.finish(nodes)
     elif video_url:
+        await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 视频 - {title_desc}")
         await xiaohongshu.finish(await get_video_seg(url=video_url))

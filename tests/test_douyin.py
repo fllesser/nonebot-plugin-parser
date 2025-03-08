@@ -34,7 +34,6 @@ async def test_douyin_old_video():
     老视频，网页打开会重定向到 m.ixigua.com
     https://v.douyin.com/iUrHrruH
     """
-    logger.info("尝试解析抖音老视频(西瓜视频), https://v.douyin.com/iUrHrruH")
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()
@@ -101,6 +100,7 @@ async def test_douyin_slides():
     logger.debug(f"dynamic_images: {video_info.dynamic_images}")
     assert video_info.dynamic_images
     logger.success(f"抖音图集(含视频解析出视频)解析成功 {dynamic_image_url}")
+
     logger.info(f"开始解析抖音图集(含视频解析出静态图片) {static_image_url}")
     video_info = await parser.parse_share_url(static_image_url)
     logger.debug(f"title: {video_info.title}")
