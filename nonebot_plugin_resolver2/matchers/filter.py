@@ -1,20 +1,20 @@
 import json
 
-from nonebot.rule import to_me
-from nonebot.matcher import Matcher
-from nonebot.plugin import on_command
-from nonebot.permission import SUPERUSER
 from nonebot.adapters.onebot.v11 import (
-    Bot,
-    MessageEvent,
-    GroupMessageEvent,
-    PrivateMessageEvent,
     GROUP_ADMIN,
     GROUP_OWNER,
+    Bot,
+    GroupMessageEvent,
+    MessageEvent,
+    PrivateMessageEvent,
 )
+from nonebot.matcher import Matcher
+from nonebot.permission import SUPERUSER
+from nonebot.plugin import on_command
+from nonebot.rule import to_me
 
-from ..config import store
-from ..constant import DISABLE_GROUPS
+from nonebot_plugin_resolver2.config import store
+from nonebot_plugin_resolver2.constant import DISABLE_GROUPS
 
 
 def load_or_initialize_set() -> set[int]:
@@ -36,11 +36,7 @@ disabled_group_set: set[int] = load_or_initialize_set()
 
 # Rule
 def is_not_in_disabled_groups(event: MessageEvent) -> bool:
-    return (
-        True
-        if not isinstance(event, GroupMessageEvent)
-        else event.group_id not in disabled_group_set
-    )
+    return True if not isinstance(event, GroupMessageEvent) else event.group_id not in disabled_group_set
 
 
 @on_command("开启所有解析", permission=SUPERUSER, block=True).handle()
@@ -119,11 +115,10 @@ async def _(matcher: Matcher, bot: Bot, event: MessageEvent):
     :return:
     """
     disable_groups = [
-        str(item) + "--" + (await bot.get_group_info(group_id=item))["group_name"]
-        for item in disabled_group_set
+        str(item) + "--" + (await bot.get_group_info(group_id=item))["group_name"] for item in disabled_group_set
     ]
     disable_groups = "\n".join(disable_groups)
     if isinstance(event, GroupMessageEvent):
         await matcher.send("已经发送到私信了~")
-    message = f"解析关闭的群聊如下：\n{disable_groups} \n🌟 温馨提示：如果想开关解析需要在群聊@我然后输入[开启/关闭解析], 另外还可以私信我发送[开启/关闭所有解析]"
+    message = f"解析关闭的群聊如下：\n{disable_groups} \n🌟 温馨提示：如果想开关解析需要在群聊@我然后输入[开启/关闭解析], 另外还可以私信我发送[开启/关闭所有解析]"  # noqa: E501
     await bot.send_private_msg(user_id=event.user_id, message=message)

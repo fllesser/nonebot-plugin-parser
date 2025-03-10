@@ -1,16 +1,16 @@
 import re
+
 from bilibili_api import Credential, select_client
-from bilibili_api.opus import Opus
-from bilibili_api.live import LiveRoom
 from bilibili_api.article import Article
 from bilibili_api.favorite_list import get_video_favorite_list_content
-from ..config import rconfig
-from ..cookie import cookies_str_to_dict
+from bilibili_api.live import LiveRoom
+from bilibili_api.opus import Opus
+
+from nonebot_plugin_resolver2.config import rconfig
+from nonebot_plugin_resolver2.cookie import cookies_str_to_dict
 
 CREDENTIAL: Credential | None = (
-    Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck))
-    if rconfig.r_bili_ck
-    else None
+    Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck)) if rconfig.r_bili_ck else None
 )
 
 # 选择客户端
@@ -123,9 +123,7 @@ async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
             continue
         avid = matched.group(0) if matched else ""
         urls.append(cover)
-        texts.append(
-            f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}"
-        )
+        texts.append(f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}")
     return texts, urls
 
 

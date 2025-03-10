@@ -1,5 +1,6 @@
-import re
 import json
+import re
+
 import aiohttp
 from nonebot.log import logger
 
@@ -46,9 +47,7 @@ class DouYin(BaseParser):
     # @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, url: str) -> VideoInfo:
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, headers=self.default_headers, ssl=False
-            ) as response:
+            async with session.get(url, headers=self.default_headers, ssl=False) as response:
                 response.raise_for_status()
                 text = await response.text()
                 data = self.format_response(text)
@@ -115,13 +114,9 @@ class DouYin(BaseParser):
         # 返回的json数据中，视频字典类型为 note_(id)/page
         NOTE_ID_PAGE_KEY = "note_(id)/page"
         if VIDEO_ID_PAGE_KEY in json_data["loaderData"]:
-            original_video_info = json_data["loaderData"][VIDEO_ID_PAGE_KEY][
-                "videoInfoRes"
-            ]
+            original_video_info = json_data["loaderData"][VIDEO_ID_PAGE_KEY]["videoInfoRes"]
         elif NOTE_ID_PAGE_KEY in json_data["loaderData"]:
-            original_video_info = json_data["loaderData"][NOTE_ID_PAGE_KEY][
-                "videoInfoRes"
-            ]
+            original_video_info = json_data["loaderData"][NOTE_ID_PAGE_KEY]["videoInfoRes"]
         else:
             raise Exception("failed to parse Videos or Photo Gallery info from json")
 
@@ -141,13 +136,11 @@ class DouYin(BaseParser):
             "request_source": "200",
         }
         headers = {
-            "User-Agent": "Mozilla/5.0 (Linux; Android 10; VOG-AL00 Build/HUAWEIVOG-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; VOG-AL00 Build/HUAWEIVOG-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",  # noqa: E501
             "Accept": "application/json, text/plain, */*",
         }
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, params=params, headers=headers, ssl=False
-            ) as resp:
+            async with session.get(url, params=params, headers=headers, ssl=False) as resp:
                 resp.raise_for_status()
                 resp = await resp.json()
         detail = resp.get("aweme_details")

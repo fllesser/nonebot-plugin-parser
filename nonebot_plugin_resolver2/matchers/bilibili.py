@@ -1,38 +1,33 @@
+import asyncio
 from pathlib import Path
 import re
-import aiohttp
-import asyncio
 
-from nonebot.log import logger
-from nonebot.params import CommandArg
-from nonebot.plugin.on import on_message, on_command
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
+import aiohttp
 from bilibili_api import (
-    video,
     HEADERS,
+    video,
 )
 from bilibili_api.video import VideoDownloadURLDataDetecter
-from .utils import construct_nodes, get_video_seg, get_file_seg
-from .filter import is_not_in_disabled_groups
-from .preprocess import r_keywords, ExtractText, Keyword
-from ..parsers.bilibili import (
-    parse_live,
-    parse_opus,
-    parse_read,
-    parse_favlist,
-    CREDENTIAL,
-)
-from ..download.common import (
+from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
+from nonebot.log import logger
+from nonebot.params import CommandArg
+from nonebot.plugin.on import on_command, on_message
+
+from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
+from nonebot_plugin_resolver2.download.common import (
     delete_boring_characters,
     download_file_by_stream,
     download_imgs_without_raise,
     merge_av,
 )
-from ..config import NEED_UPLOAD, NICKNAME, DURATION_MAXIMUM, plugin_cache_dir
+from nonebot_plugin_resolver2.parsers.bilibili import CREDENTIAL, parse_favlist, parse_live, parse_opus, parse_read
+
+from .filter import is_not_in_disabled_groups
+from .preprocess import ExtractText, Keyword, r_keywords
+from .utils import construct_nodes, get_file_seg, get_video_seg
 
 bilibili = on_message(
-    rule=is_not_in_disabled_groups
-    & r_keywords("bilibili", "bili2233", "b23", "BV", "av"),
+    rule=is_not_in_disabled_groups & r_keywords("bilibili", "bili2233", "b23", "BV", "av"),
     priority=5,
 )
 
@@ -45,9 +40,7 @@ patterns: dict[str, re.Pattern] = {
     "/av": re.compile(r"/av(\d{6,})()"),
     "b23": re.compile(r"https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()"),
     "bili2233": re.compile(r"https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()()"),
-    "bilibili": re.compile(
-        r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"
-    ),
+    "bilibili": re.compile(r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"),
 }
 
 
@@ -64,9 +57,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
     if keyword in ("b23", "bili2233"):
         b23url = url
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                b23url, headers=HEADERS, allow_redirects=False
-            ) as resp:
+            async with session.get(b23url, headers=HEADERS, allow_redirects=False) as resp:
                 url = resp.headers.get("Location", b23url)
         if url == b23url:
             logger.info(f"链接 {url} 无效，忽略")
@@ -78,6 +69,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             keyword = id_type
             video_id = match.group(1)
 
+    segs: list[Message | MessageSegment | str] = []
     # 如果不是视频
     if not video_id:
         # 动态
@@ -89,9 +81,9 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             opus_id = int(matched.group(1))
             img_lst, text = await parse_opus(opus_id)
             await bilibili.send(f"{share_prefix}动态")
-            segs: list[MessageSegment | str] = [text]
+            segs = [text]
             if img_lst:
-                paths: list[Path] = await download_imgs_without_raise(img_lst)
+                paths = await download_imgs_without_raise(img_lst)
                 segs.extend(MessageSegment.image(path) for path in paths)
             await bilibili.finish(construct_nodes(bot.self_id, segs))
         # 直播间解析
@@ -119,10 +111,10 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             texts, urls = await parse_read(read_id)
             await bilibili.send(f"{share_prefix}专栏")
             # 并发下载
-            paths: list[Path] = await download_imgs_without_raise(urls)
+            paths = await download_imgs_without_raise(urls)
             # 反转路径列表，pop 时，则为原始顺序，提高性能
             paths.reverse()
-            segs: list[MessageSegment | str] = []
+            segs = []
             for text in texts:
                 if text:
                     segs.append(text)
@@ -142,7 +134,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             texts, urls = await parse_favlist(fav_id)
             await bilibili.send(f"{share_prefix}收藏夹\n正在为你找出相关链接请稍等...")
             paths: list[Path] = await download_imgs_without_raise(urls)
-            segs: list[MessageSegment | str] = []
+            segs = []
             # 组合 text 和 image
             for path, text in zip(paths, texts):
                 segs.append(MessageSegment.image(path) + text)
@@ -157,7 +149,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
     else:
         v = video.Video(bvid=video_id, credential=CREDENTIAL)
     # 合并转发消息 list
-    segs: list[MessageSegment | str] = []
+    segs = []
     try:
         video_info = await v.get_info()
     except Exception as e:
@@ -188,21 +180,13 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
     # 删除特殊字符
     # video_title = delete_boring_characters(video_title)
     online = await v.get_online()
-    online_str = (
-        f"🏄‍♂️ 总共 {online['total']} 人在观看，{online['count']} 人在网页端观看"
-    )
+    online_str = f"🏄‍♂️ 总共 {online['total']} 人在观看，{online['count']} 人在网页端观看"
     segs.append(MessageSegment.image(video_cover))
-    segs.append(
-        f"{video_title}\n{extra_bili_info(video_info)}\n📝 简介：{video_desc}\n{online_str}"
-    )
+    segs.append(f"{video_title}\n{extra_bili_info(video_info)}\n📝 简介：{video_desc}\n{online_str}")
     # 这里是总结内容，如果写了 cookie 就可以
     if CREDENTIAL:
         ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
-        ai_summary = (
-            ai_conclusion.get("model_result", {"summary": ""})
-            .get("summary", "")
-            .strip()
-        )
+        ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "").strip()
         ai_summary = f"AI总结: {ai_summary}" if ai_summary else "该视频暂不支持AI总结"
         segs.append(ai_summary)
     if video_duration > DURATION_MAXIMUM:
@@ -230,12 +214,8 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
 
             # 下载视频和音频
             v_path, a_path = await asyncio.gather(
-                download_file_by_stream(
-                    video_url, f"{prefix}-video.m4s", ext_headers=HEADERS
-                ),
-                download_file_by_stream(
-                    audio_url, f"{prefix}-audio.m4s", ext_headers=HEADERS
-                ),
+                download_file_by_stream(video_url, f"{prefix}-video.m4s", ext_headers=HEADERS),
+                download_file_by_stream(audio_url, f"{prefix}-audio.m4s", ext_headers=HEADERS),
             )
             await merge_av(v_path, a_path, video_path)
     except Exception:
@@ -250,9 +230,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     match = re.match(r"^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?$", text)
     if not match:
         await bili_music.finish("命令格式: bm BV1LpD3YsETa [集数](中括号表示可选)")
-    await bot.call_api(
-        "set_msg_emoji_like", message_id=event.message_id, emoji_id="282"
-    )
+    await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     bvid, p_num = match.group(1), match.group(2)
     p_num = int(p_num) - 1 if p_num else 0
     v = video.Video(bvid=bvid, credential=CREDENTIAL)

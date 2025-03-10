@@ -1,15 +1,15 @@
 from pathlib import Path
+
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
-from ..constant import VIDEO_MAX_MB
-from ..download.common import download_video
-from ..config import NICKNAME
+
+from nonebot_plugin_resolver2.config import NICKNAME
+from nonebot_plugin_resolver2.constant import VIDEO_MAX_MB
+from nonebot_plugin_resolver2.download.common import download_video
 
 
 def construct_nodes(user_id, segments: MessageSegment | list) -> Message:
     def node(content):
-        return MessageSegment.node_custom(
-            user_id=user_id, nickname=NICKNAME, content=content
-        )
+        return MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=content)
 
     segments = segments if isinstance(segments, list) else [segments]
     return Message([node(seg) for seg in segments])

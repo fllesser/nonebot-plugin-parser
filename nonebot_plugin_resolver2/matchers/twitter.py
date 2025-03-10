@@ -1,18 +1,17 @@
 import re
-import aiohttp
-
 from typing import Any
-from nonebot.rule import Rule
-from nonebot.plugin.on import on_keyword
+
+import aiohttp
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
+from nonebot.plugin.on import on_keyword
+from nonebot.rule import Rule
+
+from nonebot_plugin_resolver2.config import NICKNAME, PROXY
+from nonebot_plugin_resolver2.constant import COMMON_HEADER
+from nonebot_plugin_resolver2.download.common import download_img
 
 from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg
-
-from ..constant import COMMON_HEADER
-
-from ..download.common import download_img
-from ..config import PROXY, NICKNAME
 
 twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -21,9 +20,7 @@ twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 async def _(event: MessageEvent):
     msg: str = event.message.extract_plain_text().strip()
 
-    if match := re.search(
-        r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]*)", msg
-    ):
+    if match := re.search(r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]*)", msg):
         x_url = match.group(0)
     else:
         return

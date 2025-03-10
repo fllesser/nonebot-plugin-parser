@@ -1,4 +1,5 @@
 import re
+
 import aiohttp
 
 from .base import BaseParser, VideoAuthor, VideoInfo
@@ -18,9 +19,7 @@ class KuGou(BaseParser):
 
         title = match.group(1).replace("_", " ")
 
-        api_url = (
-            f"https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={title}&n=1&type=json"
-        )
+        api_url = f"https://www.hhlqilongzhu.cn/api/dg_kugouSQ.php?msg={title}&n=1&type=json"
         async with aiohttp.ClientSession() as session:
             async with session.get(api_url, headers=self.default_headers) as response:
                 response.raise_for_status()

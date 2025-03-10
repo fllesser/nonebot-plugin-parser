@@ -1,6 +1,5 @@
 from http import cookiejar
 from pathlib import Path
-from typing import Dict
 
 
 def save_cookies_to_netscape(cookies_str: str, file: Path, domain: str):
@@ -36,7 +35,7 @@ def save_cookies_to_netscape(cookies_str: str, file: Path, domain: str):
     cj.save(ignore_discard=True, ignore_expires=True)
 
 
-def cookies_str_to_dict(cookies_str: str) -> Dict[str, str]:
+def cookies_str_to_dict(cookies_str: str) -> dict[str, str]:
     res = {}
     for cookie in cookies_str.split(";"):
         name, value = cookie.strip().split("=", 1)

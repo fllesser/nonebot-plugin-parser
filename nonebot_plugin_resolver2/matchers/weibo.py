@@ -1,27 +1,25 @@
-import re
-import math
-import aiohttp
 import asyncio
+import math
+import re
 
-from nonebot.rule import Rule
+import aiohttp
+from nonebot.adapters.onebot.v11 import Bot, MessageEvent, MessageSegment
 from nonebot.plugin.on import on_keyword
-from nonebot.adapters.onebot.v11 import MessageEvent, Bot, MessageSegment
+from nonebot.rule import Rule
+
+from nonebot_plugin_resolver2.config import NICKNAME
+from nonebot_plugin_resolver2.constant import COMMON_HEADER
+from nonebot_plugin_resolver2.download.common import download_img, download_video
+from nonebot_plugin_resolver2.parsers.weibo import WeiBo
 
 from .filter import is_not_in_disabled_groups
 from .utils import construct_nodes, get_video_seg
-
-from ..download.common import download_img, download_video
-from ..parsers.weibo import WeiBo
-from ..constant import COMMON_HEADER
-from ..config import NICKNAME
 
 # WEIBO_SINGLE_INFO
 WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
 weibo_parser = WeiBo()
 
-weibo = on_keyword(
-    keywords={"weibo.com", "m.weibo.cn"}, rule=Rule(is_not_in_disabled_groups)
-)
+weibo = on_keyword(keywords={"weibo.com", "m.weibo.cn"}, rule=Rule(is_not_in_disabled_groups))
 
 
 @weibo.handle()
@@ -56,17 +54,11 @@ async def _(bot: Bot, event: MessageEvent):
 
     # 请求数据
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-            WEIBO_SINGLE_INFO.format(weibo_id), headers=headers
-        ) as resp:
+        async with session.get(WEIBO_SINGLE_INFO.format(weibo_id), headers=headers) as resp:
             if resp.status != 200:
-                await weibo.finish(
-                    f"{share_prefix}获取数据失败 {resp.status} {resp.reason}"
-                )
+                await weibo.finish(f"{share_prefix}获取数据失败 {resp.status} {resp.reason}")
             if "application/json" not in resp.headers.get("content-type", ""):
-                await weibo.finish(
-                    f"{share_prefix}获取数据失败 content-type is not application/json"
-                )
+                await weibo.finish(f"{share_prefix}获取数据失败 content-type is not application/json")
             resp = await resp.json()
 
     weibo_data = resp["data"]
@@ -86,31 +78,25 @@ async def _(bot: Bot, event: MessageEvent):
         f"{share_prefix}{re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}"
     )
     if pics:
-        pics = map(lambda x: x["large"]["url"], pics)
+        pics = (x["large"]["url"] for x in pics)
         download_img_funcs = [
-            asyncio.create_task(
-                download_img(
-                    url=item, ext_headers={"Referer": "http://blog.sina.com.cn/"}
-                )
-            )
+            asyncio.create_task(download_img(url=item, ext_headers={"Referer": "http://blog.sina.com.cn/"}))
             for item in pics
         ]
         image_paths = await asyncio.gather(*download_img_funcs)
         # 发送图片
-        nodes = construct_nodes(
-            bot.self_id, [MessageSegment.image(img_path) for img_path in image_paths]
-        )
+        nodes = construct_nodes(bot.self_id, [MessageSegment.image(img_path) for img_path in image_paths])
         # 发送异步后的数据
         await weibo.finish(nodes)
 
     if page_info:
-        video_url: str = page_info.get("urls", {"mp4_720p_mp4": ""}).get(
-            "mp4_720p_mp4", ""
-        ) or page_info.get("urls", {"mp4_hd_mp4", ""}).get("mp4_hd_mp4", "")
+        video_url: str = page_info.get("urls", {"mp4_720p_mp4": ""}).get("mp4_720p_mp4", "") or page_info.get(
+            "urls", {"mp4_hd_mp4", ""}
+        ).get("mp4_hd_mp4", "")
         if not video_url:
             return
         ext_headers = {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
             "referer": "https://weibo.com/",
         }
         video_path = await download_video(

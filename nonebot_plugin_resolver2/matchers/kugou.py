@@ -1,15 +1,16 @@
 import re
 
+from nonebot.adapters.onebot.v11 import MessageSegment
 from nonebot.log import logger
 from nonebot.plugin.on import on_message
-from nonebot.adapters.onebot.v11 import MessageSegment
-from .utils import get_file_seg
-from .filter import is_not_in_disabled_groups
-from .preprocess import r_keywords, ExtractText
-from ..parsers.kugou import KuGou
-from ..download.common import delete_boring_characters, download_audio
-from ..config import NICKNAME, NEED_UPLOAD
 
+from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME
+from nonebot_plugin_resolver2.download.common import delete_boring_characters, download_audio
+from nonebot_plugin_resolver2.parsers.kugou import KuGou
+
+from .filter import is_not_in_disabled_groups
+from .preprocess import ExtractText, r_keywords
+from .utils import get_file_seg
 
 kugou = on_message(rule=is_not_in_disabled_groups & r_keywords("kugou.com"))
 kugou_parser = KuGou()
@@ -34,10 +35,7 @@ async def _(text: str = ExtractText()):
 
     title_author_name = f"{video_info.title} - {video_info.author.name}"
 
-    await kugou.send(
-        f"{share_prefix}{title_author_name}"
-        + MessageSegment.image(video_info.cover_url)
-    )
+    await kugou.send(f"{share_prefix}{title_author_name}" + MessageSegment.image(video_info.cover_url))
 
     filename = f"{delete_boring_characters(title_author_name)}.flac"
     try:

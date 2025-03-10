@@ -1,10 +1,11 @@
-import re
 import json
-import aiohttp
-from urllib.parse import urlparse, parse_qs
+import re
+from urllib.parse import parse_qs, urlparse
 
-from ..constant import COMMON_HEADER
-from ..config import rconfig
+import aiohttp
+
+from nonebot_plugin_resolver2.config import rconfig
+from nonebot_plugin_resolver2.constant import COMMON_HEADER
 
 # 小红书下载链接
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"
@@ -35,9 +36,7 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
     params = parse_qs(parsed_url.query)
     # 提取 xsec_source 和 xsec_token
     xsec_source = params.get("xsec_source", [None])[0] or "pc_feed"
-    print(xsec_source)
     xsec_token = params.get("xsec_token", [None])[0]
-    print(xsec_token)
     async with aiohttp.ClientSession() as session:
         async with session.get(
             f"{XHS_REQ_LINK}{xhs_id}?xsec_source={xsec_source}&xsec_token={xsec_token}",

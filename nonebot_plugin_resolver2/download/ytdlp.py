@@ -1,10 +1,12 @@
 import asyncio
-import yt_dlp
-
 from pathlib import Path
 from typing import Any
+
+import yt_dlp
+
+from nonebot_plugin_resolver2.config import PROXY, plugin_cache_dir, scheduler
+
 from .common import delete_boring_characters
-from ..config import plugin_cache_dir, scheduler, PROXY
 
 # 缓存链接信息
 url_info: dict[str, dict[str, str]] = {}
