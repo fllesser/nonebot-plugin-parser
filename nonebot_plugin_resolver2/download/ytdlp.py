@@ -6,7 +6,7 @@ import yt_dlp
 
 from nonebot_plugin_resolver2.config import PROXY, plugin_cache_dir, scheduler
 
-from .common import delete_boring_characters
+from .utils import delete_boring_characters
 
 # 缓存链接信息
 url_info: dict[str, dict[str, str]] = {}

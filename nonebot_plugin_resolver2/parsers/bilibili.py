@@ -125,7 +125,3 @@ async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
         urls.append(cover)
         texts.append(f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}")
     return texts, urls
-
-
-async def parse_video(bvid: str | None = None, avid: int | None = None):
-    raise NotImplementedError

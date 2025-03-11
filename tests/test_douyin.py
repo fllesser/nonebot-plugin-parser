@@ -7,6 +7,7 @@ async def test_douyin_common_video():
     https://v.douyin.com/iDHWnyTP
     https://www.douyin.com/video/7440422807663660328
     """
+    from nonebot_plugin_resolver2.download.common import download_video, re_encode_video
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()
@@ -27,6 +28,12 @@ async def test_douyin_common_video():
         logger.debug(f"video_url: {video_info.video_url}")
         assert video_info.video_url
         logger.success(f"抖音视频解析成功 {url}")
+        video_path = await download_video(video_info.video_url)
+        logger.success(f"video_path: {video_path}")
+        output_path = await re_encode_video(video_path)
+        # 需要打印文件大小, 单位 MB
+        assert output_path
+        logger.success(f"抖音视频解析成功 {url}")
 
 
 async def test_douyin_old_video():
@@ -34,6 +41,7 @@ async def test_douyin_old_video():
     老视频，网页打开会重定向到 m.ixigua.com
     https://v.douyin.com/iUrHrruH
     """
+
     from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
     parser = DouYin()

@@ -9,17 +9,19 @@ from bilibili_api import (
 )
 from bilibili_api.video import VideoDownloadURLDataDetecter
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11.exception import ActionFailed
 from nonebot.log import logger
 from nonebot.params import CommandArg
 from nonebot.plugin.on import on_command, on_message
 
 from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
 from nonebot_plugin_resolver2.download.common import (
-    delete_boring_characters,
     download_file_by_stream,
     download_imgs_without_raise,
     merge_av,
+    re_encode_video,
 )
+from nonebot_plugin_resolver2.download.utils import delete_boring_characters
 from nonebot_plugin_resolver2.parsers.bilibili import CREDENTIAL, parse_favlist, parse_live, parse_opus, parse_read
 
 from .filter import is_not_in_disabled_groups
@@ -217,11 +219,21 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
                 download_file_by_stream(video_url, f"{prefix}-video.m4s", ext_headers=HEADERS),
                 download_file_by_stream(audio_url, f"{prefix}-audio.m4s", ext_headers=HEADERS),
             )
+
             await merge_av(v_path, a_path, video_path)
     except Exception:
         await bilibili.send("视频下载失败, 请联系机器人管理员", reply_message=True)
         raise
-    await bilibili.send(await get_video_seg(video_path))
+    try:
+        await bilibili.send(await get_video_seg(video_path))
+    except ActionFailed as e:
+        message: str = e.info.get("message", "")
+        # 无缩略图
+        if message.endswith(".png'"):
+            # 重新编码为 h264
+            logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
+            h264_path = await re_encode_video(video_path)
+            await bilibili.send(await get_video_seg(h264_path))
 
 
 @bili_music.handle()

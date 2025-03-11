@@ -1,8 +1,7 @@
 import asyncio
-from collections import deque
+import hashlib
 from pathlib import Path
-import re
-import time
+from urllib.parse import urlparse
 
 import aiofiles
 import aiohttp
@@ -11,6 +10,8 @@ from tqdm.asyncio import tqdm
 
 from nonebot_plugin_resolver2.config import plugin_cache_dir
 from nonebot_plugin_resolver2.constant import COMMON_HEADER
+
+from .utils import exec_ffmpeg_cmd, safe_unlink
 
 
 async def download_file_by_stream(
@@ -32,7 +33,7 @@ async def download_file_by_stream(
     """
     # file_name = file_name if file_name is not None else parse_url_resource_name(url)
     if not file_name:
-        file_name = generate_file_name(url, "file")
+        file_name = generate_file_name(url)
     file_path = plugin_cache_dir / file_name
     if file_path.exists():
         return file_path
@@ -56,7 +57,7 @@ async def download_file_by_stream(
                     # 设置前缀信息
                     bar.set_description(file_name)
                     async with aiofiles.open(file_path, "wb") as f:
-                        async for chunk in resp.content.iter_chunked(1024):
+                        async for chunk in resp.content.iter_chunked(1024 * 1024):
                             await f.write(chunk)
                             bar.update(len(chunk))
         except (aiohttp.ClientError, asyncio.TimeoutError) as e:
@@ -84,7 +85,7 @@ async def download_video(
         Path: video file path
     """
     if video_name is None:
-        video_name = generate_file_name(url, "video")
+        video_name = generate_file_name(url, ".mp4")
     return await download_file_by_stream(url, video_name, proxy, ext_headers)
 
 
@@ -106,7 +107,7 @@ async def download_audio(
         Path: audio file path
     """
     if audio_name is None:
-        audio_name = generate_file_name(url, "audio")
+        audio_name = generate_file_name(url, ".mp3")
     return await download_file_by_stream(url, audio_name, proxy, ext_headers)
 
 
@@ -128,7 +129,7 @@ async def download_img(
         Path: image file path
     """
     if img_name is None:
-        img_name = generate_file_name(url, "image")
+        img_name = generate_file_name(url, ".jpg")
     return await download_file_by_stream(url, img_name, proxy, ext_headers)
 
 
@@ -149,7 +150,7 @@ async def merge_av(v_path: Path, a_path: Path, output_path: Path) -> None:
     logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
 
     # 显式指定流映射
-    command = [
+    cmd = [
         "ffmpeg",
         "-y",
         "-i",
@@ -165,63 +166,71 @@ async def merge_av(v_path: Path, a_path: Path, output_path: Path) -> None:
         str(output_path),
     ]
 
-    try:
-        process = await asyncio.create_subprocess_exec(
-            *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        _, stderr = await process.communicate()
-        return_code = process.returncode
-    except FileNotFoundError:
-        raise RuntimeError("ffmpeg 未安装或无法找到可执行文件")
-
-    if return_code != 0:
-        error_msg = stderr.decode().strip()
-        raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
-
-    # 安全删除文件
-    async def safe_unlink(path: Path):
-        try:
-            await asyncio.to_thread(path.unlink, missing_ok=True)
-        except Exception as e:
-            logger.error(f"删除 {path} 失败: {e}")
-
+    await exec_ffmpeg_cmd(cmd)
     await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
 
 
-# A deque to store the URL to file name mapping
-url_file_mapping: deque[tuple[str, str]] = deque(maxlen=20)
+async def merge_av_h264(v_path: Path, a_path: Path, output_path: Path) -> None:
+    logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
+
+    # 修改命令以确保视频使用 H.264 编码
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(v_path),
+        "-i",
+        str(a_path),
+        "-c:v",
+        "libx264",  # 明确指定使用 H.264 编码
+        "-preset",
+        "medium",  # 编码速度和质量的平衡
+        "-crf",
+        "23",  # 质量因子，值越低质量越高
+        "-c:a",
+        "aac",  # 音频使用 AAC 编码
+        "-b:a",
+        "128k",  # 音频比特率
+        "-map",
+        "0:v:0",
+        "-map",
+        "1:a:0",
+        str(output_path),
+    ]
+
+    await exec_ffmpeg_cmd(cmd)
+    await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
 
 
-def generate_file_name(url: str, type: str) -> str:
-    if file_name := next(
-        (f for u, f in url_file_mapping if u == url),
-        None,
-    ):
-        return file_name
-    suffix = ""
-    match type:
-        case "audio":
-            suffix = ".mp3"
-        case "image":
-            suffix = ".jpg"
-        case "video":
-            suffix = ".mp4"
-        case _:
-            if match := re.search(r"(\.[a-zA-Z0-9]+)\?", url):
-                suffix = match.group(1) if match else ""
-    file_name = f"{type}_{int(time.time())}_{hash(url)}{suffix}"
-    url_file_mapping.append((url, file_name))
+# 将视频重新编码到 h264
+async def re_encode_video(video_path: Path) -> Path:
+    output_path = video_path.with_name(f"{video_path.stem}_h264{video_path.suffix}")
+    if output_path.exists():
+        return output_path
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(video_path),
+        "-c:v",
+        "libx264",
+        "-preset",
+        "medium",
+        "-crf",
+        "23",
+        str(output_path),
+    ]
+    await exec_ffmpeg_cmd(cmd)
+    logger.success(f"视频重新编码为 H.264 成功: {output_path}, 大小: {output_path.stat().st_size / 1024 / 1024:.2f}MB")
+    await asyncio.gather(safe_unlink(video_path))
+    return output_path
+
+
+def generate_file_name(url: str, suffix: str | None = None) -> str:
+    # 根据 url 获取文件后缀
+    path = Path(urlparse(url).path)
+    suffix = path.suffix if path.suffix else suffix
+    # 获取 url 的 md5 值
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
+    file_name = f"{url_hash}{suffix}"
     return file_name
-
-
-def delete_boring_characters(sentence: str) -> str:
-    """
-    去除标题的特殊字符
-    :param sentence:
-    :return:
-    """
-    return re.sub(
-        r'[’!"∀〃\$%&\'\(\)\*\+,\./:;<=>\?@，。?★、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～]+',
-        "",
-        sentence,
-    )
