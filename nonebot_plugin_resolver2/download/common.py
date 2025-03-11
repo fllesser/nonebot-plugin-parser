@@ -229,6 +229,8 @@ async def merge_av_h264(v_path: Path, a_path: Path, output_path: Path) -> None:
 # 将视频重新编码到 h264
 async def re_encode_video(video_path: Path) -> Path:
     output_path = video_path.with_name(f"{video_path.stem}_h264{video_path.suffix}")
+    if output_path.exists():
+        return output_path
     command = [
         "ffmpeg",
         "-y",
