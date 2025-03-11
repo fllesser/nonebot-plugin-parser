@@ -11,7 +11,7 @@ from tqdm.asyncio import tqdm
 from nonebot_plugin_resolver2.config import plugin_cache_dir
 from nonebot_plugin_resolver2.constant import COMMON_HEADER
 
-from .utils import safe_unlink
+from .utils import exec_ffmpeg_cmd, safe_unlink
 
 
 async def download_file_by_stream(
@@ -150,7 +150,7 @@ async def merge_av(v_path: Path, a_path: Path, output_path: Path) -> None:
     logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
 
     # 显式指定流映射
-    command = [
+    cmd = [
         "ffmpeg",
         "-y",
         "-i",
@@ -166,19 +166,7 @@ async def merge_av(v_path: Path, a_path: Path, output_path: Path) -> None:
         str(output_path),
     ]
 
-    try:
-        process = await asyncio.create_subprocess_exec(
-            *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        _, stderr = await process.communicate()
-        return_code = process.returncode
-    except FileNotFoundError:
-        raise RuntimeError("ffmpeg 未安装或无法找到可执行文件")
-
-    if return_code != 0:
-        error_msg = stderr.decode().strip()
-        raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
-
+    await exec_ffmpeg_cmd(cmd)
     await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
 
 
@@ -186,7 +174,7 @@ async def merge_av_h264(v_path: Path, a_path: Path, output_path: Path) -> None:
     logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
 
     # 修改命令以确保视频使用 H.264 编码
-    command = [
+    cmd = [
         "ffmpeg",
         "-y",
         "-i",
@@ -210,19 +198,7 @@ async def merge_av_h264(v_path: Path, a_path: Path, output_path: Path) -> None:
         str(output_path),
     ]
 
-    try:
-        process = await asyncio.create_subprocess_exec(
-            *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        _, stderr = await process.communicate()
-        return_code = process.returncode
-    except FileNotFoundError:
-        raise RuntimeError("ffmpeg 未安装或无法找到可执行文件")
-
-    if return_code != 0:
-        error_msg = stderr.decode().strip()
-        raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
-
+    await exec_ffmpeg_cmd(cmd)
     await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
 
 
@@ -231,7 +207,7 @@ async def re_encode_video(video_path: Path) -> Path:
     output_path = video_path.with_name(f"{video_path.stem}_h264{video_path.suffix}")
     if output_path.exists():
         return output_path
-    command = [
+    cmd = [
         "ffmpeg",
         "-y",
         "-i",
@@ -244,19 +220,8 @@ async def re_encode_video(video_path: Path) -> Path:
         "23",
         str(output_path),
     ]
-    try:
-        process = await asyncio.create_subprocess_exec(
-            *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-        )
-        _, stderr = await process.communicate()
-        return_code = process.returncode
-    except FileNotFoundError:
-        raise RuntimeError("ffmpeg 未安装或无法找到可执行文件")
-    if return_code != 0:
-        error_msg = stderr.decode().strip()
-        raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
-
-    logger.success(f"视频重新编码为 h264 成功: {output_path}, 大小: {output_path.stat().st_size / 1024 / 1024:.2f}MB")
+    await exec_ffmpeg_cmd(cmd)
+    logger.success(f"视频重新编码为 H.264 成功: {output_path}, 大小: {output_path.stat().st_size / 1024 / 1024:.2f}MB")
     await asyncio.gather(safe_unlink(video_path))
     return output_path
 
