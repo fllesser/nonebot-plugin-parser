@@ -141,7 +141,7 @@ async def parse_video_download_url(
     elif bvid:
         video = Video(bvid=bvid, credential=CREDENTIAL)
     else:
-        raise ValueError("avid 和 bvid 不能同时为 None")
+        raise ValueError("avid 和 bvid 至少指定一项")
     # 获取下载数据
     download_url_data = await video.get_download_url(page_index=page_index)
     detecter = VideoDownloadURLDataDetecter(download_url_data)
