@@ -25,7 +25,12 @@ jobs:
       uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
-
+    
+    - name: Install ffmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+    
     - name: Install Dependences 
       run: | 
         uv sync --all-groups

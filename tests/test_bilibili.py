@@ -1,5 +1,5 @@
-import pytest
 from nonebot.log import logger
+import pytest
 
 
 async def test_bilibili_live():
@@ -50,9 +50,7 @@ async def test_bilibili_opus():
 
 @pytest.mark.asyncio
 async def test_bilibili_favlist():
-    logger.info(
-        "开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create"
-    )
+    logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
     from nonebot_plugin_resolver2.parsers.bilibili import parse_favlist
 
     # https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
