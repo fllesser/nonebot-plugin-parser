@@ -125,3 +125,29 @@ async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
         urls.append(cover)
         texts.append(f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}")
     return texts, urls
+
+
+async def parse_video_info(*, bvid: str | None = None, avid: int | None = None) -> None:
+    pass
+
+
+async def parse_video_download_url(
+    *, bvid: str | None = None, avid: int | None = None, page_index: int = 0
+) -> tuple[str, str]:
+    from bilibili_api.video import Video, VideoDownloadURLDataDetecter
+
+    if avid:
+        video = Video(aid=avid, credential=CREDENTIAL)
+    elif bvid:
+        video = Video(bvid=bvid, credential=CREDENTIAL)
+    else:
+        raise ValueError("avid 和 bvid 至少指定一项")
+    # 获取下载数据
+    download_url_data = await video.get_download_url(page_index=page_index)
+    detecter = VideoDownloadURLDataDetecter(download_url_data)
+    streams = detecter.detect_best_streams()
+    video_stream = streams[0]
+    audio_stream = streams[1]
+    if video_stream is None or audio_stream is None:
+        raise ValueError("未找到视频或音频流")
+    return video_stream.url, audio_stream.url
