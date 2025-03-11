@@ -118,7 +118,7 @@
 |      r_need_upload       |  否   |          False          |                                                                                         音频解析，是否需要上传群文件                                                                                          |
 | r_video_duration_maximum |  否   |           480           |                                                                                         视频最大解析长度，单位：_秒_                                                                                          |
 |   r_disable_resolvers    |  否   |           []            | 全局禁止的解析，示例 r_disable_resolvers=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kugou", "twitter", "ncm", "ytb", "acfun", "tiktok", "weibo", "xiaohongshu"] |
-|      r_encode_h264       |  否   |          False          |                                                                                          B 站视频是否重新编码为 h264                                                                                          |
+
 
 ## 🎉 使用
 ### 指令表
