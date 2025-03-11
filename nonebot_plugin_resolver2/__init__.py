@@ -1,16 +1,16 @@
-from nonebot import get_driver, logger
-
+from nonebot import get_driver
+from nonebot.log import logger
 from nonebot.plugin import PluginMetadata
-from .matchers import resolvers
+
 from .config import (
     Config,
+    plugin_cache_dir,
     rconfig,
     scheduler,
-    plugin_cache_dir,
     ytb_cookies_file,
 )
 from .cookie import save_cookies_to_netscape
-
+from .matchers import resolvers
 
 __plugin_meta__ = PluginMetadata(
     name="链接分享自动解析",
@@ -26,9 +26,7 @@ __plugin_meta__ = PluginMetadata(
 @get_driver().on_startup
 async def _():
     if not rconfig.r_bili_ck:
-        logger.warning(
-            "未配置哔哩哔哩 cookie，无法使用哔哩哔哩AI总结，可能无法解析 720p 以上画质视频"
-        )
+        logger.warning("未配置哔哩哔哩 cookie，无法使用哔哩哔哩AI总结，可能无法解析 720p 以上画质视频")
     if rconfig.r_ytb_ck:
         save_cookies_to_netscape(rconfig.r_ytb_ck, ytb_cookies_file, "youtube.com")
         logger.info(f"保存 youtube cookie 到 {ytb_cookies_file}")

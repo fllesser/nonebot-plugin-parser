@@ -1,17 +1,16 @@
+import asyncio
+from collections import deque
+from pathlib import Path
 import re
 import time
-import aiohttp
-import asyncio
-import aiofiles
-import subprocess
 
-from pathlib import Path
-from collections import deque
+import aiofiles
+import aiohttp
 from nonebot.log import logger
 from tqdm.asyncio import tqdm
 
-from ..constant import COMMON_HEADER
-from ..config import plugin_cache_dir
+from nonebot_plugin_resolver2.config import plugin_cache_dir
+from nonebot_plugin_resolver2.constant import COMMON_HEADER
 
 
 async def download_file_by_stream(
@@ -44,9 +43,7 @@ async def download_file_by_stream(
 
     async with aiohttp.ClientSession(headers=headers) as session:
         try:
-            async with session.get(
-                url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=300, connect=10.0)
-            ) as resp:
+            async with session.get(url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=300, connect=10.0)) as resp:
                 resp.raise_for_status()
                 with tqdm(
                     total=int(resp.headers.get("Content-Length", 0)),
@@ -144,41 +141,55 @@ async def download_imgs_without_raise(urls: list[str]) -> list[Path]:
     Returns:
         list[Path]: image file paths
     """
-    paths_or_errs = await asyncio.gather(
-        *[download_img(url) for url in urls], return_exceptions=True
-    )
+    paths_or_errs = await asyncio.gather(*[download_img(url) for url in urls], return_exceptions=True)
     return [p for p in paths_or_errs if isinstance(p, Path)]
 
 
-async def merge_av(v_path: Path, a_path: Path, output_path: Path):
-    """helper function to merge video and audio
-
-    Args:
-        v_path (Path): video path
-        a_path (Path): audio path
-        output_path (Path): ouput path
-
-    Raises:
-        RuntimeError: ffmpeg未安装或命令执行失败
-    """
+async def merge_av(v_path: Path, a_path: Path, output_path: Path) -> None:
     logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
-    # 构建 ffmpeg 命令, localstore already path.resolve()
-    command = f'ffmpeg -y -i "{v_path}" -i "{a_path}" -c copy "{output_path}"'
-    result = await asyncio.get_event_loop().run_in_executor(
-        None,
-        lambda: subprocess.call(
-            command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        ),
-    )
-    if result != 0:
-        raise RuntimeError("ffmpeg未安装或命令执行失败")
-    # 删除原始文件
-    v_path.unlink()
-    a_path.unlink()
+
+    # 显式指定流映射
+    command = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(v_path),
+        "-i",
+        str(a_path),
+        "-c",
+        "copy",
+        "-map",
+        "0:v:0",
+        "-map",
+        "1:a:0",
+        str(output_path),
+    ]
+
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+        _, stderr = await process.communicate()
+        return_code = process.returncode
+    except FileNotFoundError:
+        raise RuntimeError("ffmpeg 未安装或无法找到可执行文件")
+
+    if return_code != 0:
+        error_msg = stderr.decode().strip()
+        raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
+
+    # 安全删除文件
+    async def safe_unlink(path: Path):
+        try:
+            await asyncio.to_thread(path.unlink, missing_ok=True)
+        except Exception as e:
+            logger.error(f"删除 {path} 失败: {e}")
+
+    await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
 
 
 # A deque to store the URL to file name mapping
-url_file_mapping: deque[tuple[str, str]] = deque(maxlen=100)
+url_file_mapping: deque[tuple[str, str]] = deque(maxlen=20)
 
 
 def generate_file_name(url: str, type: str) -> str:

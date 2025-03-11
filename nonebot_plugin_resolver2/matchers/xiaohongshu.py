@@ -1,21 +1,18 @@
 import re
 
+from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 from nonebot.log import logger
 from nonebot.plugin.on import on_message
-from nonebot.adapters.onebot.v11 import Bot, MessageSegment
+
+from nonebot_plugin_resolver2.config import NICKNAME
+from nonebot_plugin_resolver2.download.common import download_imgs_without_raise
+from nonebot_plugin_resolver2.parsers.xiaohongshu import parse_url
 
 from .filter import is_not_in_disabled_groups
-from .utils import get_video_seg, construct_nodes
-from .preprocess import r_keywords, ExtractText
-from ..parsers.xiaohongshu import parse_url
+from .preprocess import ExtractText, r_keywords
+from .utils import construct_nodes, get_video_seg
 
-from ..download.common import download_imgs_without_raise
-from ..config import NICKNAME
-
-
-xiaohongshu = on_message(
-    rule=is_not_in_disabled_groups & r_keywords("xiaohongshu.com", "xhslink.com")
-)
+xiaohongshu = on_message(rule=is_not_in_disabled_groups & r_keywords("xiaohongshu.com", "xhslink.com"))
 
 
 @xiaohongshu.handle()
@@ -36,9 +33,7 @@ async def _(bot: Bot, text: str = ExtractText()):
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 图文")
         img_path_list = await download_imgs_without_raise(img_urls)
         # 发送图片
-        segs = [title_desc] + [
-            MessageSegment.image(img_path) for img_path in img_path_list
-        ]
+        segs = [title_desc] + [MessageSegment.image(img_path) for img_path in img_path_list]
         nodes = construct_nodes(bot.self_id, segs)
         await xiaohongshu.finish(nodes)
     elif video_url:

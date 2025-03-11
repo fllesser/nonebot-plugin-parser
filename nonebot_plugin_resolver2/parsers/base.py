@@ -1,6 +1,7 @@
-import aiohttp
-from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+
+import aiohttp
 
 
 @dataclass
@@ -47,7 +48,7 @@ class BaseParser(ABC):
     @property
     def default_headers(self) -> dict[str, str]:
         return {
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 Edg/132.0.0.0"
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 Edg/132.0.0.0"  # noqa: E501
         }
 
     @abstractmethod
@@ -74,8 +75,6 @@ class BaseParser(ABC):
         :return: 重定向后的URL
         """
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, headers=self.default_headers, allow_redirects=False, ssl=False
-            ) as response:
+            async with session.get(url, headers=self.default_headers, allow_redirects=False, ssl=False) as response:
                 response.raise_for_status()
                 return response.headers.get("Location", url)

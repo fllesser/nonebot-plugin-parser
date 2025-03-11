@@ -1,25 +1,20 @@
+from pathlib import Path
 import re
 
-from pathlib import Path
-from nonebot.log import logger
-from nonebot.typing import T_State
-from nonebot.params import Arg
-from nonebot.rule import Rule
-from nonebot.plugin.on import on_keyword
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
+from nonebot.log import logger
+from nonebot.params import Arg
+from nonebot.plugin.on import on_keyword
+from nonebot.rule import Rule
+from nonebot.typing import T_State
+
+from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME, ytb_cookies_file
+from nonebot_plugin_resolver2.download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 
 from .filter import is_not_in_disabled_groups
-from .utils import get_video_seg, get_file_seg
-from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
-from ..config import (
-    NEED_UPLOAD,
-    NICKNAME,
-    ytb_cookies_file,
-)
+from .utils import get_file_seg, get_video_seg
 
-ytb = on_keyword(
-    keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disabled_groups)
-)
+ytb = on_keyword(keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disabled_groups))
 
 
 @ytb.handle()
@@ -47,9 +42,7 @@ async def _(event: MessageEvent, state: T_State):
 @ytb.got("type", prompt="您需要下载音频(0)，还是视频(1)")
 async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()):
     url: str = state["url"]
-    await bot.call_api(
-        "set_msg_emoji_like", message_id=event.message_id, emoji_id="282"
-    )
+    await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     video_path: Path | None = None
     audio_path: Path | None = None
     is_video = type.extract_plain_text().strip() == "1"

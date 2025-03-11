@@ -1,12 +1,12 @@
 import json
+from typing import Any, Literal
 
-from typing import Literal, Any
-from nonebot.rule import Rule
+from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.log import logger
 from nonebot.message import event_preprocessor
-from nonebot.typing import T_State
-from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.params import Depends
+from nonebot.rule import Rule
+from nonebot.typing import T_State
 
 R_KEYWORD_KEY: Literal["_r_keyword"] = "_r_keyword"
 R_EXTRACT_KEY: Literal["_r_extract"] = "_r_extract"
@@ -87,9 +87,7 @@ class RKeywordsRule:
         return f"RKeywords(keywords={self.keywords})"
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, RKeywordsRule) and frozenset(
-            self.keywords
-        ) == frozenset(other.keywords)
+        return isinstance(other, RKeywordsRule) and frozenset(self.keywords) == frozenset(other.keywords)
 
     def __hash__(self) -> int:
         return hash(frozenset(self.keywords))

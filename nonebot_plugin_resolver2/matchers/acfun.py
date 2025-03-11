@@ -1,19 +1,18 @@
-import re
-import json
-import aiohttp
 import asyncio
+import json
+import re
+
 import aiofiles
-import subprocess
-
-
+import aiohttp
 from nonebot import on_keyword
-from nonebot.rule import Rule
-from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Message, MessageEvent
+from nonebot.log import logger
+from nonebot.rule import Rule
+
+from nonebot_plugin_resolver2.config import NICKNAME, plugin_cache_dir
 
 from .filter import is_not_in_disabled_groups
 from .utils import get_video_seg
-from ..config import plugin_cache_dir, NICKNAME
 
 acfun = on_keyword(keywords={"acfun.cn"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -30,22 +29,20 @@ async def _(event: MessageEvent) -> None:
     await acfun.send(Message(f"{NICKNAME}解析 | 猴山 - {video_name}"))
     m3u8_full_urls, ts_names, output_file_name = await parse_m3u8(url_m3u8s)
     # logger.info(output_folder_name, output_file_name)
-    await asyncio.gather(
-        *[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)]
-    )
+    await asyncio.gather(*[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)])
     await merge_ac_file_to_mp4(ts_names, output_file_name)
     await acfun.send(await get_video_seg(plugin_cache_dir / output_file_name))
 
 
 headers = {
     "referer": "https://www.acfun.cn/",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83",  # noqa: E501
 }
 
 
 async def parse_url(url: str):
     """
-        解析acfun链接
+    解析acfun链接
     :param url:
     :return:
     """
@@ -109,9 +106,9 @@ async def download_m3u8_videos(m3u8_full_url, i):
     """
     async with aiohttp.ClientSession() as session:
         async with session.get(m3u8_full_url, headers=headers) as resp:
-            with open(plugin_cache_dir / f"{i}.ts", "wb") as f:
+            async with aiofiles.open(plugin_cache_dir / f"{i}.ts", "wb") as f:
                 async for chunk in resp.content.iter_chunked(1024):
-                    f.write(chunk)
+                    await f.write(chunk)
 
 
 def escape_special_chars(str_json):
@@ -126,12 +123,8 @@ def parse_video_name(video_info: dict):
     """
     ac_id = "ac" + video_info["dougaId"] if video_info["dougaId"] is not None else ""
     title = video_info["title"] if video_info["title"] is not None else ""
-    author = (
-        video_info["user"]["name"] if video_info["user"]["name"] is not None else ""
-    )
-    upload_time = (
-        video_info["createTime"] if video_info["createTime"] is not None else ""
-    )
+    author = video_info["user"]["name"] if video_info["user"]["name"] is not None else ""
+    upload_time = video_info["createTime"] if video_info["createTime"] is not None else ""
     desc = video_info["description"] if video_info["description"] is not None else ""
 
     raw = "_".join([ac_id, title, author, upload_time, desc])[:101]
@@ -145,12 +138,35 @@ async def merge_ac_file_to_mp4(ts_names, file_name):
     filepath = plugin_cache_dir / file_name
     async with aiofiles.open(filetxt, "w") as f:
         await f.write(concat_str)
-    command = f'ffmpeg -y -f concat -safe 0 -i {filetxt} -c copy "{filepath}"'
-    stdout = subprocess.DEVNULL
-    stderr = subprocess.DEVNULL
-    await asyncio.get_event_loop().run_in_executor(
-        None, lambda: subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
-    )
+    command = [
+        "ffmpeg",
+        "-y",
+        "-f",
+        "concat",
+        "-safe",
+        "0",
+        "-i",
+        str(filetxt),  # Path 对象转字符串
+        "-c",
+        "copy",
+        str(filepath),  # 自动处理路径空格
+    ]
+
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+
+        # 等待进程完成并捕获输出
+        _, stderr = await process.communicate()
+        return_code = process.returncode
+
+    except FileNotFoundError:
+        raise RuntimeError("ffmpeg 未安装或无法找到可执行文件")
+
+    if return_code != 0:
+        error_msg = stderr.decode().strip()
+        raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
 
 
 def parse_video_name_fixed(video_info: dict):

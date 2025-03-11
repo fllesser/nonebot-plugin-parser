@@ -29,7 +29,7 @@ dependencies = [
 
 
 [dependency-groups]
-dev = ["nonebot2[fastapi]>=2.4.0,<3.0.0", "ruff>=0.9.9,<1.0.0"]
+dev = ["nonebot2[fastapi]>=2.4.0,<3.0.0", "ruff>=0.9.10,<1.0.0"]
 
 test = [
   "nonebug>=0.3.7,<1.0.0",
@@ -45,10 +45,73 @@ adapters = [
 plugins = ["nonebot_plugin_resolver2"]
 
 
-[tool.ruff]
-lint.ignore = ["E402"]
-
+[tool.uv.workspace]
+# members = ["nonebot_plugin_template", "tests"]
+exclude = [".docs"]
 
 [tool.pytest.ini_options]
+# testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.format]
+line-ending = "lf"
+
+[tool.ruff.lint]
+select = [
+  "F",     # Pyflakes
+  "W",     # pycodestyle warnings
+  "E",     # pycodestyle errors
+  "I",     # isort
+  "UP",    # pyupgrade
+  "ASYNC", # flake8-async
+  "C4",    # flake8-comprehensions
+  "T10",   # flake8-debugger
+  "T20",   # flake8-print
+  "PYI",   # flake8-pyi
+  "PT",    # flake8-pytest-style
+  "Q",     # flake8-quotes
+  "TID",   # flake8-tidy-imports
+  "RUF",   # Ruff-specific rules
+]
+ignore = [
+  "E402",   # module-import-not-at-top-of-file
+  "UP037",  # quoted-annotation
+  "RUF001", # ambiguous-unicode-character-string
+  "RUF002", # ambiguous-unicode-character-docstring
+  "RUF003", # ambiguous-unicode-character-comment
+  "W191",   # indentation contains tabs
+  # "I001",   # isort: imports are incorrectly sorted
+]
+
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = ["tests/*"]
+extra-standard-library = ["typing_extensions"]
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+
+[tool.pyright]
+pythonVersion = "3.10"
+pythonPlatform = "All"
+defineConstant = { PYDANTIC_V2 = true }
+executionEnvironments = [
+  { root = "./tests", extraPaths = [
+    "./",
+  ] },
+  { root = "./" },
+]
+typeCheckingMode = "standard"
+reportShadowedImports = false
+disableBytesTypePromotions = true

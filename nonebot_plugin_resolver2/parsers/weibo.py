@@ -1,7 +1,7 @@
 import aiohttp
 
-from .utils import get_val_from_url_by_query_key
 from .base import BaseParser, VideoAuthor, VideoInfo
+from .utils import get_val_from_url_by_query_key
 
 
 class WeiBo(BaseParser):
@@ -25,9 +25,7 @@ class WeiBo(BaseParser):
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + video_id + '"}}'
         async with aiohttp.ClientSession() as session:
-            async with session.post(
-                req_url, headers=headers, data=post_content
-            ) as response:
+            async with session.post(req_url, headers=headers, data=post_content) as response:
                 response.raise_for_status()
                 json_data = await response.json()
         data = json_data["data"]["Component_Play_Playinfo"]

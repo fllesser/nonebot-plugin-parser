@@ -1,27 +1,24 @@
 import re
-import aiohttp
 
-from nonebot.plugin import on_message
+import aiohttp
 from nonebot.adapters.onebot.v11 import MessageSegment
+from nonebot.plugin import on_message
+
+from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME
+from nonebot_plugin_resolver2.constant import COMMON_HEADER
+from nonebot_plugin_resolver2.download.common import download_audio
 
 from .filter import is_not_in_disabled_groups
+from .preprocess import ExtractText, Keyword, r_keywords
 from .utils import get_file_seg
-from .preprocess import r_keywords, ExtractText, Keyword
-from ..constant import COMMON_HEADER
-from ..download.common import download_audio
-from ..config import NICKNAME, NEED_UPLOAD
 
 # NCM获取歌曲信息链接
 NETEASE_API_CN = "https://www.markingchen.ink"
 
 # NCM临时接口
-NETEASE_TEMP_API = (
-    "https://www.hhlqilongzhu.cn/api/dg_wyymusic.php?id={}&br=7&type=json"
-)
+NETEASE_TEMP_API = "https://www.hhlqilongzhu.cn/api/dg_wyymusic.php?id={}&br=7&type=json"
 
-ncm = on_message(
-    rule=is_not_in_disabled_groups & r_keywords("music.163.com", "163cn.tv")
-)
+ncm = on_message(rule=is_not_in_disabled_groups & r_keywords("music.163.com", "163cn.tv"))
 
 
 @ncm.handle()
@@ -45,18 +42,14 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     # 对接临时接口
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER
-            ) as resp:
+            async with session.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER) as resp:
                 ncm_vip_data = await resp.json()
         ncm_music_url, ncm_cover, ncm_singer, ncm_title = (
             ncm_vip_data.get(key) for key in ["music_url", "cover", "singer", "title"]
         )
     except Exception as e:
         await ncm.finish(f"{share_prefix}错误: {e}")
-    await ncm.send(
-        f"{share_prefix}{ncm_title} {ncm_singer}" + MessageSegment.image(ncm_cover)
-    )
+    await ncm.send(f"{share_prefix}{ncm_title} {ncm_singer}" + MessageSegment.image(ncm_cover))
     # 下载音频文件后会返回一个下载路径
     file_name = f"{ncm_title}-{ncm_singer}.flac"
     try:
