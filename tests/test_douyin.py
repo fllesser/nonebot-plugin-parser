@@ -31,7 +31,10 @@ async def test_douyin_common_video():
         video_path = await download_video(video_info.video_url)
         logger.success(f"video_path: {video_path}")
         output_path = await re_encode_video(video_path)
-        logger.success(f"重新编码成 h264, output_path: {output_path}")
+        # 需要打印文件大小, 单位 MB
+        logger.success(
+            f"重新编码成 h264, output_path: {output_path}, 大小: {output_path.stat().st_size / 1024 / 1024:.2f} MB"
+        )
         assert output_path
         logger.success(f"抖音视频解析成功 {url}")
 
