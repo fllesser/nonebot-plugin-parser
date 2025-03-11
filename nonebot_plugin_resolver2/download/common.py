@@ -254,6 +254,7 @@ async def re_encode_video(video_path: Path) -> Path:
         error_msg = stderr.decode().strip()
         raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
 
+    logger.success(f"视频重新编码为 h264 成功: {output_path}, 大小: {output_path.stat().st_size / 1024 / 1024:.2f}MB")
     await asyncio.gather(safe_unlink(video_path))
     return output_path
 
