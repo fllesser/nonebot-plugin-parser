@@ -229,11 +229,12 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
     except ActionFailed as e:
         message: str = e.info.get("message", "")
         # 无缩略图
-        if message.endswith(".png'"):
-            # 重新编码为 h264
-            logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
-            h264_path = await re_encode_video(video_path)
-            await bilibili.send(await get_video_seg(h264_path))
+        if not message.endswith(".png'"):
+            raise
+        # 重新编码为 h264
+        logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
+        h264_path = await re_encode_video(video_path)
+        await bilibili.send(await get_video_seg(h264_path))
 
 
 @bili_music.handle()
