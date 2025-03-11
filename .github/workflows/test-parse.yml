@@ -46,3 +46,7 @@ jobs:
     - name: Run Xiaohongshu Tests
       run: |
         python -m pytest -v -s tests/test_xhs.py
+    
+    - name: Run Download tests
+      run: |
+        python -m pytest -v -s tests/test_download.py

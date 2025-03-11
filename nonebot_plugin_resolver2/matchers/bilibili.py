@@ -13,11 +13,12 @@ from nonebot.log import logger
 from nonebot.params import CommandArg
 from nonebot.plugin.on import on_command, on_message
 
-from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
+from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir, rconfig
 from nonebot_plugin_resolver2.download.common import (
     download_file_by_stream,
     download_imgs_without_raise,
     merge_av,
+    merge_av_h264,
 )
 from nonebot_plugin_resolver2.download.utils import delete_boring_characters
 from nonebot_plugin_resolver2.parsers.bilibili import CREDENTIAL, parse_favlist, parse_live, parse_opus, parse_read
@@ -217,7 +218,10 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
                 download_file_by_stream(video_url, f"{prefix}-video.m4s", ext_headers=HEADERS),
                 download_file_by_stream(audio_url, f"{prefix}-audio.m4s", ext_headers=HEADERS),
             )
-            await merge_av(v_path, a_path, video_path)
+            if rconfig.r_encode_h264:
+                await merge_av_h264(v_path, a_path, video_path)
+            else:
+                await merge_av(v_path, a_path, video_path)
     except Exception:
         await bilibili.send("视频下载失败, 请联系机器人管理员", reply_message=True)
         raise
