@@ -5,7 +5,7 @@
 
 <div align="center">
 
-# ✨ 链接分享自动解析 ✨
+## ✨ 链接分享自动解析 ✨
 
 <a href="./LICENSE">
     <img src="https://img.shields.io/github/license/fllesser/nonebot-plugin-resolver2.svg" alt="license">
@@ -18,6 +18,11 @@
     <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json" alt="ruff">
 </a>
 </div>
+
+> [!IMPORTANT]
+> **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～⭐️
+
+<img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=fllesser&repo=nonebot-plugin-resolver2" alt="starify" />
 
 ## 📖 介绍
 
