@@ -36,7 +36,8 @@ class Config(BaseModel):
     r_proxy: str = "http://127.0.0.1:7890"
     # 是否需要上传音频文件
     r_need_upload: bool = False
-    # r_encode_h264: bool = False
+    # 4 条以内消息，是否需要合并转发
+    r_forward: bool = True
     # 视频最大时长
     r_video_duration_maximum: int = 480
     # 禁止的解析器
