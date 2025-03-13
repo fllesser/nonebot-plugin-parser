@@ -1,22 +1,29 @@
 import asyncio
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
 import yt_dlp
 
-from nonebot_plugin_resolver2.config import PROXY, plugin_cache_dir, scheduler
+from nonebot_plugin_resolver2.config import PROXY, plugin_cache_dir
 
 from .utils import delete_boring_characters
 
-# 缓存链接信息
-url_info: dict[str, dict[str, str]] = {}
+
+# 使用定长字典缓存链接信息，最多保存 20 个条目
+class LimitedSizeDict(OrderedDict):
+    def __init__(self, *args, max_size=20, **kwargs):
+        self.max_size = max_size
+        super().__init__(*args, **kwargs)
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        if len(self) > self.max_size:
+            self.popitem(last=False)  # 移除最早添加的项
 
 
-# 定时清理
-@scheduler.scheduled_job("cron", hour=2, minute=0, id="resolver2-clean-url-info")
-async def _():
-    url_info.clear()
-
+# 使用定长字典缓存链接信息，最多保存 20 个条目
+url_info_mapping: LimitedSizeDict = LimitedSizeDict()
 
 # 获取视频信息的 基础 opts
 ydl_extract_base_opts: dict[str, Any] = {
@@ -43,7 +50,7 @@ async def get_video_info(url: str, cookiefile: Path | None = None) -> dict[str, 
     Returns:
         dict[str, str]: video info
     """
-    info_dict = url_info.get(url, None)
+    info_dict = url_info_mapping.get(url, None)
     if info_dict:
         return info_dict
     ydl_opts = {} | ydl_extract_base_opts
@@ -54,7 +61,7 @@ async def get_video_info(url: str, cookiefile: Path | None = None) -> dict[str, 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info_dict = await asyncio.to_thread(ydl.extract_info, url, download=False)
         assert info_dict, "获取视频信息失败"
-        url_info[url] = info_dict
+        url_info_mapping[url] = info_dict
         return info_dict
 
 
