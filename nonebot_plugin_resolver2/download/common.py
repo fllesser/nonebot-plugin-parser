@@ -144,16 +144,19 @@ async def download_img(
     return await download_file_by_stream(url, img_name, proxy, ext_headers)
 
 
-async def download_imgs_without_raise(urls: list[str]) -> list[Path]:
+async def download_imgs_without_raise(urls: list[str], ext_headers: dict[str, str] | None = None) -> list[Path]:
     """download images without raise
 
     Args:
         urls (list[str]): urls
+        ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
 
     Returns:
         list[Path]: image file paths
     """
-    paths_or_errs = await asyncio.gather(*[download_img(url) for url in urls], return_exceptions=True)
+    paths_or_errs = await asyncio.gather(
+        *[download_img(url, ext_headers=ext_headers) for url in urls], return_exceptions=True
+    )
     return [p for p in paths_or_errs if isinstance(p, Path)]
 
 

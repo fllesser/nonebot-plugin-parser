@@ -1,18 +1,31 @@
 from pathlib import Path
 
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
+from nonebot import get_bots
+from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment
+from nonebot.matcher import Matcher
 
-from nonebot_plugin_resolver2.config import NICKNAME
+from nonebot_plugin_resolver2.config import NEED_FORWARD, NICKNAME
 from nonebot_plugin_resolver2.constant import VIDEO_MAX_MB
 from nonebot_plugin_resolver2.download.common import download_video
 
 
-def construct_nodes(user_id, segments: MessageSegment | list) -> Message:
+def construct_nodes(segments: MessageSegment | list[MessageSegment | Message | str]) -> Message:
+    bot = next(iter(bot for bot in get_bots().values() if isinstance(bot, Bot)))
+    user_id = int(bot.self_id)
+
     def node(content):
         return MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=content)
 
     segments = segments if isinstance(segments, list) else [segments]
     return Message([node(seg) for seg in segments])
+
+
+async def send_segments(matcher: type[Matcher], segments: list) -> None:
+    if NEED_FORWARD or len(segments) > 4:
+        await matcher.send(construct_nodes(segments))
+    else:
+        for seg in segments:
+            await matcher.send(seg)
 
 
 async def get_video_seg(

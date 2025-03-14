@@ -26,7 +26,7 @@ from nonebot_plugin_resolver2.parsers.bilibili import CREDENTIAL, parse_favlist,
 
 from .filter import is_not_in_disabled_groups
 from .preprocess import ExtractText, Keyword, r_keywords
-from .utils import construct_nodes, get_file_seg, get_video_seg
+from .utils import get_file_seg, get_video_seg, send_segments
 
 bilibili = on_message(
     rule=is_not_in_disabled_groups & r_keywords("bilibili", "bili2233", "b23", "BV", "av"),
@@ -35,7 +35,7 @@ bilibili = on_message(
 
 bili_music = on_command(cmd="bm", block=True)
 
-patterns: dict[str, re.Pattern] = {
+PATTERNS: dict[str, re.Pattern] = {
     "BV": re.compile(r"(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?"),
     "av": re.compile(r"av(\d{6,})(?:\s)?(\d{1,3})?"),
     "/BV": re.compile(r"/(BV[1-9a-zA-Z]{10})()"),
@@ -49,7 +49,7 @@ patterns: dict[str, re.Pattern] = {
 @bilibili.handle()
 async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
     share_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
-    match = patterns[keyword].search(text)
+    match = PATTERNS[keyword].search(text)
     if not match:
         logger.info(f"{text} 中的链接或id无效, 忽略")
         return
@@ -67,10 +67,10 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
 
     # 链接中是否包含BV，av号
     if url and (id_type := next((i for i in ("/BV", "/av") if i in url), None)):
-        if match := patterns[id_type].search(url):
+        if match := PATTERNS[id_type].search(url):
             keyword = id_type
             video_id = match.group(1)
-
+    # 预发送消息列表
     segs: list[Message | MessageSegment | str] = []
     # 如果不是视频
     if not video_id:
@@ -87,7 +87,8 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             if img_lst:
                 paths = await download_imgs_without_raise(img_lst)
                 segs.extend(MessageSegment.image(path) for path in paths)
-            await bilibili.finish(construct_nodes(bot.self_id, segs))
+            await send_segments(bilibili, segs)
+            await bilibili.finish()
         # 直播间解析
         elif "/live" in url:
             # https://live.bilibili.com/30528999?hotRank=0
@@ -123,7 +124,8 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
                 else:
                     segs.append(MessageSegment.image(paths.pop()))
             if segs:
-                await bilibili.finish(construct_nodes(bot.self_id, segs))
+                await send_segments(bilibili, segs)
+                await bilibili.finish()
         # 收藏夹解析
         elif "/favlist" in url:
             # https://space.bilibili.com/22990202/favlist?fid=2344812202
@@ -140,10 +142,11 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             # 组合 text 和 image
             for path, text in zip(paths, texts):
                 segs.append(MessageSegment.image(path) + text)
-            await bilibili.finish(construct_nodes(bot.self_id, segs))
+            await send_segments(bilibili, segs)
+            await bilibili.finish()
         else:
             logger.warning(f"不支持的链接: {url}")
-            return
+            await bilibili.finish()
 
     # 视频
     if keyword in ("av", "/av"):
@@ -179,8 +182,6 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
             segs.append(MessageSegment.image(first_frame))
     else:
         page_num = 0
-    # 删除特殊字符
-    # video_title = delete_boring_characters(video_title)
     online = await v.get_online()
     online_str = f"🏄‍♂️ 总共 {online['total']} 人在观看，{online['count']} 人在网页端观看"
     segs.append(MessageSegment.image(video_cover))
@@ -195,7 +196,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
         segs.append(
             f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!"
         )
-    await bilibili.send(construct_nodes(bot.self_id, segs))
+    await send_segments(bilibili, segs)
     if video_duration > DURATION_MAXIMUM:
         logger.info(f"video duration > {DURATION_MAXIMUM}, do not download")
         return

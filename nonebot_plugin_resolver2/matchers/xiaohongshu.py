@@ -10,7 +10,7 @@ from nonebot_plugin_resolver2.parsers.xiaohongshu import parse_url
 
 from .filter import is_not_in_disabled_groups
 from .preprocess import ExtractText, r_keywords
-from .utils import construct_nodes, get_video_seg
+from .utils import get_video_seg, send_segments
 
 xiaohongshu = on_message(rule=is_not_in_disabled_groups & r_keywords("xiaohongshu.com", "xhslink.com"))
 
@@ -34,8 +34,8 @@ async def _(bot: Bot, text: str = ExtractText()):
         img_path_list = await download_imgs_without_raise(img_urls)
         # 发送图片
         segs = [title_desc] + [MessageSegment.image(img_path) for img_path in img_path_list]
-        nodes = construct_nodes(bot.self_id, segs)
-        await xiaohongshu.finish(nodes)
+        await send_segments(xiaohongshu, segs)
+        await xiaohongshu.finish()
     elif video_url:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 视频 - {title_desc}")
         await xiaohongshu.finish(await get_video_seg(url=video_url))

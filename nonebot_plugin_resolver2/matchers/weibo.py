@@ -1,4 +1,3 @@
-import asyncio
 import math
 import re
 
@@ -9,11 +8,11 @@ from nonebot.rule import Rule
 
 from nonebot_plugin_resolver2.config import NICKNAME
 from nonebot_plugin_resolver2.constant import COMMON_HEADER
-from nonebot_plugin_resolver2.download.common import download_img, download_video
+from nonebot_plugin_resolver2.download.common import download_imgs_without_raise, download_video
 from nonebot_plugin_resolver2.parsers.weibo import WeiBo
 
 from .filter import is_not_in_disabled_groups
-from .utils import construct_nodes, get_video_seg
+from .utils import get_video_seg, send_segments
 
 # WEIBO_SINGLE_INFO
 WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
@@ -78,16 +77,13 @@ async def _(bot: Bot, event: MessageEvent):
         f"{share_prefix}{re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}"
     )
     if pics:
-        pics = (x["large"]["url"] for x in pics)
-        download_img_funcs = [
-            asyncio.create_task(download_img(url=item, ext_headers={"Referer": "http://blog.sina.com.cn/"}))
-            for item in pics
-        ]
-        image_paths = await asyncio.gather(*download_img_funcs)
+        pics = [x["large"]["url"] for x in pics]
+        image_paths = await download_imgs_without_raise(pics)
         # 发送图片
-        nodes = construct_nodes(bot.self_id, [MessageSegment.image(img_path) for img_path in image_paths])
+        segs = [MessageSegment.image(img_path) for img_path in image_paths]
         # 发送异步后的数据
-        await weibo.finish(nodes)
+        await send_segments(weibo, segs)
+        await weibo.finish()
 
     if page_info:
         video_url: str = page_info.get("urls", {"mp4_720p_mp4": ""}).get("mp4_720p_mp4", "") or page_info.get(

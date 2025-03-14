@@ -37,7 +37,7 @@ class Config(BaseModel):
     # 是否需要上传音频文件
     r_need_upload: bool = False
     # 4 条以内消息，是否需要合并转发
-    r_forward: bool = True
+    r_need_forward: bool = True
     # 视频最大时长
     r_video_duration_maximum: int = 480
     # 禁止的解析器
@@ -62,3 +62,5 @@ PROXY: str | None = None if rconfig.r_is_oversea else rconfig.r_proxy
 DURATION_MAXIMUM: int = rconfig.r_video_duration_maximum
 # 是否需要上传音频文件
 NEED_UPLOAD: bool = rconfig.r_need_upload
+# 是否需要合并转发
+NEED_FORWARD: bool = rconfig.r_need_forward
