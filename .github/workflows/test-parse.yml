@@ -6,7 +6,7 @@ on:
       - '*'
 
 jobs:
-  build:
+  parse-url-test:
     runs-on: ubuntu-latest
     env:
       LOG_LEVEL: INFO
@@ -26,14 +26,14 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Install ffmpeg
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg
+    # - name: Install ffmpeg
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y ffmpeg
     
     - name: Install Dependences 
       run: | 
-        uv sync --all-groups
+        uv sync --group test
 
     - name: Run Bilibili Tests
       run: |
