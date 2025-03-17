@@ -37,11 +37,13 @@ async def _(event: MessageEvent, state: T_State):
     except Exception as e:
         await ytb.finish(f"{NICKNAME}解析 | 油管 - 标题获取出错: {e}")
     state["url"] = url
+    state["title"] = title
 
 
 @ytb.got("type", prompt="您需要下载音频(0)，还是视频(1)")
 async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()):
     url: str = state["url"]
+    title: str = state["title"]
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     video_path: Path | None = None
     audio_path: Path | None = None
@@ -57,7 +59,8 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
         await ytb.send(f"{media_type}下载失败, 请联系机器人管理员", reply_message=True)
     if video_path:
         await ytb.send(await get_video_seg(video_path))
-    if audio_path:
+    elif audio_path:
         await ytb.send(MessageSegment.record(audio_path))
         if NEED_UPLOAD:
-            await ytb.send(get_file_seg(audio_path))
+            file_name = f"{title}.flac"
+            await ytb.send(get_file_seg(audio_path, file_name))

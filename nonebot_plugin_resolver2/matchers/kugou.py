@@ -38,9 +38,8 @@ async def _(text: str = ExtractText()):
 
     await kugou.send(f"{share_prefix}{title_author_name}" + MessageSegment.image(video_info.cover_url))
 
-    filename = f"{delete_boring_characters(title_author_name)}.flac"
     try:
-        audio_path = await download_audio(url=video_info.music_url, audio_name=filename)
+        audio_path = await download_audio(url=video_info.music_url)
     except Exception:
         await kugou.send("音频下载失败, 请联系机器人管理员", reply_message=True)
         raise
@@ -48,4 +47,5 @@ async def _(text: str = ExtractText()):
     await kugou.send(MessageSegment.record(audio_path))
     # 发送群文件
     if NEED_UPLOAD:
+        filename = f"{delete_boring_characters(title_author_name)}.flac"
         await kugou.finish(get_file_seg(audio_path, filename))
