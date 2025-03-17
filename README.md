@@ -121,6 +121,7 @@
 |       r_is_oversea       |  否   |          False          |                                                                                海外服务器部署，或者使用了透明代理，设置为 True                                                                                |
 |         r_proxy          |  否   | 'http://127.0.0.1:7890' |                                                                                    # 代理，仅在 r_is_oversea=False 时生效                                                                                     |
 |      r_need_upload       |  否   |          False          |                                                                                         音频解析，是否需要上传群文件                                                                                          |
+|      r_need_forward      |  否   |          True           |                                                                                      超过 4 条的解析消息是否需要合并转发                                                                                      |
 | r_video_duration_maximum |  否   |           480           |                                                                                         视频最大解析长度，单位：_秒_                                                                                          |
 |   r_disable_resolvers    |  否   |           []            | 全局禁止的解析，示例 r_disable_resolvers=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kugou", "twitter", "ncm", "ytb", "acfun", "tiktok", "weibo", "xiaohongshu"] |
 

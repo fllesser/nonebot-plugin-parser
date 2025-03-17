@@ -3,6 +3,7 @@ import re
 import aiohttp
 from nonebot import on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent
+from nonebot.log import logger
 from nonebot.rule import Rule
 
 from nonebot_plugin_resolver2.config import NICKNAME, PROXY
@@ -19,11 +20,11 @@ async def _(event: MessageEvent):
     # 消息
     message: str = event.message.extract_plain_text().strip()
     url_reg = r"(?:http:|https:)\/\/(www|vt|vm).tiktok.com\/[A-Za-z\d._?%&+\-=\/#@]*"
-    if match := re.search(url_reg, message):
-        url = match.group(0)
-        prefix = match.group(1)
-    else:
+    matched = re.search(url_reg, message)
+    if not matched:
+        logger.warning("tiktok url is incomplete, ignored")
         return
+    url, prefix = matched.group(0), matched.group(1)
 
     if prefix == "vt" or prefix == "vm":
         async with aiohttp.ClientSession() as session:

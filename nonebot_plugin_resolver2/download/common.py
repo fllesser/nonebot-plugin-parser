@@ -13,6 +13,17 @@ from nonebot_plugin_resolver2.constant import COMMON_HEADER
 
 from .utils import exec_ffmpeg_cmd, safe_unlink
 
+# 创建一个全局 session 对象
+_session: aiohttp.ClientSession | None = None
+
+
+async def get_session() -> aiohttp.ClientSession:
+    """获取或创建全局 session 对象"""
+    global _session
+    if _session is None or _session.closed:
+        _session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300, connect=10.0))
+    return _session
+
 
 async def download_file_by_stream(
     url: str,
@@ -42,27 +53,27 @@ async def download_file_by_stream(
     if ext_headers is not None:
         headers.update(ext_headers)
 
-    async with aiohttp.ClientSession(headers=headers) as session:
-        try:
-            async with session.get(url, proxy=proxy, timeout=aiohttp.ClientTimeout(total=300, connect=10.0)) as resp:
-                resp.raise_for_status()
-                with tqdm(
-                    total=int(resp.headers.get("Content-Length", 0)),
-                    unit="B",
-                    unit_scale=True,
-                    unit_divisor=1024,
-                    dynamic_ncols=True,
-                    colour="green",
-                ) as bar:
-                    # 设置前缀信息
-                    bar.set_description(file_name)
-                    async with aiofiles.open(file_path, "wb") as f:
-                        async for chunk in resp.content.iter_chunked(1024 * 1024):
-                            await f.write(chunk)
-                            bar.update(len(chunk))
-        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
-            logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常{e}")
-            raise
+    session = await get_session()
+    try:
+        async with session.get(url, headers=headers, proxy=proxy) as resp:
+            resp.raise_for_status()
+            with tqdm(
+                total=int(resp.headers.get("Content-Length", 0)),
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+                dynamic_ncols=True,
+                colour="green",
+            ) as bar:
+                # 设置前缀信息
+                bar.set_description(file_name)
+                async with aiofiles.open(file_path, "wb") as f:
+                    async for chunk in resp.content.iter_chunked(1024 * 1024):
+                        await f.write(chunk)
+                        bar.update(len(chunk))
+    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常{e}")
+        raise
 
     return file_path
 
@@ -133,16 +144,19 @@ async def download_img(
     return await download_file_by_stream(url, img_name, proxy, ext_headers)
 
 
-async def download_imgs_without_raise(urls: list[str]) -> list[Path]:
+async def download_imgs_without_raise(urls: list[str], ext_headers: dict[str, str] | None = None) -> list[Path]:
     """download images without raise
 
     Args:
         urls (list[str]): urls
+        ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
 
     Returns:
         list[Path]: image file paths
     """
-    paths_or_errs = await asyncio.gather(*[download_img(url) for url in urls], return_exceptions=True)
+    paths_or_errs = await asyncio.gather(
+        *[download_img(url, ext_headers=ext_headers) for url in urls], return_exceptions=True
+    )
     return [p for p in paths_or_errs if isinstance(p, Path)]
 
 
@@ -226,10 +240,10 @@ async def re_encode_video(video_path: Path) -> Path:
     return output_path
 
 
-def generate_file_name(url: str, suffix: str | None = None) -> str:
+def generate_file_name(url: str, default_suffix: str | None = None) -> str:
     # 根据 url 获取文件后缀
     path = Path(urlparse(url).path)
-    suffix = path.suffix if path.suffix else suffix
+    suffix = path.suffix if path.suffix else default_suffix
     # 获取 url 的 md5 值
     url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
     file_name = f"{url_hash}{suffix}"
