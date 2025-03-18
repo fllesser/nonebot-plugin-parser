@@ -8,7 +8,7 @@ from nonebot.log import logger
 from nonebot.rule import Rule
 
 from nonebot_plugin_resolver2.config import NICKNAME
-from nonebot_plugin_resolver2.download.common import download_imgs_without_raise
+from nonebot_plugin_resolver2.download import download_imgs_without_raise
 from nonebot_plugin_resolver2.parsers.base import VideoInfo
 from nonebot_plugin_resolver2.parsers.douyin import DouYin
 

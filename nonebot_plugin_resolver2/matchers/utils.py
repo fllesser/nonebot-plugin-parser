@@ -6,7 +6,7 @@ from nonebot.matcher import Matcher
 
 from nonebot_plugin_resolver2.config import NEED_FORWARD, NICKNAME
 from nonebot_plugin_resolver2.constant import VIDEO_MAX_MB
-from nonebot_plugin_resolver2.download.common import download_video
+from nonebot_plugin_resolver2.download import download_video
 
 
 def construct_nodes(segments: MessageSegment | list[MessageSegment | Message | str]) -> Message:

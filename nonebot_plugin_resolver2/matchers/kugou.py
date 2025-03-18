@@ -5,7 +5,7 @@ from nonebot.log import logger
 from nonebot.plugin.on import on_message
 
 from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME
-from nonebot_plugin_resolver2.download.common import download_audio
+from nonebot_plugin_resolver2.download import download_audio
 from nonebot_plugin_resolver2.download.utils import delete_boring_characters
 from nonebot_plugin_resolver2.parsers.kugou import KuGou
 

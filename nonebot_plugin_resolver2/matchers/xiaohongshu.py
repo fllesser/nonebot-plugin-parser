@@ -5,7 +5,7 @@ from nonebot.log import logger
 from nonebot.plugin.on import on_message
 
 from nonebot_plugin_resolver2.config import NICKNAME
-from nonebot_plugin_resolver2.download.common import download_imgs_without_raise
+from nonebot_plugin_resolver2.download import download_imgs_without_raise
 from nonebot_plugin_resolver2.parsers.xiaohongshu import parse_url
 
 from .filter import is_not_in_disabled_groups

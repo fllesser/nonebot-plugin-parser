@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 from pathlib import Path
 import re
+from urllib.parse import urlparse
 
 from nonebot.log import logger
 
@@ -12,7 +14,7 @@ def delete_boring_characters(sentence: str) -> str:
     :return:
     """
     return re.sub(
-        r'[’!"∀〃\$%&\'\(\)\*\+,\./:;<=>\?@，。?★、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～]+',
+        r'[’!"∀〃\$%&\'\(\)\*\+,\./:;<=>\?@，。?★/、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～]+',
         "",
         sentence,
     )
@@ -39,3 +41,13 @@ async def exec_ffmpeg_cmd(cmd: list[str]) -> None:
     if return_code != 0:
         error_msg = stderr.decode().strip()
         raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
+
+
+def generate_file_name(url: str, default_suffix: str | None = None) -> str:
+    # 根据 url 获取文件后缀
+    path = Path(urlparse(url).path)
+    suffix = path.suffix if path.suffix else default_suffix
+    # 获取 url 的 md5 值
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
+    file_name = f"{url_hash}{suffix}"
+    return file_name

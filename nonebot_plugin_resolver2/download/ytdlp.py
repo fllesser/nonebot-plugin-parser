@@ -7,7 +7,7 @@ import yt_dlp
 
 from nonebot_plugin_resolver2.config import PROXY, plugin_cache_dir
 
-from .common import generate_file_name
+from .utils import generate_file_name
 
 
 # 使用定长字典缓存链接信息，最多保存 20 个条目

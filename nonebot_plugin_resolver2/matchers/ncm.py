@@ -6,7 +6,7 @@ from nonebot.plugin import on_message
 
 from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME
 from nonebot_plugin_resolver2.constant import COMMON_HEADER
-from nonebot_plugin_resolver2.download.common import download_audio
+from nonebot_plugin_resolver2.download import download_audio
 
 from .filter import is_not_in_disabled_groups
 from .preprocess import ExtractText, Keyword, r_keywords
