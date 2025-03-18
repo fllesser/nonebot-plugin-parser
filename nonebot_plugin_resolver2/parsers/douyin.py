@@ -41,7 +41,6 @@ class DouYin(BaseParser):
                 continue
         raise ParseException("failed to parse video url from share_url")
 
-    # @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, url: str) -> VideoInfo:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=self.default_headers, ssl=False) as response:
