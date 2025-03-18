@@ -110,7 +110,7 @@ async def ytdlp_download_audio(url: str, cookiefile: Path | None = None) -> Path
     if audio_path.exists():
         return audio_path
     ydl_opts = {
-        "outtmpl": f"{plugin_cache_dir} / {file_name}.%(ext)s",
+        "outtmpl": f"{plugin_cache_dir / file_name}.%(ext)s",
         "format": "bestaudio/best",
         "postprocessors": [
             {
