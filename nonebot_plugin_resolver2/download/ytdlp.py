@@ -105,7 +105,7 @@ async def ytdlp_download_audio(url: str, cookiefile: Path | None = None) -> Path
     Returns:
         Path: audio file path
     """
-    audio_path = plugin_cache_dir / generate_file_name(url, ".flac")
+    audio_path = plugin_cache_dir / generate_file_name(url)
     if audio_path.exists():
         return audio_path
     ydl_opts = {
