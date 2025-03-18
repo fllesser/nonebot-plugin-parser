@@ -15,7 +15,7 @@ from nonebot.params import CommandArg
 from nonebot.plugin.on import on_command, on_message
 
 from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
-from nonebot_plugin_resolver2.download.common import (
+from nonebot_plugin_resolver2.download import (
     download_file_by_stream,
     download_imgs_without_raise,
     merge_av,
