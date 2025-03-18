@@ -7,7 +7,7 @@ import yt_dlp
 
 from nonebot_plugin_resolver2.config import PROXY, plugin_cache_dir
 
-from .utils import delete_boring_characters
+from .utils import generate_file_name
 
 
 # 使用定长字典缓存链接信息，最多保存 20 个条目
@@ -76,13 +76,12 @@ async def ytdlp_download_video(url: str, cookiefile: Path | None = None) -> Path
         Path: video file path
     """
     info_dict = await get_video_info(url, cookiefile)
-    title = delete_boring_characters(info_dict.get("title", "titleless")[:50])
     duration = int(info_dict.get("duration", 600))
-    video_path = plugin_cache_dir / f"{title}.mp4"
+    video_path = plugin_cache_dir / generate_file_name(url, ".mp4")
     if video_path.exists():
         return video_path
     ydl_opts = {
-        "outtmpl": f"{plugin_cache_dir / title}.%(ext)s",
+        "outtmpl": f"{video_path}",
         "merge_output_format": "mp4",
         "format": f"bv[filesize<={duration // 10 + 10}M]+ba/b[filesize<={duration // 8 + 10}M]",
         "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
@@ -106,18 +105,17 @@ async def ytdlp_download_audio(url: str, cookiefile: Path | None = None) -> Path
     Returns:
         Path: audio file path
     """
-    info_dict = await get_video_info(url, cookiefile)
-    title = delete_boring_characters(info_dict.get("title", "titleless")[:50])
-    audio_path = plugin_cache_dir / f"{title}.mp3"
+    file_name = generate_file_name(url)
+    audio_path = plugin_cache_dir / f"{file_name}.flac"
     if audio_path.exists():
         return audio_path
     ydl_opts = {
-        "outtmpl": f"{plugin_cache_dir / title}.%(ext)s",
+        "outtmpl": f"{plugin_cache_dir / file_name}.%(ext)s",
         "format": "bestaudio/best",
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
+                "preferredcodec": "flac",
                 "preferredquality": "0",
             }
         ],

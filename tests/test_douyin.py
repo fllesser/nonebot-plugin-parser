@@ -35,22 +35,21 @@ async def test_douyin_old_video():
     https://v.douyin.com/iUrHrruH
     """
 
-    from nonebot_plugin_resolver2.parsers.douyin import DouYin
-
-    parser = DouYin()
-
-    url = "https://v.douyin.com/iUrHrruH"
-    logger.info(f"开始解析抖音西瓜视频 {url}")
-    video_info = await parser.parse_share_url(url)
-    logger.debug(f"title: {video_info.title}")
-    assert video_info.title
-    logger.debug(f"author: {video_info.author}")
-    assert video_info.author
-    logger.debug(f"cover_url: {video_info.cover_url}")
-    assert video_info.cover_url
-    logger.debug(f"video_url: {video_info.video_url}")
-    assert video_info.video_url
-    logger.success(f"抖音西瓜视频解析成功 {url}")
+    # from nonebot_plugin_resolver2.parsers.douyin import DouYin
+    # parser = DouYin()
+    # 该作品已删除，暂时忽略
+    # url = "https://v.douyin.com/iUrHrruH"
+    # logger.info(f"开始解析抖音西瓜视频 {url}")
+    # video_info = await parser.parse_share_url(url)
+    # logger.debug(f"title: {video_info.title}")
+    # assert video_info.title
+    # logger.debug(f"author: {video_info.author}")
+    # assert video_info.author
+    # logger.debug(f"cover_url: {video_info.cover_url}")
+    # assert video_info.cover_url
+    # logger.debug(f"video_url: {video_info.video_url}")
+    # assert video_info.video_url
+    # logger.success(f"抖音西瓜视频解析成功 {url}")
 
 
 async def test_douyin_note():

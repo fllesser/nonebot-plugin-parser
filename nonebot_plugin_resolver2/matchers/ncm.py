@@ -6,7 +6,8 @@ from nonebot.plugin import on_message
 
 from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME
 from nonebot_plugin_resolver2.constant import COMMON_HEADER
-from nonebot_plugin_resolver2.download.common import download_audio
+from nonebot_plugin_resolver2.download import download_audio
+from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
 
 from .filter import is_not_in_disabled_groups
 from .preprocess import ExtractText, Keyword, r_keywords
@@ -51,9 +52,8 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         await ncm.finish(f"{share_prefix}错误: {e}")
     await ncm.send(f"{share_prefix}{ncm_title} {ncm_singer}" + MessageSegment.image(ncm_cover))
     # 下载音频文件后会返回一个下载路径
-    file_name = f"{ncm_title}-{ncm_singer}.flac"
     try:
-        audio_path = await download_audio(ncm_music_url, file_name)
+        audio_path = await download_audio(ncm_music_url)
     except Exception:
         await ncm.send("音频下载失败，请联系机器人管理员", reply_message=True)
         raise
@@ -61,4 +61,6 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件
     if NEED_UPLOAD:
+        file_name = keep_zh_en_num(f"{ncm_title}-{ncm_singer}")
+        file_name = f"{file_name}.flac"
         await ncm.send(get_file_seg(audio_path, file_name))

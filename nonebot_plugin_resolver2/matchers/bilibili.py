@@ -15,7 +15,7 @@ from nonebot.params import CommandArg
 from nonebot.plugin.on import on_command, on_message
 
 from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
-from nonebot_plugin_resolver2.download.common import (
+from nonebot_plugin_resolver2.download import (
     download_file_by_stream,
     download_imgs_without_raise,
     merge_av,
@@ -217,11 +217,11 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
 
             # 下载视频和音频
             v_path, a_path = await asyncio.gather(
-                download_file_by_stream(video_url, f"{prefix}-video.m4s", ext_headers=HEADERS),
-                download_file_by_stream(audio_url, f"{prefix}-audio.m4s", ext_headers=HEADERS),
+                download_file_by_stream(video_url, file_name=f"{prefix}-video.m4s", ext_headers=HEADERS),
+                download_file_by_stream(audio_url, file_name=f"{prefix}-audio.m4s", ext_headers=HEADERS),
             )
 
-            await merge_av(v_path, a_path, video_path)
+            await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
     except Exception:
         await bilibili.send("视频下载失败, 请联系机器人管理员", reply_message=True)
         raise
@@ -268,7 +268,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
             if auio_stream is None:
                 return await bili_music.finish("没有获取到可用音频流")
             audio_url = auio_stream.url
-            await download_file_by_stream(audio_url, audio_name, ext_headers=HEADERS)
+            await download_file_by_stream(audio_url, file_name=audio_name, ext_headers=HEADERS)
     except Exception:
         await bili_music.send("音频下载失败, 请联系机器人管理员", reply_message=True)
         raise

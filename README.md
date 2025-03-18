@@ -98,13 +98,15 @@
 
 <details open>
 <summary>安装必要组件</summary>
-<summary>部分解析都依赖于 ffmpeg</summary>
+大部分解析都依赖于 ffmpeg
 
-    # ubuntu/debian
+ubuntu/debian
+
     sudo apt-get install ffmpeg
-    ffmpeg -version
-    # 其他 linux 参考(原项目推荐): https://gitee.com/baihu433/ffmpeg
-    # Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
+
+其他 linux 参考(原项目推荐): https://gitee.com/baihu433/ffmpeg
+
+Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 </details>
 
 ## ⚙️ 配置

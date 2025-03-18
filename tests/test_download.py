@@ -4,7 +4,7 @@ from nonebot.log import logger
 def test_generate_file_name():
     import random
 
-    from nonebot_plugin_resolver2.download.common import generate_file_name
+    from nonebot_plugin_resolver2.download.utils import generate_file_name
 
     suffix_lst = [".jpg", ".png", ".gif", ".webp", ".jpeg", ".bmp", ".tiff", ".ico", ".svg", ".heic", ".heif"]
     # 测试 100 个链接
