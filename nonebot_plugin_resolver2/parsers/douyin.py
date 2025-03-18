@@ -4,7 +4,7 @@ import re
 import aiohttp
 from nonebot.log import logger
 
-from .base import BaseParser, VideoAuthor, VideoInfo
+from .base import BaseParser, ParseException, VideoAuthor, VideoInfo
 
 
 class DouYin(BaseParser):
@@ -29,7 +29,6 @@ class DouYin(BaseParser):
             _type, video_id = match.group(1), match.group(2)
             if _type == "slides":
                 return await self.parse_slides(video_id)
-        all_error = ""
         for url in [
             iesdouyin_url,
             self._m_douyin_by_video_id(_type, video_id),
@@ -38,11 +37,9 @@ class DouYin(BaseParser):
             try:
                 return await self.parse_video(url)
             except Exception as e:
-                error = f"failed to parse video url from {url[:60]}, error: {e}"
-                logger.warning(error)
-                all_error += error + "\n"
+                logger.warning(f"failed to parse video url from {url[:60]}, error: {e}")
                 continue
-        raise Exception(all_error)
+        raise ParseException("failed to parse video url from share_url")
 
     # @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
     async def parse_video(self, url: str) -> VideoInfo:
