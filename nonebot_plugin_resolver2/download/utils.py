@@ -43,7 +43,7 @@ async def exec_ffmpeg_cmd(cmd: list[str]) -> None:
         raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
 
 
-def generate_file_name(url: str, default_suffix: str | None = None) -> str:
+def generate_file_name(url: str, default_suffix: str = "") -> str:
     # 根据 url 获取文件后缀
     path = Path(urlparse(url).path)
     suffix = path.suffix if path.suffix else default_suffix
