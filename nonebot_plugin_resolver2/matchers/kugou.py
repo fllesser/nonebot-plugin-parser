@@ -6,7 +6,7 @@ from nonebot.plugin.on import on_message
 
 from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME
 from nonebot_plugin_resolver2.download import download_audio
-from nonebot_plugin_resolver2.download.utils import delete_boring_characters
+from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
 from nonebot_plugin_resolver2.parsers.kugou import KuGou
 
 from .filter import is_not_in_disabled_groups
@@ -47,5 +47,5 @@ async def _(text: str = ExtractText()):
     await kugou.send(MessageSegment.record(audio_path))
     # 发送群文件
     if NEED_UPLOAD:
-        filename = f"{delete_boring_characters(title_author_name)}.flac"
+        filename = f"{keep_zh_en_num(title_author_name)}.flac"
         await kugou.finish(get_file_seg(audio_path, filename))

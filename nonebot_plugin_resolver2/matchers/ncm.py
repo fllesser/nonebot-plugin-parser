@@ -7,6 +7,7 @@ from nonebot.plugin import on_message
 from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME
 from nonebot_plugin_resolver2.constant import COMMON_HEADER
 from nonebot_plugin_resolver2.download import download_audio
+from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
 
 from .filter import is_not_in_disabled_groups
 from .preprocess import ExtractText, Keyword, r_keywords
@@ -60,5 +61,6 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件
     if NEED_UPLOAD:
-        file_name = f"{ncm_title}-{ncm_singer}.flac"
+        file_name = keep_zh_en_num(f"{ncm_title}-{ncm_singer}")
+        file_name = f"{file_name}.flac"
         await ncm.send(get_file_seg(audio_path, file_name))
