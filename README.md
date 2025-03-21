@@ -17,6 +17,12 @@
 <a href="https://github.com/astral-sh/ruff">
     <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json" alt="ruff">
 </a>
+<a href="https://github.com/astral-sh/uv">
+    <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json" alt="uv">
+</a>
+
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/fllesser/nonebot-plugin-resolver2/master.svg)](https://results.pre-commit.ci/latest/github/fllesser/nonebot-plugin-resolver2/master)
+
 </div>
 
 > [!IMPORTANT]
@@ -121,7 +127,7 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 |        r_bili_ck         |  否   |           ""            |                  B站 cookie, 可不填，若填写，必须含有 SESSDATA 项，可附加 B 站 AI 总结功能,如果需要长期使用此凭据则不应该在**浏览器登录账户**导致 Cookies 被刷新，建议注册个小号获取 cookie                   |
 |         r_ytb_ck         |  否   |           ""            |                                                                             Youtube cookie, Youtube 视频因人机检测下载失败，需填                                                                              |
 |       r_is_oversea       |  否   |          False          |                                                                                海外服务器部署，或者使用了透明代理，设置为 True                                                                                |
-|         r_proxy          |  否   | 'http://127.0.0.1:7890' |                                                                                    # 代理，仅在 r_is_oversea=False 时生效                                                                                     |
+|         r_proxy          |  否   | 'http://127.0.0.1:7890' |                                                                                    代理，仅在 `r_is_oversea=False` 时生效                                                                                     |
 |      r_need_upload       |  否   |          False          |                                                                                         音频解析，是否需要上传群文件                                                                                          |
 |      r_need_forward      |  否   |          True           |                                                                                      **不超过** 4 条的解析消息是否需要合并转发，配置为 False ，超过4条的解析消息仍然会用合并转发包裹                                                                                     |
 | r_video_duration_maximum |  否   |           480           |                                                                                         视频最大解析长度，单位：_秒_                                                                                          |
