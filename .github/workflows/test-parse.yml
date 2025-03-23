@@ -10,7 +10,7 @@ jobs:
   parse-url-test:
     runs-on: ubuntu-latest
     env:
-      LOG_LEVEL: INFO
+      LOG_LEVEL: DEBUG
     strategy:
       matrix:
         python-version:
