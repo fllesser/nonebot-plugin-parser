@@ -1,6 +1,10 @@
 # from nonebot.log import logger
 
 
+def test_douyin():
+    pass
+
+
 # async def test_douyin_common_video():
 #     """
 #     测试普通视频
