@@ -117,16 +117,18 @@ async def test_douyin_oversea():
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 Edg/132.0.0.0"  # noqa: E501
     }
 
+    ext_headers = {"Server": "volc-dcdn"}
+
     async with aiohttp.ClientSession() as session:
         async with session.get(
             "https://m.douyin.com/share/note/7484675353898667274",
-            headers=ios_headers,
+            headers=ios_headers | ext_headers,
         ) as response:
             # headers
-            logger.info("headers")
+            logger.debug("headers")
             for key, value in response.headers.items():
-                logger.info(f"{key}: {value}")
-            logger.info(f"status: {response.status}")
+                logger.debug(f"{key}: {value}")
+            logger.debug(f"status: {response.status}")
             response.raise_for_status()
             text = await response.text()
-            logger.info(text)
+            logger.debug(text)
