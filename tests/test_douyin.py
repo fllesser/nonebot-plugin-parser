@@ -122,6 +122,11 @@ async def test_douyin_oversea():
             "https://m.douyin.com/share/note/7484675353898667274",
             headers=ios_headers,
         ) as response:
+            # headers
+            logger.info("headers")
+            for key, value in response.headers.items():
+                logger.info(f"{key}: {value}")
+            logger.info(f"status: {response.status}")
             response.raise_for_status()
             text = await response.text()
             logger.info(text)
