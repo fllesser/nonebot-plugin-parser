@@ -100,7 +100,7 @@ class DouYin(BaseParser):
         find_res = pattern.search(text)
 
         if not find_res or not find_res.group(1):
-            raise ValueError("parse video json info from html fail")
+            raise ParseException("can't find _ROUTER_DATA in html")
 
         json_data = json.loads(find_res.group(1).strip())
 
@@ -114,14 +114,14 @@ class DouYin(BaseParser):
         elif NOTE_ID_PAGE_KEY in json_data["loaderData"]:
             original_video_info = json_data["loaderData"][NOTE_ID_PAGE_KEY]["videoInfoRes"]
         else:
-            raise Exception("failed to parse Videos or Photo Gallery info from json")
+            raise ParseException("failed to parse Videos or Photo Gallery info from json")
 
         # 如果没有视频信息，获取并抛出异常
         if len(original_video_info["item_list"]) == 0:
             err_detail_msg = "failed to parse video info from HTML"
             if len(filter_list := original_video_info["filter_list"]) > 0:
                 err_detail_msg = filter_list[0]["detail_msg"]
-            raise Exception(err_detail_msg)
+            raise ParseException(err_detail_msg)
 
         return original_video_info["item_list"][0]
 
@@ -141,7 +141,7 @@ class DouYin(BaseParser):
                 resp = await resp.json()
         detail = resp.get("aweme_details")
         if not detail:
-            raise ValueError("链接作品不存在")
+            raise ParseException("can't find aweme_details in json")
         data = detail[0]
         title = data.get("share_info").get("share_desc_info")
         images = []

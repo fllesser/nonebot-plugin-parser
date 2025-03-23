@@ -108,3 +108,20 @@ async def test_douyin_slides():
     logger.debug(f"images: {video_info.images}")
     assert video_info.images
     logger.success(f"抖音图集(含视频解析出静态图片)解析成功 {static_image_url}")
+
+
+async def test_douyin_oversea():
+    import aiohttp
+
+    ios_headers = {
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 Edg/132.0.0.0"  # noqa: E501
+    }
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://m.douyin.com/share/note/7484675353898667274",
+            headers=ios_headers,
+        ) as response:
+            response.raise_for_status()
+            text = await response.text()
+            logger.info(text)
