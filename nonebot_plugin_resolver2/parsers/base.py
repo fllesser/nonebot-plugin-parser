@@ -60,14 +60,6 @@ class BaseParser(ABC):
         """
         pass
 
-    @abstractmethod
-    async def parse_video_id(self, video_id: str) -> VideoInfo:
-        """
-        :param video_id: 视频ID
-        :return: VideoInfo
-        """
-        pass
-
     async def get_redirect_url(self, url: str) -> str:
         """
         获取重定向后的URL

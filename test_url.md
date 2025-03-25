@@ -58,6 +58,7 @@ xiaohongshu:
 - https://www.xiaohongshu.com/discovery/item/67c41945000000002802b2e2?source=webshare&xhsshare=pc_web&xsec_token=ABS6rGbAmdjNtTuLqfAB2aR0oDioMqDezM4Hx5EeDFGSI=&xsec_source=pc_share
 
 weibo:
+- https://video.weibo.com/show?fid=1034:5145615399845897
 - https://weibo.com/7207262816/P5kWdcfDe
 - https://weibo.com/7207262816/O70aCbjnd
 - http://m.weibo.cn/status/5112672433738061
