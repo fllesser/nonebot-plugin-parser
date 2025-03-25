@@ -12,5 +12,6 @@ async def test_x():
         # "https://x.com/Fortnite/status/1904222508657561750",  # image
     ]
     for url in urls:
+        logger.info(f"开始解析 {url}")
         video_url, pic_url = await parse_x_url(url)
-        logger.info(f"资源 url: {video_url or pic_url}")
+        logger.info(f"视频或图片: {video_url or pic_url}")
