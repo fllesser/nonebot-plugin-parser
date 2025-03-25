@@ -2,7 +2,7 @@ import math
 import re
 
 import aiohttp
-from nonebot.adapters.onebot.v11 import Bot, MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.plugin.on import on_keyword
 from nonebot.rule import Rule
 
@@ -22,7 +22,7 @@ weibo = on_keyword(keywords={"weibo.com", "m.weibo.cn"}, rule=Rule(is_not_in_dis
 
 
 @weibo.handle()
-async def _(bot: Bot, event: MessageEvent):
+async def _(event: MessageEvent):
     message = event.message.extract_plain_text().strip()
     share_prefix = f"{NICKNAME}解析 | 微博 - "
     # fid
@@ -82,6 +82,8 @@ async def _(bot: Bot, event: MessageEvent):
         # 发送图片
         segs = [MessageSegment.image(img_path) for img_path in image_paths]
         # 发送异步后的数据
+        if not segs:
+            await weibo.finish("微博图床失效，下载图片失败，详见 log")
         await send_segments(weibo, segs)
         await weibo.finish()
 
