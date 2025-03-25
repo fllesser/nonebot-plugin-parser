@@ -16,4 +16,5 @@ async def test_weibo_pics():
     for url in urls:
         logger.info(f"开始解析 {url}")
         video_info = await weibo.parse_share_url(url)
+        logger.info(f"解析结果: {video_info}")
         assert video_info.video_url or video_info.images
