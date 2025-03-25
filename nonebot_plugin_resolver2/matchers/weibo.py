@@ -33,4 +33,5 @@ async def _(event: MessageEvent):
         await weibo.finish(await get_video_seg(video_path))
     if video_info.images:
         image_paths = await download_imgs_without_raise(video_info.images, ext_headers=ext_headers)
-        await send_segments(weibo, [MessageSegment.image(f) for f in image_paths])
+        if image_paths:
+            await send_segments(weibo, [MessageSegment.image(f) for f in image_paths])

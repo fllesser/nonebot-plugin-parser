@@ -4,7 +4,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_weibo_pics():
-    from nonebot_plugin_resolver2.download import download_imgs_without_raise, download_video
+    from nonebot_plugin_resolver2.download import download_img
     from nonebot_plugin_resolver2.parsers.weibo import WeiBo
 
     ext_headers = {
@@ -25,11 +25,13 @@ async def test_weibo_pics():
     for url in urls:
         logger.info(f"开始解析 {url}")
         video_info = await weibo.parse_share_url(url)
-        if video_info.video_url:
-            # 下载视频
-            video_path = await download_video(video_info.video_url, ext_headers=ext_headers)
-            logger.info(f"视频下载成功 {video_path}")
+        # if video_info.video_url:
+        #     # 下载视频
+        #     video_path = await download_video(video_info.video_url, ext_headers=ext_headers)
+        #     logger.info(f"视频下载成功 {video_path}")
         if video_info.images:
             # 下载图片
-            image_paths = await download_imgs_without_raise(video_info.images, ext_headers=ext_headers)
-            logger.info(f"图片下载成功 {image_paths}")
+            for image in video_info.images:
+                logger.info(f"开始下载图片 {image}")
+                image_path = await download_img(image, ext_headers=ext_headers)
+                logger.info(f"图片下载成功 {image_path}")
