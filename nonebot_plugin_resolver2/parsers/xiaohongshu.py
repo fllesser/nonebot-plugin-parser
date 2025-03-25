@@ -52,7 +52,7 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
     json_str = matched.group(1)
     json_str = json_str.replace("undefined", "null")
     json_obj = json.loads(json_str)
-
+    # print keys
     note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
     # 资源类型 normal 图，video 视频
     resource_type = note_data["type"]
