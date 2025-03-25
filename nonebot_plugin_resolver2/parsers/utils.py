@@ -14,9 +14,9 @@ def get_val_from_url_by_query_key(url: str, query_key: str) -> str:
     try:
         query_val = url_query[query_key][0]
     except KeyError:
-        raise KeyError(f"url中不存在query参数: {query_key}")
+        raise KeyError(f"url 中不存在 {query_key} 参数")
 
     if len(query_val) == 0:
-        raise ValueError(f"url中query参数值长度为0: {query_key}")
+        raise ValueError(f"url 中 {query_key} 参数值为空")
 
-    return url_query[query_key][0]
+    return query_val

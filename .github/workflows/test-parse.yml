@@ -48,6 +48,10 @@ jobs:
       run: |
         python -m pytest -v -s tests/test_xhs.py
     
+    - name: Run Weibo Tests
+      run: |
+        python -m pytest -v -s tests/test_weibo.py
+    
     - name: Run Download tests
       run: |
         python -m pytest -v -s tests/test_download.py
