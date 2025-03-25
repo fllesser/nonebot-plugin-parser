@@ -54,6 +54,3 @@ class KuGou(BaseParser):
         #     video_url="",
         #     author=VideoAuthor(name=song_info.get("author_name")),
         # )
-
-    async def parse_video_id(self, video_id: str) -> VideoInfo:
-        return await super().parse_video_id(video_id)
