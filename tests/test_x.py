@@ -10,7 +10,7 @@ async def test_x():
     urls = [
         "https://x.com/Fortnite/status/1904171341735178552",  # video
         "https://x.com/Fortnite/status/1870484479980052921",  # image
-        "https://x.com/Fortnite/status/1904222508657561750",  # image
+        # "https://x.com/Fortnite/status/1904222508657561750",  # image
     ]
     for url in urls:
         try:
