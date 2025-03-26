@@ -155,3 +155,5 @@ uv.lock
 cache
 data
 config
+
+.DS_Store
