@@ -11,16 +11,16 @@ from nonebot_plugin_resolver2.constant import COMMON_HEADER
 
 from .utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
 
-# 创建一个全局 session 对象
-_session: aiohttp.ClientSession | None = None
+# 全局 session
+_SESSION: aiohttp.ClientSession | None = None
 
 
 async def _get_session() -> aiohttp.ClientSession:
-    """获取或创建全局 session 对象"""
-    global _session
-    if _session is None or _session.closed:
-        _session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300, connect=10.0))
-    return _session
+    """获取或创建全局 session"""
+    global _SESSION
+    if _SESSION is None or _SESSION.closed:
+        _SESSION = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300, connect=10.0))
+    return _SESSION
 
 
 async def download_file_by_stream(
@@ -40,36 +40,40 @@ async def download_file_by_stream(
 
     Returns:
         Path: file path
+
+    Raises:
+        aiohttp.ClientError: When download fails
+        asyncio.TimeoutError: When download times out
     """
-    # file_name = file_name if file_name is not None else parse_url_resource_name(url)
     if not file_name:
         file_name = generate_file_name(url)
     file_path = plugin_cache_dir / file_name
+
+    # 如果文件存在，则直接返回
     if file_path.exists():
         return file_path
 
-    headers = COMMON_HEADER.copy()
-    if ext_headers is not None:
-        headers.update(ext_headers)
+    headers = {**COMMON_HEADER, **(ext_headers or {})}
 
-    session = await _get_session()
     try:
+        session = await _get_session()
         async with session.get(url, headers=headers, proxy=proxy) as resp, aiofiles.open(file_path, "wb") as file:
             resp.raise_for_status()
-            with tqdm(
-                total=int(resp.headers.get("Content-Length", 0)),
-                unit="B",
-                unit_scale=True,
-                unit_divisor=1024,
-                dynamic_ncols=True,
-                colour="green",
-            ) as bar:
-                # 设置前缀信息
-                bar.set_description(file_name)
+            tqdm_kwargs = {
+                "total": int(resp.headers.get("Content-Length", 0)),
+                "unit": "B",
+                "unit_scale": True,
+                "unit_divisor": 1024,
+                "dynamic_ncols": True,
+                "colour": "green",
+                "desc": file_name,
+            }
+            with tqdm(**tqdm_kwargs) as bar:
                 async for chunk in resp.content.iter_chunked(1024 * 1024):
                     await file.write(chunk)
                     bar.update(len(chunk))
     except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        await safe_unlink(file_path)
         logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常{e}")
         raise
 
@@ -93,6 +97,10 @@ async def download_video(
 
     Returns:
         Path: video file path
+
+    Raises:
+        aiohttp.ClientError: When download fails
+        asyncio.TimeoutError: When download times out
     """
     if video_name is None:
         video_name = generate_file_name(url, ".mp4")
@@ -116,6 +124,10 @@ async def download_audio(
 
     Returns:
         Path: audio file path
+
+    Raises:
+        aiohttp.ClientError: When download fails
+        asyncio.TimeoutError: When download times out
     """
     if audio_name is None:
         audio_name = generate_file_name(url, ".mp3")
@@ -139,6 +151,10 @@ async def download_img(
 
     Returns:
         Path: image file path
+
+    Raises:
+        aiohttp.ClientError: When download fails
+        asyncio.TimeoutError: When download times out
     """
     if img_name is None:
         img_name = generate_file_name(url, ".jpg")
