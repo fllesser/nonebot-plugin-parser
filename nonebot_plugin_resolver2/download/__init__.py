@@ -59,16 +59,15 @@ async def download_file_by_stream(
         session = await _get_session()
         async with session.get(url, headers=headers, proxy=proxy) as resp, aiofiles.open(file_path, "wb") as file:
             resp.raise_for_status()
-            tqdm_kwargs = {
-                "total": int(resp.headers.get("Content-Length", 0)),
-                "unit": "B",
-                "unit_scale": True,
-                "unit_divisor": 1024,
-                "dynamic_ncols": True,
-                "colour": "green",
-                "desc": file_name,
-            }
-            with tqdm(**tqdm_kwargs) as bar:
+            with tqdm(
+                total=int(resp.headers.get("Content-Length", 0)),
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+                dynamic_ncols=True,
+                colour="green",
+                desc=file_name,
+            ) as bar:
                 async for chunk in resp.content.iter_chunked(1024 * 1024):
                     await file.write(chunk)
                     bar.update(len(chunk))
