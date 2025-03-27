@@ -33,16 +33,31 @@ async def _():
     if not rconfig.r_xhs_ck:
         if xiaohongshu := resolvers.pop("xiaohongshu", None):
             xiaohongshu.destroy()
-            logger.warning("未配置小红书 cookie, 小红书解析器已销毁")
-    # 处理黑名单 resovler
+            logger.warning("未配置小红书 cookie, 小红书解析已关闭")
+
+    # 关闭全局禁用的解析
     for resolver in rconfig.r_disable_resolvers:
         if matcher := resolvers.get(resolver, None):
             matcher.destroy()
-            logger.warning(f"解析器 {resolver} 已销毁")
+            logger.warning(f"{resolver} 解析已关闭")
 
 
 @scheduler.scheduled_job("cron", hour=1, minute=0, id="resolver2-clean-local-cache")
-async def _():
-    for file in plugin_cache_dir.iterdir():
-        if file.is_file():
-            file.unlink()
+async def clean_plugin_cache():
+    import asyncio
+
+    from nonebot_plugin_resolver2.download.utils import safe_unlink
+
+    try:
+        files = [f for f in plugin_cache_dir.iterdir() if f.is_file()]
+        if not files:
+            logger.info("No cache files to clean")
+            return
+
+        # 并发删除文件
+        tasks = [safe_unlink(file) for file in files]
+        await asyncio.gather(*tasks)
+
+        logger.info(f"Successfully cleaned {len(files)} cache files")
+    except Exception as e:
+        logger.error(f"Error while cleaning cache: {e}")
