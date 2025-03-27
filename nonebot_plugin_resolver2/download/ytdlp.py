@@ -10,8 +10,11 @@ from nonebot_plugin_resolver2.config import PROXY, plugin_cache_dir
 from .utils import generate_file_name
 
 
-# 使用定长字典缓存链接信息，最多保存 20 个条目
 class LimitedSizeDict(OrderedDict):
+    """
+    定长字典
+    """
+
     def __init__(self, *args, max_size=20, **kwargs):
         self.max_size = max_size
         super().__init__(*args, **kwargs)
