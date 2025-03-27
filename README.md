@@ -1,11 +1,11 @@
 <div align="center">
-    <a href="https://v2.nonebot.dev/store">
-    <img src="https://raw.githubusercontent.com/fllesser/nonebot-plugin-template/refs/heads/resource/.docs/NoneBotPlugin.svg" width="300" alt="logo"></a>
-</div>
+<a href="https://v2.nonebot.dev/store">
+    <img src="https://raw.githubusercontent.com/fllesser/nonebot-plugin-template/refs/heads/resource/.docs/NoneBotPlugin.svg" width="280" alt="logo">
+</a>
 
-<div align="center">
+# nonebot-plugin-resolver2
 
-## ✨ 链接分享自动解析 ✨
+_✨ [Nonebot2](https://github.com/nonebot/nonebot2) 链接分享自动解析插件 ✨_
 
 <a href="./LICENSE">
     <img src="https://img.shields.io/github/license/fllesser/nonebot-plugin-resolver2.svg" alt="license">
@@ -129,7 +129,7 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 |       r_is_oversea       |  否   |          False          |                                                                                海外服务器部署，或者使用了透明代理，设置为 True                                                                                |
 |         r_proxy          |  否   | 'http://127.0.0.1:7890' |                                                                                    代理，仅在 `r_is_oversea=False` 时生效                                                                                     |
 |      r_need_upload       |  否   |          False          |                                                                                         音频解析，是否需要上传群文件                                                                                          |
-|      r_need_forward      |  否   |          True           |                                                                                      **不超过** 4 条的解析消息是否需要合并转发，配置为 False ，超过4条的解析消息仍然会用合并转发包裹                                                                                     |
+|      r_need_forward      |  否   |          True           |                                                        **不超过** 4 条的解析消息是否需要合并转发，配置为 False ，超过4条的解析消息仍然会用合并转发包裹                                                        |
 | r_video_duration_maximum |  否   |           480           |                                                                                         视频最大解析长度，单位：_秒_                                                                                          |
 |   r_disable_resolvers    |  否   |           []            | 全局禁止的解析，示例 r_disable_resolvers=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kugou", "twitter", "ncm", "ytb", "acfun", "tiktok", "weibo", "xiaohongshu"] |
 
