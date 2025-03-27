@@ -29,17 +29,22 @@ async def _():
         logger.warning("未配置哔哩哔哩 cookie，无法使用哔哩哔哩AI总结，可能无法解析 720p 以上画质视频")
     if rconfig.r_ytb_ck:
         save_cookies_to_netscape(rconfig.r_ytb_ck, ytb_cookies_file, "youtube.com")
-        logger.info(f"保存 youtube cookie 到 {ytb_cookies_file}")
+        logger.debug(f"保存 youtube cookie 到 {ytb_cookies_file}")
+
+    destroy_resolvers: list[str] = []
     if not rconfig.r_xhs_ck:
         if xiaohongshu := resolvers.pop("xiaohongshu", None):
             xiaohongshu.destroy()
             logger.warning("未配置小红书 cookie, 小红书解析已关闭")
+            destroy_resolvers.append("xiaohongshu")
 
     # 关闭全局禁用的解析
     for resolver in rconfig.r_disable_resolvers:
         if matcher := resolvers.get(resolver, None):
             matcher.destroy()
-            logger.warning(f"{resolver} 解析已关闭")
+            destroy_resolvers.append(resolver)
+    if destroy_resolvers:
+        logger.warning(f"已关闭解析: {', '.join(destroy_resolvers)}")
 
 
 @scheduler.scheduled_job("cron", hour=1, minute=0, id="resolver2-clean-local-cache")

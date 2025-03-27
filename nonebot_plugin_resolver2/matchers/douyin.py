@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 
 from nonebot import on_keyword
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
 from nonebot.log import logger
 from nonebot.rule import Rule
 
@@ -21,7 +21,7 @@ douyin_parser = DouYin()
 
 
 @douyin.handle()
-async def _(bot: Bot, event: MessageEvent):
+async def _(event: MessageEvent):
     # 消息
     msg: str = event.message.extract_plain_text().strip()
     # 正则匹配

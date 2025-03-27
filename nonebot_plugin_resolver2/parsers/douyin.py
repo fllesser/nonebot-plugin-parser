@@ -1,5 +1,6 @@
 import json
 import re
+from typing import Any
 
 import aiohttp
 from nonebot.log import logger
@@ -46,13 +47,14 @@ class DouYin(BaseParser):
             async with session.get(url, headers=self.default_headers, ssl=False) as response:
                 response.raise_for_status()
                 text = await response.text()
-                data = self.format_response(text)
+                data: dict[str, Any] = self.format_response(text)
         # 获取图集图片地址
-        images = []
+        images: list[str] = []
         # 如果data含有 images，并且 images 是一个列表
         if "images" in data and isinstance(data["images"], list):
             # 获取每个图片的url_list中的第一个元素，非空时添加到images列表中
             for img in data["images"]:
+                assert isinstance(img, dict)
                 if (
                     "url_list" in img
                     and isinstance(img["url_list"], list)
@@ -92,7 +94,7 @@ class DouYin(BaseParser):
     def _m_douyin_by_video_id(self, _type: str, video_id: str) -> str:
         return f"https://m.douyin.com/share/{_type}/{video_id}"
 
-    def format_response(self, text: str) -> dict:
+    def format_response(self, text: str) -> dict[str, Any]:
         pattern = re.compile(
             pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
             flags=re.DOTALL,
