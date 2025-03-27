@@ -1,4 +1,5 @@
 import re
+from typing import Any
 
 from bilibili_api import Credential, select_client
 from bilibili_api.article import Article
@@ -37,10 +38,10 @@ async def parse_opus(opus_id: int) -> tuple[list[str], str]:
                     if isinstance(i, dict):
                         yield from find_url(i)
 
-    urls = list(find_url(opus_info))
+    urls: list[str] = list(find_url(opus_info))
 
     dynamic = opus.turn_to_dynamic()
-    dynamic_info = await dynamic.get_info()
+    dynamic_info: dict[str, Any] = await dynamic.get_info()
     orig_text = (
         dynamic_info.get("item", {})
         .get("modules", {})
@@ -56,7 +57,7 @@ async def parse_opus(opus_id: int) -> tuple[list[str], str]:
 
 async def parse_live(room_id: int) -> tuple[str, str, str]:
     room = LiveRoom(room_display_id=room_id, credential=CREDENTIAL)
-    room_info = (await room.get_room_info())["room_info"]
+    room_info: dict[str, Any] = (await room.get_room_info())["room_info"]
     title, cover, keyframe = (
         room_info["title"],
         room_info["cover"],
@@ -108,10 +109,12 @@ async def parse_read(read_id: int) -> tuple[list[str], list[str]]:
 
 
 async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
-    fav_list = (await get_video_favorite_list_content(fav_id))["medias"][:50]
-    texts = []
-    urls = []
-    for fav in fav_list:
+    fav_list: dict[str, Any] = await get_video_favorite_list_content(fav_id)
+    # 取前 50 个
+    medias_50: list[dict[str, Any]] = fav_list["medias"][:50]
+    texts: list[str] = []
+    urls: list[str] = []
+    for fav in medias_50:
         title, cover, intro, link = (
             fav["title"],
             fav["cover"],

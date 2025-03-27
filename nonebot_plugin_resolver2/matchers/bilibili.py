@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 import re
+from typing import Any
 
 import aiohttp
 from bilibili_api import (
@@ -21,7 +22,7 @@ from nonebot_plugin_resolver2.download import (
     merge_av,
     re_encode_video,
 )
-from nonebot_plugin_resolver2.download.utils import delete_boring_characters
+from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
 from nonebot_plugin_resolver2.parsers.bilibili import CREDENTIAL, parse_favlist, parse_live, parse_opus, parse_read
 
 from .filter import is_not_in_disabled_groups
@@ -47,7 +48,7 @@ PATTERNS: dict[str, re.Pattern] = {
 
 
 @bilibili.handle()
-async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
+async def _(text: str = ExtractText(), keyword: str = Keyword()):
     share_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
     match = PATTERNS[keyword].search(text)
     if not match:
@@ -156,7 +157,7 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
     # 合并转发消息 list
     segs = []
     try:
-        video_info = await v.get_info()
+        video_info: dict[str, Any] = await v.get_info()
     except Exception as e:
         await bilibili.finish(f"{share_prefix}出错 {e}")
     await bilibili.send(f"{share_prefix}视频")
@@ -166,12 +167,13 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
         video_info["desc"],
         video_info["duration"],
     )
-    # 校准 分 p 的情况
+    # 处理分 p
     page_num = (int(page_num) - 1) if page_num else 0
     if (pages := video_info.get("pages")) and len(pages) > 1:
         # 解析URL
         if url and (match := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
             page_num = int(match.group(1)) - 1
+        assert isinstance(pages, list)
         # 取模防止数组越界
         page_num = page_num % len(pages)
         p_video = pages[page_num]
@@ -241,48 +243,57 @@ async def _(bot: Bot, text: str = ExtractText(), keyword: str = Keyword()):
 @bili_music.handle()
 async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     text = args.extract_plain_text().strip()
-    match = re.match(r"^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?$", text)
-    if not match:
+    matched = re.match(r"^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?$", text)
+    if not matched:
         await bili_music.finish("命令格式: bm BV1LpD3YsETa [集数](中括号表示可选)")
+
+    # 回应用户
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
-    bvid, p_num = match.group(1), match.group(2)
+    bvid, p_num = matched.group(1), matched.group(2)
+
+    # 处理分 p
     p_num = int(p_num) - 1 if p_num else 0
     v = video.Video(bvid=bvid, credential=CREDENTIAL)
     try:
-        video_info: dict = await v.get_info()
+        video_info: dict[str, Any] = await v.get_info()
         video_title: str = video_info.get("title", "")
         if pages := video_info.get("pages"):
+            assert isinstance(pages, list)
+            # 取模防止数组越界
             p_num = p_num % len(pages)
             p_video = pages[p_num]
             # video_duration = p_video.get('duration', video_duration)
             if p_name := p_video.get("part").strip():
                 video_title = p_name
-        video_title = delete_boring_characters(video_title)
+        video_title = keep_zh_en_num(video_title)
         audio_name = f"{video_title}.mp3"
         audio_path = plugin_cache_dir / audio_name
         if not audio_path.exists():
             download_url_data = await v.get_download_url(page_index=p_num)
             detecter = VideoDownloadURLDataDetecter(download_url_data)
             streams = detecter.detect_best_streams()
-            auio_stream = streams[1]
-            if auio_stream is None:
+            audio_stream = streams[1]
+            if audio_stream is None:
                 return await bili_music.finish("没有获取到可用音频流")
-            audio_url = auio_stream.url
+            audio_url = audio_stream.url
             await download_file_by_stream(audio_url, file_name=audio_name, ext_headers=HEADERS)
     except Exception:
         await bili_music.send("音频下载失败, 请联系机器人管理员", reply_message=True)
         raise
+
+    # 发送音频
     await bili_music.send(MessageSegment.record(audio_path))
+    # 上传音频
     if NEED_UPLOAD:
         await bili_music.send(get_file_seg(audio_path))
 
 
-def extra_bili_info(video_info: dict) -> str:
+def extra_bili_info(video_info: dict[str, Any]) -> str:
     """
     格式化视频信息
     """
     # 获取视频统计数据
-    video_state = video_info["stat"]
+    video_state: dict[str, Any] = video_info["stat"]
 
     # 定义需要展示的数据及其显示名称
     stats_mapping = [

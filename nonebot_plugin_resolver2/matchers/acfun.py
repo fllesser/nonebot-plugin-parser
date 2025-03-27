@@ -1,6 +1,7 @@
 import asyncio
 import json
 import re
+from typing import Any
 
 import aiofiles
 import aiohttp
@@ -115,7 +116,7 @@ def escape_special_chars(str_json):
     return str_json.replace('\\\\"', '\\"').replace('\\"', '"')
 
 
-def parse_video_name(video_info: dict):
+def parse_video_name(video_info: dict[str, Any]):
     """
     获取视频信息
     :param video_info:
@@ -131,7 +132,7 @@ def parse_video_name(video_info: dict):
     return raw
 
 
-async def merge_ac_file_to_mp4(ts_names, file_name):
+async def merge_ac_file_to_mp4(ts_names, file_name: str) -> None:
     concat_str = "\n".join([f"file {i}.ts" for i, d in enumerate(ts_names)])
 
     filetxt = plugin_cache_dir / "file.txt"
@@ -169,7 +170,7 @@ async def merge_ac_file_to_mp4(ts_names, file_name):
         raise RuntimeError(f"ffmpeg 执行失败: {error_msg}")
 
 
-def parse_video_name_fixed(video_info: dict):
+def parse_video_name_fixed(video_info: dict) -> str:
     """
     校准文件名
     :param video_info:

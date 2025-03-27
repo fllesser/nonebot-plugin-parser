@@ -31,35 +31,46 @@ async def test_bilibili_read():
 
 
 async def test_bilibili_opus():
+    from nonebot_plugin_resolver2.download import download_imgs_without_raise
+    from nonebot_plugin_resolver2.parsers.bilibili import parse_opus
+
     logger.info(
         "开始解析B站动态 https://www.bilibili.com/opus/998440765151510535, https://www.bilibili.com/opus/1040093151889457152"
     )
-    from nonebot_plugin_resolver2.parsers.bilibili import parse_opus
-
     # - https://www.bilibili.com/opus/998440765151510535
     # - https://www.bilibili.com/opus/1040093151889457152
     opus_ids = [998440765151510535, 1040093151889457152]
     for opus_id in opus_ids:
         urls, orig_text = await parse_opus(opus_id)
-        logger.debug(urls)
         assert urls
-        logger.debug(orig_text)
+        logger.debug(urls)
+
+        files = await download_imgs_without_raise(urls)
+        assert len(files) == len(urls)
+
         assert orig_text
+        logger.debug(orig_text)
     logger.success("B站动态解析成功")
 
 
 @pytest.mark.asyncio
 async def test_bilibili_favlist():
-    logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
+    from nonebot_plugin_resolver2.download import download_imgs_without_raise
     from nonebot_plugin_resolver2.parsers.bilibili import parse_favlist
 
+    logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
     # https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
     fav_id = 311147541
     texts, urls = await parse_favlist(fav_id)
-    logger.debug(texts)
+
     assert texts
-    logger.debug(urls)
+    logger.debug(texts)
+
     assert urls
+    logger.debug(urls)
+
+    files = await download_imgs_without_raise(urls)
+    assert len(files) == len(urls)
     logger.success("B站收藏夹解析成功")
 
 
