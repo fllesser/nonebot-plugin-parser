@@ -3,9 +3,7 @@
     <img src="https://raw.githubusercontent.com/fllesser/nonebot-plugin-template/refs/heads/resource/.docs/NoneBotPlugin.svg" width="310" alt="logo">
 </a>
 
-# nonebot-plugin-resolver2
-
-_✨ [Nonebot2](https://github.com/nonebot/nonebot2) 链接分享自动解析插件 ✨_
+## ✨ [Nonebot2](https://github.com/nonebot/nonebot2) 链接分享自动解析插件 ✨
 
 <a href="./LICENSE">
     <img src="https://img.shields.io/github/license/fllesser/nonebot-plugin-resolver2.svg" alt="license">
