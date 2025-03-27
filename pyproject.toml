@@ -50,7 +50,6 @@ plugins = ["nonebot_plugin_resolver2"]
 # members = ["nonebot_plugin_template", "tests"]
 
 [tool.pytest.ini_options]
-# testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 pythonpath = [".", "nonebot_plugin_resolver2", "tests"]
