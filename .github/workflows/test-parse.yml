@@ -38,24 +38,24 @@ jobs:
 
     - name: Run Bilibili Tests
       run: |
-        python -m pytest -v -s tests/test_bilibili.py
+        uv run pytest tests/test_bilibili.py
 
     - name: Run Douyin Tests
       run: |
-        python -m pytest -v -s tests/test_douyin.py
+        uv run pytest tests/test_douyin.py
     
     - name: Run Xiaohongshu Tests
       run: |
-        python -m pytest -v -s tests/test_xhs.py
+        uv run pytest tests/test_xhs.py
     
     - name: Run Weibo Tests
       run: |
-        python -m pytest -v -s tests/test_weibo.py
+        uv run pytest tests/test_weibo.py
     
     - name: Run Twitter Tests
       run: |
-        python -m pytest -v -s tests/test_x.py
+        uv run pytest tests/test_x.py
     
     - name: Run Download tests
       run: |
-        python -m pytest -v -s tests/test_download.py
+        uv run pytest tests/test_download.py

@@ -53,6 +53,16 @@ plugins = ["nonebot_plugin_resolver2"]
 # testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
+pythonpath = [".", "nonebot_plugin_resolver2", "tests"]
+addopts = [
+  "-v",                # 详细输出
+  "-s",                # 显示打印信息
+  "--tb=short",        # 简短的错误回溯
+  "-ra",               # 显示所有测试结果摘要
+  "--strict-markers",  # 严格标记模式
+  # "--doctest-modules", # 运行文档测试
+  "--import-mode=prepend"  # 导入模式
+]
 
 [tool.ruff]
 line-length = 120

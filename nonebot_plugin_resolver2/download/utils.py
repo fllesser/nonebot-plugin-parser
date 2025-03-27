@@ -4,18 +4,7 @@ from pathlib import Path
 import re
 from urllib.parse import urlparse
 
-from nonebot.log import logger
-
-
-def delete_boring_characters(sentence: str) -> str:
-    """
-    去除标题的特殊字符
-    """
-    return re.sub(
-        r'[’!"∀〃\$%&\'\(\)\*\+,\./:;<=>\?@，。?★/、…【】《》？“”‘’！\[\\\]\^_`\{\|\}~～]+',
-        "",
-        sentence,
-    )
+from nonebot import logger
 
 
 def keep_zh_en_num(text: str) -> str:
