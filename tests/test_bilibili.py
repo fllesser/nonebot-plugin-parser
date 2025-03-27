@@ -9,10 +9,11 @@ async def test_bilibili_live():
     # https://live.bilibili.com/23585383
     room_id = 23585383
     title, cover, _ = await parse_live(room_id)
-    logger.debug(title)
     assert title
-    logger.debug(cover)
+    logger.debug(f"title: {title}")
+
     assert cover.startswith("https://i0.hdslb.com/")
+    logger.debug(f"cover: {cover}")
     logger.success("B站直播解析成功")
 
 
@@ -23,10 +24,11 @@ async def test_bilibili_read():
     # https://www.bilibili.com/read/cv523868
     read_id = 523868
     texts, urls = await parse_read(read_id)
-    logger.debug(texts)
     assert texts
-    logger.debug(urls)
+    logger.debug(f"texts: {texts}")
+
     assert urls
+    logger.debug(f"urls: {urls}")
     logger.success("B站图文解析成功")
 
 
