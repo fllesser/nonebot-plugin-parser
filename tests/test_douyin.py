@@ -124,10 +124,7 @@ async def test_douyin_oversea():
     # ext_headers = {"Server": "volc-dcdn"}
     # ios_headers.update(ext_headers)
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://m.douyin.com/share/note/7484675353898667274",
-            headers=ios_headers
-        ) as response:
+        async with session.get("https://m.douyin.com/share/note/7484675353898667274", headers=ios_headers) as response:
             # headers
             logger.debug("headers")
             for key, value in response.headers.items():
