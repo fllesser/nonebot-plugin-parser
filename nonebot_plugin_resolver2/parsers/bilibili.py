@@ -1,7 +1,7 @@
 import re
 from typing import Any
 
-from bilibili_api import Credential, select_client
+from bilibili_api import Credential, request_settings, select_client
 from bilibili_api.article import Article
 from bilibili_api.favorite_list import get_video_favorite_list_content
 from bilibili_api.live import LiveRoom
@@ -10,6 +10,8 @@ from bilibili_api.opus import Opus
 from nonebot_plugin_resolver2.config import rconfig
 from nonebot_plugin_resolver2.cookie import cookies_str_to_dict
 
+from .base import ParseException
+
 CREDENTIAL: Credential | None = (
     Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck)) if rconfig.r_bili_ck else None
 )
@@ -17,28 +19,28 @@ CREDENTIAL: Credential | None = (
 # 选择客户端
 select_client("curl_cffi")
 # 模仿浏览器
-# request_settings.set("impersonate", "chrome131")
+request_settings.set("impersonate", "chrome131")
+# 第二参数数值参考 curl_cffi 文档
+# https://curl-cffi.readthedocs.io/en/latest/impersonate.html
 
 
 async def parse_opus(opus_id: int) -> tuple[list[str], str]:
+    """解析动态信息
+
+    Args:
+        opus_id (int): 动态 id
+
+    Returns:
+        tuple[list[str], str]: 图片 url 列表和动态信息
+    """
     opus = Opus(opus_id, CREDENTIAL)
     opus_info = await opus.get_info()
     if not isinstance(opus_info, dict):
-        raise Exception("获取动态信息失败")
+        raise ParseException("获取动态信息失败")
 
-    # 递归查找 opus_info 里所有键为 url 的 value
-    def find_url(d: dict):
-        for k, v in d.items():
-            if k == "url":
-                yield v
-            if isinstance(v, dict):
-                yield from find_url(v)
-            if isinstance(v, list):
-                for i in v:
-                    if isinstance(i, dict):
-                        yield from find_url(i)
-
-    urls: list[str] = list(find_url(opus_info))
+    # 获取图片信息
+    urls = await opus.get_images_raw_info()
+    urls = [url["url"] for url in urls]
 
     dynamic = opus.turn_to_dynamic()
     dynamic_info: dict[str, Any] = await dynamic.get_info()
@@ -56,6 +58,14 @@ async def parse_opus(opus_id: int) -> tuple[list[str], str]:
 
 
 async def parse_live(room_id: int) -> tuple[str, str, str]:
+    """解析直播信息
+
+    Args:
+        room_id (int): 直播 id
+
+    Returns:
+        tuple[str, str, str]: 标题、封面、关键帧
+    """
     room = LiveRoom(room_display_id=room_id, credential=CREDENTIAL)
     room_info: dict[str, Any] = (await room.get_room_info())["room_info"]
     title, cover, keyframe = (
@@ -109,6 +119,15 @@ async def parse_read(read_id: int) -> tuple[list[str], list[str]]:
 
 
 async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
+    """解析收藏夹信息
+
+    Args:
+        fav_id (int): 收藏夹 id
+
+    Returns:
+        tuple[list[str], list[str]]: 标题、封面、简介、链接
+    """
+
     fav_list: dict[str, Any] = await get_video_favorite_list_content(fav_id)
     # 取前 50 个
     medias_50: list[dict[str, Any]] = fav_list["medias"][:50]
@@ -131,12 +150,20 @@ async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
 
 
 async def parse_video_info(*, bvid: str | None = None, avid: int | None = None) -> None:
-    pass
+    raise NotImplementedError
 
 
 async def parse_video_download_url(
     *, bvid: str | None = None, avid: int | None = None, page_index: int = 0
 ) -> tuple[str, str]:
+    """解析视频下载链接
+
+    Args:
+        bvid (str | None): bvid
+        avid (int | None): avid
+        page_index (int): 页码
+    """
+
     from bilibili_api.video import Video, VideoDownloadURLDataDetecter
 
     if avid:

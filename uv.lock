@@ -200,7 +200,7 @@ wheels = [
 
 [[package]]
 name = "bilibili-api-python"
-version = "17.1.3"
+version = "17.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "apscheduler" },
@@ -216,9 +216,9 @@ dependencies = [
     { name = "qrcode-terminal" },
     { name = "yarl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/04/0f/11f374ae385ef510020322d5de7ea83ca42e1b533895e44f939af0e7e380/bilibili_api_python-17.1.3.tar.gz", hash = "sha256:993067db480a561c5d2bbb3fd0a702db90b5bb09c5972594b95ea32b88e7ad81", size = 1402174 }
+sdist = { url = "https://files.pythonhosted.org/packages/af/5e/793d4806010ce7112de4a63ef336249ff7634241cfab43382862ab4f4fac/bilibili_api_python-17.1.4.tar.gz", hash = "sha256:5a67eb7f8ac9cca934f3c66858d9a847d988f4d8cb2891a3a394180d6cf0b950", size = 1405817 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/be/2f6cdcd59b6cb3d2864a2b155dad82bac3fcdcefa23d0b9104b8878f5328/bilibili_api_python-17.1.3-py3-none-any.whl", hash = "sha256:b6c1c5b4c3990031d3de294391b5735980351a5a1af956e4644886d5810767e7", size = 371524 },
+    { url = "https://files.pythonhosted.org/packages/0b/90/cf19554d8ccd8429737913837359ac93d5f017850ce9b87cf551c180c780/bilibili_api_python-17.1.4-py3-none-any.whl", hash = "sha256:44f21b39f7b7e6a4ce773de4850568b84bbfbbdf7bd98f4a38aa116b040a011b", size = 374588 },
 ]
 
 [[package]]
@@ -889,7 +889,7 @@ wheels = [
 
 [[package]]
 name = "nonebot-plugin-resolver2"
-version = "1.7.7"
+version = "1.7.8"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },
@@ -920,14 +920,14 @@ test = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
     { name = "aiohttp", specifier = ">=3.10.5,<4.0.0" },
-    { name = "bilibili-api-python", specifier = ">=17.1.3,<18.0.0" },
+    { name = "bilibili-api-python", specifier = ">=17.1.4,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.8.0,<1.0.0" },
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6,<3.0.0" },
     { name = "nonebot-plugin-apscheduler", specifier = ">=0.5.0,<1.0.0" },
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
     { name = "nonebot2", specifier = ">=2.4.2,<3.0.0" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
-    { name = "yt-dlp", specifier = ">=2025.3.26" },
+    { name = "yt-dlp", specifier = ">=2025.3.27" },
 ]
 
 [package.metadata.requires-dev]
@@ -1852,9 +1852,9 @@ wheels = [
 
 [[package]]
 name = "yt-dlp"
-version = "2025.3.26"
+version = "2025.3.27"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ea/c6/3aa1988043494a03a28fdf308cdd1cb8d432f4e9a54d2d9d22f785db5dba/yt_dlp-2025.3.26.tar.gz", hash = "sha256:47456172bc7a88dba1c519fe42d80087a8f530c03d2cbf24e060a41f8f1f6ecb", size = 2962047 }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/cf/b944738d1508948e00b6d71b2305448ca4ea18fcc1c6ba0c2118270f2e82/yt_dlp-2025.3.27.tar.gz", hash = "sha256:30cb078f803b539b2a66521c5ec86d328c07f74aeca9440069e58619c299cf15", size = 2963084 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/33/67b8be5e72f730ee142c6f6b0481738c21b482e84068cac7efd68c072088/yt_dlp-2025.3.26-py3-none-any.whl", hash = "sha256:5e3c6464bf7ab61739a7238fe42c922515795350533eff1335eab78b4f624375", size = 3221410 },
+    { url = "https://files.pythonhosted.org/packages/9d/8a/d4a533d5bb37e6459fbbf3f801a5f8bffafe78e364a9981ab571a7038db8/yt_dlp-2025.3.27-py3-none-any.whl", hash = "sha256:bef4105af0f25c13c1a505daf46142af45d9312dc2c3553651db083e6860e641", size = 3221898 },
 ]
