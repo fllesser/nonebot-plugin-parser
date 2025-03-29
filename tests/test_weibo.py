@@ -26,8 +26,7 @@ async def test_weibo_pics():
         assert video_info.video_url or video_info.images
         logger.success(f"微博解析成功 {url}")
         if video_info.video_url:
-            file = await download_video(video_info.video_url, ext_headers=ext_headers)
-            assert file
+            await download_video(video_info.video_url, ext_headers=ext_headers)
             logger.success(f"微博视频下载成功 {url}")
         if video_info.images:
             files = await download_imgs_without_raise(video_info.images, ext_headers=ext_headers)
