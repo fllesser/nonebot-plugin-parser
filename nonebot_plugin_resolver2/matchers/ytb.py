@@ -59,7 +59,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
         logger.error(f"{media_type}下载失败 | {url} | {e}", exc_info=True)
         await ytb.send(f"{media_type}下载失败, 请联系机器人管理员", reply_message=True)
     if video_path:
-        await ytb.send(await get_video_seg(video_path))
+        await ytb.send(get_video_seg(video_path))
     elif audio_path:
         await ytb.send(MessageSegment.record(audio_path))
         if NEED_UPLOAD:

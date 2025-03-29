@@ -1,11 +1,12 @@
 import re
 
-from nonebot.adapters.onebot.v11 import Bot, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageSegment
 from nonebot.log import logger
 from nonebot.plugin.on import on_message
 
 from nonebot_plugin_resolver2.config import NICKNAME
-from nonebot_plugin_resolver2.download import download_imgs_without_raise
+from nonebot_plugin_resolver2.download import download_imgs_without_raise, download_video
+from nonebot_plugin_resolver2.parsers.base import ParseException
 from nonebot_plugin_resolver2.parsers.xiaohongshu import parse_url
 
 from .filter import is_not_in_disabled_groups
@@ -16,7 +17,7 @@ xiaohongshu = on_message(rule=is_not_in_disabled_groups & r_keywords("xiaohongsh
 
 
 @xiaohongshu.handle()
-async def _(bot: Bot, text: str = ExtractText()):
+async def _(text: str = ExtractText()):
     matched = re.search(
         r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",
         text,
@@ -26,7 +27,7 @@ async def _(bot: Bot, text: str = ExtractText()):
         return
     try:
         title_desc, img_urls, video_url = await parse_url(matched.group(0))
-    except Exception as e:
+    except ParseException as e:
         logger.error(f"解析小红书失败: {e}")
         await xiaohongshu.finish(f"{NICKNAME}解析 | 小红书 - 笔记不存在或 cookie 过期")
     if img_urls:
@@ -38,4 +39,5 @@ async def _(bot: Bot, text: str = ExtractText()):
         await xiaohongshu.finish()
     elif video_url:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 视频 - {title_desc}")
-        await xiaohongshu.finish(await get_video_seg(url=video_url))
+        video_path = await download_video(video_url)
+        await xiaohongshu.finish(get_video_seg(video_path))

@@ -27,10 +27,11 @@ async def _(event: MessageEvent):
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
         "referer": "https://weibo.com/",
     }
+
     await weibo.send(f"{pub_prefix}{video_info.title} - {video_info.author.name}")
     if video_info.video_url:
         video_path = await download_video(video_info.video_url, ext_headers=ext_headers)
-        await weibo.finish(await get_video_seg(video_path))
+        await weibo.finish(get_video_seg(video_path))
     if video_info.images:
         image_paths = await download_imgs_without_raise(video_info.images, ext_headers=ext_headers)
         if image_paths:

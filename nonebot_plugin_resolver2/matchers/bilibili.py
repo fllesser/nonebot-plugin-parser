@@ -228,7 +228,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         await bilibili.send("视频下载失败, 请联系机器人管理员", reply_message=True)
         raise
     try:
-        await bilibili.send(await get_video_seg(video_path))
+        await bilibili.send(get_video_seg(video_path))
     except ActionFailed as e:
         message: str = e.info.get("message", "")
         # 无缩略图
@@ -236,8 +236,8 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             raise
         # 重新编码为 h264
         logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
-        h264_path = await re_encode_video(video_path)
-        await bilibili.send(await get_video_seg(h264_path))
+        h264_video_path = await re_encode_video(video_path)
+        await bilibili.send(get_video_seg(h264_video_path))
 
 
 @bili_music.handle()

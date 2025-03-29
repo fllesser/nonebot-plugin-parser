@@ -40,7 +40,7 @@ async def _(event: MessageEvent):
 
     try:
         video_path = await ytdlp_download_video(url=url)
-        res = await get_video_seg(video_path)
+        res = get_video_seg(video_path)
     except Exception as e:
         res = f"{share_prefix}下载视频失败 {e}"
 

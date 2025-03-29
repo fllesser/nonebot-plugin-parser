@@ -177,9 +177,15 @@ async def download_imgs_without_raise(urls: list[str], ext_headers: dict[str, st
 
 
 async def merge_av(*, v_path: Path, a_path: Path, output_path: Path) -> None:
+    """合并视频和音频
+
+    Args:
+        v_path (Path): 视频文件路径
+        a_path (Path): 音频文件路径
+        output_path (Path): 输出文件路径
+    """
     logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
 
-    # 显式指定流映射
     cmd = [
         "ffmpeg",
         "-y",
