@@ -19,8 +19,8 @@ from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKN
 from nonebot_plugin_resolver2.download import (
     download_file_by_stream,
     download_imgs_without_raise,
+    encode_video_to_h264,
     merge_av,
-    re_encode_video,
 )
 from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
 from nonebot_plugin_resolver2.parsers.bilibili import CREDENTIAL, parse_favlist, parse_live, parse_opus, parse_read
@@ -236,7 +236,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             raise
         # 重新编码为 h264
         logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
-        h264_video_path = await re_encode_video(video_path)
+        h264_video_path = await encode_video_to_h264(video_path)
         await bilibili.send(get_video_seg(h264_video_path))
 
 

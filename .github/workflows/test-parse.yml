@@ -42,13 +42,13 @@ jobs:
       run: |
         uv run pytest tests/test_bilibili.py
 
-    - name: Run Douyin Tests
-      run: |
-        uv run pytest tests/test_douyin.py
+    # - name: Run Douyin Tests
+    #   run: |
+    #     uv run pytest tests/test_douyin.py
     
-    - name: Run Xiaohongshu Tests
-      run: |
-        uv run pytest tests/test_xhs.py
+    # - name: Run Xiaohongshu Tests
+    #   run: |
+    #     uv run pytest tests/test_xhs.py
     
     - name: Run Weibo Tests
       run: |

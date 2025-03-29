@@ -207,6 +207,13 @@ async def merge_av(*, v_path: Path, a_path: Path, output_path: Path) -> None:
 
 
 async def merge_av_h264(*, v_path: Path, a_path: Path, output_path: Path) -> None:
+    """合并视频和音频，并使用 H.264 编码
+
+    Args:
+        v_path (Path): 视频文件路径
+        a_path (Path): 音频文件路径
+        output_path (Path): 输出文件路径
+    """
     logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
 
     # 修改命令以确保视频使用 H.264 编码
@@ -238,8 +245,15 @@ async def merge_av_h264(*, v_path: Path, a_path: Path, output_path: Path) -> Non
     await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
 
 
-# 将视频重新编码到 h264
-async def re_encode_video(video_path: Path) -> Path:
+async def encode_video_to_h264(video_path: Path) -> Path:
+    """将视频重新编码到 h264
+
+    Args:
+        video_path (Path): 视频路径
+
+    Returns:
+        Path: 编码后的视频路径
+    """
     output_path = video_path.with_name(f"{video_path.stem}_h264{video_path.suffix}")
     if output_path.exists():
         return output_path
