@@ -2,24 +2,30 @@ from dataclasses import dataclass
 import re
 from typing import Any
 
-from bilibili_api import Credential, request_settings, select_client
+from bilibili_api import Credential
 from bilibili_api.video import Video
-
-from nonebot_plugin_resolver2.config import rconfig
-from nonebot_plugin_resolver2.cookie import cookies_str_to_dict
 
 from .base import ParseException
 
-CREDENTIAL: Credential | None = (
-    Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck)) if rconfig.r_bili_ck else None
-)
+CREDENTIAL: Credential | None = None
 
-# 选择客户端
-select_client("curl_cffi")
-# 模仿浏览器
-request_settings.set("impersonate", "chrome131")
-# 第二参数数值参考 curl_cffi 文档
-# https://curl-cffi.readthedocs.io/en/latest/impersonate.html
+
+def init_bilibili_api():
+    """初始化 bilibili api"""
+
+    from bilibili_api import request_settings, select_client
+
+    from nonebot_plugin_resolver2.config import rconfig
+    from nonebot_plugin_resolver2.cookie import cookies_str_to_dict
+
+    # 选择客户端
+    select_client("curl_cffi")
+    # 模仿浏览器
+    request_settings.set("impersonate", "chrome131")
+    # 第二参数数值参考 curl_cffi 文档
+    # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
+    global CREDENTIAL
+    CREDENTIAL = Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck)) if rconfig.r_bili_ck else None
 
 
 async def parse_opus(opus_id: int) -> tuple[list[str], str]:

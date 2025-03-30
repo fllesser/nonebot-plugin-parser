@@ -80,15 +80,20 @@ async def test_bilibili_favlist():
 async def test_bilibili_video():
     from nonebot_plugin_resolver2.parsers.bilibili import parse_video_info
 
+    logger.info("开始解析B站视频 BV1VLk9YDEzB")
     video_info = await parse_video_info(bvid="BV1VLk9YDEzB")
     logger.debug(video_info)
+    logger.success("B站视频解析成功")
 
+    logger.info("开始解析B站视频 BV1584y167sD p40")
     video_info = await parse_video_info(bvid="BV1584y167sD", page_num=40)
     logger.debug(video_info)
+    logger.success("B站视频解析成功")
 
-    # av605821754 40
+    logger.info("开始解析B站视频 av605821754 p40")
     video_info = await parse_video_info(avid=605821754, page_num=40)
     logger.debug(video_info)
+    logger.success("B站视频解析成功")
 
 
 # @pytest.mark.asyncio
