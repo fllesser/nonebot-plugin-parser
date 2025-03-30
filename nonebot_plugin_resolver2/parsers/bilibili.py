@@ -216,7 +216,7 @@ async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, 
         video_duration = int(p_video.get("duration", video_duration))
         # 获取分集标题
         if p_name := p_video.get("part").strip():
-            title += f", 分集标题: {p_name}\n"
+            title += f"\n分集标题: {p_name}"
         # 获取分集封面
         if first_frame_url := p_video.get("first_frame"):
             cover_url = first_frame_url

@@ -152,7 +152,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             await bilibili.finish()
 
     # 获取分集数
-    page_num = (int(page_num) - 1) if page_num else 1
+    page_num = int(page_num) if page_num else 1
     if url and (matched := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
         page_num = int(matched.group(1))
     # 视频
@@ -222,7 +222,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     bvid, p_num = str(matched.group(1)), str(matched.group(2))
 
     # 处理分 p
-    p_num = (int(p_num) - 1) if p_num else 1
+    p_num = int(p_num) if p_num else 1
     video_info = await parse_video_info(bvid=bvid, page_num=p_num)
     try:
         video_title = keep_zh_en_num(video_info.title)
