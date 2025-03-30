@@ -1,5 +1,5 @@
+from nonebot import on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
-from nonebot.plugin.on import on_keyword
 from nonebot.rule import Rule
 
 from nonebot_plugin_resolver2.config import NICKNAME
@@ -7,7 +7,7 @@ from nonebot_plugin_resolver2.download import download_imgs_without_raise, downl
 from nonebot_plugin_resolver2.parsers.weibo import ParseException, WeiBo
 
 from .filter import is_not_in_disabled_groups
-from .utils import get_video_seg, send_segments
+from .helper import get_video_seg, send_segments
 
 weibo_parser = WeiBo()
 

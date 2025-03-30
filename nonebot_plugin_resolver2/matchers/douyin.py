@@ -2,9 +2,8 @@ import asyncio
 from pathlib import Path
 import re
 
-from nonebot import on_keyword
+from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
-from nonebot.log import logger
 from nonebot.rule import Rule
 
 from nonebot_plugin_resolver2.config import NICKNAME
@@ -13,7 +12,7 @@ from nonebot_plugin_resolver2.parsers.base import ParseException, VideoInfo
 from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
 from .filter import is_not_in_disabled_groups
-from .utils import get_video_seg, send_segments
+from .helper import get_video_seg, send_segments
 
 douyin = on_keyword(keywords={"douyin.com"}, rule=Rule(is_not_in_disabled_groups))
 

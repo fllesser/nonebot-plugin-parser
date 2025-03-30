@@ -1,5 +1,6 @@
 import json
 
+from nonebot import on_command
 from nonebot.adapters.onebot.v11 import (
     GROUP_ADMIN,
     GROUP_OWNER,
@@ -10,7 +11,6 @@ from nonebot.adapters.onebot.v11 import (
 )
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
-from nonebot.plugin import on_command
 from nonebot.rule import to_me
 
 from nonebot_plugin_resolver2.config import store
@@ -18,6 +18,7 @@ from nonebot_plugin_resolver2.constant import DISABLE_GROUPS
 
 
 def load_or_initialize_set() -> set[int]:
+    """加载或初始化关闭解析的名单"""
     data_file = store.get_plugin_data_file(DISABLE_GROUPS)
     # 判断是否存在
     if not data_file.exists():
@@ -26,6 +27,7 @@ def load_or_initialize_set() -> set[int]:
 
 
 def save_disabled_groups():
+    """保存关闭解析的名单"""
     data_file = store.get_plugin_data_file(DISABLE_GROUPS)
     data_file.write_text(json.dumps(list(disabled_group_set)))
 
@@ -41,10 +43,7 @@ def is_not_in_disabled_groups(event: MessageEvent) -> bool:
 
 @on_command("开启所有解析", permission=SUPERUSER, block=True).handle()
 async def _(matcher: Matcher, bot: Bot, event: PrivateMessageEvent):
-    """
-    开启所有解析
-
-    """
+    """开启所有解析"""
     disabled_group_set.clear()
     save_disabled_groups()
     await matcher.finish("所有解析已开启")
@@ -52,10 +51,7 @@ async def _(matcher: Matcher, bot: Bot, event: PrivateMessageEvent):
 
 @on_command("关闭所有解析", permission=SUPERUSER, block=True).handle()
 async def _(matcher: Matcher, bot: Bot, event: PrivateMessageEvent):
-    """
-    关闭所有解析
-
-    """
+    """关闭所有解析"""
     gid_list: list[int] = [g["group_id"] for g in await bot.get_group_list()]
     disabled_group_set.update(gid_list)
     save_disabled_groups()
@@ -69,12 +65,7 @@ async def _(matcher: Matcher, bot: Bot, event: PrivateMessageEvent):
     block=True,
 ).handle()
 async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
-    """
-    开启解析
-    :param bot:
-    :param event:
-    :return:
-    """
+    """开启解析"""
     gid = event.group_id
     if gid in disabled_group_set:
         disabled_group_set.remove(gid)
@@ -91,12 +82,7 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
     block=True,
 ).handle()
 async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
-    """
-    关闭解析
-    :param bot:
-    :param event:
-    :return:
-    """
+    """关闭解析"""
     gid = event.group_id
     if gid not in disabled_group_set:
         disabled_group_set.add(gid)
@@ -108,12 +94,7 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
 
 @on_command("查看关闭解析", permission=SUPERUSER, block=True).handle()
 async def _(matcher: Matcher, bot: Bot, event: MessageEvent):
-    """
-    查看关闭解析
-    :param bot:
-    :param event:
-    :return:
-    """
+    """查看关闭解析"""
     disable_groups = [
         str(item) + "--" + (await bot.get_group_info(group_id=item))["group_name"] for item in disabled_group_set
     ]

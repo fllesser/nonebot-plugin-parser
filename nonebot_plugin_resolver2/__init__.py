@@ -1,5 +1,4 @@
-from nonebot import get_driver
-from nonebot.log import logger
+from nonebot import get_driver, logger
 from nonebot.plugin import PluginMetadata
 
 from .config import (
@@ -20,6 +19,11 @@ __plugin_meta__ = PluginMetadata(
     homepage="https://github.com/fllesser/nonebot-plugin-resolver2",
     config=Config,
     supported_adapters={"~onebot.v11"},
+    extra={
+        "author": "fllesser",
+        "email": "fllessive@gmail.com",
+        "homepage": "https://github.com/fllesser/nonebot-plugin-resolver2",
+    },
 )
 
 

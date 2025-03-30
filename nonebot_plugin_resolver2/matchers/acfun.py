@@ -5,15 +5,14 @@ from typing import Any
 
 import aiofiles
 import aiohttp
-from nonebot import on_keyword
+from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Message, MessageEvent
-from nonebot.log import logger
 from nonebot.rule import Rule
 
 from nonebot_plugin_resolver2.config import NICKNAME, plugin_cache_dir
 
 from .filter import is_not_in_disabled_groups
-from .utils import get_video_seg
+from .helper import get_video_seg
 
 acfun = on_keyword(keywords={"acfun.cn"}, rule=Rule(is_not_in_disabled_groups))
 

@@ -4,11 +4,10 @@ import re
 
 import aiohttp
 from bilibili_api import HEADERS
+from nonebot import logger, on_command, on_message
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
 from nonebot.adapters.onebot.v11.exception import ActionFailed
-from nonebot.log import logger
 from nonebot.params import CommandArg
-from nonebot.plugin.on import on_command, on_message
 
 from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
 from nonebot_plugin_resolver2.download import (
@@ -28,8 +27,8 @@ from nonebot_plugin_resolver2.parsers.bilibili import (
 )
 
 from .filter import is_not_in_disabled_groups
+from .helper import get_file_seg, get_video_seg, send_segments
 from .preprocess import ExtractText, Keyword, r_keywords
-from .utils import get_file_seg, get_video_seg, send_segments
 
 bilibili = on_message(
     rule=is_not_in_disabled_groups & r_keywords("bilibili", "bili2233", "b23", "BV", "av"),

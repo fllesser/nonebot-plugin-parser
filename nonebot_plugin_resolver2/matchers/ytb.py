@@ -1,10 +1,9 @@
 from pathlib import Path
 import re
 
+from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
-from nonebot.log import logger
 from nonebot.params import Arg
-from nonebot.plugin.on import on_keyword
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
@@ -13,7 +12,7 @@ from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
 from nonebot_plugin_resolver2.download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 
 from .filter import is_not_in_disabled_groups
-from .utils import get_file_seg, get_video_seg
+from .helper import get_file_seg, get_video_seg
 
 ytb = on_keyword(keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disabled_groups))
 

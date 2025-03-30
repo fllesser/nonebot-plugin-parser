@@ -1,16 +1,15 @@
 import re
 
 import aiohttp
-from nonebot import on_keyword
+from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent
-from nonebot.log import logger
 from nonebot.rule import Rule
 
 from nonebot_plugin_resolver2.config import NICKNAME, PROXY
 from nonebot_plugin_resolver2.download.ytdlp import get_video_info, ytdlp_download_video
 
 from .filter import is_not_in_disabled_groups
-from .utils import get_video_seg
+from .helper import get_video_seg
 
 tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disabled_groups))
 

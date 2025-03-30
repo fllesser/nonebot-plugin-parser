@@ -233,7 +233,7 @@ async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, 
         f"📝 简介：{video_info['desc']}\n"
         f"🏄‍♂️ 总共 {online['total']} 人在观看，{online['count']} 人在网页端观看"
     )
-    ai_summary: str = ""
+    ai_summary: str = "未配置 ck 无法使用 AI 总结"
     # 获取 AI 总结
     if CREDENTIAL:
         cid = await video.get_cid(page_idx)

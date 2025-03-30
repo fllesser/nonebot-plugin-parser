@@ -8,19 +8,18 @@ from tqdm.asyncio import tqdm
 
 from nonebot_plugin_resolver2.config import plugin_cache_dir
 from nonebot_plugin_resolver2.constant import COMMON_HEADER
-
-from .utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
+from nonebot_plugin_resolver2.download.utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
 
 # 全局 session
-_SESSION: aiohttp.ClientSession | None = None
+__SESSION: aiohttp.ClientSession | None = None
 
 
-async def _get_session() -> aiohttp.ClientSession:
+async def __get_session() -> aiohttp.ClientSession:
     """获取或创建全局 session"""
-    global _SESSION
-    if _SESSION is None or _SESSION.closed:
-        _SESSION = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300, connect=10.0))
-    return _SESSION
+    global __SESSION
+    if __SESSION is None or __SESSION.closed:
+        __SESSION = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300, connect=10.0))
+    return __SESSION
 
 
 async def download_file_by_stream(
@@ -56,7 +55,7 @@ async def download_file_by_stream(
     headers = {**COMMON_HEADER, **(ext_headers or {})}
 
     try:
-        session = await _get_session()
+        session = await __get_session()
         async with session.get(url, headers=headers, proxy=proxy) as resp, aiofiles.open(file_path, "wb") as file:
             resp.raise_for_status()
             with tqdm(
@@ -272,5 +271,5 @@ async def encode_video_to_h264(video_path: Path) -> Path:
     ]
     await exec_ffmpeg_cmd(cmd)
     logger.success(f"视频重新编码为 H.264 成功: {output_path}, 大小: {output_path.stat().st_size / 1024 / 1024:.2f}MB")
-    await asyncio.gather(safe_unlink(video_path))
+    await safe_unlink(video_path)
     return output_path
