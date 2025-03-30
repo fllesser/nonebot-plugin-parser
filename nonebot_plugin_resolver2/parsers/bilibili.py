@@ -204,7 +204,7 @@ async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, 
 
     display_info: str = ""
     cover_url: str | None = None
-    title: str = ""
+    title: str = video_info["title"]
     # 处理分 p
     page_idx = page_num - 1
     if (pages := video_info.get("pages")) and len(pages) > 1:
@@ -216,7 +216,7 @@ async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, 
         video_duration = int(p_video.get("duration", video_duration))
         # 获取分集标题
         if p_name := p_video.get("part").strip():
-            title = f"分集标题: {p_name}\n"
+            title += f", 分集标题: {p_name}\n"
         # 获取分集封面
         if first_frame_url := p_video.get("first_frame"):
             cover_url = first_frame_url
