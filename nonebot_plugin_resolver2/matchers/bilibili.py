@@ -1,14 +1,9 @@
 import asyncio
 from pathlib import Path
 import re
-from typing import Any
 
 import aiohttp
-from bilibili_api import (
-    HEADERS,
-    video,
-)
-from bilibili_api.video import VideoDownloadURLDataDetecter
+from bilibili_api import HEADERS
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
 from nonebot.adapters.onebot.v11.exception import ActionFailed
 from nonebot.log import logger
@@ -18,12 +13,19 @@ from nonebot.plugin.on import on_command, on_message
 from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
 from nonebot_plugin_resolver2.download import (
     download_file_by_stream,
+    download_img,
     download_imgs_without_raise,
     encode_video_to_h264,
     merge_av,
 )
 from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
-from nonebot_plugin_resolver2.parsers.bilibili import CREDENTIAL, parse_favlist, parse_live, parse_opus, parse_read
+from nonebot_plugin_resolver2.parsers.bilibili import (
+    parse_favlist,
+    parse_live,
+    parse_opus,
+    parse_read,
+    parse_video_info,
+)
 
 from .filter import is_not_in_disabled_groups
 from .preprocess import ExtractText, Keyword, r_keywords
@@ -54,7 +56,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     if not match:
         logger.info(f"{text} 中的链接或id无效, 忽略")
         return
-    url, video_id, page_num = match.group(0), match.group(1), match.group(2)
+    url, video_id, page_num = str(match.group(0)), str(match.group(1)), int(match.group(2))
 
     # 短链重定向地址
     if keyword in ("b23", "bili2233"):
@@ -70,7 +72,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     if url and (id_type := next((i for i in ("/BV", "/av") if i in url), None)):
         if match := PATTERNS[id_type].search(url):
             keyword = id_type
-            video_id = match.group(1)
+            video_id = str(match.group(1))
     # 预发送消息列表
     segs: list[Message | MessageSegment | str] = []
     # 如果不是视频
@@ -149,84 +151,51 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             logger.warning(f"不支持的链接: {url}")
             await bilibili.finish()
 
+    # 获取分集数
+    page_num = (page_num - 1) if page_num else 1
+    if url and (matched := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
+        page_num = int(matched.group(1))
     # 视频
     if keyword in ("av", "/av"):
-        v = video.Video(aid=int(video_id), credential=CREDENTIAL)
+        video_info = await parse_video_info(avid=int(video_id), page_num=page_num)
     else:
-        v = video.Video(bvid=video_id, credential=CREDENTIAL)
-    # 合并转发消息 list
-    segs = []
-    try:
-        video_info: dict[str, Any] = await v.get_info()
-    except Exception as e:
-        await bilibili.finish(f"{share_prefix}出错 {e}")
-    await bilibili.send(f"{share_prefix}视频")
-    video_title, video_cover, video_desc, video_duration = (
-        video_info["title"],
-        video_info["pic"],
-        video_info["desc"],
-        video_info["duration"],
-    )
-    # 处理分 p
-    page_num = (int(page_num) - 1) if page_num else 0
-    if (pages := video_info.get("pages")) and len(pages) > 1:
-        # 解析URL
-        if url and (match := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
-            page_num = int(match.group(1)) - 1
-        assert isinstance(pages, list)
-        # 取模防止数组越界
-        page_num = page_num % len(pages)
-        p_video = pages[page_num]
-        video_duration = p_video.get("duration", video_duration)
-        if p_name := p_video.get("part").strip():
-            segs.append(f"分集标题: {p_name}")
-        if first_frame := p_video.get("first_frame"):
-            segs.append(MessageSegment.image(first_frame))
-    else:
-        page_num = 0
-    online = await v.get_online()
-    online_str = f"🏄‍♂️ 总共 {online['total']} 人在观看，{online['count']} 人在网页端观看"
-    segs.append(MessageSegment.image(video_cover))
-    segs.append(f"{video_title}\n{extra_bili_info(video_info)}\n📝 简介：{video_desc}\n{online_str}")
-    # 这里是总结内容，如果写了 cookie 就可以
-    if CREDENTIAL:
-        ai_conclusion = await v.get_ai_conclusion(await v.get_cid(0))
-        ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "").strip()
-        ai_summary = f"AI总结: {ai_summary}" if ai_summary else "该视频暂不支持AI总结"
-        segs.append(ai_summary)
-    if video_duration > DURATION_MAXIMUM:
+        video_info = await parse_video_info(bvid=video_id, page_num=page_num)
+
+    segs = [
+        MessageSegment.image(await download_img(video_info.cover_url)),
+        video_info.display_info,
+        video_info.ai_summary,
+    ]
+    if video_info.video_duration > DURATION_MAXIMUM:
         segs.append(
-            f"⚠️ 当前视频时长 {video_duration // 60} 分钟，超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!"
+            f"⚠️ 当前视频时长 {video_info.video_duration // 60} 分钟, "
+            f"超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!"
         )
     await send_segments(bilibili, segs)
-    if video_duration > DURATION_MAXIMUM:
-        logger.info(f"video duration > {DURATION_MAXIMUM}, do not download")
+
+    if video_info.video_duration > DURATION_MAXIMUM:
+        logger.info(f"video duration > {DURATION_MAXIMUM}, ignore download")
         return
     # 下载视频和音频
-    try:
-        prefix = f"{video_id}-{page_num}"
-        video_name = f"{prefix}.mp4"
-        video_path = plugin_cache_dir / video_name
-        if not video_path.exists():
-            download_url_data = await v.get_download_url(page_index=page_num)
-            detecter = VideoDownloadURLDataDetecter(download_url_data)
-            streams = detecter.detect_best_streams()
-            video_stream = streams[0]
-            audio_stream = streams[1]
-            if video_stream is None or audio_stream is None:
-                return await bilibili.finish(f"{share_prefix}未找到视频或音频流")
-            video_url, audio_url = video_stream.url, audio_stream.url
+    file_name_prefix = f"{video_id}-{page_num}"
+    video_path = plugin_cache_dir / f"{file_name_prefix}.mp4"
 
+    try:
+        if not video_path.exists():
             # 下载视频和音频
             v_path, a_path = await asyncio.gather(
-                download_file_by_stream(video_url, file_name=f"{prefix}-video.m4s", ext_headers=HEADERS),
-                download_file_by_stream(audio_url, file_name=f"{prefix}-audio.m4s", ext_headers=HEADERS),
+                download_file_by_stream(
+                    video_info.video_url, file_name=f"{file_name_prefix}-video.m4s", ext_headers=HEADERS
+                ),
+                download_file_by_stream(
+                    video_info.audio_url, file_name=f"{file_name_prefix}-audio.m4s", ext_headers=HEADERS
+                ),
             )
-
             await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
     except Exception:
-        await bilibili.send("视频下载失败, 请联系机器人管理员", reply_message=True)
+        await bilibili.send("视频下载失败", reply_message=True)
         raise
+    # 发送视频
     try:
         await bilibili.send(get_video_seg(video_path))
     except ActionFailed as e:
@@ -249,36 +218,19 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
 
     # 回应用户
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
-    bvid, p_num = matched.group(1), matched.group(2)
+    bvid, p_num = str(matched.group(1)), int(matched.group(2))
 
     # 处理分 p
-    p_num = int(p_num) - 1 if p_num else 0
-    v = video.Video(bvid=bvid, credential=CREDENTIAL)
+    p_num = (p_num - 1) if p_num else 1
+    video_info = await parse_video_info(bvid=bvid, page_num=p_num)
     try:
-        video_info: dict[str, Any] = await v.get_info()
-        video_title: str = video_info.get("title", "")
-        if pages := video_info.get("pages"):
-            assert isinstance(pages, list)
-            # 取模防止数组越界
-            p_num = p_num % len(pages)
-            p_video = pages[p_num]
-            # video_duration = p_video.get('duration', video_duration)
-            if p_name := p_video.get("part").strip():
-                video_title = p_name
-        video_title = keep_zh_en_num(video_title)
+        video_title = keep_zh_en_num(video_info.title)
         audio_name = f"{video_title}.mp3"
         audio_path = plugin_cache_dir / audio_name
         if not audio_path.exists():
-            download_url_data = await v.get_download_url(page_index=p_num)
-            detecter = VideoDownloadURLDataDetecter(download_url_data)
-            streams = detecter.detect_best_streams()
-            audio_stream = streams[1]
-            if audio_stream is None:
-                return await bili_music.finish("没有获取到可用音频流")
-            audio_url = audio_stream.url
-            await download_file_by_stream(audio_url, file_name=audio_name, ext_headers=HEADERS)
+            await download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=HEADERS)
     except Exception:
-        await bili_music.send("音频下载失败, 请联系机器人管理员", reply_message=True)
+        await bili_music.send("音频下载失败", reply_message=True)
         raise
 
     # 发送音频
@@ -286,32 +238,3 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     # 上传音频
     if NEED_UPLOAD:
         await bili_music.send(get_file_seg(audio_path))
-
-
-def extra_bili_info(video_info: dict[str, Any]) -> str:
-    """
-    格式化视频信息
-    """
-    # 获取视频统计数据
-    video_state: dict[str, Any] = video_info["stat"]
-
-    # 定义需要展示的数据及其显示名称
-    stats_mapping = [
-        ("点赞", "like"),
-        ("硬币", "coin"),
-        ("收藏", "favorite"),
-        ("分享", "share"),
-        ("评论", "reply"),
-        ("总播放量", "view"),
-        ("弹幕数量", "danmaku"),
-    ]
-
-    # 构建结果字符串
-    result_parts = []
-    for display_name, stat_key in stats_mapping:
-        value = video_state[stat_key]
-        # 数值超过10000时转换为万为单位
-        formatted_value = f"{value / 10000:.1f}万" if value > 10000 else str(value)
-        result_parts.append(f"{display_name}: {formatted_value}")
-
-    return " | ".join(result_parts)

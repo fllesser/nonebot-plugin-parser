@@ -164,11 +164,13 @@ async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
 class BilibiliVideoInfo:
     """Bilibili 视频信息"""
 
-    display_info: str = ""
-    cover_url: str | None = None
-    video_url: str | None = None
-    audio_url: str | None = None
-    ai_summary: str | None = None
+    title: str
+    display_info: str
+    cover_url: str
+    video_duration: int
+    video_url: str
+    audio_url: str
+    ai_summary: str
 
 
 def parse_video(*, bvid: str | None = None, avid: int | None = None) -> Video:
@@ -202,19 +204,20 @@ async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, 
 
     display_info: str = ""
     cover_url: str | None = None
+    title: str = ""
     # 处理分 p
-    page_idx = int(page_num) - 1
+    page_idx = page_num - 1
     if (pages := video_info.get("pages")) and len(pages) > 1:
-        # # 解析URL
-        # if url and (match := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
-        #     page_num = int(match.group(1)) - 1
         assert isinstance(pages, list)
         # 取模防止数组越界
         page_idx = page_idx % len(pages)
         p_video = pages[page_idx]
+        # 获取分集时长
         video_duration = int(p_video.get("duration", video_duration))
+        # 获取分集标题
         if p_name := p_video.get("part").strip():
-            display_info += f"分集标题: {p_name}\n"
+            title = f"分集标题: {p_name}\n"
+        # 获取分集封面
         if first_frame_url := p_video.get("first_frame"):
             cover_url = first_frame_url
     else:
@@ -226,12 +229,11 @@ async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, 
     online = await video.get_online()
 
     display_info = (
-        f"{video_info['title']}\n"
         f"{__extra_bili_info(video_info)}\n"
         f"📝 简介：{video_info['desc']}\n"
         f"🏄‍♂️ 总共 {online['total']} 人在观看，{online['count']} 人在网页端观看"
     )
-    ai_summary: str | None = None
+    ai_summary: str = ""
     # 获取 AI 总结
     if CREDENTIAL:
         cid = await video.get_cid(page_idx)
@@ -240,10 +242,12 @@ async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, 
         ai_summary = f"AI总结: {ai_summary}" if ai_summary else "该视频暂不支持AI总结"
 
     return BilibiliVideoInfo(
+        title=title,
         display_info=display_info,
         cover_url=cover_url if cover_url else video_info["pic"],
         video_url=video_url,
         audio_url=audio_url,
+        video_duration=video_duration,
         ai_summary=ai_summary,
     )
 
