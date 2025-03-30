@@ -162,6 +162,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         video_info = await parse_video_info(bvid=video_id, page_num=page_num)
 
     segs = [
+        video_info.title,
         MessageSegment.image(await download_img(video_info.cover_url)),
         video_info.display_info,
         video_info.ai_summary,
