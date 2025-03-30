@@ -56,7 +56,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     if not match:
         logger.info(f"{text} 中的链接或id无效, 忽略")
         return
-    url, video_id, page_num = str(match.group(0)), str(match.group(1)), str(match.group(2))
+    url, video_id, page_num = str(match.group(0)), str(match.group(1)), match.group(2)
 
     # 短链重定向地址
     if keyword in ("b23", "bili2233"):
@@ -219,7 +219,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
 
     # 回应用户
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
-    bvid, p_num = str(matched.group(1)), str(matched.group(2))
+    bvid, p_num = str(matched.group(1)), matched.group(2)
 
     # 处理分 p
     p_num = int(p_num) if p_num else 1
