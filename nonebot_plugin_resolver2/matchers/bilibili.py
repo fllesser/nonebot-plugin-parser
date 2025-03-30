@@ -56,7 +56,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     if not match:
         logger.info(f"{text} 中的链接或id无效, 忽略")
         return
-    url, video_id, page_num = str(match.group(0)), str(match.group(1)), int(match.group(2))
+    url, video_id, page_num = str(match.group(0)), str(match.group(1)), str(match.group(2))
 
     # 短链重定向地址
     if keyword in ("b23", "bili2233"):
@@ -152,7 +152,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             await bilibili.finish()
 
     # 获取分集数
-    page_num = (page_num - 1) if page_num else 1
+    page_num = (int(page_num) - 1) if page_num else 1
     if url and (matched := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
         page_num = int(matched.group(1))
     # 视频
@@ -218,10 +218,10 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
 
     # 回应用户
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
-    bvid, p_num = str(matched.group(1)), int(matched.group(2))
+    bvid, p_num = str(matched.group(1)), str(matched.group(2))
 
     # 处理分 p
-    p_num = (p_num - 1) if p_num else 1
+    p_num = (int(p_num) - 1) if p_num else 1
     video_info = await parse_video_info(bvid=bvid, page_num=p_num)
     try:
         video_title = keep_zh_en_num(video_info.title)
