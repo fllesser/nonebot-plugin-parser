@@ -5,15 +5,14 @@ from typing import Any
 
 import aiofiles
 import aiohttp
-from nonebot import on_keyword
+from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Message, MessageEvent
-from nonebot.log import logger
 from nonebot.rule import Rule
 
 from nonebot_plugin_resolver2.config import NICKNAME, plugin_cache_dir
 
 from .filter import is_not_in_disabled_groups
-from .utils import get_video_seg
+from .helper import get_video_seg
 
 acfun = on_keyword(keywords={"acfun.cn"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -32,7 +31,7 @@ async def _(event: MessageEvent) -> None:
     # logger.info(output_folder_name, output_file_name)
     await asyncio.gather(*[download_m3u8_videos(url, i) for i, url in enumerate(m3u8_full_urls)])
     await merge_ac_file_to_mp4(ts_names, output_file_name)
-    await acfun.send(await get_video_seg(plugin_cache_dir / output_file_name))
+    await acfun.send(get_video_seg(plugin_cache_dir / output_file_name))
 
 
 headers = {
@@ -42,10 +41,13 @@ headers = {
 
 
 async def parse_url(url: str):
-    """
-    解析acfun链接
-    :param url:
-    :return:
+    """解析acfun链接
+
+    Args:
+        url (str): 链接
+
+    Returns:
+        tuple: 视频链接和视频名称
     """
     url_suffix = "?quickViewId=videoInfo_new&ajaxpipe=1"
     url = url + url_suffix
@@ -70,10 +72,13 @@ async def parse_url(url: str):
 
 
 async def parse_m3u8(m3u8_url: str):
-    """
-        解析m3u8链接
-    :param m3u8_url:
-    :return:
+    """解析m3u8链接
+
+    Args:
+        m3u8_url (str): m3u8链接
+
+    Returns:
+        tuple: 视频链接和视频名称
     """
     async with aiohttp.ClientSession() as session:
         async with session.get(m3u8_url, headers=headers) as resp:
@@ -100,10 +105,11 @@ async def parse_m3u8(m3u8_url: str):
 
 
 async def download_m3u8_videos(m3u8_full_url, i):
-    """
-    批量下载m3u8
-    :param m3u8_full_urls:
-    :return:
+    """下载m3u8视频
+
+    Args:
+        m3u8_full_url (str): m3u8链接
+        i (int): 文件名
     """
     async with aiohttp.ClientSession() as session:
         async with session.get(m3u8_full_url, headers=headers) as resp:
@@ -112,15 +118,26 @@ async def download_m3u8_videos(m3u8_full_url, i):
                     await f.write(chunk)
 
 
-def escape_special_chars(str_json):
+def escape_special_chars(str_json: str) -> str:
+    """转义特殊字符
+
+    Args:
+        str_json (str): 字符串
+
+    Returns:
+        str: 转义后的字符串
+    """
     return str_json.replace('\\\\"', '\\"').replace('\\"', '"')
 
 
-def parse_video_name(video_info: dict[str, Any]):
-    """
-    获取视频信息
-    :param video_info:
-    :return:
+def parse_video_name(video_info: dict[str, Any]) -> str:
+    """获取视频信息
+
+    Args:
+        video_info (dict[str, Any]): 视频信息
+
+    Returns:
+        str: 视频信息
     """
     ac_id = "ac" + video_info["dougaId"] if video_info["dougaId"] is not None else ""
     title = video_info["title"] if video_info["title"] is not None else ""
@@ -132,7 +149,13 @@ def parse_video_name(video_info: dict[str, Any]):
     return raw
 
 
-async def merge_ac_file_to_mp4(ts_names, file_name: str) -> None:
+async def merge_ac_file_to_mp4(ts_names: list[str], file_name: str) -> None:
+    """合并ac文件到mp4
+
+    Args:
+        ts_names (list[str]): ts文件名
+        file_name (str): 文件名
+    """
     concat_str = "\n".join([f"file {i}.ts" for i, d in enumerate(ts_names)])
 
     filetxt = plugin_cache_dir / "file.txt"
@@ -171,10 +194,13 @@ async def merge_ac_file_to_mp4(ts_names, file_name: str) -> None:
 
 
 def parse_video_name_fixed(video_info: dict) -> str:
-    """
-    校准文件名
-    :param video_info:
-    :return:
+    """校准文件名
+
+    Args:
+        video_info (dict): 视频信息
+
+    Returns:
+        str: 校准后的文件名
     """
     f = parse_video_name(video_info)
     t = f.replace(" ", "-")

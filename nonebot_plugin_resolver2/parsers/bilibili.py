@@ -1,27 +1,31 @@
+from dataclasses import dataclass
 import re
 from typing import Any
 
-from bilibili_api import Credential, request_settings, select_client
-from bilibili_api.article import Article
-from bilibili_api.favorite_list import get_video_favorite_list_content
-from bilibili_api.live import LiveRoom
-from bilibili_api.opus import Opus
-
-from nonebot_plugin_resolver2.config import rconfig
-from nonebot_plugin_resolver2.cookie import cookies_str_to_dict
+from bilibili_api import Credential
+from bilibili_api.video import Video
 
 from .base import ParseException
 
-CREDENTIAL: Credential | None = (
-    Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck)) if rconfig.r_bili_ck else None
-)
+CREDENTIAL: Credential | None = None
 
-# 选择客户端
-select_client("curl_cffi")
-# 模仿浏览器
-request_settings.set("impersonate", "chrome131")
-# 第二参数数值参考 curl_cffi 文档
-# https://curl-cffi.readthedocs.io/en/latest/impersonate.html
+
+def init_bilibili_api():
+    """初始化 bilibili api"""
+
+    from bilibili_api import request_settings, select_client
+
+    from nonebot_plugin_resolver2.config import rconfig
+    from nonebot_plugin_resolver2.cookie import cookies_str_to_dict
+
+    # 选择客户端
+    select_client("curl_cffi")
+    # 模仿浏览器
+    request_settings.set("impersonate", "chrome131")
+    # 第二参数数值参考 curl_cffi 文档
+    # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
+    global CREDENTIAL
+    CREDENTIAL = Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck)) if rconfig.r_bili_ck else None
 
 
 async def parse_opus(opus_id: int) -> tuple[list[str], str]:
@@ -33,6 +37,8 @@ async def parse_opus(opus_id: int) -> tuple[list[str], str]:
     Returns:
         tuple[list[str], str]: 图片 url 列表和动态信息
     """
+    from bilibili_api.opus import Opus
+
     opus = Opus(opus_id, CREDENTIAL)
     opus_info = await opus.get_info()
     if not isinstance(opus_info, dict):
@@ -66,6 +72,8 @@ async def parse_live(room_id: int) -> tuple[str, str, str]:
     Returns:
         tuple[str, str, str]: 标题、封面、关键帧
     """
+    from bilibili_api.live import LiveRoom
+
     room = LiveRoom(room_display_id=room_id, credential=CREDENTIAL)
     room_info: dict[str, Any] = (await room.get_room_info())["room_info"]
     title, cover, keyframe = (
@@ -85,6 +93,8 @@ async def parse_read(read_id: int) -> tuple[list[str], list[str]]:
     Returns:
         list[str]: img url or text
     """
+    from bilibili_api.article import Article
+
     ar = Article(read_id)
 
     # 加载内容
@@ -127,6 +137,7 @@ async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
     Returns:
         tuple[list[str], list[str]]: 标题、封面、简介、链接
     """
+    from bilibili_api.favorite_list import get_video_favorite_list_content
 
     fav_list: dict[str, Any] = await get_video_favorite_list_content(fav_id)
     # 取前 50 个
@@ -149,29 +160,113 @@ async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
     return texts, urls
 
 
-async def parse_video_info(*, bvid: str | None = None, avid: int | None = None) -> None:
-    raise NotImplementedError
+@dataclass
+class BilibiliVideoInfo:
+    """Bilibili 视频信息"""
+
+    title: str
+    display_info: str
+    cover_url: str
+    video_duration: int
+    video_url: str
+    audio_url: str
+    ai_summary: str
+
+
+def parse_video(*, bvid: str | None = None, avid: int | None = None) -> Video:
+    """解析视频信息
+
+    Args:
+        bvid (str | None): bvid
+        avid (int | None): avid
+    """
+    if avid:
+        return Video(aid=avid, credential=CREDENTIAL)
+    elif bvid:
+        return Video(bvid=bvid, credential=CREDENTIAL)
+    else:
+        raise ParseException("avid 和 bvid 至少指定一项")
+
+
+async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, page_num: int = 1) -> BilibiliVideoInfo:
+    """解析视频信息
+
+    Args:
+        bvid (str | None): bvid
+        avid (int | None): avid
+        page_num (int): 页码
+    """
+
+    video = parse_video(bvid=bvid, avid=avid)
+    video_info: dict[str, Any] = await video.get_info()
+
+    video_duration: int = int(video_info["duration"])
+
+    display_info: str = ""
+    cover_url: str | None = None
+    title: str = video_info["title"]
+    # 处理分 p
+    page_idx = page_num - 1
+    if (pages := video_info.get("pages")) and len(pages) > 1:
+        assert isinstance(pages, list)
+        # 取模防止数组越界
+        page_idx = page_idx % len(pages)
+        p_video = pages[page_idx]
+        # 获取分集时长
+        video_duration = int(p_video.get("duration", video_duration))
+        # 获取分集标题
+        if p_name := p_video.get("part").strip():
+            title += f"\n分集: {p_name}"
+        # 获取分集封面
+        if first_frame_url := p_video.get("first_frame"):
+            cover_url = first_frame_url
+    else:
+        page_idx = 0
+
+    # 获取下载链接
+    video_url, audio_url = await parse_video_download_url(video=video, page_index=page_idx)
+    # 获取在线观看人数
+    online = await video.get_online()
+
+    display_info = (
+        f"{__extra_bili_info(video_info)}\n"
+        f"📝 简介：{video_info['desc']}\n"
+        f"🏄‍♂️ 总共 {online['total']} 人在观看，{online['count']} 人在网页端观看"
+    )
+    ai_summary: str = "未配置 ck 无法使用 AI 总结"
+    # 获取 AI 总结
+    if CREDENTIAL:
+        cid = await video.get_cid(page_idx)
+        ai_conclusion = await video.get_ai_conclusion(cid)
+        ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "").strip()
+        ai_summary = f"AI总结: {ai_summary}" if ai_summary else "该视频暂不支持AI总结"
+
+    return BilibiliVideoInfo(
+        title=title,
+        display_info=display_info,
+        cover_url=cover_url if cover_url else video_info["pic"],
+        video_url=video_url,
+        audio_url=audio_url,
+        video_duration=video_duration,
+        ai_summary=ai_summary,
+    )
 
 
 async def parse_video_download_url(
-    *, bvid: str | None = None, avid: int | None = None, page_index: int = 0
+    *, video: Video | None = None, bvid: str | None = None, avid: int | None = None, page_index: int = 0
 ) -> tuple[str, str]:
     """解析视频下载链接
 
     Args:
         bvid (str | None): bvid
         avid (int | None): avid
-        page_index (int): 页码
+        page_index (int): 页索引 = 页码 - 1
     """
 
-    from bilibili_api.video import Video, VideoDownloadURLDataDetecter
+    from bilibili_api.video import VideoDownloadURLDataDetecter
 
-    if avid:
-        video = Video(aid=avid, credential=CREDENTIAL)
-    elif bvid:
-        video = Video(bvid=bvid, credential=CREDENTIAL)
-    else:
-        raise ValueError("avid 和 bvid 至少指定一项")
+    if video is None:
+        video = parse_video(bvid=bvid, avid=avid)
     # 获取下载数据
     download_url_data = await video.get_download_url(page_index=page_index)
     detecter = VideoDownloadURLDataDetecter(download_url_data)
@@ -181,3 +276,32 @@ async def parse_video_download_url(
     if video_stream is None or audio_stream is None:
         raise ValueError("未找到视频或音频流")
     return video_stream.url, audio_stream.url
+
+
+def __extra_bili_info(video_info: dict[str, Any]) -> str:
+    """
+    格式化视频信息
+    """
+    # 获取视频统计数据
+    video_state: dict[str, Any] = video_info["stat"]
+
+    # 定义需要展示的数据及其显示名称
+    stats_mapping = [
+        ("点赞", "like"),
+        ("硬币", "coin"),
+        ("收藏", "favorite"),
+        ("分享", "share"),
+        ("评论", "reply"),
+        ("总播放量", "view"),
+        ("弹幕数量", "danmaku"),
+    ]
+
+    # 构建结果字符串
+    result_parts = []
+    for display_name, stat_key in stats_mapping:
+        value = video_state[stat_key]
+        # 数值超过10000时转换为万为单位
+        formatted_value = f"{value / 10000:.1f}万" if value > 10000 else str(value)
+        result_parts.append(f"{display_name}: {formatted_value}")
+
+    return " | ".join(result_parts)

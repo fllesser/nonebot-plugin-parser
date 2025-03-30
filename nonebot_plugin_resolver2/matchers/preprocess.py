@@ -1,8 +1,8 @@
 import json
 from typing import Any, Literal
 
+from nonebot import logger
 from nonebot.adapters.onebot.v11 import MessageEvent
-from nonebot.log import logger
 from nonebot.message import event_preprocessor
 from nonebot.params import Depends
 from nonebot.rule import Rule

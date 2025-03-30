@@ -1,8 +1,8 @@
 import re
 
 import aiohttp
+from nonebot import on_message
 from nonebot.adapters.onebot.v11 import MessageSegment
-from nonebot.plugin import on_message
 
 from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME
 from nonebot_plugin_resolver2.constant import COMMON_HEADER
@@ -10,8 +10,8 @@ from nonebot_plugin_resolver2.download import download_audio
 from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
 
 from .filter import is_not_in_disabled_groups
+from .helper import get_file_seg
 from .preprocess import ExtractText, Keyword, r_keywords
-from .utils import get_file_seg
 
 # NCM获取歌曲信息链接
 NETEASE_API_CN = "https://www.markingchen.ink"

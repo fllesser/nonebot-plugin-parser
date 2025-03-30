@@ -7,13 +7,24 @@ import aiohttp
 from nonebot_plugin_resolver2.config import rconfig
 from nonebot_plugin_resolver2.constant import COMMON_HEADER
 
+from .base import ParseException
+
 # 小红书下载链接
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"
 
 
 async def parse_url(url: str) -> tuple[str, list[str], str]:
-    """
-    解析小红书 URL
+    """解析小红书 URL
+
+    Args:
+        url (str): 小红书 URL
+
+    Raises:
+        Exception: 没有符合的小红书 URL
+        Exception: 小红书 cookies 可能已失效
+
+    Returns:
+        tuple[str, list[str], str]: 标题, 图片列表, 视频 URL
     """
     # 请求头
     headers = {
@@ -29,7 +40,7 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
     pattern = r"(?:/explore/|/discovery/item/|source=note&noteId=)(\w+)"
     matched = re.search(pattern, url)
     if not matched:
-        raise Exception("没有符合的小红书 URL")
+        raise ParseException("不支持的小红书 URL")
     xhs_id = matched.group(1)
     # 解析 URL 参数
     parsed_url = urlparse(url)
@@ -47,7 +58,7 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
     pattern = r"window.__INITIAL_STATE__=(.*?)</script>"
     matched = re.search(pattern, html)
     if not matched:
-        raise Exception("小红书 cookies 可能已失效")
+        raise ParseException("小红书 cookies 可能已失效")
 
     json_str = matched.group(1)
     json_str = json_str.replace("undefined", "null")

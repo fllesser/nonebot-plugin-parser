@@ -100,7 +100,7 @@ class WeiBo(BaseParser):
             pics = [x["large"]["url"] for x in pics]
 
         videos = page_info.get("urls")
-        video_url = videos.get("mp4_720p_mp4") or videos.get("mp4_hd_mp4") if videos else ""
+        video_url: str = videos.get("mp4_720p_mp4") or videos.get("mp4_hd_mp4") if videos else ""
 
         return VideoInfo(
             title=f"{re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}",
