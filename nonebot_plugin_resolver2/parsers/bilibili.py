@@ -287,13 +287,13 @@ def __extra_bili_info(video_info: dict[str, Any]) -> str:
 
     # 定义需要展示的数据及其显示名称
     stats_mapping = [
-        ("点赞", "like"),
-        ("硬币", "coin"),
-        ("收藏", "favorite"),
-        ("分享", "share"),
-        ("评论", "reply"),
-        ("总播放量", "view"),
-        ("弹幕数量", "danmaku"),
+        ("👍", "like"),
+        ("🪙", "coin"),
+        ("⭐", "favorite"),
+        ("↗️", "share"),
+        ("💬", "reply"),
+        ("👀", "view"),
+        # ("弹幕", "danmaku"),
     ]
 
     # 构建结果字符串
@@ -302,6 +302,6 @@ def __extra_bili_info(video_info: dict[str, Any]) -> str:
         value = video_state[stat_key]
         # 数值超过10000时转换为万为单位
         formatted_value = f"{value / 10000:.1f}万" if value > 10000 else str(value)
-        result_parts.append(f"{display_name}: {formatted_value}")
+        result_parts.append(f"{display_name} {formatted_value}")
 
     return " | ".join(result_parts)
