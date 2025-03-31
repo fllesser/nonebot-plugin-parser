@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-resolver2"
-version = "1.7.8"
+version = "1.7.9"
 description = "NoneBot2 链接分享解析器自动解析, BV号/链接/小程序/卡片 | B站/抖音/网易云/微博/小红书/youtube/tiktok/twitter/acfun"
 authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
 urls = { Repository = "https://github.com/fllesser/nonebot-plugin-resolver2" }
@@ -41,14 +41,8 @@ test = [
 
 
 [tool.nonebot]
-adapters = [
-  { name = "OnebotAdapterV11", module_name = "nonebot.adapters.onebot.v11" },
-]
 plugins = ["nonebot_plugin_resolver2"]
 
-
-[tool.uv.workspace]
-# members = ["nonebot_plugin_template", "tests"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -96,7 +90,7 @@ ignore = [
   "RUF003", # ambiguous-unicode-character-comment
   "W191",   # indentation contains tabs
   # "I001",   # isort: imports are incorrectly sorted
-  "TID252",  # 相对导入
+  "TID252", # 相对导入
 ]
 
 
