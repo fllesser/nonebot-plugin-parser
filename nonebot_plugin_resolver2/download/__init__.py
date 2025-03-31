@@ -11,15 +11,15 @@ from nonebot_plugin_resolver2.constant import COMMON_HEADER
 from nonebot_plugin_resolver2.download.utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
 
 # 全局 session
-__SESSION: aiohttp.ClientSession | None = None
+_SESSION: aiohttp.ClientSession | None = None
 
 
-async def __get_session() -> aiohttp.ClientSession:
+async def _get_session() -> aiohttp.ClientSession:
     """获取或创建全局 session"""
-    global __SESSION
-    if __SESSION is None or __SESSION.closed:
-        __SESSION = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300, connect=10.0))
-    return __SESSION
+    global _SESSION
+    if _SESSION is None or _SESSION.closed:
+        _SESSION = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=300, connect=10.0))
+    return _SESSION
 
 
 async def download_file_by_stream(
@@ -55,7 +55,7 @@ async def download_file_by_stream(
     headers = {**COMMON_HEADER, **(ext_headers or {})}
 
     try:
-        session = await __get_session()
+        session = await _get_session()
         async with session.get(url, headers=headers, proxy=proxy) as resp, aiofiles.open(file_path, "wb") as file:
             resp.raise_for_status()
             with tqdm(
