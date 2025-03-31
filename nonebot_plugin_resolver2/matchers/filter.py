@@ -13,8 +13,8 @@ from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
 from nonebot.rule import to_me
 
-from nonebot_plugin_resolver2.config import store
-from nonebot_plugin_resolver2.constant import DISABLE_GROUPS
+from ..config import store
+from ..constant import DISABLE_GROUPS
 
 
 def load_or_initialize_set() -> set[int]:

@@ -6,11 +6,10 @@ from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.rule import Rule
 
-from nonebot_plugin_resolver2.config import NICKNAME, PROXY
-from nonebot_plugin_resolver2.constant import COMMON_HEADER
-from nonebot_plugin_resolver2.download import download_img, download_video
-from nonebot_plugin_resolver2.parsers.base import ParseException
-
+from ..config import NICKNAME, PROXY
+from ..constant import COMMON_HEADER
+from ..download import download_img, download_video
+from ..parsers.base import ParseException
 from .filter import is_not_in_disabled_groups
 from .helper import get_video_seg
 

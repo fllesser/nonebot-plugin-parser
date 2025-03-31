@@ -4,8 +4,8 @@ from nonebot import get_bots
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment
 from nonebot.matcher import Matcher
 
-from nonebot_plugin_resolver2.config import NEED_FORWARD, NICKNAME
-from nonebot_plugin_resolver2.constant import VIDEO_MAX_MB
+from ..config import NEED_FORWARD, NICKNAME
+from ..constant import VIDEO_MAX_MB
 
 
 def construct_nodes(segments: MessageSegment | list[MessageSegment | Message | str]) -> Message:

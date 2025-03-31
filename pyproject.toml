@@ -96,6 +96,7 @@ ignore = [
   "RUF003", # ambiguous-unicode-character-comment
   "W191",   # indentation contains tabs
   # "I001",   # isort: imports are incorrectly sorted
+  "TID252",  # 相对导入
 ]
 
 

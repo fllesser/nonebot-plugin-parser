@@ -7,10 +7,9 @@ from nonebot.params import Arg
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
-from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME, ytb_cookies_file
-from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
-from nonebot_plugin_resolver2.download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
-
+from ..config import NEED_UPLOAD, NICKNAME, ytb_cookies_file
+from ..download.utils import keep_zh_en_num
+from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 from .filter import is_not_in_disabled_groups
 from .helper import get_file_seg, get_video_seg
 

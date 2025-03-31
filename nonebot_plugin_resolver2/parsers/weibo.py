@@ -3,8 +3,7 @@ import re
 
 import aiohttp
 
-from nonebot_plugin_resolver2.constant import COMMON_HEADER
-
+from ..constant import COMMON_HEADER
 from .base import BaseParser, ParseException, VideoAuthor, VideoInfo
 
 WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"

@@ -6,9 +6,9 @@ import aiohttp
 from nonebot.log import logger
 from tqdm.asyncio import tqdm
 
-from nonebot_plugin_resolver2.config import plugin_cache_dir
-from nonebot_plugin_resolver2.constant import COMMON_HEADER
-from nonebot_plugin_resolver2.download.utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
+from ..config import plugin_cache_dir
+from ..constant import COMMON_HEADER
+from .utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
 
 # 全局 session
 _SESSION: aiohttp.ClientSession | None = None
