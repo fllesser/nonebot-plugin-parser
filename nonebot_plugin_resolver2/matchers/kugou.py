@@ -3,11 +3,10 @@ import re
 from nonebot import logger, on_message
 from nonebot.adapters.onebot.v11 import MessageSegment
 
-from nonebot_plugin_resolver2.config import NEED_UPLOAD, NICKNAME
-from nonebot_plugin_resolver2.download import download_audio
-from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
-from nonebot_plugin_resolver2.parsers.kugou import KuGou
-
+from ..config import NEED_UPLOAD, NICKNAME
+from ..download import download_audio
+from ..download.utils import keep_zh_en_num
+from ..parsers.kugou import KuGou
 from .filter import is_not_in_disabled_groups
 from .helper import get_file_seg
 from .preprocess import ExtractText, r_keywords

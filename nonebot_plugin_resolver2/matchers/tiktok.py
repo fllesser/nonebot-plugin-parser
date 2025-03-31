@@ -5,9 +5,8 @@ from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
-from nonebot_plugin_resolver2.config import NICKNAME, PROXY
-from nonebot_plugin_resolver2.download.ytdlp import get_video_info, ytdlp_download_video
-
+from ..config import NICKNAME, PROXY
+from ..download.ytdlp import get_video_info, ytdlp_download_video
 from .filter import is_not_in_disabled_groups
 from .helper import get_video_seg
 

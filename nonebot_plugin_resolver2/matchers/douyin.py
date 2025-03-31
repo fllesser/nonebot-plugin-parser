@@ -6,11 +6,10 @@ from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
 from nonebot.rule import Rule
 
-from nonebot_plugin_resolver2.config import NICKNAME
-from nonebot_plugin_resolver2.download import download_imgs_without_raise, download_video
-from nonebot_plugin_resolver2.parsers.base import ParseException, VideoInfo
-from nonebot_plugin_resolver2.parsers.douyin import DouYin
-
+from ..config import NICKNAME
+from ..download import download_imgs_without_raise, download_video
+from ..parsers.base import ParseException, VideoInfo
+from ..parsers.douyin import DouYin
 from .filter import is_not_in_disabled_groups
 from .helper import get_video_seg, send_segments
 

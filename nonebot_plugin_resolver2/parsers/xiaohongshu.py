@@ -4,9 +4,8 @@ from urllib.parse import parse_qs, urlparse
 
 import aiohttp
 
-from nonebot_plugin_resolver2.config import rconfig
-from nonebot_plugin_resolver2.constant import COMMON_HEADER
-
+from ..config import rconfig
+from ..constant import COMMON_HEADER
 from .base import ParseException
 
 # 小红书下载链接

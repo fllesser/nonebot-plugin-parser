@@ -5,8 +5,7 @@ from typing import Any
 
 import yt_dlp
 
-from nonebot_plugin_resolver2.config import PROXY, plugin_cache_dir
-
+from ..config import PROXY, plugin_cache_dir
 from .utils import generate_file_name
 
 

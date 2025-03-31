@@ -15,8 +15,8 @@ def init_bilibili_api():
 
     from bilibili_api import request_settings, select_client
 
-    from nonebot_plugin_resolver2.config import rconfig
-    from nonebot_plugin_resolver2.cookie import cookies_str_to_dict
+    from ..config import rconfig
+    from ..cookie import cookies_str_to_dict
 
     # 选择客户端
     select_client("curl_cffi")

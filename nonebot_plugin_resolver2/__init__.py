@@ -60,7 +60,7 @@ async def _():
 async def clean_plugin_cache():
     import asyncio
 
-    from nonebot_plugin_resolver2.download.utils import safe_unlink
+    from .download.utils import safe_unlink
 
     try:
         files = [f for f in plugin_cache_dir.iterdir() if f.is_file()]

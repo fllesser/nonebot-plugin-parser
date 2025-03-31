@@ -9,23 +9,22 @@ from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegme
 from nonebot.adapters.onebot.v11.exception import ActionFailed
 from nonebot.params import CommandArg
 
-from nonebot_plugin_resolver2.config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
-from nonebot_plugin_resolver2.download import (
+from ..config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
+from ..download import (
     download_file_by_stream,
     download_img,
     download_imgs_without_raise,
     encode_video_to_h264,
     merge_av,
 )
-from nonebot_plugin_resolver2.download.utils import keep_zh_en_num
-from nonebot_plugin_resolver2.parsers.bilibili import (
+from ..download.utils import keep_zh_en_num
+from ..parsers.bilibili import (
     parse_favlist,
     parse_live,
     parse_opus,
     parse_read,
     parse_video_info,
 )
-
 from .filter import is_not_in_disabled_groups
 from .helper import get_file_seg, get_video_seg, send_segments
 from .preprocess import ExtractText, Keyword, r_keywords
