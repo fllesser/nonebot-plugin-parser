@@ -69,7 +69,7 @@ def get_video_seg(video_path: Path) -> MessageSegment:
         seg = MessageSegment.text("获取视频失败")
     elif file_size_byte_count > VIDEO_MAX_MB * 1024 * 1024:
         # 转为文件 Seg
-        seg = get_file_seg(file)
+        seg = get_file_seg(file, display_name=video_path.name)
     else:
         seg = MessageSegment.video(file)
     return seg
