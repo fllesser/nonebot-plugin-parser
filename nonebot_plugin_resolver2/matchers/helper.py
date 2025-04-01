@@ -1,10 +1,11 @@
 from pathlib import Path
 
 from nonebot import get_bots
+from nonebot.adapters.onebot.utils import f2s
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageSegment
 from nonebot.matcher import Matcher
 
-from ..config import NEED_FORWARD, NICKNAME
+from ..config import NEED_FORWARD, NICKNAME, USE_BASE64
 from ..constant import VIDEO_MAX_MB
 
 
@@ -41,42 +42,59 @@ async def send_segments(matcher: type[Matcher], segments: list) -> None:
             await matcher.send(seg)
 
 
-def get_video_seg(video_path: Path) -> MessageSegment:
-    """获取视频 Seg
+def get_img_seg(img_path: Path) -> MessageSegment:
+    """获取图片 Seg
 
     Args:
-        video_path (Path): 视频路径
+        img_path (Path): 图片路径
+
+    Returns:
+        MessageSegment: 图片 Seg
+    """
+    file = img_path.read_bytes() if USE_BASE64 else img_path
+    return MessageSegment.image(file)
+
+
+def get_video_seg(video_path: Path) -> MessageSegment:
+    """获取视频 Seg
 
     Returns:
         MessageSegment: 视频 Seg
     """
     seg: MessageSegment
     # 检测文件大小
-    file_size_bytes = int(video_path.stat().st_size)
-    if file_size_bytes == 0:
+    file_size_byte_count = int(video_path.stat().st_size)
+    file = video_path.read_bytes() if USE_BASE64 else video_path
+    if file_size_byte_count == 0:
         seg = MessageSegment.text("获取视频失败")
-    elif file_size_bytes > VIDEO_MAX_MB * 1024 * 1024:
+    elif file_size_byte_count > VIDEO_MAX_MB * 1024 * 1024:
         # 转为文件 Seg
-        seg = get_file_seg(video_path)
+        seg = get_file_seg(file)
     else:
-        seg = MessageSegment.video(video_path)
+        seg = MessageSegment.video(file)
     return seg
 
 
-def get_file_seg(file_path: Path, display_name: str = "") -> MessageSegment:
+def get_file_seg(file: Path | bytes, display_name: str = "") -> MessageSegment:
     """获取文件 Seg
 
     Args:
-        file_path (Path): 文件路径
-        display_name (str, optional): 显示名称. Defaults to file_path.name.
+        file (Path | bytes): 文件路径
+        display_name (str, optional): 显示名称. Defaults to file.name.
 
     Returns:
         MessageSegment: 文件 Seg
     """
+    file_name = file.name if isinstance(file, Path) else display_name
+    if not file_name:
+        raise ValueError("文件名不能为空")
+    if USE_BASE64:
+        file = file.read_bytes() if isinstance(file, Path) else file
+
     return MessageSegment(
         "file",
         data={
-            "name": display_name if display_name else file_path.name,
-            "file": file_path.resolve().as_uri(),
+            "name": file_name,
+            "file": f2s(file),
         },
     )

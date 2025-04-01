@@ -3,7 +3,7 @@ from typing import Any
 
 import aiohttp
 from nonebot import logger, on_keyword
-from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
 from ..config import NICKNAME, PROXY
@@ -11,7 +11,7 @@ from ..constant import COMMON_HEADER
 from ..download import download_img, download_video
 from ..parsers.base import ParseException
 from .filter import is_not_in_disabled_groups
-from .helper import get_video_seg
+from .helper import get_img_seg, get_video_seg
 
 twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -37,7 +37,7 @@ async def _(event: MessageEvent):
         await twitter.send(get_video_seg(video_path))
     if pic_url:
         img_path = await download_img(url=pic_url, proxy=PROXY)
-        await twitter.send(MessageSegment.image(img_path))
+        await twitter.send(get_img_seg(img_path))
 
 
 async def parse_x_url(x_url: str) -> tuple[str, str]:

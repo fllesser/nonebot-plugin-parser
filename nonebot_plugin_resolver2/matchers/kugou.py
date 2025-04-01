@@ -4,11 +4,11 @@ from nonebot import logger, on_message
 from nonebot.adapters.onebot.v11 import MessageSegment
 
 from ..config import NEED_UPLOAD, NICKNAME
-from ..download import download_audio
+from ..download import download_audio, download_img
 from ..download.utils import keep_zh_en_num
 from ..parsers.kugou import KuGou
 from .filter import is_not_in_disabled_groups
-from .helper import get_file_seg
+from .helper import get_file_seg, get_img_seg
 from .preprocess import ExtractText, r_keywords
 
 kugou = on_message(rule=is_not_in_disabled_groups & r_keywords("kugou.com"))
@@ -34,7 +34,7 @@ async def _(text: str = ExtractText()):
 
     title_author_name = f"{video_info.title} - {video_info.author.name}"
 
-    await kugou.send(f"{share_prefix}{title_author_name}" + MessageSegment.image(video_info.cover_url))
+    await kugou.send(f"{share_prefix}{title_author_name}" + get_img_seg(await download_img(video_info.cover_url)))
 
     try:
         audio_path = await download_audio(url=video_info.music_url)

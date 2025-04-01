@@ -11,7 +11,7 @@ from ..download import download_imgs_without_raise, download_video
 from ..parsers.base import ParseException, VideoInfo
 from ..parsers.douyin import DouYin
 from .filter import is_not_in_disabled_groups
-from .helper import get_video_seg, send_segments
+from .helper import get_img_seg, get_video_seg, send_segments
 
 douyin = on_keyword(keywords={"douyin.com"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -39,7 +39,7 @@ async def _(event: MessageEvent):
     # 存在普通图片
     if video_info.images:
         paths: list[Path] = await download_imgs_without_raise(video_info.images)
-        segs.extend(MessageSegment.image(path) for path in paths)
+        segs.extend(get_img_seg(path) for path in paths)
     # 存在动态图片
     if video_info.dynamic_images:
         # 并发下载动态图片
