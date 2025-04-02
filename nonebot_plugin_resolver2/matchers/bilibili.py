@@ -88,7 +88,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             if img_lst:
                 paths = await download_imgs_without_raise(img_lst)
                 segs.extend(get_img_seg(path) for path in paths)
-            await send_segments(bilibili, segs)
+            await send_segments(segs)
             await bilibili.finish()
         # 直播间解析
         elif "/live" in url:
@@ -125,7 +125,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
                 else:
                     segs.append(get_img_seg(paths.pop()))
             if segs:
-                await send_segments(bilibili, segs)
+                await send_segments(segs)
                 await bilibili.finish()
         # 收藏夹解析
         elif "/favlist" in url:
@@ -143,7 +143,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             # 组合 text 和 image
             for path, text in zip(paths, texts):
                 segs.append(get_img_seg(path) + text)
-            await send_segments(bilibili, segs)
+            await send_segments(segs)
             await bilibili.finish()
         else:
             logger.warning(f"不支持的链接: {url}")
@@ -170,7 +170,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             f"⚠️ 当前视频时长 {video_info.video_duration // 60} 分钟, "
             f"超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!"
         )
-    await send_segments(bilibili, segs)
+    await send_segments(segs)
 
     if video_info.video_duration > DURATION_MAXIMUM:
         logger.info(f"video duration > {DURATION_MAXIMUM}, ignore download")

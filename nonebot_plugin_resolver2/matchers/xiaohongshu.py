@@ -1,6 +1,7 @@
 import re
 
 from nonebot import logger, on_message
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
 from ..download import download_imgs_without_raise, download_video
@@ -31,8 +32,11 @@ async def _(text: str = ExtractText()):
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 图文")
         img_path_list = await download_imgs_without_raise(img_urls)
         # 发送图片
-        segs = [title_desc] + [get_img_seg(img_path) for img_path in img_path_list]
-        await send_segments(xiaohongshu, segs)
+        segs: list[MessageSegment | Message | str] = [
+            title_desc,
+            *(get_img_seg(img_path) for img_path in img_path_list),
+        ]
+        await send_segments(segs)
         await xiaohongshu.finish()
     elif video_url:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 视频 - {title_desc}")

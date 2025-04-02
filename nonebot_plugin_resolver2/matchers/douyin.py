@@ -48,7 +48,7 @@ async def _(event: MessageEvent):
         video_seg_lst = [get_video_seg(seg) for seg in video_download_results if isinstance(seg, Path)]
         segs.extend(video_seg_lst)
     if segs:
-        await send_segments(douyin, segs)
+        await send_segments(segs)
         await douyin.finish()
     # 存在视频
     if video_url := video_info.video_url:

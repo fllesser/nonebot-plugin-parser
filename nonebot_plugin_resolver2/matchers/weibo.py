@@ -34,4 +34,4 @@ async def _(event: MessageEvent):
     if video_info.images:
         image_paths = await download_imgs_without_raise(video_info.images, ext_headers=ext_headers)
         if image_paths:
-            await send_segments(weibo, [get_img_seg(path) for path in image_paths])
+            await send_segments([get_img_seg(path) for path in image_paths])
