@@ -291,10 +291,10 @@ def __extra_bili_info(video_info: dict[str, Any]) -> str:
         ("👍", "like"),
         ("🪙", "coin"),
         ("⭐", "favorite"),
-        ("↗️", "share"),
+        ("↩️", "share"),
         ("💬", "reply"),
         ("👀", "view"),
-        # ("弹幕", "danmaku"),
+        ("💭", "danmaku"),
     ]
 
     # 构建结果字符串
