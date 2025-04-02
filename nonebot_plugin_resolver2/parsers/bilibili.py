@@ -230,8 +230,8 @@ async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, 
 
     video_stat = video_info["stat"]
     display_info = (
-        f"👍 {video_stat['like']} | 🪙 {video_stat['coin']} | ⭐ {video_stat['favorite']}\n"
-        f"↗️ {video_stat['share']} | 💬 {video_stat['reply']} | 👀 {video_stat['view']}\n"
+        f"👍 {video_stat['like']} 🪙 {video_stat['coin']} ⭐ {video_stat['favorite']} "
+        f"↗️ {video_stat['share']} 💬 {video_stat['reply']} 👀 {video_stat['view']}\n"
         f"📝 简介：{video_info['desc']}\n"
         f"🏄‍♂️ 总共 {online['total']} 人在观看，{online['count']} 人在网页端观看"
     )
