@@ -85,8 +85,9 @@ def get_file_seg(file: Path | bytes, display_name: str = "") -> MessageSegment:
     Returns:
         MessageSegment: 文件 Seg
     """
-    file_name = file.name if isinstance(file, Path) else display_name
-    if not file_name:
+    if not display_name and isinstance(file, Path):
+        display_name = file.name
+    if not display_name:
         raise ValueError("文件名不能为空")
     if USE_BASE64:
         file = file.read_bytes() if isinstance(file, Path) else file
@@ -94,7 +95,7 @@ def get_file_seg(file: Path | bytes, display_name: str = "") -> MessageSegment:
     return MessageSegment(
         "file",
         data={
-            "name": file_name,
+            "name": display_name,
             "file": f2s(file),
         },
     )
