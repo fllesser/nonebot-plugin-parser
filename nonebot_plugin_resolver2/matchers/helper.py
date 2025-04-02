@@ -66,7 +66,7 @@ def get_video_seg(video_path: Path) -> MessageSegment:
     file_size_byte_count = int(video_path.stat().st_size)
     file = video_path.read_bytes() if USE_BASE64 else video_path
     if file_size_byte_count == 0:
-        seg = MessageSegment.text("获取视频失败")
+        seg = MessageSegment.text("视频文件大小为0")
     elif file_size_byte_count > VIDEO_MAX_MB * 1024 * 1024:
         # 转为文件 Seg
         seg = get_file_seg(file, display_name=video_path.name)
@@ -91,7 +91,6 @@ def get_file_seg(file: Path | bytes, display_name: str = "") -> MessageSegment:
         raise ValueError("文件名不能为空")
     if USE_BASE64:
         file = file.read_bytes() if isinstance(file, Path) else file
-
     return MessageSegment(
         "file",
         data={
