@@ -228,10 +228,9 @@ async def parse_video_info(*, bvid: str | None = None, avid: int | None = None, 
     # 获取在线观看人数
     online = await video.get_online()
 
-    video_stat = video_info["stat"]
+    # video_stat = video_info["stat"]
     display_info = (
-        f"👍 {video_stat['like']} 🪙 {video_stat['coin']} ⭐ {video_stat['favorite']} "
-        f"↗️ {video_stat['share']} 💬 {video_stat['reply']} 👀 {video_stat['view']}\n"
+        f"{__extra_bili_info(video_info)}\n"
         f"📝 简介：{video_info['desc']}\n"
         f"🏄‍♂️ 总共 {online['total']} 人在观看，{online['count']} 人在网页端观看"
     )
@@ -306,4 +305,4 @@ def __extra_bili_info(video_info: dict[str, Any]) -> str:
         formatted_value = f"{value / 10000:.1f}万" if value > 10000 else str(value)
         result_parts.append(f"{display_name} {formatted_value}")
 
-    return " | ".join(result_parts)
+    return " ".join(result_parts)
