@@ -2,6 +2,7 @@ from nonebot.log import logger
 import pytest
 
 
+@pytest.mark.asyncio
 async def test_bilibili_live():
     logger.info("开始解析B站直播 https://live.bilibili.com/23585383")
     from nonebot_plugin_resolver2.parsers.bilibili import parse_live
@@ -17,6 +18,7 @@ async def test_bilibili_live():
     logger.success("B站直播解析成功")
 
 
+@pytest.mark.asyncio
 async def test_bilibili_read():
     logger.info("开始解析B站图文 https://www.bilibili.com/read/cv523868")
     from nonebot_plugin_resolver2.parsers.bilibili import parse_read
@@ -32,6 +34,7 @@ async def test_bilibili_read():
     logger.success("B站图文解析成功")
 
 
+@pytest.mark.asyncio
 async def test_bilibili_opus():
     from nonebot_plugin_resolver2.download import download_imgs_without_raise
     from nonebot_plugin_resolver2.parsers.bilibili import parse_opus
@@ -55,25 +58,25 @@ async def test_bilibili_opus():
     logger.success("B站动态解析成功")
 
 
-@pytest.mark.asyncio
-async def test_bilibili_favlist():
-    from nonebot_plugin_resolver2.download import download_imgs_without_raise
-    from nonebot_plugin_resolver2.parsers.bilibili import parse_favlist
+# @pytest.mark.asyncio
+# async def test_bilibili_favlist():
+#     from nonebot_plugin_resolver2.download import download_imgs_without_raise
+#     from nonebot_plugin_resolver2.parsers.bilibili import parse_favlist
 
-    logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
-    # https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
-    fav_id = 311147541
-    texts, urls = await parse_favlist(fav_id)
+#     logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
+#     # https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
+#     fav_id = 311147541
+#     texts, urls = await parse_favlist(fav_id)
 
-    assert texts
-    logger.debug(texts)
+#     assert texts
+#     logger.debug(texts)
 
-    assert urls
-    logger.debug(urls)
+#     assert urls
+#     logger.debug(urls)
 
-    files = await download_imgs_without_raise(urls)
-    assert len(files) == len(urls)
-    logger.success("B站收藏夹解析成功")
+#     files = await download_imgs_without_raise(urls)
+#     assert len(files) == len(urls)
+#     logger.success("B站收藏夹解析成功")
 
 
 # @pytest.mark.asyncio

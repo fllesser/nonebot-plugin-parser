@@ -1,4 +1,4 @@
-from nonebot.log import logger
+from nonebot import logger
 import pytest
 
 
