@@ -9,7 +9,7 @@ from ..config import NEED_FORWARD, NICKNAME, USE_BASE64
 from ..constant import VIDEO_MAX_MB
 
 
-def construct_nodes(user_id: int, segments: MessageSegment | list[MessageSegment | Message | str]) -> Message:
+def construct_nodes(user_id: int, segments: list[Message | MessageSegment | str]) -> Message:
     """构造节点
 
     Args:
@@ -22,11 +22,10 @@ def construct_nodes(user_id: int, segments: MessageSegment | list[MessageSegment
     def node(content):
         return MessageSegment.node_custom(user_id=user_id, nickname=NICKNAME, content=content)
 
-    segments = segments if isinstance(segments, list) else [segments]
     return Message([node(seg) for seg in segments])
 
 
-async def send_segments(segments: list[MessageSegment | Message | str]) -> None:
+async def send_segments(segments: list[Message | MessageSegment | str]) -> None:
     """发送消息段
 
     Args:
@@ -35,7 +34,7 @@ async def send_segments(segments: list[MessageSegment | Message | str]) -> None:
     bot = current_bot.get()
     event: MessageEvent = cast(MessageEvent, current_event.get())
 
-    if NEED_FORWARD or len(segments) > 4:
+    if NEED_FORWARD or len(list(segments)) > 4:
         message = construct_nodes(int(bot.self_id), segments)
         kwargs: dict[str, Any] = {"messages": message}
         if isinstance(event, GroupMessageEvent):
@@ -47,8 +46,9 @@ async def send_segments(segments: list[MessageSegment | Message | str]) -> None:
         await bot.call_api(api, **kwargs)
 
     else:
-        for seg in segments:
-            await bot.send(event, seg)
+        segments[:-1] = [MessageSegment.text(seg + "\n") if isinstance(seg, str) else seg for seg in segments[:-1]]
+        message = Message(*segments)
+        await bot.send(event, message=message)
 
 
 def get_img_seg(img_path: Path) -> MessageSegment:
