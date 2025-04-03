@@ -34,7 +34,7 @@ async def send_segments(segments: list[Message | MessageSegment | str]) -> None:
     bot = current_bot.get()
     event: MessageEvent = cast(MessageEvent, current_event.get())
 
-    if NEED_FORWARD or len(list(segments)) > 4:
+    if NEED_FORWARD or len(segments) > 4:
         message = construct_nodes(int(bot.self_id), segments)
         kwargs: dict[str, Any] = {"messages": message}
         if isinstance(event, GroupMessageEvent):
