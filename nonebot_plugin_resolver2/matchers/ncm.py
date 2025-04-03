@@ -6,10 +6,10 @@ from nonebot.adapters.onebot.v11 import MessageSegment
 
 from ..config import NEED_UPLOAD, NICKNAME
 from ..constant import COMMON_HEADER
-from ..download import download_audio
+from ..download import download_audio, download_img
 from ..download.utils import keep_zh_en_num
 from .filter import is_not_in_disabled_groups
-from .helper import get_file_seg
+from .helper import get_file_seg, get_img_seg
 from .preprocess import ExtractText, Keyword, r_keywords
 
 # NCM获取歌曲信息链接
@@ -49,7 +49,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         )
     except Exception as e:
         await ncm.finish(f"{share_prefix}错误: {e}")
-    await ncm.send(f"{share_prefix}{ncm_title} {ncm_singer}" + MessageSegment.image(ncm_cover))
+    await ncm.send(f"{share_prefix}{ncm_title} {ncm_singer}" + get_img_seg(await download_img(ncm_cover)))
     # 下载音频文件后会返回一个下载路径
     try:
         audio_path = await download_audio(ncm_music_url)

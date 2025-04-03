@@ -1,6 +1,8 @@
-from nonebot.log import logger
+from nonebot import logger
+import pytest
 
 
+@pytest.mark.asyncio
 async def test_douyin_common_video():
     """
     测试普通视频
@@ -29,6 +31,7 @@ async def test_douyin_common_video():
         logger.success(f"抖音视频解析成功 {url}")
 
 
+@pytest.mark.asyncio
 async def test_douyin_old_video():
     """
     老视频，网页打开会重定向到 m.ixigua.com

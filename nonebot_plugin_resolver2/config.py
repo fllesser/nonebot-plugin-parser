@@ -38,6 +38,8 @@ class Config(BaseModel):
     r_need_upload: bool = False
     # 4 条以内消息，是否需要合并转发
     r_need_forward: bool = True
+    # 是否使用 base64 编码发送图片，音频，视频
+    r_use_base64: bool = False
     # 视频最大时长
     r_video_duration_maximum: int = 480
     # 禁止的解析器
@@ -64,3 +66,5 @@ DURATION_MAXIMUM: int = rconfig.r_video_duration_maximum
 NEED_UPLOAD: bool = rconfig.r_need_upload
 # 是否需要合并转发
 NEED_FORWARD: bool = rconfig.r_need_forward
+# 是否使用 base64 编码发送图片，音频，视频
+USE_BASE64: bool = rconfig.r_use_base64

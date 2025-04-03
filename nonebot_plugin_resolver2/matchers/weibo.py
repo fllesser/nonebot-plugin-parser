@@ -1,12 +1,12 @@
 from nonebot import on_keyword
-from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
 from ..config import NICKNAME
 from ..download import download_imgs_without_raise, download_video
 from ..parsers.weibo import ParseException, WeiBo
 from .filter import is_not_in_disabled_groups
-from .helper import get_video_seg, send_segments
+from .helper import get_img_seg, get_video_seg, send_segments
 
 weibo_parser = WeiBo()
 
@@ -34,4 +34,4 @@ async def _(event: MessageEvent):
     if video_info.images:
         image_paths = await download_imgs_without_raise(video_info.images, ext_headers=ext_headers)
         if image_paths:
-            await send_segments(weibo, [MessageSegment.image(f) for f in image_paths])
+            await send_segments([get_img_seg(path) for path in image_paths])

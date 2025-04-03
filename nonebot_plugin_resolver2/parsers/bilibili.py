@@ -140,6 +140,8 @@ async def parse_favlist(fav_id: int) -> tuple[list[str], list[str]]:
     from bilibili_api.favorite_list import get_video_favorite_list_content
 
     fav_list: dict[str, Any] = await get_video_favorite_list_content(fav_id)
+    if fav_list["medias"] is None:
+        raise ParseException("收藏夹内容为空, 或被风控")
     # 取前 50 个
     medias_50: list[dict[str, Any]] = fav_list["medias"][:50]
     texts: list[str] = []

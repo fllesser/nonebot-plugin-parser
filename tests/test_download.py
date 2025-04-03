@@ -1,4 +1,4 @@
-from nonebot.log import logger
+from nonebot import logger
 
 
 def test_generate_file_name():

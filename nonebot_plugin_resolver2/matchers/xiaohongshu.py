@@ -1,14 +1,14 @@
 import re
 
 from nonebot import logger, on_message
-from nonebot.adapters.onebot.v11 import MessageSegment
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
 from ..download import download_imgs_without_raise, download_video
 from ..parsers.base import ParseException
 from ..parsers.xiaohongshu import parse_url
 from .filter import is_not_in_disabled_groups
-from .helper import get_video_seg, send_segments
+from .helper import get_img_seg, get_video_seg, send_segments
 from .preprocess import ExtractText, r_keywords
 
 xiaohongshu = on_message(rule=is_not_in_disabled_groups & r_keywords("xiaohongshu.com", "xhslink.com"))
@@ -32,8 +32,11 @@ async def _(text: str = ExtractText()):
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 图文")
         img_path_list = await download_imgs_without_raise(img_urls)
         # 发送图片
-        segs = [title_desc] + [MessageSegment.image(img_path) for img_path in img_path_list]
-        await send_segments(xiaohongshu, segs)
+        segs: list[MessageSegment | Message | str] = [
+            title_desc,
+            *(get_img_seg(img_path) for img_path in img_path_list),
+        ]
+        await send_segments(segs)
         await xiaohongshu.finish()
     elif video_url:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 视频 - {title_desc}")

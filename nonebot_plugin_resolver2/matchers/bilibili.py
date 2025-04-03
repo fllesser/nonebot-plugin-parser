@@ -26,7 +26,7 @@ from ..parsers.bilibili import (
     parse_video_info,
 )
 from .filter import is_not_in_disabled_groups
-from .helper import get_file_seg, get_video_seg, send_segments
+from .helper import get_file_seg, get_img_seg, get_video_seg, send_segments
 from .preprocess import ExtractText, Keyword, r_keywords
 
 bilibili = on_message(
@@ -87,8 +87,8 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             segs = [text]
             if img_lst:
                 paths = await download_imgs_without_raise(img_lst)
-                segs.extend(MessageSegment.image(path) for path in paths)
-            await send_segments(bilibili, segs)
+                segs.extend(get_img_seg(path) for path in paths)
+            await send_segments(segs)
             await bilibili.finish()
         # 直播间解析
         elif "/live" in url:
@@ -102,8 +102,8 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             if not title:
                 await bilibili.finish(f"{share_prefix}直播 - 未找到直播间信息")
             res = f"{share_prefix}直播 {title}"
-            res += MessageSegment.image(cover) if cover else ""
-            res += MessageSegment.image(keyframe) if keyframe else ""
+            res += get_img_seg(await download_img(cover)) if cover else ""
+            res += get_img_seg(await download_img(keyframe)) if keyframe else ""
             await bilibili.finish(res)
         # 专栏解析
         elif "/read" in url:
@@ -123,9 +123,9 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
                 if text:
                     segs.append(text)
                 else:
-                    segs.append(MessageSegment.image(paths.pop()))
+                    segs.append(get_img_seg(paths.pop()))
             if segs:
-                await send_segments(bilibili, segs)
+                await send_segments(segs)
                 await bilibili.finish()
         # 收藏夹解析
         elif "/favlist" in url:
@@ -142,8 +142,8 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             segs = []
             # 组合 text 和 image
             for path, text in zip(paths, texts):
-                segs.append(MessageSegment.image(path) + text)
-            await send_segments(bilibili, segs)
+                segs.append(get_img_seg(path) + text)
+            await send_segments(segs)
             await bilibili.finish()
         else:
             logger.warning(f"不支持的链接: {url}")
@@ -161,7 +161,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
     segs = [
         video_info.title,
-        MessageSegment.image(await download_img(video_info.cover_url)),
+        get_img_seg(await download_img(video_info.cover_url)),
         video_info.display_info,
         video_info.ai_summary,
     ]
@@ -170,7 +170,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             f"⚠️ 当前视频时长 {video_info.video_duration // 60} 分钟, "
             f"超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!"
         )
-    await send_segments(bilibili, segs)
+    await send_segments(segs)
 
     if video_info.video_duration > DURATION_MAXIMUM:
         logger.info(f"video duration > {DURATION_MAXIMUM}, ignore download")
