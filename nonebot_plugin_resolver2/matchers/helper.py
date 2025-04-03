@@ -47,7 +47,7 @@ async def send_segments(segments: list[Message | MessageSegment | str]) -> None:
 
     else:
         segments[:-1] = [MessageSegment.text(seg + "\n") if isinstance(seg, str) else seg for seg in segments[:-1]]
-        message = Message(*segments)
+        message = sum(segments, Message())
         await bot.send(event, message=message)
 
 
