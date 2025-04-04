@@ -60,10 +60,11 @@ async def download_file_by_stream(
         async with session.get(url, headers=headers, proxy=proxy) as resp:
             resp.raise_for_status()
             # 获取文件大小
-            content_length = int(resp.headers.get("Content-Length", 1024))
-            if (file_size := content_length / 1024 / 1024) > MAX_SIZE:
+            content_length = resp.headers.get("Content-Length")
+            content_length = int(content_length) if content_length else None
+            if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
                 logger.warning(f"文件 {file_name} 大小 {file_size:.2f}MB 超过 {MAX_SIZE}MB, 取消下载")
-                raise FinishedException
+                raise FinishedException  # ?
             with tqdm(
                 total=content_length,
                 unit="B",
