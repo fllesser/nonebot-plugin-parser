@@ -3,10 +3,11 @@ from pathlib import Path
 
 import aiofiles
 import aiohttp
+from nonebot.exception import FinishedException
 from nonebot.log import logger
 from tqdm.asyncio import tqdm
 
-from ..config import plugin_cache_dir
+from ..config import MAX_SIZE, plugin_cache_dir
 from ..constant import COMMON_HEADER
 from .utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
 
@@ -56,10 +57,15 @@ async def download_file_by_stream(
 
     try:
         session = await _get_session()
-        async with session.get(url, headers=headers, proxy=proxy) as resp, aiofiles.open(file_path, "wb") as file:
+        async with session.get(url, headers=headers, proxy=proxy) as resp:
             resp.raise_for_status()
+            # 获取文件大小
+            content_length = int(resp.headers["Content-Length"])
+            if (file_size := content_length / 1024 / 1024) > MAX_SIZE:
+                logger.warning(f"文件 {file_name} 大小 {file_size:.2f}MB 超过 {MAX_SIZE}MB, 取消下载")
+                raise FinishedException
             with tqdm(
-                total=int(resp.headers.get("Content-Length", 0)),
+                total=content_length,
                 unit="B",
                 unit_scale=True,
                 unit_divisor=1024,
@@ -67,14 +73,14 @@ async def download_file_by_stream(
                 colour="green",
                 desc=file_name,
             ) as bar:
-                async for chunk in resp.content.iter_chunked(1024 * 1024):
-                    await file.write(chunk)
-                    bar.update(len(chunk))
+                async with aiofiles.open(file_path, "wb") as file:
+                    async for chunk in resp.content.iter_chunked(1024 * 1024):
+                        await file.write(chunk)
+                        bar.update(len(chunk))
     except (aiohttp.ClientError, asyncio.TimeoutError) as e:
         await safe_unlink(file_path)
         logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常{e}")
         raise
-
     return file_path
 
 

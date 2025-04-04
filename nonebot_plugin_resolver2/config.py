@@ -38,6 +38,8 @@ class Config(BaseModel):
     r_need_forward: bool = True
     # 是否使用 base64 编码发送图片，音频，视频
     r_use_base64: bool = False
+    # 资源最大大小 默认 100 单位 MB
+    r_max_size: int = 100
     # 视频最大时长
     r_video_duration_maximum: int = 480
     # 禁止的解析器
@@ -60,6 +62,8 @@ NICKNAME: str = next(iter(get_driver().config.nickname), "")
 PROXY: str | None = rconfig.r_proxy
 # 哔哩哔哩限制的最大视频时长（默认8分钟）单位：秒
 DURATION_MAXIMUM: int = rconfig.r_video_duration_maximum
+# 资源最大大小
+MAX_SIZE: int = rconfig.r_max_size
 # 是否需要上传音频文件
 NEED_UPLOAD: bool = rconfig.r_need_upload
 # 是否需要合并转发
