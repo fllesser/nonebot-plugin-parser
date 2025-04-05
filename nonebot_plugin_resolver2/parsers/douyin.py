@@ -39,10 +39,10 @@ class DouYin(BaseParser):
             try:
                 return await self.parse_video(url)
             except ParseException as e:
-                logger.warning(f"failed to parse {url[:60]}, error: {e}")
+                logger.warning(f"failed to parse {url[:60]}, error: {e}", exc_info=True)
                 continue
             except Exception as e:
-                logger.warning(f"failed to parse {url[:60]}, unknown error: {e}")
+                logger.warning(f"failed to parse {url[:60]}, unknown error: {e}", exc_info=True)
                 continue
         raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
