@@ -10,6 +10,7 @@ from nonebot.typing import T_State
 from ..config import NEED_UPLOAD, NICKNAME, ytb_cookies_file
 from ..download.utils import keep_zh_en_num
 from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
+from ..exception import handle_exception
 from .filter import is_not_in_disabled_groups
 from .helper import get_file_seg, get_video_seg
 
@@ -17,6 +18,7 @@ ytb = on_keyword(keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disab
 
 
 @ytb.handle()
+@handle_exception(ytb)
 async def _(event: MessageEvent, state: T_State):
     message = event.message.extract_plain_text().strip()
     pattern = (
@@ -55,7 +57,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
     except Exception as e:
         media_type = "视频" if is_video else "音频"
         logger.error(f"{media_type}下载失败 | {url} | {e}", exc_info=True)
-        await ytb.send(f"{media_type}下载失败, 请联系机器人管理员", reply_message=True)
+        await ytb.send(f"{media_type}下载失败", reply_message=True)
     if video_path:
         await ytb.send(get_video_seg(video_path))
     elif audio_path:

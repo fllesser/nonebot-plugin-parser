@@ -18,6 +18,7 @@ from ..download import (
     merge_av,
 )
 from ..download.utils import keep_zh_en_num
+from ..exception import handle_exception
 from ..parsers.bilibili import (
     parse_favlist,
     parse_live,
@@ -48,6 +49,7 @@ PATTERNS: dict[str, re.Pattern] = {
 
 
 @bilibili.handle()
+@handle_exception(bilibili)
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
     share_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
     match = PATTERNS[keyword].search(text)

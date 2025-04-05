@@ -3,12 +3,12 @@ from pathlib import Path
 
 import aiofiles
 import aiohttp
-from nonebot.exception import FinishedException
 from nonebot.log import logger
 from tqdm.asyncio import tqdm
 
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..constant import COMMON_HEADER
+from ..exception import DownloadException
 from .utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
 
 # 全局 session
@@ -63,8 +63,9 @@ async def download_file_by_stream(
             content_length = resp.headers.get("Content-Length")
             content_length = int(content_length) if content_length else None
             if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
-                logger.warning(f"文件 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB, 取消下载")
-                raise FinishedException("文件大小超过限制, 跳过下载")  # ?
+                notice = f"文件 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB, 取消下载"
+                logger.warning(notice)
+                raise DownloadException(notice)
             with tqdm(
                 total=content_length,
                 unit="B",
@@ -81,7 +82,7 @@ async def download_file_by_stream(
     except asyncio.TimeoutError:
         await safe_unlink(file_path)
         logger.error(f"url: {url}, file_path: {file_path} 下载超时")
-        raise FinishedException("资源下载超时")
+        raise DownloadException("资源下载超时")
     except aiohttp.ClientError as e:
         await safe_unlink(file_path)
         logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常{e}")

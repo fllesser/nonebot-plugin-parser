@@ -6,7 +6,7 @@ import aiohttp
 
 from ..config import rconfig
 from ..constant import COMMON_HEADER
-from .base import ParseException
+from ..exception import ParseException
 
 # 小红书下载链接
 XHS_REQ_LINK = "https://www.xiaohongshu.com/explore/"

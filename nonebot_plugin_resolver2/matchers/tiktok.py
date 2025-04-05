@@ -7,6 +7,7 @@ from nonebot.rule import Rule
 
 from ..config import NICKNAME, PROXY
 from ..download.ytdlp import get_video_info, ytdlp_download_video
+from ..exception import handle_exception
 from .filter import is_not_in_disabled_groups
 from .helper import get_video_seg
 
@@ -14,6 +15,7 @@ tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disabled_groups
 
 
 @tiktok.handle()
+@handle_exception(tiktok)
 async def _(event: MessageEvent):
     # 消息
     message: str = event.message.extract_plain_text().strip()

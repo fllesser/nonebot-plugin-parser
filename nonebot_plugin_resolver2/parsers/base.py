@@ -70,11 +70,3 @@ class BaseParser(ABC):
             async with session.get(url, headers=self.default_headers, allow_redirects=False, ssl=False) as response:
                 response.raise_for_status()
                 return response.headers.get("Location", url)
-
-
-class ParseException(Exception):
-    """
-    解析器异常
-    """
-
-    pass

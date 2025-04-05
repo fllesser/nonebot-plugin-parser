@@ -5,7 +5,8 @@ from typing import Any
 import aiohttp
 from nonebot.log import logger
 
-from .base import BaseParser, ParseException, VideoAuthor, VideoInfo
+from ..exception import ParseException
+from .base import BaseParser, VideoAuthor, VideoInfo
 
 
 class DouYin(BaseParser):
@@ -37,10 +38,13 @@ class DouYin(BaseParser):
         ]:
             try:
                 return await self.parse_video(url)
-            except Exception as e:
-                logger.warning(f"failed to parse video url from {url[:60]}, error: {e}")
+            except ParseException as e:
+                logger.warning(f"failed to parse {url[:60]}, error: {e}")
                 continue
-        raise ParseException("failed to parse video url from share_url")
+            except Exception as e:
+                logger.warning(f"failed to parse {url[:60]}, unknown error: {e}")
+                continue
+        raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
     async def parse_video(self, url: str) -> VideoInfo:
         async with aiohttp.ClientSession() as session:

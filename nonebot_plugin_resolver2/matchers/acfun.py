@@ -19,11 +19,11 @@ acfun = on_keyword(keywords={"acfun.cn"}, rule=Rule(is_not_in_disabled_groups))
 @acfun.handle()
 async def _(event: MessageEvent) -> None:
     message: str = event.message.extract_plain_text().strip()
-    match = re.search(r"(?:ac=|/ac)(\d+)", message)
-    if not match:
+    matched = re.search(r"(?:ac=|/ac)(\d+)", message)
+    if not matched:
         logger.info("acfun url is incomplete, ignored")
         return
-    url = f"https://www.acfun.cn/v/ac{match.group(1)}"
+    url = f"https://www.acfun.cn/v/ac{matched.group(1)}"
     url_m3u8s, video_name = await parse_url(url)
     await acfun.send(Message(f"{NICKNAME}解析 | 猴山 - {video_name}"))
     m3u8_full_urls, ts_names, output_file_name = await parse_m3u8(url_m3u8s)

@@ -9,7 +9,7 @@ from nonebot.rule import Rule
 from ..config import NICKNAME, PROXY
 from ..constant import COMMON_HEADER
 from ..download import download_img, download_video
-from ..parsers.base import ParseException
+from ..exception import ParseException, handle_exception
 from .filter import is_not_in_disabled_groups
 from .helper import get_img_seg, get_video_seg
 
@@ -17,6 +17,7 @@ twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 
 
 @twitter.handle()
+@handle_exception(twitter)
 async def _(event: MessageEvent):
     msg: str = event.message.extract_plain_text().strip()
 
@@ -28,10 +29,7 @@ async def _(event: MessageEvent):
 
     await twitter.send(f"{NICKNAME}解析 | 小蓝鸟")
 
-    try:
-        video_url, pic_url = await parse_x_url(x_url)
-    except ParseException as e:
-        await twitter.finish(f"{NICKNAME}解析 | 小蓝鸟 - {e}")
+    video_url, pic_url = await parse_x_url(x_url)
     # 下载视频
     if video_url:
         video_path = await download_video(url=video_url, proxy=PROXY)
