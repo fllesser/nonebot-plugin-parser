@@ -149,6 +149,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             logger.warning(f"不支持的链接: {url}")
             await bilibili.finish()
 
+    await bilibili.send(f"{share_prefix}视频")
     # 获取分集数
     page_num = int(page_num) if page_num else 1
     if url and (matched := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
