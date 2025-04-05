@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import re
 from typing import Any
 
@@ -52,7 +53,7 @@ async def parse_m3u8(m3u8_url: str):
         m3u8_url (str): m3u8链接
 
     Returns:
-        tuple: 视频链接和视频名称
+        list[str]: 视频链接
     """
     async with aiohttp.ClientSession() as session:
         async with session.get(m3u8_url, headers=ACFUN_HEADERS) as resp:
@@ -70,25 +71,7 @@ async def parse_m3u8(m3u8_url: str):
     m3u8_prefix = "/".join(m3u8_url.split("/")[0:-1])
     m3u8_full_urls = [f"{m3u8_prefix}/{d}" for d in m3u8_relative_links]
 
-    # aria2c下载的文件名，就是取url最后一段，去掉末尾 url 参数(?之后是url参数)
-    ts_names = [str(d.split("?")[0]) for d in m3u8_relative_links]
-    output_folder_name = ts_names[0][:-9]
-    output_file_name = output_folder_name + ".mp4"
-    return m3u8_full_urls, ts_names, output_file_name
-
-
-async def download_m3u8_videos(m3u8_full_url: str, file_name: str) -> None:
-    """下载m3u8视频
-
-    Args:
-        m3u8_full_url (str): m3u8链接
-        file_name (str): 文件名
-    """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(m3u8_full_url, headers=ACFUN_HEADERS) as resp:
-            async with aiofiles.open(plugin_cache_dir / f"{file_name}.ts", "wb") as f:
-                async for chunk in resp.content.iter_chunked(1024):
-                    await f.write(chunk)
+    return m3u8_full_urls
 
 
 def parse_video_name(video_info: dict[str, Any]) -> str:
@@ -110,20 +93,23 @@ def parse_video_name(video_info: dict[str, Any]) -> str:
     return raw
 
 
-async def merge_ac_file_to_mp4(ts_names: list[str], file_name: str) -> None:
+async def merge_ac_file_to_mp4(acid: int, ts_files: list[Path]) -> Path:
     """合并ac文件到mp4
 
     Args:
-        ts_names (list[str]): ts文件名
-        file_name (str): 文件名
+        acid (int): acid
+        ts_files (list[Path]): ts文件
+
+    Returns:
+        Path: 合并后的mp4文件
     """
     from ..download.utils import exec_ffmpeg_cmd
 
-    concat_str = "\n".join([f"file {i}.ts" for i, d in enumerate(ts_names)])
+    concat_str = "\n".join([f"file {d.name}" for d in ts_files])
 
-    filetxt = plugin_cache_dir / "file.txt"
-    filepath = plugin_cache_dir / file_name
-    async with aiofiles.open(filetxt, "w") as f:
+    txt_file = plugin_cache_dir / f"acfun_{acid}.txt"
+    video_file = plugin_cache_dir / f"acfun_{acid}.mp4"
+    async with aiofiles.open(txt_file, "w") as f:
         await f.write(concat_str)
     command = [
         "ffmpeg",
@@ -133,13 +119,14 @@ async def merge_ac_file_to_mp4(ts_names: list[str], file_name: str) -> None:
         "-safe",
         "0",
         "-i",
-        str(filetxt),  # Path 对象转字符串
+        str(txt_file),
         "-c",
         "copy",
-        str(filepath),  # 自动处理路径空格
+        str(video_file),
     ]
 
     await exec_ffmpeg_cmd(command)
+    return video_file
 
 
 def parse_video_name_fixed(video_info: dict) -> str:
