@@ -128,7 +128,8 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 |      r_need_upload       |  否   | False  |                                                                                                  音频解析，是否需要上传群文件                                                                                                  |
 |      r_need_forward      |  否   |  True  |                                                                **不超过** 4 条的解析消息是否需要合并转发，配置为 False ，超过4条的解析消息仍然会用合并转发包裹                                                                 |
 |       r_use_base64       |  否   | False  | 视频，图片，音频是否使用 base64 发送，注意：编解码和传输 base64 会占用更多的内存,性能和带宽, 甚至可能会使 websocket 连接崩溃，因此该配置项仅推荐 nonebot 和 协议端不在同一机器，或者使用 docker 懒得映射插件缓存目录的用户配置 |
-| r_video_duration_maximum |  否   |  480   |                                                                                                  视频最大解析长度，单位：_秒_                                                                                                  |
+| r_video_duration_maximum |  否   |  480   |                                                                                                B站视频最大解析时长，单位：_秒_                                                                                                 |
+|        r_max_size        |  否   |  100   |                                                                                                     音视频下载最大文件大小                                                                                                     |
 |   r_disable_resolvers    |  否   |   []   |         全局禁止的解析，示例 r_disable_resolvers=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kugou", "twitter", "ncm", "ytb", "acfun", "tiktok", "weibo", "xiaohongshu"]          |
 
 
