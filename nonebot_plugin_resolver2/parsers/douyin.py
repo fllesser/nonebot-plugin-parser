@@ -3,7 +3,7 @@ import re
 from typing import Any
 
 import aiohttp
-from nonebot.log import logger
+from nonebot import logger
 
 from ..exception import ParseException
 from .base import BaseParser, VideoAuthor, VideoInfo

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import aiofiles
 import aiohttp
-from nonebot.log import logger
+from nonebot import logger
 from tqdm.asyncio import tqdm
 
 from ..config import MAX_SIZE, plugin_cache_dir

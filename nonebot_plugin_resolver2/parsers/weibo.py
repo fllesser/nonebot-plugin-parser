@@ -12,6 +12,7 @@ WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
 
 class WeiBo(BaseParser):
     async def parse_share_url(self, share_url: str) -> VideoInfo:
+        """解析微博分享链接"""
         # https://video.weibo.com/show?fid=1034:5145615399845897
         if match := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
             return await self.parse_fid(match.group(1))
@@ -66,6 +67,7 @@ class WeiBo(BaseParser):
         return video_info
 
     async def parse_weibo_id(self, weibo_id: str) -> VideoInfo:
+        """解析微博 id"""
         headers = {
             "accept": "application/json",
             "cookie": "_T_WM=40835919903; WEIBOCN_FROM=1110006030; MLOGIN=0; XSRF-TOKEN=4399c8",
@@ -114,7 +116,7 @@ class WeiBo(BaseParser):
 ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-def base62_encode(number):
+def base62_encode(number: int) -> str:
     """将数字转换为 base62 编码"""
     if number == 0:
         return "0"
@@ -127,7 +129,8 @@ def base62_encode(number):
     return result
 
 
-def mid2id(mid):
+def mid2id(mid: str) -> str:
+    """将微博 mid 转换为 id"""
     mid = str(mid)[::-1]  # 反转输入字符串
     size = math.ceil(len(mid) / 7)  # 计算每个块的大小
     result = []
