@@ -10,7 +10,7 @@ import aiohttp
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..download import download_file_by_stream
 from ..download.utils import safe_unlink
-from ..exception import DownloadException
+from ..exception import DownloadException, ParseException
 from .utils import escape_special_chars
 
 ACFUN_HEADERS = {
@@ -36,12 +36,12 @@ async def parse_acfun_url(url: str) -> tuple[str, str]:
             resp.raise_for_status()
             raw = await resp.text()
 
-    # 分离视频信息和 ksPlayJson
-    strs_remove_header = raw.split("window.pageInfo = window.videoInfo =")
-    strs_remove_tail = strs_remove_header[1].split("</script>")
-    str_json = strs_remove_tail[0]
-    str_json_escaped = escape_special_chars(str_json)
-    video_info = json.loads(str_json_escaped)
+    matched = re.search(r"window\.videoInfo =(.*?)</script>", raw)
+    if not matched:
+        raise ParseException("解析 acfun 视频信息失败")
+    json_str = matched.group(1)
+    json_str = escape_special_chars(json_str)
+    video_info = json.loads(json_str)
 
     video_desc = (
         f"ac{video_info.get('dougaId', '')}\n"

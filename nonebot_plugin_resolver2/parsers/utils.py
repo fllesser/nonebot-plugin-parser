@@ -29,13 +29,13 @@ def parse_url_query(url: str, query_key: str) -> str:
     return query_val
 
 
-def escape_special_chars(str_json: str) -> str:
+def escape_special_chars(json_str: str) -> str:
     """转义特殊字符
 
     Args:
-        str_json (str): 字符串
+        json_str (str): json 字符串
 
     Returns:
-        str: 转义后的字符串
+        str: 转义后的 json 字符串
     """
-    return str_json.replace('\\\\"', '\\"').replace('\\"', '"')
+    return json_str.replace('\\\\"', '\\"').replace('\\"', '"')
