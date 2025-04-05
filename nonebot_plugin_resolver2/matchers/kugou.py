@@ -36,11 +36,7 @@ async def _(text: str = ExtractText()):
 
     await kugou.send(f"{share_prefix}{title_author_name}" + get_img_seg(await download_img(video_info.cover_url)))
 
-    try:
-        audio_path = await download_audio(url=video_info.music_url)
-    except Exception:
-        await kugou.send("音频下载失败, 请联系机器人管理员", reply_message=True)
-        raise
+    audio_path = await download_audio(url=video_info.music_url)
     # 发送语音
     await kugou.send(MessageSegment.record(audio_path))
     # 发送群文件

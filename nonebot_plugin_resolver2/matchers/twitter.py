@@ -32,9 +32,11 @@ async def _(event: MessageEvent):
         video_url, pic_url = await parse_x_url(x_url)
     except ParseException as e:
         await twitter.finish(f"{NICKNAME}解析 | 小蓝鸟 - {e}")
+    # 下载视频
     if video_url:
         video_path = await download_video(url=video_url, proxy=PROXY)
         await twitter.send(get_video_seg(video_path))
+    # 下载图片
     if pic_url:
         img_path = await download_img(url=pic_url, proxy=PROXY)
         await twitter.send(get_img_seg(img_path))

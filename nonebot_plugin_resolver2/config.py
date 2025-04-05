@@ -25,11 +25,11 @@ MatcherNames = Literal[
 
 class Config(BaseModel):
     # 小红书 cookies
-    r_xhs_ck: str = ""
+    r_xhs_ck: str | None = None
     # bilibili cookies
-    r_bili_ck: str = ""
+    r_bili_ck: str | None = None
     # youtube cookies
-    r_ytb_ck: str = ""
+    r_ytb_ck: str | None = None
     # 代理
     r_proxy: str | None = None
     # 是否需要上传音频文件

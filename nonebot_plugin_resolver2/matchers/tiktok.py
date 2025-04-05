@@ -30,11 +30,9 @@ async def _(event: MessageEvent):
                 url = resp.headers.get("Location")
     assert url
     share_prefix = f"{NICKNAME}解析 | TikTok - "
-    try:
-        info = await get_video_info(url)
-        await tiktok.send(f"{share_prefix}{info['title']}")
-    except Exception as e:
-        await tiktok.send(f"{share_prefix}标题获取出错: {e}")
+    # 获取视频信息
+    info = await get_video_info(url)
+    await tiktok.send(f"{share_prefix}{info['title']}")
 
     try:
         video_path = await ytdlp_download_video(url=url)

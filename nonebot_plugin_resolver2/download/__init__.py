@@ -64,7 +64,7 @@ async def download_file_by_stream(
             content_length = int(content_length) if content_length else None
             if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
                 logger.warning(f"文件 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB, 取消下载")
-                raise FinishedException  # ?
+                raise FinishedException("文件大小超过限制, 跳过下载")  # ?
             with tqdm(
                 total=content_length,
                 unit="B",
@@ -78,10 +78,15 @@ async def download_file_by_stream(
                     async for chunk in resp.content.iter_chunked(1024 * 1024):
                         await file.write(chunk)
                         bar.update(len(chunk))
-    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+    except asyncio.TimeoutError:
+        await safe_unlink(file_path)
+        logger.error(f"url: {url}, file_path: {file_path} 下载超时")
+        raise FinishedException("资源下载超时")
+    except aiohttp.ClientError as e:
         await safe_unlink(file_path)
         logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常{e}")
         raise
+
     return file_path
 
 
