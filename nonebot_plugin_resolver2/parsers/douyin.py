@@ -32,9 +32,9 @@ class DouYin(BaseParser):
             if _type == "slides":
                 return await self.parse_slides(video_id)
         for url in [
-            iesdouyin_url,
             self._m_douyin_by_video_id(_type, video_id),
             share_url,
+            iesdouyin_url,
         ]:
             try:
                 return await self.parse_video(url)

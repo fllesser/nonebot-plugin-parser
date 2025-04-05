@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from functools import wraps
 
-from nonebot import logger
 from nonebot.matcher import Matcher
 
 
@@ -32,7 +31,7 @@ def handle_exception(matcher: type[Matcher], error_message: str | None = None):
             try:
                 return await func(*args, **kwargs)
             except (ParseException, DownloadException) as e:
-                logger.warning(f"{matcher.module_name}: {e}")
+                # logger.warning(f"{matcher.module_name}: {e}")
                 msg = error_message or str(e)
                 await matcher.finish(msg, reply_message=True)
 

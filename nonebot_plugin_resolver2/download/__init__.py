@@ -63,7 +63,7 @@ async def download_file_by_stream(
             content_length = resp.headers.get("Content-Length")
             content_length = int(content_length) if content_length else None
             if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
-                logger.warning(f"预下载文件 {file_name} 大小{file_size:.2f} MB 超过 {MAX_SIZE} MB, 取消下载")
+                logger.warning(f"预下载文件 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB 限制, 取消下载")
                 raise DownloadException("音视频流大小超过限制，取消下载")
             with tqdm(
                 total=content_length,
