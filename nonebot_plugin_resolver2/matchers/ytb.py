@@ -2,7 +2,7 @@ from pathlib import Path
 import re
 
 from nonebot import logger, on_keyword
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent
 from nonebot.params import Arg
 from nonebot.rule import Rule
 from nonebot.typing import T_State
@@ -12,7 +12,7 @@ from ..download.utils import keep_zh_en_num
 from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 from ..exception import handle_exception
 from .filter import is_not_in_disabled_groups
-from .helper import get_file_seg, get_video_seg
+from .helper import get_file_seg, get_record_seg, get_video_seg
 
 ytb = on_keyword(keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -61,7 +61,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
     if video_path:
         await ytb.send(get_video_seg(video_path))
     elif audio_path:
-        await ytb.send(MessageSegment.record(audio_path))
+        await ytb.send(get_record_seg(audio_path))
         if NEED_UPLOAD:
             file_name = f"{keep_zh_en_num(title)}.flac"
             await ytb.send(get_file_seg(audio_path, file_name))
