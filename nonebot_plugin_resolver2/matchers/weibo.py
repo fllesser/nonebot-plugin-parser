@@ -4,7 +4,8 @@ from nonebot.rule import Rule
 
 from ..config import NICKNAME
 from ..download import download_imgs_without_raise, download_video
-from ..parsers.weibo import ParseException, WeiBo
+from ..exception import handle_exception
+from ..parsers.weibo import WeiBo
 from .filter import is_not_in_disabled_groups
 from .helper import get_img_seg, get_video_seg, send_segments
 
@@ -14,13 +15,11 @@ weibo = on_keyword(keywords={"weibo.com", "m.weibo.cn"}, rule=Rule(is_not_in_dis
 
 
 @weibo.handle()
+@handle_exception(weibo)
 async def _(event: MessageEvent):
     message = event.message.extract_plain_text().strip()
     pub_prefix = f"{NICKNAME}解析 | 微博 - "
-    try:
-        video_info = await weibo_parser.parse_share_url(message)
-    except ParseException as e:
-        await weibo.finish(f"{pub_prefix}解析失败: {e}")
+    video_info = await weibo_parser.parse_share_url(message)
 
     ext_headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501

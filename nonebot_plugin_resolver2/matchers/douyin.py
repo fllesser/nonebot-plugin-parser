@@ -8,7 +8,8 @@ from nonebot.rule import Rule
 
 from ..config import NICKNAME
 from ..download import download_imgs_without_raise, download_video
-from ..parsers.base import ParseException, VideoInfo
+from ..exception import handle_exception
+from ..parsers.base import VideoInfo
 from ..parsers.douyin import DouYin
 from .filter import is_not_in_disabled_groups
 from .helper import get_img_seg, get_video_seg, send_segments
@@ -19,6 +20,7 @@ douyin_parser = DouYin()
 
 
 @douyin.handle()
+@handle_exception(douyin)
 async def _(event: MessageEvent):
     # 消息
     msg: str = event.message.extract_plain_text().strip()
@@ -29,10 +31,7 @@ async def _(event: MessageEvent):
         logger.warning("douyin url is incomplete, ignored")
         return
     share_url = matched.group(0)
-    try:
-        video_info: VideoInfo = await douyin_parser.parse_share_url(share_url)
-    except ParseException:
-        await douyin.finish("作品已删除，或资源直链获取失败, 请稍后再试", reply_message=True)
+    video_info: VideoInfo = await douyin_parser.parse_share_url(share_url)
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
 
     segs: list[MessageSegment | Message | str] = []

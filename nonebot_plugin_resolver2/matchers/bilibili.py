@@ -18,6 +18,7 @@ from ..download import (
     merge_av,
 )
 from ..download.utils import keep_zh_en_num
+from ..exception import handle_exception
 from ..parsers.bilibili import (
     parse_favlist,
     parse_live,
@@ -48,6 +49,7 @@ PATTERNS: dict[str, re.Pattern] = {
 
 
 @bilibili.handle()
+@handle_exception(bilibili)
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
     share_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
     match = PATTERNS[keyword].search(text)
@@ -149,6 +151,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             logger.warning(f"不支持的链接: {url}")
             await bilibili.finish()
 
+    await bilibili.send(f"{share_prefix}视频")
     # 获取分集数
     page_num = int(page_num) if page_num else 1
     if url and (matched := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
@@ -179,21 +182,17 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     file_name_prefix = f"{video_id}-{page_num}"
     video_path = plugin_cache_dir / f"{file_name_prefix}.mp4"
 
-    try:
-        if not video_path.exists():
-            # 下载视频和音频
-            v_path, a_path = await asyncio.gather(
-                download_file_by_stream(
-                    video_info.video_url, file_name=f"{file_name_prefix}-video.m4s", ext_headers=HEADERS
-                ),
-                download_file_by_stream(
-                    video_info.audio_url, file_name=f"{file_name_prefix}-audio.m4s", ext_headers=HEADERS
-                ),
-            )
-            await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
-    except Exception:
-        await bilibili.send("视频下载失败", reply_message=True)
-        raise
+    if not video_path.exists():
+        # 下载视频和音频
+        v_path, a_path = await asyncio.gather(
+            download_file_by_stream(
+                video_info.video_url, file_name=f"{file_name_prefix}-video.m4s", ext_headers=HEADERS
+            ),
+            download_file_by_stream(
+                video_info.audio_url, file_name=f"{file_name_prefix}-audio.m4s", ext_headers=HEADERS
+            ),
+        )
+        await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
     # 发送视频
     try:
         await bilibili.send(get_video_seg(video_path))
@@ -222,15 +221,13 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     # 处理分 p
     p_num = int(p_num) if p_num else 1
     video_info = await parse_video_info(bvid=bvid, page_num=p_num)
-    try:
-        video_title = keep_zh_en_num(video_info.title)
-        audio_name = f"{video_title}.mp3"
-        audio_path = plugin_cache_dir / audio_name
-        if not audio_path.exists():
-            await download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=HEADERS)
-    except Exception:
-        await bili_music.send("音频下载失败", reply_message=True)
-        raise
+    # 音频文件名
+    video_title = keep_zh_en_num(video_info.title)
+    audio_name = f"{video_title}.mp3"
+    audio_path = plugin_cache_dir / audio_name
+    # 下载
+    if not audio_path.exists():
+        await download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=HEADERS)
 
     # 发送音频
     await bili_music.send(MessageSegment.record(audio_path))

@@ -6,6 +6,7 @@ from typing import Any
 import yt_dlp
 
 from ..config import PROXY, plugin_cache_dir
+from ..exception import ParseException
 from .utils import generate_file_name
 
 
@@ -62,7 +63,8 @@ async def get_video_info(url: str, cookiefile: Path | None = None) -> dict[str, 
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info_dict = await asyncio.to_thread(ydl.extract_info, url, download=False)
-        assert info_dict, "获取视频信息失败"
+        if not info_dict:
+            raise ParseException("获取视频信息失败")
         url_info_mapping[url] = info_dict
         return info_dict
 

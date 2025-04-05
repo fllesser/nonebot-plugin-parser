@@ -38,6 +38,10 @@ jobs:
       run: | 
         uv sync --group test
 
+    - name: Run Load Tests
+      run: |
+        uv run pytest tests/test_load.py
+
     - name: Run Bilibili Tests
       run: |
         uv run pytest tests/test_bilibili.py

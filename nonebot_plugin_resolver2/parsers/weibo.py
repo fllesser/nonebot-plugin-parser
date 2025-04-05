@@ -4,7 +4,8 @@ import re
 import aiohttp
 
 from ..constant import COMMON_HEADER
-from .base import BaseParser, ParseException, VideoAuthor, VideoInfo
+from ..exception import ParseException
+from .base import BaseParser, VideoAuthor, VideoInfo
 
 WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
 

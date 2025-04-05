@@ -5,7 +5,8 @@ from typing import Any
 import aiohttp
 from nonebot.log import logger
 
-from .base import BaseParser, ParseException, VideoAuthor, VideoInfo
+from ..exception import ParseException
+from .base import BaseParser, VideoAuthor, VideoInfo
 
 
 class DouYin(BaseParser):
@@ -31,16 +32,19 @@ class DouYin(BaseParser):
             if _type == "slides":
                 return await self.parse_slides(video_id)
         for url in [
-            iesdouyin_url,
             self._m_douyin_by_video_id(_type, video_id),
             share_url,
+            iesdouyin_url,
         ]:
             try:
                 return await self.parse_video(url)
-            except Exception as e:
-                logger.warning(f"failed to parse video url from {url[:60]}, error: {e}")
+            except ParseException as e:
+                logger.warning(f"failed to parse {url[:60]}, error: {e}")
                 continue
-        raise ParseException("failed to parse video url from share_url")
+            except Exception as e:
+                logger.warning(f"failed to parse {url[:60]}, unknown error: {e}")
+                continue
+        raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
     async def parse_video(self, url: str) -> VideoInfo:
         async with aiohttp.ClientSession() as session:
@@ -120,10 +124,10 @@ class DouYin(BaseParser):
 
         # 如果没有视频信息，获取并抛出异常
         if len(original_video_info["item_list"]) == 0:
-            err_detail_msg = "failed to parse video info from HTML"
+            err_msg = "failed to parse video info from HTML"
             if len(filter_list := original_video_info["filter_list"]) > 0:
-                err_detail_msg = filter_list[0]["detail_msg"]
-            raise ParseException(err_detail_msg)
+                err_msg = filter_list[0]["detail_msg"] or filter_list[0]["filter_reason"]
+            raise ParseException(err_msg)
 
         return original_video_info["item_list"][0]
 

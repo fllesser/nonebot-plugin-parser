@@ -5,7 +5,7 @@ from typing import Any
 from bilibili_api import Credential
 from bilibili_api.video import Video
 
-from .base import ParseException
+from ..exception import ParseException
 
 CREDENTIAL: Credential | None = None
 

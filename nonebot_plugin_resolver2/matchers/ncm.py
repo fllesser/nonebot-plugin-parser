@@ -1,13 +1,14 @@
 import re
 
 import aiohttp
-from nonebot import on_message
+from nonebot import logger, on_message
 from nonebot.adapters.onebot.v11 import MessageSegment
 
 from ..config import NEED_UPLOAD, NICKNAME
 from ..constant import COMMON_HEADER
 from ..download import download_audio, download_img
 from ..download.utils import keep_zh_en_num
+from ..exception import handle_exception
 from .filter import is_not_in_disabled_groups
 from .helper import get_file_seg, get_img_seg
 from .preprocess import ExtractText, Keyword, r_keywords
@@ -22,6 +23,7 @@ ncm = on_message(rule=is_not_in_disabled_groups & r_keywords("music.163.com", "1
 
 
 @ncm.handle()
+@handle_exception(ncm)
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
     share_prefix = f"{NICKNAME}解析 | 网易云 - "
     # 解析短链接
@@ -34,10 +36,11 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
                     url = resp.headers.get("Location", "")
     else:
         url = text
-    if match := re.search(r"id=(\d+)", url):
-        ncm_id = match.group(1)
-    else:
-        await ncm.finish(f"{share_prefix}获取链接失败")
+    matched = re.search(r"id=(\d+)", url)
+    if not matched:
+        logger.info(f"{share_prefix}无效链接，忽略 - {text}")
+        return
+    ncm_id = matched.group(1)
 
     # 对接临时接口
     try:
@@ -48,14 +51,11 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             ncm_vip_data.get(key) for key in ["music_url", "cover", "singer", "title"]
         )
     except Exception as e:
-        await ncm.finish(f"{share_prefix}错误: {e}")
+        await ncm.send(f"{share_prefix}错误: {e}")
+        raise
     await ncm.send(f"{share_prefix}{ncm_title} {ncm_singer}" + get_img_seg(await download_img(ncm_cover)))
     # 下载音频文件后会返回一个下载路径
-    try:
-        audio_path = await download_audio(ncm_music_url)
-    except Exception:
-        await ncm.send("音频下载失败，请联系机器人管理员", reply_message=True)
-        raise
+    audio_path = await download_audio(ncm_music_url)
     # 发送语音
     await ncm.send(MessageSegment.record(audio_path))
     # 发送群文件

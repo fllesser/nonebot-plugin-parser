@@ -6,8 +6,9 @@ import aiohttp
 from nonebot.log import logger
 from tqdm.asyncio import tqdm
 
-from ..config import plugin_cache_dir
+from ..config import MAX_SIZE, plugin_cache_dir
 from ..constant import COMMON_HEADER
+from ..exception import DownloadException
 from .utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
 
 # 全局 session
@@ -56,10 +57,16 @@ async def download_file_by_stream(
 
     try:
         session = await _get_session()
-        async with session.get(url, headers=headers, proxy=proxy) as resp, aiofiles.open(file_path, "wb") as file:
+        async with session.get(url, headers=headers, proxy=proxy) as resp:
             resp.raise_for_status()
+            # 获取文件大小
+            content_length = resp.headers.get("Content-Length")
+            content_length = int(content_length) if content_length else None
+            if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
+                logger.warning(f"预下载 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB 限制, 取消下载")
+                raise DownloadException("音视频流大小超过配置限制，取消下载")
             with tqdm(
-                total=int(resp.headers.get("Content-Length", 0)),
+                total=content_length,  # 为 None 时，无进度条
                 unit="B",
                 unit_scale=True,
                 unit_divisor=1024,
@@ -67,10 +74,15 @@ async def download_file_by_stream(
                 colour="green",
                 desc=file_name,
             ) as bar:
-                async for chunk in resp.content.iter_chunked(1024 * 1024):
-                    await file.write(chunk)
-                    bar.update(len(chunk))
-    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+                async with aiofiles.open(file_path, "wb") as file:
+                    async for chunk in resp.content.iter_chunked(1024 * 1024):
+                        await file.write(chunk)
+                        bar.update(len(chunk))
+    except asyncio.TimeoutError:
+        await safe_unlink(file_path)
+        logger.error(f"url: {url}, file_path: {file_path} 下载超时")
+        raise DownloadException("资源下载超时")
+    except aiohttp.ClientError as e:
         await safe_unlink(file_path)
         logger.error(f"url: {url}, file_path: {file_path} 下载过程中出现异常{e}")
         raise

@@ -7,6 +7,7 @@ from nonebot.rule import Rule
 
 from ..config import NICKNAME, PROXY
 from ..download.ytdlp import get_video_info, ytdlp_download_video
+from ..exception import handle_exception
 from .filter import is_not_in_disabled_groups
 from .helper import get_video_seg
 
@@ -14,6 +15,7 @@ tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disabled_groups
 
 
 @tiktok.handle()
+@handle_exception(tiktok)
 async def _(event: MessageEvent):
     # 消息
     message: str = event.message.extract_plain_text().strip()
@@ -30,11 +32,9 @@ async def _(event: MessageEvent):
                 url = resp.headers.get("Location")
     assert url
     share_prefix = f"{NICKNAME}解析 | TikTok - "
-    try:
-        info = await get_video_info(url)
-        await tiktok.send(f"{share_prefix}{info['title']}")
-    except Exception as e:
-        await tiktok.send(f"{share_prefix}标题获取出错: {e}")
+    # 获取视频信息
+    info = await get_video_info(url)
+    await tiktok.send(f"{share_prefix}{info['title']}")
 
     try:
         video_path = await ytdlp_download_video(url=url)
