@@ -39,7 +39,7 @@ async def parse_acfun_url(url: str) -> tuple[str, str]:
     matched = re.search(r"window\.videoInfo =(.*?)</script>", raw)
     if not matched:
         raise ParseException("解析 acfun 视频信息失败")
-    json_str = matched.group(1)
+    json_str = str(matched.group(1))
     json_str = escape_special_chars(json_str)
     video_info = json.loads(json_str)
 
