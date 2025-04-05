@@ -61,7 +61,7 @@ jobs:
     - name: Run Twitter Tests
       run: |
         uv run pytest tests/test_x.py
-    
-    - name: Run Download tests
+  
+    - name: Run Acfun Tests
       run: |
-        uv run pytest tests/test_download.py
+        uv run pytest tests/test_acfun.py

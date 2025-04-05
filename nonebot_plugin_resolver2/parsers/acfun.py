@@ -77,16 +77,16 @@ async def parse_m3u8(m3u8_url: str):
     return m3u8_full_urls, ts_names, output_file_name
 
 
-async def download_m3u8_videos(m3u8_full_url: str, idx: int) -> None:
+async def download_m3u8_videos(m3u8_full_url: str, file_name: str) -> None:
     """下载m3u8视频
 
     Args:
         m3u8_full_url (str): m3u8链接
-        idx (int): 文件名
+        file_name (str): 文件名
     """
     async with aiohttp.ClientSession() as session:
         async with session.get(m3u8_full_url, headers=ACFUN_HEADERS) as resp:
-            async with aiofiles.open(plugin_cache_dir / f"{idx}.ts", "wb") as f:
+            async with aiofiles.open(plugin_cache_dir / f"{file_name}.ts", "wb") as f:
                 async for chunk in resp.content.iter_chunked(1024):
                     await f.write(chunk)
 
