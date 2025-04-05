@@ -7,7 +7,7 @@ from typing_extensions import deprecated
 import aiofiles
 import aiohttp
 
-from ..config import plugin_cache_dir
+from ..config import MAX_SIZE, plugin_cache_dir
 from ..download import download_file_by_stream
 from ..download.utils import safe_unlink
 from ..exception import DownloadException
@@ -69,17 +69,35 @@ async def download_acfun_video(m3u8s_url: str, acid: int) -> Path:
     Returns:
         Path: 下载的mp4文件
     """
+    from tqdm.asyncio import tqdm
+
     m3u8_full_urls = await _parse_m3u8(m3u8s_url)
     video_file = plugin_cache_dir / f"acfun_{acid}.mp4"
     if video_file.exists():
         return video_file
 
     try:
+        max_size_in_bytes = MAX_SIZE * 1024 * 1024
         async with aiofiles.open(video_file, "wb") as f, aiohttp.ClientSession() as session:
-            for url in m3u8_full_urls:
-                async with session.get(url, headers=ACFUN_HEADERS) as resp:
-                    async for chunk in resp.content.iter_chunked(1024):
-                        await f.write(chunk)
+            total_size = 0
+            with tqdm(
+                total=None,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+                dynamic_ncols=True,
+                colour="green",
+                desc=video_file.name,
+            ) as bar:
+                for url in m3u8_full_urls:
+                    async with session.get(url, headers=ACFUN_HEADERS) as resp:
+                        async for chunk in resp.content.iter_chunked(1024 * 1024):
+                            await f.write(chunk)
+                            total_size += len(chunk)
+                            bar.update(len(chunk))
+                    if total_size > max_size_in_bytes:
+                        # 直接截断
+                        break
     except aiohttp.ClientError as e:
         await safe_unlink(video_file)
         raise DownloadException(f"下载 acfun 视频失败: {e}")
