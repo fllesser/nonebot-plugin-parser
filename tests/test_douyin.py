@@ -39,8 +39,9 @@ async def test_douyin_old_video():
     """
 
     # from nonebot_plugin_resolver2.parsers.douyin import DouYin
+
     # parser = DouYin()
-    # 该作品已删除，暂时忽略
+    # # 该作品已删除，暂时忽略
     # url = "https://v.douyin.com/iUrHrruH"
     # logger.info(f"开始解析抖音西瓜视频 {url}")
     # video_info = await parser.parse_share_url(url)

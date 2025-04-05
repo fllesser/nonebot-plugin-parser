@@ -39,10 +39,10 @@ class DouYin(BaseParser):
             try:
                 return await self.parse_video(url)
             except ParseException as e:
-                logger.warning(f"failed to parse {url[:60]}, error: {e}", exc_info=True)
+                logger.warning(f"failed to parse {url[:60]}, error: {e}")
                 continue
             except Exception as e:
-                logger.warning(f"failed to parse {url[:60]}, unknown error: {e}", exc_info=True)
+                logger.warning(f"failed to parse {url[:60]}, unknown error: {e}")
                 continue
         raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
@@ -124,10 +124,10 @@ class DouYin(BaseParser):
 
         # 如果没有视频信息，获取并抛出异常
         if len(original_video_info["item_list"]) == 0:
-            err_detail_msg = "failed to parse video info from HTML"
+            err_msg = "failed to parse video info from HTML"
             if len(filter_list := original_video_info["filter_list"]) > 0:
-                err_detail_msg = filter_list[0]["detail_msg"]
-            raise ParseException(err_detail_msg)
+                err_msg = filter_list[0]["detail_msg"] or filter_list[0]["filter_reason"]
+            raise ParseException(err_msg)
 
         return original_video_info["item_list"][0]
 
