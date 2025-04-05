@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 import re
-from typing import Any
 
 import aiofiles
 import aiohttp
@@ -22,28 +21,38 @@ async def parse_acfun_url(url: str) -> tuple[str, str]:
         url (str): 链接
 
     Returns:
-        tuple: 视频链接和视频名称
+        tuple: 视频链接和视频描述
     """
+    # 拼接查询参数
+    url = f"{url}?quickViewId=videoInfo_new&ajaxpipe=1"
 
-    url_suffix = "?quickViewId=videoInfo_new&ajaxpipe=1"
-    url = url + url_suffix
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=ACFUN_HEADERS) as resp:
+            resp.raise_for_status()
             raw = await resp.text()
+
+    # 分离视频信息和 ksPlayJson
     strs_remove_header = raw.split("window.pageInfo = window.videoInfo =")
     strs_remove_tail = strs_remove_header[1].split("</script>")
     str_json = strs_remove_tail[0]
     str_json_escaped = escape_special_chars(str_json)
     video_info = json.loads(str_json_escaped)
 
-    video_name = parse_video_name_fixed(video_info)
+    video_desc = (
+        f"ac{video_info.get('dougaId', '')}\n"
+        f"标题: {video_info.get('title', '')}\n"
+        f"作者: {video_info.get('user', {}).get('name', '')}\n"
+        f"简介: {video_info.get('description', '')}\n"
+        f"上传于 {video_info.get('createTime', '')}"
+    )
+
     ks_play_json = video_info["currentVideoInfo"]["ksPlayJson"]
     ks_play = json.loads(ks_play_json)
     representations = ks_play["adaptationSet"][0]["representation"]
     # 这里[d['url'] for d in representations]，从 4k ~ 360，此处默认720p
     m3u8_url = [d["url"] for d in representations][3]
 
-    return m3u8_url, video_name
+    return m3u8_url, video_desc
 
 
 async def parse_m3u8(m3u8_url: str):
@@ -74,26 +83,7 @@ async def parse_m3u8(m3u8_url: str):
     return m3u8_full_urls
 
 
-def parse_video_name(video_info: dict[str, Any]) -> str:
-    """获取视频信息
-
-    Args:
-        video_info (dict[str, Any]): 视频信息
-
-    Returns:
-        str: 视频信息
-    """
-    ac_id = "ac" + video_info.get("dougaId", "")
-    title = video_info.get("title", "")
-    author = video_info.get("user", {}).get("name", "")
-    upload_time = video_info.get("createTime", "")
-    desc = video_info.get("description", "")
-
-    raw = "_".join([ac_id, title, author, upload_time, desc])[:101]
-    return raw
-
-
-async def merge_ac_file_to_mp4(acid: int, ts_files: list[Path]) -> Path:
+async def merge_acs_to_mp4(acid: int, ts_files: list[Path]) -> Path:
     """合并ac文件到mp4
 
     Args:
@@ -127,17 +117,3 @@ async def merge_ac_file_to_mp4(acid: int, ts_files: list[Path]) -> Path:
 
     await exec_ffmpeg_cmd(command)
     return video_file
-
-
-def parse_video_name_fixed(video_info: dict) -> str:
-    """校准文件名
-
-    Args:
-        video_info (dict): 视频信息
-
-    Returns:
-        str: 校准后的文件名
-    """
-    f = parse_video_name(video_info)
-    t = f.replace(" ", "-")
-    return t
