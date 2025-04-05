@@ -1,11 +1,16 @@
+import asyncio
 import json
 from pathlib import Path
 import re
+from typing_extensions import deprecated
 
 import aiofiles
 import aiohttp
 
 from ..config import plugin_cache_dir
+from ..download import download_file_by_stream
+from ..download.utils import safe_unlink
+from ..exception import DownloadException
 from .utils import escape_special_chars
 
 ACFUN_HEADERS = {
@@ -55,7 +60,37 @@ async def parse_acfun_url(url: str) -> tuple[str, str]:
     return m3u8_url, video_desc
 
 
-async def parse_m3u8(m3u8_url: str):
+async def download_acfun_video(m3u8s_url: str, acid: int) -> Path:
+    """下载acfun视频
+
+    Args:
+        m3u8s_url (str): m3u8链接
+        acid (int): acid
+
+    Returns:
+        Path: 下载的mp4文件
+    """
+    m3u8_full_urls = await _parse_m3u8(m3u8s_url)
+    video_file = plugin_cache_dir / f"acfun_{acid}.mp4"
+    if video_file.exists():
+        return video_file
+
+    try:
+        async with aiofiles.open(video_file, "wb") as f, aiohttp.ClientSession() as session:
+            for url in m3u8_full_urls:
+                async with session.get(url, headers=ACFUN_HEADERS) as resp:
+                    async for chunk in resp.content.iter_chunked(1024):
+                        await f.write(chunk)
+    except aiohttp.ClientError as e:
+        await safe_unlink(video_file)
+        raise DownloadException(f"下载 acfun 视频失败: {e}")
+    except asyncio.TimeoutError:
+        await safe_unlink(video_file)
+        raise DownloadException("下载 acfun 视频超时")
+    return video_file
+
+
+async def _parse_m3u8(m3u8_url: str):
     """解析m3u8链接
 
     Args:
@@ -83,7 +118,8 @@ async def parse_m3u8(m3u8_url: str):
     return m3u8_full_urls
 
 
-async def merge_acs_to_mp4(acid: int, ts_files: list[Path]) -> Path:
+@deprecated("已废弃，请使用 download_acfun_video 代替")
+async def _merge_acs_to_mp4(acid: int, ts_files: list[Path]) -> Path:
     """合并ac文件到mp4
 
     Args:
@@ -117,3 +153,19 @@ async def merge_acs_to_mp4(acid: int, ts_files: list[Path]) -> Path:
 
     await exec_ffmpeg_cmd(command)
     return video_file
+
+
+@deprecated("已废弃，请使用 download_acfun_video 代替")
+async def download_and_merge_acfun_video(m3u8s_url: str, acid: int) -> Path:
+    """下载并合并acfun视频
+
+    Args:
+        m3u8s_url (str): m3u8链接
+        acid (int): acid
+
+    Returns:
+        Path: 合并后的mp4文件
+    """
+    m3u8_full_urls = await _parse_m3u8(m3u8s_url)
+    ts_paths = await asyncio.gather(*[download_file_by_stream(url) for url in m3u8_full_urls])
+    return await _merge_acs_to_mp4(acid, ts_paths)
