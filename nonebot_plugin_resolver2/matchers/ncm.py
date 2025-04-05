@@ -2,7 +2,6 @@ import re
 
 import aiohttp
 from nonebot import logger, on_message
-from nonebot.adapters.onebot.v11 import MessageSegment
 
 from ..config import NEED_UPLOAD, NICKNAME
 from ..constant import COMMON_HEADER
@@ -10,7 +9,7 @@ from ..download import download_audio, download_img
 from ..download.utils import keep_zh_en_num
 from ..exception import handle_exception
 from .filter import is_not_in_disabled_groups
-from .helper import get_file_seg, get_img_seg
+from .helper import get_file_seg, get_img_seg, get_record_seg
 from .preprocess import ExtractText, Keyword, r_keywords
 
 # NCM获取歌曲信息链接
@@ -46,6 +45,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{NETEASE_TEMP_API.replace('{}', ncm_id)}", headers=COMMON_HEADER) as resp:
+                resp.raise_for_status()
                 ncm_vip_data = await resp.json()
         ncm_music_url, ncm_cover, ncm_singer, ncm_title = (
             ncm_vip_data.get(key) for key in ["music_url", "cover", "singer", "title"]
@@ -57,7 +57,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     # 下载音频文件后会返回一个下载路径
     audio_path = await download_audio(ncm_music_url)
     # 发送语音
-    await ncm.send(MessageSegment.record(audio_path))
+    await ncm.send(get_record_seg(audio_path))
     # 发送群文件
     if NEED_UPLOAD:
         file_name = keep_zh_en_num(f"{ncm_title}-{ncm_singer}")

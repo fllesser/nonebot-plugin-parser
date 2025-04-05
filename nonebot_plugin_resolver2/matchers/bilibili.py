@@ -27,7 +27,7 @@ from ..parsers.bilibili import (
     parse_video_info,
 )
 from .filter import is_not_in_disabled_groups
-from .helper import get_file_seg, get_img_seg, get_video_seg, send_segments
+from .helper import get_file_seg, get_img_seg, get_record_seg, get_video_seg, send_segments
 from .preprocess import ExtractText, Keyword, r_keywords
 
 bilibili = on_message(
@@ -230,7 +230,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
         await download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=HEADERS)
 
     # 发送音频
-    await bili_music.send(MessageSegment.record(audio_path))
+    await bili_music.send(get_record_seg(audio_path))
     # 上传音频
     if NEED_UPLOAD:
         await bili_music.send(get_file_seg(audio_path))

@@ -64,6 +64,19 @@ def get_img_seg(img_path: Path) -> MessageSegment:
     return MessageSegment.image(file)
 
 
+def get_record_seg(audio_path: Path) -> MessageSegment:
+    """获取语音 Seg
+
+    Args:
+        audio_path (Path): 语音路径
+
+    Returns:
+        MessageSegment: 语音 Seg
+    """
+    file = audio_path.read_bytes() if USE_BASE64 else audio_path
+    return MessageSegment.record(file)
+
+
 def get_video_seg(video_path: Path) -> MessageSegment:
     """获取视频 Seg
 
