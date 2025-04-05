@@ -46,9 +46,8 @@ async def parse_acfun_url(url: str) -> tuple[str, str]:
     video_desc = (
         f"ac{video_info.get('dougaId', '')}\n"
         f"标题: {video_info.get('title', '')}\n"
-        f"作者: {video_info.get('user', {}).get('name', '')}\n"
         f"简介: {video_info.get('description', '')}\n"
-        f"上传于 {video_info.get('createTime', '')}"
+        f"作者: {video_info.get('user', {}).get('name', '')}, 上传于 {video_info.get('createTime', '')}"
     )
 
     ks_play_json = video_info["currentVideoInfo"]["ksPlayJson"]
