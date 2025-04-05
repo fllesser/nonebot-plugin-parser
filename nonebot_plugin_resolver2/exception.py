@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from functools import wraps
 
 from nonebot import logger
 from nonebot.matcher import Matcher
@@ -26,6 +27,7 @@ def handle_exception(matcher: type[Matcher], error_message: str | None = None):
     """
 
     def decorator(func: Callable):
+        @wraps(func)
         async def wrapper(*args, **kwargs):
             try:
                 return await func(*args, **kwargs)
