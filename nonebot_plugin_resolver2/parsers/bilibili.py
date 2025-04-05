@@ -4,6 +4,7 @@ from typing import Any
 
 from bilibili_api import Credential
 from bilibili_api.video import Video
+from nonebot import logger
 
 from ..exception import ParseException
 
@@ -16,7 +17,7 @@ def init_bilibili_api():
     from bilibili_api import request_settings, select_client
 
     from ..config import rconfig
-    from ..cookie import cookies_str_to_dict
+    from ..cookie import ck2dict
 
     # 选择客户端
     select_client("curl_cffi")
@@ -24,8 +25,12 @@ def init_bilibili_api():
     request_settings.set("impersonate", "chrome131")
     # 第二参数数值参考 curl_cffi 文档
     # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
+
+    if not rconfig.r_bili_ck:
+        logger.warning("未配置哔哩哔哩 cookie, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
+        return
     global CREDENTIAL
-    CREDENTIAL = Credential.from_cookies(cookies_str_to_dict(rconfig.r_bili_ck)) if rconfig.r_bili_ck else None
+    CREDENTIAL = Credential.from_cookies(ck2dict(rconfig.r_bili_ck))
 
 
 async def parse_opus(opus_id: int) -> tuple[list[str], str]:

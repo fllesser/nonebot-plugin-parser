@@ -1,12 +1,19 @@
 from urllib.parse import parse_qs, urlparse
 
 
-def get_val_from_url_by_query_key(url: str, query_key: str) -> str:
-    """
-    从url的query参数中解析出query_key对应的值
-    :param url: url地址
-    :param query_key: query参数的key
-    :return:
+def parse_url_query(url: str, query_key: str) -> str:
+    """从 url 的 query 参数中解析出 query_key 对应的值
+
+    Args:
+        url (str): url 地址
+        query_key (str): query 参数的 key
+
+    Raises:
+        KeyError: url 中不存在 query_key 参数
+        ValueError: url 中 query_key 参数值为空
+
+    Returns:
+        str: query_key 对应的值
     """
     url_res = urlparse(url)
     url_query = parse_qs(url_res.query, keep_blank_values=True)
@@ -20,3 +27,15 @@ def get_val_from_url_by_query_key(url: str, query_key: str) -> str:
         raise ValueError(f"url 中 {query_key} 参数值为空")
 
     return query_val
+
+
+def escape_special_chars(str_json: str) -> str:
+    """转义特殊字符
+
+    Args:
+        str_json (str): 字符串
+
+    Returns:
+        str: 转义后的字符串
+    """
+    return str_json.replace('\\\\"', '\\"').replace('\\"', '"')

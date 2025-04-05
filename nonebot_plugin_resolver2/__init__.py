@@ -29,8 +29,6 @@ __plugin_meta__ = PluginMetadata(
 
 @get_driver().on_startup
 async def _():
-    if not rconfig.r_bili_ck:
-        logger.warning("未配置哔哩哔哩 cookie，无法使用哔哩哔哩AI总结，可能无法解析 720p 以上画质视频")
     if rconfig.r_ytb_ck:
         save_cookies_to_netscape(rconfig.r_ytb_ck, ytb_cookies_file, "youtube.com")
         logger.debug(f"保存 youtube cookie 到 {ytb_cookies_file}")
@@ -65,7 +63,7 @@ async def clean_plugin_cache():
     try:
         files = [f for f in plugin_cache_dir.iterdir() if f.is_file()]
         if not files:
-            logger.info("No cache files to clean")
+            logger.info("no cache files to clean")
             return
 
         # 并发删除文件

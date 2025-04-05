@@ -22,7 +22,6 @@ def handle_exception(matcher: type[Matcher], error_message: str | None = None):
     Args:
         matcher: 需要处理的 matcher 类型
         error_message: 自定义错误消息
-        reply_message: 是否回复消息
     """
 
     def decorator(func: Callable):

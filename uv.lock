@@ -889,7 +889,7 @@ wheels = [
 
 [[package]]
 name = "nonebot-plugin-resolver2"
-version = "1.8.0"
+version = "1.8.2"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },
@@ -927,7 +927,7 @@ requires-dist = [
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
     { name = "nonebot2", specifier = ">=2.4.2,<3.0.0" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
-    { name = "yt-dlp", specifier = ">=2025.3.27" },
+    { name = "yt-dlp", specifier = ">=2025.3.31" },
 ]
 
 [package.metadata.requires-dev]
@@ -1852,9 +1852,9 @@ wheels = [
 
 [[package]]
 name = "yt-dlp"
-version = "2025.3.27"
+version = "2025.3.31"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8c/cf/b944738d1508948e00b6d71b2305448ca4ea18fcc1c6ba0c2118270f2e82/yt_dlp-2025.3.27.tar.gz", hash = "sha256:30cb078f803b539b2a66521c5ec86d328c07f74aeca9440069e58619c299cf15", size = 2963084 }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/11/333d16f88b1515d4c601e1dfbf1028e6798f0b2a8ff1dc5aaa7b797aa9e8/yt_dlp-2025.3.31.tar.gz", hash = "sha256:1bfe0e660d1a70a09e27b2d58f92e30b1e2e362cc487829f2f824346ae49fb91", size = 2967466 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/8a/d4a533d5bb37e6459fbbf3f801a5f8bffafe78e364a9981ab571a7038db8/yt_dlp-2025.3.27-py3-none-any.whl", hash = "sha256:bef4105af0f25c13c1a505daf46142af45d9312dc2c3553651db083e6860e641", size = 3221898 },
+    { url = "https://files.pythonhosted.org/packages/a8/bf/7b0affb8f163376309696cfd1c677818fa0969fbb9d88225087208799afe/yt_dlp-2025.3.31-py3-none-any.whl", hash = "sha256:8ecb3aa218a3bebe431119f513a8972b9b9d992edf67168c00ab92329a03baec", size = 3226021 },
 ]
