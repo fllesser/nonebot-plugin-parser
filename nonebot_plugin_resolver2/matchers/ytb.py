@@ -49,12 +49,12 @@ async def _(
     event: MessageEvent,
     state: T_State,
     type: str = ArgStr(),
-    arg_prompt_result: dict[str, Any] = ArgPromptResult(),
+    type_prompt_result: dict[str, Any] = ArgPromptResult("type"),
 ):
     # 回应用户
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     # 撤回 选择类型 的 prompt
-    await bot.delete_msg(message_id=arg_prompt_result["message_id"])
+    await bot.delete_msg(message_id=type_prompt_result["message_id"])
     # 获取 url 和 title
     url: str = state["url"]
     title: str = state["title"]
