@@ -49,7 +49,7 @@ async def _(
     event: MessageEvent,
     state: T_State,
     type: str = ArgStr(),
-    type_prompt_result: dict[str, Any] = ArgPromptResult("type"),
+    type_prompt_result: Any = ArgPromptResult("type"),
 ):
     # 回应用户
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
