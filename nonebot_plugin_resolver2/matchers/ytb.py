@@ -1,9 +1,10 @@
 from pathlib import Path
 import re
+from typing import Any
 
 from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
-from nonebot.params import ArgStr, PausePromptResult
+from nonebot.params import ArgStr, ReceivePromptResult
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
@@ -48,7 +49,7 @@ async def _(
     event: MessageEvent,
     state: T_State,
     type: str = ArgStr(),
-    pause_result=PausePromptResult(),
+    pause_result: dict[str, Any] = ReceivePromptResult(),
 ):
     # 回应用户
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
