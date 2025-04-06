@@ -4,7 +4,7 @@ from typing import Any
 
 from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
-from nonebot.params import ArgPromptResult, ArgStr
+from nonebot.params import ArgPlainText, ArgPromptResult
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
@@ -48,7 +48,7 @@ async def _(
     bot: Bot,
     event: MessageEvent,
     state: T_State,
-    type: str = ArgStr(),
+    type: str = ArgPlainText(),
     type_prompt_result: Any = ArgPromptResult("type"),
 ):
     # 回应用户
