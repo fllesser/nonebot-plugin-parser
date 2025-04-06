@@ -2,8 +2,8 @@ from pathlib import Path
 import re
 
 from nonebot import logger, on_keyword
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent
-from nonebot.params import Arg
+from nonebot.adapters.onebot.v11 import Bot, MessageEvent
+from nonebot.params import ArgStr, PausePromptResult
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
@@ -26,29 +26,42 @@ async def _(event: MessageEvent, state: T_State):
         # https://www.youtube.com/watch?v=1LnPnmKALL8&list=RD8AxpdwegNKc&index=2
         r"(?:https?://)?(?:www\.)?(?:youtube\.com|youtu\.be)/[A-Za-z\d\._\?%&\+\-=/#]+"
     )
-    if match := re.search(pattern, message):
-        url = match.group(0)
-    else:
+    matched = re.search(pattern, message)
+    if not matched:
         logger.warning(f"{message} 中的链接不支持，已忽略")
         await ytb.finish()
+
+    url = matched.group(0)
     try:
         info_dict = await get_video_info(url, ytb_cookies_file)
         title = info_dict.get("title", "未知")
-        await ytb.send(f"{NICKNAME}解析 | 油管 - {title}")
     except Exception as e:
         await ytb.finish(f"{NICKNAME}解析 | 油管 - 标题获取出错: {e}")
+    await ytb.send(f"{NICKNAME}解析 | 油管 - {title}")
     state["url"] = url
     state["title"] = title
 
 
 @ytb.got("type", prompt="您需要下载音频(0)，还是视频(1)")
-async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()):
+async def _(
+    bot: Bot,
+    event: MessageEvent,
+    state: T_State,
+    type: str = ArgStr(),
+    pause_result: dict[str, int] = PausePromptResult(),
+):
+    # 回应用户
+    await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
+    # 撤回 选择类型 的 prompt
+    await bot.delete_msg(message_id=pause_result["message_id"])
+    # 获取 url 和 title
     url: str = state["url"]
     title: str = state["title"]
-    await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
+    # 下载视频或音频
     video_path: Path | None = None
     audio_path: Path | None = None
-    is_video = type.extract_plain_text().strip() == "1"
+    # 判断是否下载视频
+    is_video = type == "1"
     try:
         if is_video:
             video_path = await ytdlp_download_video(url, ytb_cookies_file)
@@ -58,6 +71,7 @@ async def _(bot: Bot, event: MessageEvent, state: T_State, type: Message = Arg()
         media_type = "视频" if is_video else "音频"
         logger.error(f"{media_type}下载失败 | {url} | {e}", exc_info=True)
         await ytb.send(f"{media_type}下载失败", reply_message=True)
+    # 发送视频或音频
     if video_path:
         await ytb.send(get_video_seg(video_path))
     elif audio_path:
