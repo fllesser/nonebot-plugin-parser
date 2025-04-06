@@ -4,7 +4,7 @@ from typing import Any
 
 from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
-from nonebot.params import ArgStr, ReceivePromptResult
+from nonebot.params import ArgPromptResult, ArgStr
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
@@ -49,12 +49,12 @@ async def _(
     event: MessageEvent,
     state: T_State,
     type: str = ArgStr(),
-    pause_result: dict[str, Any] = ReceivePromptResult(),
+    arg_prompt_result: dict[str, Any] = ArgPromptResult(),
 ):
     # 回应用户
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     # 撤回 选择类型 的 prompt
-    await bot.delete_msg(message_id=pause_result["message_id"])
+    await bot.delete_msg(message_id=arg_prompt_result["message_id"])
     # 获取 url 和 title
     url: str = state["url"]
     title: str = state["title"]
