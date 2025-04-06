@@ -889,7 +889,7 @@ wheels = [
 
 [[package]]
 name = "nonebot-plugin-resolver2"
-version = "1.8.2"
+version = "1.8.3"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },
