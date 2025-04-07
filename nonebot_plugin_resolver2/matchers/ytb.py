@@ -1,10 +1,10 @@
 from pathlib import Path
 import re
-from typing import Any
 
 from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
-from nonebot.params import ArgPlainText, ArgPromptResult
+from nonebot.consts import REJECT_PROMPT_RESULT_KEY
+from nonebot.params import ArgPlainText
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
@@ -49,12 +49,11 @@ async def _(
     event: MessageEvent,
     state: T_State,
     type: str = ArgPlainText(),
-    type_prompt_result: Any = ArgPromptResult("type"),
 ):
     # 回应用户
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     # 撤回 选择类型 的 prompt
-    await bot.delete_msg(message_id=type_prompt_result["message_id"])
+    await bot.delete_msg(message_id=state[REJECT_PROMPT_RESULT_KEY.format(key="type")]["message_id"])
     # 获取 url 和 title
     url: str = state["url"]
     title: str = state["title"]
@@ -71,7 +70,7 @@ async def _(
     except Exception as e:
         media_type = "视频" if is_video else "音频"
         logger.error(f"{media_type}下载失败 | {url} | {e}", exc_info=True)
-        await ytb.send(f"{media_type}下载失败", reply_message=True)
+        await ytb.finish(f"{media_type}下载失败", reply_message=True)
     # 发送视频或音频
     if video_path:
         await ytb.send(get_video_seg(video_path))
