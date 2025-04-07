@@ -1,10 +1,10 @@
 from pathlib import Path
 import re
+from typing import Any
 
 from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
-from nonebot.consts import REJECT_PROMPT_RESULT_KEY
-from nonebot.params import ArgPlainText
+from nonebot.params import PausePromptResult
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
@@ -41,21 +41,20 @@ async def _(event: MessageEvent, state: T_State):
     await ytb.send(f"{NICKNAME}解析 | 油管 - {title}")
     state["url"] = url
     state["title"] = title
+    await ytb.pause("您需要下载音频(0)，还是视频(1)")
 
 
-@ytb.got("type", prompt="您需要下载音频(0)，还是视频(1)")
+@ytb.handle()
 async def _(
     bot: Bot,
     event: MessageEvent,
     state: T_State,
-    type: str = ArgPlainText(),
+    pause_result: Any = PausePromptResult(),
 ):
     # 回应用户
-    for k, v in state.items():
-        logger.info(f"{k}: {v}")
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     # 撤回 选择类型 的 prompt
-    await bot.delete_msg(message_id=state[REJECT_PROMPT_RESULT_KEY.format(key="type")]["message_id"])
+    await bot.delete_msg(message_id=pause_result["message_id"])
     # 获取 url 和 title
     url: str = state["url"]
     title: str = state["title"]
@@ -63,6 +62,7 @@ async def _(
     video_path: Path | None = None
     audio_path: Path | None = None
     # 判断是否下载视频
+    type = event.message.extract_plain_text().strip()
     is_video = type == "1"
     try:
         if is_video:
