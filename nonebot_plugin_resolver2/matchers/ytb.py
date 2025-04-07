@@ -51,6 +51,8 @@ async def _(
     type: str = ArgPlainText(),
 ):
     # 回应用户
+    for k, v in state.items():
+        logger.info(f"{k}: {v}")
     await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     # 撤回 选择类型 的 prompt
     await bot.delete_msg(message_id=state[REJECT_PROMPT_RESULT_KEY.format(key="type")]["message_id"])
