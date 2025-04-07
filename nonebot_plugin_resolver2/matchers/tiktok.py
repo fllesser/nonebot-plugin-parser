@@ -23,23 +23,27 @@ async def _(event: MessageEvent):
     matched = re.search(url_reg, message)
     if not matched:
         logger.warning("tiktok url is incomplete, ignored")
-        return
+        await tiktok.finish()
+    # 提取 url 和 prefix
     url, prefix = matched.group(0), matched.group(1)
 
+    # 如果 prefix 是 vt 或 vm，则需要重定向
     if prefix == "vt" or prefix == "vm":
         async with aiohttp.ClientSession() as session:
             async with session.get(url, allow_redirects=False, proxy=PROXY) as resp:
                 url = resp.headers.get("Location")
-    assert url
-    share_prefix = f"{NICKNAME}解析 | TikTok - "
+
+    pub_prefix = f"{NICKNAME}解析 | TikTok - "
+    if not url:
+        await tiktok.finish(f"{pub_prefix}短链重定向失败")
+
     # 获取视频信息
     info = await get_video_info(url)
-    await tiktok.send(f"{share_prefix}{info['title']}")
+    await tiktok.send(f"{pub_prefix}{info['title']}")
 
     try:
         video_path = await ytdlp_download_video(url=url)
-        res = get_video_seg(video_path)
     except Exception as e:
-        res = f"{share_prefix}下载视频失败 {e}"
+        await tiktok.finish(f"{pub_prefix}下载视频失败 {e}")
 
-    await tiktok.send(res)
+    await tiktok.send(get_video_seg(video_path))

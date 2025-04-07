@@ -29,6 +29,7 @@ bilibili:
 
 tiktok:
 - https://www.tiktok.com/@xwc1897/video/7436010419002608928?is_from_webapp=1&sender_device=pc
+- https://www.tiktok.com/@mssethi.ss/video/7479816398814973227?is_from_webapp=1&sender_device=pc
 
 acfun:
 - https://www.acfun.cn/v/ac46593564
