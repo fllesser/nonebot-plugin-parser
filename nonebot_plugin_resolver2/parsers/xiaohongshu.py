@@ -29,8 +29,12 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,"
         "application/signed-exchange;v=b3;q=0.9",
-        "cookie": rconfig.r_xhs_ck,
-    } | COMMON_HEADER
+        **COMMON_HEADER,
+    }
+    # 添加 cookie header
+    if rconfig.r_xhs_ck:
+        headers["cookie"] = rconfig.r_xhs_ck
+    # 处理 xhslink 短链
     if "xhslink" in url:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers, allow_redirects=False) as resp:
@@ -39,7 +43,7 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
     pattern = r"(?:/explore/|/discovery/item/|source=note&noteId=)(\w+)"
     matched = re.search(pattern, url)
     if not matched:
-        raise ParseException("不支持的小红书 URL")
+        raise ParseException("小红书分享链接不完整")
     xhs_id = matched.group(1)
     # 解析 URL 参数
     parsed_url = urlparse(url)
@@ -62,8 +66,10 @@ async def parse_url(url: str) -> tuple[str, list[str], str]:
     json_str = matched.group(1)
     json_str = json_str.replace("undefined", "null")
     json_obj = json.loads(json_str)
-    # print keys
-    note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
+    try:
+        note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
+    except KeyError:
+        raise ParseException("小红书 cookie 已失效")
     # 资源类型 normal 图，video 视频
     resource_type = note_data["type"]
     # 标题
