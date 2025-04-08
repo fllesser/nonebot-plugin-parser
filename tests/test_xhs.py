@@ -12,6 +12,7 @@ async def test_xiaohongshu():
 
     urls = [
         "https://www.xiaohongshu.com/discovery/item/67cdaecd000000000b0153f8?source=webshare&xhsshare=pc_web&xsec_token=ABTvdTfbnDYQGDDB-aS-b3qgxOzsq22vIUcGzW6N5j8eQ=&xsec_source=pc_share",
+        "https://www.xiaohongshu.com/explore/67ebf78f000000001c0050a1?app_platform=ios&app_version=8.77&share_from_user_hidden=true&xsec_source=app_share&type=normal&xsec_token=CBUGDKBemo2y6D0IIli9maqDaaazIQjzPrk2BVRi0FqLk=&author_share=1&xhsshare=QQ&shareRedId=N0pIOUc1PDk2NzUyOTgwNjY0OTdFNktO&apptime=1744081452&share_id=00207b217b7b472588141b083af74c7a",
     ]
     for url in urls:
         logger.info(f"开始解析小红书: {url}")

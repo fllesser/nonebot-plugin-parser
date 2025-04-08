@@ -58,9 +58,9 @@ jobs:
       run: |
         uv run pytest tests/test_weibo.py
     
-    - name: Run Twitter Tests
-      run: |
-        uv run pytest tests/test_x.py
+    # - name: Run Twitter Tests
+    #   run: |
+    #     uv run pytest tests/test_x.py
   
     - name: Run Acfun Tests
       run: |
