@@ -6,13 +6,13 @@ from ..config import NEED_UPLOAD, NICKNAME
 from ..download import download_audio, download_img
 from ..download.utils import keep_zh_en_num
 from ..exception import handle_exception
-from ..parsers.kugou import KuGou
+from ..parsers import KuGouParser
 from .filter import is_not_in_disabled_groups
 from .helper import get_file_seg, get_img_seg, get_record_seg
 from .preprocess import ExtractText, r_keywords
 
 kugou = on_message(rule=is_not_in_disabled_groups & r_keywords("kugou.com"))
-kugou_parser = KuGou()
+parser = KuGouParser()
 
 
 @kugou.handle()
@@ -26,13 +26,14 @@ async def _(text: str = ExtractText()):
         logger.info(f"{share_prefix}无效链接，忽略 - {text}")
         return
 
-    video_info = await kugou_parser.parse_share_url(matched.group(0))
+    share_url_info = await parser.parse_share_url(matched.group(0))
 
-    title_author_name = f"{video_info.title} - {video_info.author.name}"
+    title_author_name = f"{share_url_info.title} - {share_url_info.author.name}"
 
-    await kugou.send(f"{share_prefix}{title_author_name}" + get_img_seg(await download_img(video_info.cover_url)))
-
-    audio_path = await download_audio(url=video_info.music_url)
+    await kugou.send(f"{share_prefix}{title_author_name}" + get_img_seg(await download_img(share_url_info.cover_url)))
+    if not share_url_info.audio_url:
+        await kugou.finish(f"{share_prefix}没有找到音频直链")
+    audio_path = await download_audio(url=share_url_info.audio_url)
     # 发送语音
     await kugou.send(get_record_seg(audio_path))
     # 发送群文件

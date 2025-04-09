@@ -11,9 +11,7 @@ def keep_zh_en_num(text: str) -> str:
     """
     保留字符串中的中英文和数字
     """
-    # 先把空格替换为下划线
-    text = text.replace(" ", "_")
-    return re.sub(r"[^\u4e00-\u9fa5a-zA-Z0-9\-_]", "", text)
+    return re.sub(r"[^\u4e00-\u9fa5a-zA-Z0-9\-_]", "", text.replace(" ", "_"))
 
 
 async def safe_unlink(path: Path):
