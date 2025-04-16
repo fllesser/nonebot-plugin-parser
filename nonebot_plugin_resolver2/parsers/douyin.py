@@ -6,7 +6,7 @@ import aiohttp
 from nonebot import logger
 
 from ..exception import ParseException
-from .data import ANDROID_HEADER, IOS_HEADER, ShareUrlInfo, VideoAuthor
+from .data import ANDROID_HEADER, IOS_HEADER, ParseResult, VideoAuthor
 from .utils import get_redirect_url
 
 
@@ -21,21 +21,19 @@ class DouyinParser:
     def _build_m_douyin_url(self, _type: str, video_id: str) -> str:
         return f"https://m.douyin.com/share/{_type}/{video_id}"
 
-    async def parse_share_url(self, share_url: str) -> ShareUrlInfo:
-        if match := re.match(r"(video|note)/([0-9]+)", share_url):
+    async def parse_share_url(self, share_url: str) -> ParseResult:
+        if matched := re.match(r"(video|note)/([0-9]+)", share_url):
             # https://www.douyin.com/video/xxxxxx
-            _type, video_id = match.group(1), match.group(2)
+            _type, video_id = matched.group(1), matched.group(2)
             iesdouyin_url = self._build_iesdouyin_url(_type, video_id)
         else:
             # https://v.douyin.com/xxxxxx
             iesdouyin_url = await get_redirect_url(share_url)
             # https://www.iesdouyin.com/share/video/7468908569061100857/?region=CN&mid=0&u_
-            match = re.search(r"(slides|video|note)/(\d+)", iesdouyin_url)
-            if not match:
-                raise ValueError(
-                    f"failed to parse video id from iesdouyin url: {iesdouyin_url}, share_url: {share_url}"
-                )
-            _type, video_id = match.group(1), match.group(2)
+            matched = re.search(r"(slides|video|note)/(\d+)", iesdouyin_url)
+            if not matched:
+                raise ParseException(f"无法从 {share_url} 中解析出 ID")
+            _type, video_id = matched.group(1), matched.group(2)
             if _type == "slides":
                 return await self.parse_slides(video_id)
         for url in [
@@ -53,7 +51,7 @@ class DouyinParser:
                 continue
         raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
-    async def parse_video(self, url: str) -> ShareUrlInfo:
+    async def parse_video(self, url: str) -> ParseResult:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=self.ios_headers, ssl=False) as response:
                 response.raise_for_status()
@@ -81,7 +79,7 @@ class DouyinParser:
             # 获取重定向后的mp4视频地址
             video_url = await get_redirect_url(video_url)
 
-        share_info = ShareUrlInfo(
+        share_info = ParseResult(
             title=data["desc"],
             cover_url=data["video"]["cover"]["url_list"][0],
             pic_urls=images,
@@ -127,7 +125,7 @@ class DouyinParser:
 
         return original_video_info["item_list"][0]
 
-    async def parse_slides(self, video_id: str) -> ShareUrlInfo:
+    async def parse_slides(self, video_id: str) -> ParseResult:
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
         params = {
             "aweme_ids": f"[{video_id}]",
@@ -145,13 +143,15 @@ class DouyinParser:
         images = []
         dynamic_images = []
         for image in data.get("images"):
-            if video := image.get("video"):
+            video = image.get("video")
+            if video:
                 dynamic_images.append(video["play_addr"]["url_list"][0])
             else:
                 images.append(image["url_list"][0])
 
-        return ShareUrlInfo(
+        return ParseResult(
             title=title,
+            cover_url="",
             author=VideoAuthor(
                 name=data["author"]["nickname"],
                 avatar=data["author"]["avatar_thumb"]["url_list"][0],

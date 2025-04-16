@@ -5,9 +5,9 @@ import pytest
 @pytest.mark.asyncio
 async def test_weibo_pics():
     from nonebot_plugin_resolver2.download import download_imgs_without_raise, download_video
-    from nonebot_plugin_resolver2.parsers.weibo import WeiBo
+    from nonebot_plugin_resolver2.parsers import WeiBoParser
 
-    weibo = WeiBo()
+    weibo_parser = WeiBoParser()
 
     ext_headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
@@ -21,14 +21,14 @@ async def test_weibo_pics():
     ]
     for url in urls:
         logger.info(f"开始解析 {url}")
-        video_info = await weibo.parse_share_url(url)
+        video_info = await weibo_parser.parse_share_url(url)
         logger.info(f"解析结果: {video_info}")
-        assert video_info.video_url or video_info.images
+        assert video_info.video_url or video_info.pic_urls
         logger.success(f"微博解析成功 {url}")
         if video_info.video_url:
             await download_video(video_info.video_url, ext_headers=ext_headers)
             logger.success(f"微博视频下载成功 {url}")
-        if video_info.images:
-            files = await download_imgs_without_raise(video_info.images, ext_headers=ext_headers)
-            assert len(files) == len(video_info.images)
+        if video_info.pic_urls:
+            files = await download_imgs_without_raise(video_info.pic_urls, ext_headers=ext_headers)
+            assert len(files) == len(video_info.pic_urls)
             logger.success(f"微博图片下载成功 {url}")

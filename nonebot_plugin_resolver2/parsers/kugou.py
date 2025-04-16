@@ -3,11 +3,11 @@ import re
 import aiohttp
 
 from ..exception import ParseException
-from .data import COMMON_HEADER, ShareUrlInfo, VideoAuthor
+from .data import COMMON_HEADER, ParseResult, VideoAuthor
 
 
 class KuGouParser:
-    async def parse_share_url(self, share_url: str) -> ShareUrlInfo:
+    async def parse_share_url(self, share_url: str) -> ParseResult:
         """解析酷狗分享链接"""
         # https://t1.kugou.com/song.html?id=1hfw6baEmV3
         async with aiohttp.ClientSession() as session:
@@ -28,7 +28,7 @@ class KuGouParser:
                     raise ParseException(f"无法获取歌曲信息: {response.status}")
                 song_info = await response.json()
 
-        return ShareUrlInfo(
+        return ParseResult(
             title=song_info.get("title"),
             cover_url=song_info.get("cover"),
             audio_url=song_info.get("music_url"),

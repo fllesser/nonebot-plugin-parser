@@ -9,9 +9,9 @@ async def test_douyin_common_video():
     https://v.douyin.com/iDHWnyTP
     https://www.douyin.com/video/7440422807663660328
     """
-    from nonebot_plugin_resolver2.parsers.douyin import DouYin
+    from nonebot_plugin_resolver2.parsers import DouyinParser
 
-    parser = DouYin()
+    douyin_parser = DouyinParser()
 
     common_urls = [
         "https://v.douyin.com/iDHWnyTP",
@@ -19,7 +19,7 @@ async def test_douyin_common_video():
     ]
     for url in common_urls:
         logger.info(f"开始解析抖音视频 {url}")
-        video_info = await parser.parse_share_url(url)
+        video_info = await douyin_parser.parse_share_url(url)
         logger.debug(f"title: {video_info.title}")
         assert video_info.title
         logger.debug(f"author: {video_info.author}")
@@ -56,15 +56,16 @@ async def test_douyin_old_video():
     # logger.success(f"抖音西瓜视频解析成功 {url}")
 
 
+@pytest.mark.asyncio
 async def test_douyin_note():
     """
     测试普通图文
     https://www.douyin.com/note/7469411074119322899
     https://v.douyin.com/iP6Uu1Kh
     """
-    from nonebot_plugin_resolver2.parsers.douyin import DouYin
+    from nonebot_plugin_resolver2.parsers import DouyinParser
 
-    parser = DouYin()
+    douyin_parser = DouyinParser()
 
     note_urls = [
         "https://www.douyin.com/note/7469411074119322899",
@@ -72,48 +73,50 @@ async def test_douyin_note():
     ]
     for url in note_urls:
         logger.info(f"开始解析抖音图文 {url}")
-        video_info = await parser.parse_share_url(url)
+        video_info = await douyin_parser.parse_share_url(url)
         logger.debug(f"title: {video_info.title}")
         assert video_info.title
         logger.debug(f"author: {video_info.author}")
         assert video_info.author
         logger.debug(f"cover_url: {video_info.cover_url}")
         assert video_info.cover_url
-        logger.debug(f"images: {video_info.images}")
-        assert video_info.images
+        logger.debug(f"images: {video_info.pic_urls}")
+        assert video_info.pic_urls
         logger.success(f"抖音图文解析成功 {url}")
 
 
+@pytest.mark.asyncio
 async def test_douyin_slides():
     """
     含视频的图集
     https://v.douyin.com/CeiJfqyWs # 将会解析出视频
     https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
     """
-    from nonebot_plugin_resolver2.parsers.douyin import DouYin
+    from nonebot_plugin_resolver2.parsers import DouyinParser
 
-    parser = DouYin()
+    douyin_parser = DouyinParser()
 
     dynamic_image_url = "https://v.douyin.com/CeiJfqyWs"
     static_image_url = "https://www.douyin.com/note/7450744229229235491"
 
     logger.info(f"开始解析抖音图集(含视频解析出视频) {dynamic_image_url}")
-    video_info = await parser.parse_share_url(dynamic_image_url)
+    video_info = await douyin_parser.parse_share_url(dynamic_image_url)
     logger.debug(f"title: {video_info.title}")
     assert video_info.title
-    logger.debug(f"dynamic_images: {video_info.dynamic_images}")
-    assert video_info.dynamic_images
+    logger.debug(f"dynamic_images: {video_info.dynamic_urls}")
+    assert video_info.dynamic_urls
     logger.success(f"抖音图集(含视频解析出视频)解析成功 {dynamic_image_url}")
 
     logger.info(f"开始解析抖音图集(含视频解析出静态图片) {static_image_url}")
-    video_info = await parser.parse_share_url(static_image_url)
+    video_info = await douyin_parser.parse_share_url(static_image_url)
     logger.debug(f"title: {video_info.title}")
     assert video_info.title
-    logger.debug(f"images: {video_info.images}")
-    assert video_info.images
+    logger.debug(f"images: {video_info.pic_urls}")
+    assert video_info.pic_urls
     logger.success(f"抖音图集(含视频解析出静态图片)解析成功 {static_image_url}")
 
 
+@pytest.mark.asyncio
 async def test_douyin_oversea():
     import aiohttp
 

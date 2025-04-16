@@ -5,11 +5,11 @@ import aiohttp
 
 from ..constant import COMMON_HEADER
 from ..exception import ParseException
-from .data import ImageContent, ShareUrlInfo, VideoAuthor, VideoContent
+from .data import ParseResult, VideoAuthor
 
 
 class WeiBoParser:
-    async def parse_share_url(self, share_url: str) -> ShareUrlInfo:
+    async def parse_share_url(self, share_url: str) -> ParseResult:
         """解析微博分享链接"""
         # https://video.weibo.com/show?fid=1034:5145615399845897
         if match := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
@@ -29,7 +29,7 @@ class WeiBoParser:
 
         return await self.parse_weibo_id(weibo_id)
 
-    async def parse_fid(self, fid: str) -> ShareUrlInfo:
+    async def parse_fid(self, fid: str) -> ParseResult:
         """
         解析带 fid 的微博视频
         """
@@ -52,8 +52,8 @@ class WeiBoParser:
             _, first_mp4_url = next(iter(data["urls"].items()))
             video_url = f"https:{first_mp4_url}"
 
-        video_info = ShareUrlInfo(
-            content=VideoContent(url=video_url),
+        video_info = ParseResult(
+            video_url=video_url,
             cover_url="https:" + data["cover_image"],
             title=data["title"],
             author=VideoAuthor(
@@ -64,7 +64,7 @@ class WeiBoParser:
         )
         return video_info
 
-    async def parse_weibo_id(self, weibo_id: str) -> ShareUrlInfo:
+    async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
         """解析微博 id"""
         headers = {
             "accept": "application/json",
@@ -94,20 +94,20 @@ class WeiBoParser:
                 "page_info",
             ]
         )
-
+        video_url = ""
         # 图集
         if pics:
             pics = [x["large"]["url"] for x in pics]
-            content = ImageContent(urls=pics)
         else:
             videos = page_info.get("urls")
             video_url: str = videos.get("mp4_720p_mp4") or videos.get("mp4_hd_mp4") if videos else ""
-            content = VideoContent(url=video_url)
 
-        return ShareUrlInfo(
+        return ParseResult(
             author=VideoAuthor(name=source),
+            cover_url="",
             title=f"{re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}",
-            content=content,
+            video_url=video_url,
+            pic_urls=pics,
         )
 
     def _base62_encode(self, number: int) -> str:

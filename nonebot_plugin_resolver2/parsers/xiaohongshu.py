@@ -7,7 +7,7 @@ import aiohttp
 from ..config import rconfig
 from ..constant import COMMON_HEADER
 from ..exception import ParseException
-from .data import ImageContent, ShareUrlInfo, VideoAuthor, VideoContent
+from .data import ParseResult, VideoAuthor
 from .utils import get_redirect_url
 
 
@@ -21,18 +21,18 @@ class XiaoHongShuParser:
         if rconfig.r_xhs_ck:
             self.headers["cookie"] = rconfig.r_xhs_ck
 
-    async def parse_url(self, url: str) -> ShareUrlInfo:
+    async def parse_url(self, url: str) -> ParseResult:
         """解析小红书 URL
 
         Args:
             url (str): 小红书 URL
 
-        Raises:
-            Exception: 没有符合的小红书 URL
-            Exception: 小红书 cookies 可能已失效
-
         Returns:
-            tuple[str, list[str], str]: 标题, 图片列表, 视频 URL
+            ParseResult: 解析结果
+
+        Raises:
+            ParseException: 小红书分享链接不完整
+            ParseException: 小红书 cookie 可能已失效
         """
         # 处理 xhslink 短链
         if "xhslink" in url:
@@ -75,17 +75,19 @@ class XiaoHongShuParser:
         # 描述
         note_desc = note_data["desc"]
         title_desc = f"{note_title}\n{note_desc}"
+        img_urls = []
+        video_url = ""
         if resource_type == "normal":
             image_list = note_data["imageList"]
             img_urls = [item["urlDefault"] for item in image_list]
-            content = ImageContent(urls=img_urls)
         elif resource_type == "video":
             video_url = note_data["video"]["media"]["stream"]["h264"][0]["masterUrl"]
-            content = VideoContent(url=video_url)
         else:
             raise ParseException(f"不支持的小红书链接类型: {resource_type}")
-        return ShareUrlInfo(
+        return ParseResult(
             title=title_desc,
-            content=content,
+            cover_url="",
+            video_url=video_url,
+            pic_urls=img_urls,
             author=VideoAuthor(name=note_data["user"]["nickname"]),
         )

@@ -9,14 +9,13 @@ from nonebot.rule import Rule
 from ..config import NICKNAME
 from ..download import download_imgs_without_raise, download_video
 from ..exception import handle_exception
-from ..parsers.base import VideoInfo
-from ..parsers.douyin import DouYin
+from ..parsers import DouyinParser
 from .filter import is_not_in_disabled_groups
 from .helper import get_img_seg, get_video_seg, send_segments
 
 douyin = on_keyword(keywords={"douyin.com"}, rule=Rule(is_not_in_disabled_groups))
 
-douyin_parser = DouYin()
+douyin_parser = DouyinParser()
 
 
 @douyin.handle()
@@ -31,18 +30,18 @@ async def _(event: MessageEvent):
         logger.warning("douyin url is incomplete, ignored")
         return
     share_url = matched.group(0)
-    video_info: VideoInfo = await douyin_parser.parse_share_url(share_url)
+    video_info = await douyin_parser.parse_share_url(share_url)
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
 
     segs: list[MessageSegment | Message | str] = []
     # 存在普通图片
-    if video_info.images:
-        paths: list[Path] = await download_imgs_without_raise(video_info.images)
+    if video_info.pic_urls:
+        paths: list[Path] = await download_imgs_without_raise(video_info.pic_urls)
         segs.extend(get_img_seg(path) for path in paths)
     # 存在动态图片
-    if video_info.dynamic_images:
+    if video_info.dynamic_urls:
         # 并发下载动态图片
-        video_download_tasks = [asyncio.create_task(download_video(url)) for url in video_info.dynamic_images]
+        video_download_tasks = [asyncio.create_task(download_video(url)) for url in video_info.dynamic_urls]
         video_download_results = await asyncio.gather(*video_download_tasks, return_exceptions=True)
         video_seg_lst = [get_video_seg(seg) for seg in video_download_results if isinstance(seg, Path)]
         segs.extend(video_seg_lst)

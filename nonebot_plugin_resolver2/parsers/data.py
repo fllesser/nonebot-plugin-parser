@@ -17,20 +17,20 @@ class VideoAuthor:
 
 
 @dataclass
-class ShareUrlInfo:
-    """分享链接信息"""
+class ParseResult:
+    """解析结果"""
 
     # 标题
     title: str
 
     # 封面地址
-    cover_url: str | None = None
+    cover_url: str = ""
 
     # 视频地址
-    video_url: str | None = None
+    video_url: str = ""
 
     # 音频地址
-    audio_url: str | None = None
+    audio_url: str = ""
 
     # 图片地址
     pic_urls: list[str] = field(default_factory=list)
