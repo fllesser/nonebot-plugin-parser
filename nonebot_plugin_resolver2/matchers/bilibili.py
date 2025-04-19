@@ -2,8 +2,6 @@ import asyncio
 from pathlib import Path
 import re
 
-import aiohttp
-from bilibili_api import HEADERS
 from nonebot import logger, on_command, on_message
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
 from nonebot.adapters.onebot.v11.exception import ActionFailed
@@ -19,13 +17,7 @@ from ..download import (
 )
 from ..download.utils import keep_zh_en_num
 from ..exception import handle_exception
-from ..parsers.bilibili import (
-    parse_favlist,
-    parse_live,
-    parse_opus,
-    parse_read,
-    parse_video_info,
-)
+from ..parsers import BilibiliParser, get_redirect_url
 from .filter import is_not_in_disabled_groups
 from .helper import get_file_seg, get_img_seg, get_record_seg, get_video_seg, send_segments
 from .preprocess import ExtractText, Keyword, r_keywords
@@ -47,6 +39,8 @@ PATTERNS: dict[str, re.Pattern] = {
     "bilibili": re.compile(r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"),
 }
 
+parser = BilibiliParser()
+
 
 @bilibili.handle()
 @handle_exception(bilibili)
@@ -61,9 +55,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     # 短链重定向地址
     if keyword in ("b23", "bili2233"):
         b23url = url
-        async with aiohttp.ClientSession() as session:
-            async with session.get(b23url, headers=HEADERS, allow_redirects=False) as resp:
-                url = resp.headers.get("Location", b23url)
+        url = await get_redirect_url(url, parser.headers)
         if url == b23url:
             logger.info(f"链接 {url} 无效，忽略")
             return
@@ -84,7 +76,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
                 logger.warning(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
                 return
             opus_id = int(matched.group(1))
-            img_lst, text = await parse_opus(opus_id)
+            img_lst, text = await parser.parse_opus(opus_id)
             await bilibili.send(f"{share_prefix}动态")
             segs = [text]
             if img_lst:
@@ -100,7 +92,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
                 logger.info(f"链接 {url} 无效 - 没有获取到直播间 id, 忽略")
                 return
             room_id = int(matched.group(1))
-            title, cover, keyframe = await parse_live(room_id)
+            title, cover, keyframe = await parser.parse_live(room_id)
             if not title:
                 await bilibili.finish(f"{share_prefix}直播 - 未找到直播间信息")
             res = f"{share_prefix}直播 {title}"
@@ -114,7 +106,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
                 logger.warning(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
                 return
             read_id = int(matched.group(1))
-            texts, urls = await parse_read(read_id)
+            texts, urls = await parser.parse_read(read_id)
             await bilibili.send(f"{share_prefix}专栏")
             # 并发下载
             paths = await download_imgs_without_raise(urls)
@@ -138,7 +130,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
                 return
             fav_id = int(matched.group(1))
             # 获取收藏夹内容，并下载封面
-            texts, urls = await parse_favlist(fav_id)
+            texts, urls = await parser.parse_favlist(fav_id)
             await bilibili.send(f"{share_prefix}收藏夹\n正在为你找出相关链接请稍等...")
             paths: list[Path] = await download_imgs_without_raise(urls)
             segs = []
@@ -158,9 +150,9 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         page_num = int(matched.group(1))
     # 视频
     if keyword in ("av", "/av"):
-        video_info = await parse_video_info(avid=int(video_id), page_num=page_num)
+        video_info = await parser.parse_video_info(avid=int(video_id), page_num=page_num)
     else:
-        video_info = await parse_video_info(bvid=video_id, page_num=page_num)
+        video_info = await parser.parse_video_info(bvid=video_id, page_num=page_num)
 
     segs = [
         video_info.title,
@@ -186,10 +178,10 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         # 下载视频和音频
         v_path, a_path = await asyncio.gather(
             download_file_by_stream(
-                video_info.video_url, file_name=f"{file_name_prefix}-video.m4s", ext_headers=HEADERS
+                video_info.video_url, file_name=f"{file_name_prefix}-video.m4s", ext_headers=parser.headers
             ),
             download_file_by_stream(
-                video_info.audio_url, file_name=f"{file_name_prefix}-audio.m4s", ext_headers=HEADERS
+                video_info.audio_url, file_name=f"{file_name_prefix}-audio.m4s", ext_headers=parser.headers
             ),
         )
         await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
@@ -220,14 +212,14 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
 
     # 处理分 p
     p_num = int(p_num) if p_num else 1
-    video_info = await parse_video_info(bvid=bvid, page_num=p_num)
+    video_info = await parser.parse_video_info(bvid=bvid, page_num=p_num)
     # 音频文件名
     video_title = keep_zh_en_num(video_info.title)
     audio_name = f"{video_title}.mp3"
     audio_path = plugin_cache_dir / audio_name
     # 下载
     if not audio_path.exists():
-        await download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=HEADERS)
+        await download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=parser.headers)
 
     # 发送音频
     await bili_music.send(get_record_seg(audio_path))

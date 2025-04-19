@@ -6,33 +6,38 @@ import aiohttp
 from nonebot import logger
 
 from ..exception import ParseException
-from .base import BaseParser, VideoAuthor, VideoInfo
+from .data import ANDROID_HEADER, IOS_HEADER, ParseResult, VideoAuthor
+from .utils import get_redirect_url
 
 
-class DouYin(BaseParser):
-    """
-    抖音 / 抖音火山版
-    """
+class DouyinParser:
+    def __init__(self):
+        self.ios_headers = IOS_HEADER.copy()
+        self.android_headers = {"Accept": "application/json, text/plain, */*", **ANDROID_HEADER}
 
-    async def parse_share_url(self, share_url: str) -> VideoInfo:
-        if match := re.match(r"(video|note)/([0-9]+)", share_url):
+    def _build_iesdouyin_url(self, _type: str, video_id: str) -> str:
+        return f"https://www.iesdouyin.com/share/{_type}/{video_id}"
+
+    def _build_m_douyin_url(self, _type: str, video_id: str) -> str:
+        return f"https://m.douyin.com/share/{_type}/{video_id}"
+
+    async def parse_share_url(self, share_url: str) -> ParseResult:
+        if matched := re.match(r"(video|note)/([0-9]+)", share_url):
             # https://www.douyin.com/video/xxxxxx
-            _type, video_id = match.group(1), match.group(2)
-            iesdouyin_url = self._iesdouyin_by_video_id(_type, video_id)
+            _type, video_id = matched.group(1), matched.group(2)
+            iesdouyin_url = self._build_iesdouyin_url(_type, video_id)
         else:
             # https://v.douyin.com/xxxxxx
-            iesdouyin_url = await self.get_redirect_url(share_url)
+            iesdouyin_url = await get_redirect_url(share_url)
             # https://www.iesdouyin.com/share/video/7468908569061100857/?region=CN&mid=0&u_
-            match = re.search(r"(slides|video|note)/(\d+)", iesdouyin_url)
-            if not match:
-                raise ValueError(
-                    f"failed to parse video id from iesdouyin url: {iesdouyin_url}, share_url: {share_url}"
-                )
-            _type, video_id = match.group(1), match.group(2)
+            matched = re.search(r"(slides|video|note)/(\d+)", iesdouyin_url)
+            if not matched:
+                raise ParseException(f"无法从 {share_url} 中解析出 ID")
+            _type, video_id = matched.group(1), matched.group(2)
             if _type == "slides":
                 return await self.parse_slides(video_id)
         for url in [
-            self._m_douyin_by_video_id(_type, video_id),
+            self._build_m_douyin_url(_type, video_id),
             share_url,
             iesdouyin_url,
         ]:
@@ -46,12 +51,12 @@ class DouYin(BaseParser):
                 continue
         raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
-    async def parse_video(self, url: str) -> VideoInfo:
+    async def parse_video(self, url: str) -> ParseResult:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.default_headers, ssl=False) as response:
+            async with session.get(url, headers=self.ios_headers, ssl=False) as response:
                 response.raise_for_status()
                 text = await response.text()
-                data: dict[str, Any] = self.format_response(text)
+        data: dict[str, Any] = self._format_response(text)
         # 获取图集图片地址
         images: list[str] = []
         # 如果data含有 images，并且 images 是一个列表
@@ -68,37 +73,26 @@ class DouYin(BaseParser):
                     images.append(img["url_list"][0])
 
         # 获取视频播放地址
-        video_url = data["video"]["play_addr"]["url_list"][0].replace("playwm", "play")
-        # 如果图集地址不为空时，因为没有视频，上面抖音返回的视频地址无法访问，置空处理
-        if len(images) > 0:
-            video_url = ""
+        video_url: str = data["video"]["play_addr"]["url_list"][0].replace("playwm", "play")
 
-        # 获取重定向后的mp4视频地址
-        # 图集时，视频地址为空，不处理
-        video_mp4_url = ""
-        if len(video_url) > 0:
-            video_mp4_url = await self.get_redirect_url(video_url)
+        if video_url:
+            # 获取重定向后的mp4视频地址
+            video_url = await get_redirect_url(video_url)
 
-        video_info = VideoInfo(
-            video_url=video_mp4_url,
-            cover_url=data["video"]["cover"]["url_list"][0],
+        share_info = ParseResult(
             title=data["desc"],
-            images=images,
+            cover_url=data["video"]["cover"]["url_list"][0],
+            pic_urls=images,
+            video_url=video_url,
             author=VideoAuthor(
-                uid=data["author"]["sec_uid"],
+                # uid=data["author"]["sec_uid"],
                 name=data["author"]["nickname"],
                 avatar=data["author"]["avatar_thumb"]["url_list"][0],
             ),
         )
-        return video_info
+        return share_info
 
-    def _iesdouyin_by_video_id(self, _type: str, video_id: str) -> str:
-        return f"https://www.iesdouyin.com/share/{_type}/{video_id}"
-
-    def _m_douyin_by_video_id(self, _type: str, video_id: str) -> str:
-        return f"https://m.douyin.com/share/{_type}/{video_id}"
-
-    def format_response(self, text: str) -> dict[str, Any]:
+    def _format_response(self, text: str) -> dict[str, Any]:
         pattern = re.compile(
             pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
             flags=re.DOTALL,
@@ -131,18 +125,14 @@ class DouYin(BaseParser):
 
         return original_video_info["item_list"][0]
 
-    async def parse_slides(self, video_id: str) -> VideoInfo:
+    async def parse_slides(self, video_id: str) -> ParseResult:
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
         params = {
             "aweme_ids": f"[{video_id}]",
             "request_source": "200",
         }
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Linux; Android 10; VOG-AL00 Build/HUAWEIVOG-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",  # noqa: E501
-            "Accept": "application/json, text/plain, */*",
-        }
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params, headers=headers, ssl=False) as resp:
+            async with session.get(url, params=params, headers=self.android_headers, ssl=False) as resp:
                 resp.raise_for_status()
                 resp = await resp.json()
         detail = resp.get("aweme_details")
@@ -153,18 +143,19 @@ class DouYin(BaseParser):
         images = []
         dynamic_images = []
         for image in data.get("images"):
-            if video := image.get("video"):
+            video = image.get("video")
+            if video:
                 dynamic_images.append(video["play_addr"]["url_list"][0])
             else:
                 images.append(image["url_list"][0])
 
-        return VideoInfo(
+        return ParseResult(
             title=title,
-            video_url="",
             cover_url="",
-            images=images,
-            dynamic_images=dynamic_images,
+            author=VideoAuthor(
+                name=data["author"]["nickname"],
+                avatar=data["author"]["avatar_thumb"]["url_list"][0],
+            ),
+            pic_urls=images,
+            dynamic_urls=dynamic_images,
         )
-
-    async def parse_video_id(self, video_id: str) -> VideoInfo:
-        raise NotImplementedError

@@ -5,13 +5,11 @@ import aiohttp
 
 from ..constant import COMMON_HEADER
 from ..exception import ParseException
-from .base import BaseParser, VideoAuthor, VideoInfo
-
-WEIBO_SINGLE_INFO = "https://m.weibo.cn/statuses/show?id={}"
+from .data import ParseResult, VideoAuthor
 
 
-class WeiBo(BaseParser):
-    async def parse_share_url(self, share_url: str) -> VideoInfo:
+class WeiBoParser:
+    async def parse_share_url(self, share_url: str) -> ParseResult:
         """解析微博分享链接"""
         # https://video.weibo.com/show?fid=1034:5145615399845897
         if match := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
@@ -21,7 +19,7 @@ class WeiBo(BaseParser):
             weibo_id = match.group(1)
         # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934
         elif match := re.search(r"mid=([A-Za-z\d]+)", share_url):
-            weibo_id = mid2id(match.group(1))
+            weibo_id = self._mid2id(match.group(1))
         # https://weibo.com/1707895270/5006106478773472
         elif match := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", share_url):
             weibo_id = match.group(1)
@@ -31,7 +29,7 @@ class WeiBo(BaseParser):
 
         return await self.parse_weibo_id(weibo_id)
 
-    async def parse_fid(self, fid: str) -> VideoInfo:
+    async def parse_fid(self, fid: str) -> ParseResult:
         """
         解析带 fid 的微博视频
         """
@@ -39,7 +37,7 @@ class WeiBo(BaseParser):
         headers = {
             "Referer": f"https://h5.video.weibo.com/show/{fid}",
             "Content-Type": "application/x-www-form-urlencoded",
-            **self.default_headers,
+            **COMMON_HEADER,
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + fid + '"}}'
         async with aiohttp.ClientSession() as session:
@@ -54,19 +52,19 @@ class WeiBo(BaseParser):
             _, first_mp4_url = next(iter(data["urls"].items()))
             video_url = f"https:{first_mp4_url}"
 
-        video_info = VideoInfo(
+        video_info = ParseResult(
             video_url=video_url,
             cover_url="https:" + data["cover_image"],
             title=data["title"],
             author=VideoAuthor(
-                uid=str(data["user"]["id"]),
+                # uid=str(data["user"]["id"]),
                 name=data["author"],
                 avatar="https:" + data["avatar"],
             ),
         )
         return video_info
 
-    async def parse_weibo_id(self, weibo_id: str) -> VideoInfo:
+    async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
         """解析微博 id"""
         headers = {
             "accept": "application/json",
@@ -77,7 +75,7 @@ class WeiBo(BaseParser):
 
         # 请求数据
         async with aiohttp.ClientSession() as session:
-            async with session.get(WEIBO_SINGLE_INFO.format(weibo_id), headers=headers) as resp:
+            async with session.get(f"https://m.weibo.cn/statuses/show?id={weibo_id}", headers=headers) as resp:
                 if resp.status != 200:
                     raise ParseException(f"获取数据失败 {resp.status} {resp.reason}")
                 if "application/json" not in resp.headers.get("content-type", ""):
@@ -96,54 +94,50 @@ class WeiBo(BaseParser):
                 "page_info",
             ]
         )
-
+        video_url = ""
         # 图集
         if pics:
             pics = [x["large"]["url"] for x in pics]
+        else:
+            videos = page_info.get("urls")
+            video_url: str = videos.get("mp4_720p_mp4") or videos.get("mp4_hd_mp4") if videos else ""
 
-        videos = page_info.get("urls")
-        video_url: str = videos.get("mp4_720p_mp4") or videos.get("mp4_hd_mp4") if videos else ""
-
-        return VideoInfo(
+        return ParseResult(
+            author=VideoAuthor(name=source),
+            cover_url="",
             title=f"{re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}",
             video_url=video_url,
-            images=pics,
-            author=VideoAuthor(name=source),
+            pic_urls=pics,
         )
 
+    def _base62_encode(self, number: int) -> str:
+        """将数字转换为 base62 编码"""
+        alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        if number == 0:
+            return "0"
 
-# 定义 base62 编码字符表
-ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        result = ""
+        while number > 0:
+            result = alphabet[number % 62] + result
+            number //= 62
 
+        return result
 
-def base62_encode(number: int) -> str:
-    """将数字转换为 base62 编码"""
-    if number == 0:
-        return "0"
+    def _mid2id(self, mid: str) -> str:
+        """将微博 mid 转换为 id"""
+        mid = str(mid)[::-1]  # 反转输入字符串
+        size = math.ceil(len(mid) / 7)  # 计算每个块的大小
+        result = []
 
-    result = ""
-    while number > 0:
-        result = ALPHABET[number % 62] + result
-        number //= 62
+        for i in range(size):
+            # 对每个块进行处理并反转
+            s = mid[i * 7 : (i + 1) * 7][::-1]
+            # 将字符串转为整数后进行 base62 编码
+            s = self._base62_encode(int(s))
+            # 如果不是最后一个块并且长度不足4位，进行左侧补零操作
+            if i < size - 1 and len(s) < 4:
+                s = "0" * (4 - len(s)) + s
+            result.append(s)
 
-    return result
-
-
-def mid2id(mid: str) -> str:
-    """将微博 mid 转换为 id"""
-    mid = str(mid)[::-1]  # 反转输入字符串
-    size = math.ceil(len(mid) / 7)  # 计算每个块的大小
-    result = []
-
-    for i in range(size):
-        # 对每个块进行处理并反转
-        s = mid[i * 7 : (i + 1) * 7][::-1]
-        # 将字符串转为整数后进行 base62 编码
-        s = base62_encode(int(s))
-        # 如果不是最后一个块并且长度不足4位，进行左侧补零操作
-        if i < size - 1 and len(s) < 4:
-            s = "0" * (4 - len(s)) + s
-        result.append(s)
-
-    result.reverse()  # 反转结果数组
-    return "".join(result)  # 将结果数组连接成字符串
+        result.reverse()  # 反转结果数组
+        return "".join(result)  # 将结果数组连接成字符串

@@ -48,11 +48,6 @@ async def _():
     if destroy_resolvers:
         logger.warning(f"已关闭解析: {', '.join(destroy_resolvers)}")
 
-    # 初始化 bilibili api
-    from .parsers.bilibili import init_bilibili_api
-
-    init_bilibili_api()
-
 
 @scheduler.scheduled_job("cron", hour=1, minute=0, id="resolver2-clean-local-cache")
 async def clean_plugin_cache():
