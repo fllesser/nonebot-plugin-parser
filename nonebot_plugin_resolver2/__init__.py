@@ -49,7 +49,6 @@ async def _():
         logger.warning(f"已关闭解析: {', '.join(destroy_resolvers)}")
 
 
-
 @scheduler.scheduled_job("cron", hour=1, minute=0, id="resolver2-clean-local-cache")
 async def clean_plugin_cache():
     import asyncio
