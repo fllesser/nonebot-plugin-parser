@@ -3,7 +3,7 @@ import re
 import aiohttp
 
 from ..exception import ParseException
-from .data import COMMON_HEADER, ParseResult, VideoAuthor
+from .data import COMMON_HEADER, ParseResult
 
 
 class KuGouParser:
@@ -32,5 +32,5 @@ class KuGouParser:
             title=song_info.get("title"),
             cover_url=song_info.get("cover"),
             audio_url=song_info.get("music_url"),
-            author=VideoAuthor(name=song_info["singer"]),
+            author=song_info["singer"],
         )

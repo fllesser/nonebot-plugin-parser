@@ -28,7 +28,7 @@ async def _(text: str = ExtractText()):
 
     share_url_info = await parser.parse_share_url(matched.group(0))
 
-    title_author_name = f"{share_url_info.title} - {share_url_info.author.name}"
+    title_author_name = f"{share_url_info.title} - {share_url_info.author}"
 
     await kugou.send(f"{share_prefix}{title_author_name}" + get_img_seg(await download_img(share_url_info.cover_url)))
     if not share_url_info.audio_url:

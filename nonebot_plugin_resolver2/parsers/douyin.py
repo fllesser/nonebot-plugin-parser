@@ -6,7 +6,7 @@ import aiohttp
 from nonebot import logger
 
 from ..exception import ParseException
-from .data import ANDROID_HEADER, IOS_HEADER, ParseResult, VideoAuthor
+from .data import ANDROID_HEADER, IOS_HEADER, ParseResult
 from .utils import get_redirect_url
 
 
@@ -84,11 +84,12 @@ class DouyinParser:
             cover_url=data["video"]["cover"]["url_list"][0],
             pic_urls=images,
             video_url=video_url,
-            author=VideoAuthor(
-                # uid=data["author"]["sec_uid"],
-                name=data["author"]["nickname"],
-                avatar=data["author"]["avatar_thumb"]["url_list"][0],
-            ),
+            author=data["author"]["nickname"],
+            # author=Author(
+            #     # uid=data["author"]["sec_uid"],
+            #     name=data["author"]["nickname"],
+            #     avatar=data["author"]["avatar_thumb"]["url_list"][0],
+            # ),
         )
         return share_info
 
@@ -152,10 +153,11 @@ class DouyinParser:
         return ParseResult(
             title=title,
             cover_url="",
-            author=VideoAuthor(
-                name=data["author"]["nickname"],
-                avatar=data["author"]["avatar_thumb"]["url_list"][0],
-            ),
+            author=data["author"]["nickname"],
+            # author=Author(
+            #     name=data["author"]["nickname"],
+            #     avatar=data["author"]["avatar_thumb"]["url_list"][0],
+            # ),
             pic_urls=images,
             dynamic_urls=dynamic_images,
         )
