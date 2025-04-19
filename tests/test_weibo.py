@@ -18,6 +18,7 @@ async def test_weibo_pics():
         "https://weibo.com/7207262816/P5kWdcfDe",
         "https://weibo.com/7207262816/O70aCbjnd",
         "http://m.weibo.cn/status/5112672433738061",
+        "https://m.weibo.cn/status/5155768539808352",
     ]
     for url in urls:
         logger.info(f"开始解析 {url}")
