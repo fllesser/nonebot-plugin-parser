@@ -29,10 +29,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    # - name: Install ffmpeg
-    #   run: |
-    #     sudo apt-get update
-    #     sudo apt-get install -y ffmpeg
+    - name: Install ffmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
     
     - name: Install Dependences 
       run: | 
@@ -45,6 +45,10 @@ jobs:
     - name: Run Bilibili Tests
       run: |
         uv run pytest tests/test_bilibili.py
+
+    - name: Run Encode Tests
+      run: |
+        uv run pytest tests/test_bilibili_need_ck.py::test_encode_h264_video
 
     # - name: Run Douyin Tests
     #   run: |
@@ -65,3 +69,7 @@ jobs:
     - name: Run Acfun Tests
       run: |
         uv run pytest tests/test_acfun.py
+
+    - name: Run NCM Tests
+      run: |
+        uv run pytest tests/test_ncm.py

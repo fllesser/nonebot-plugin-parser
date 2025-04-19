@@ -5,7 +5,7 @@ import aiohttp
 
 from ..constant import COMMON_HEADER
 from ..exception import ParseException
-from .data import ParseResult, VideoAuthor
+from .data import ParseResult
 
 
 class WeiBoParser:
@@ -56,11 +56,12 @@ class WeiBoParser:
             video_url=video_url,
             cover_url="https:" + data["cover_image"],
             title=data["title"],
-            author=VideoAuthor(
-                # uid=str(data["user"]["id"]),
-                name=data["author"],
-                avatar="https:" + data["avatar"],
-            ),
+            author=data["author"],
+            # author=Author(
+            #     # uid=str(data["user"]["id"]),
+            #     name=data["author"],
+            #     avatar="https:" + data["avatar"],
+            # ),
         )
         return video_info
 
@@ -103,7 +104,7 @@ class WeiBoParser:
             video_url: str = videos.get("mp4_720p_mp4") or videos.get("mp4_hd_mp4") if videos else ""
 
         return ParseResult(
-            author=VideoAuthor(name=source),
+            author=source,
             cover_url="",
             title=f"{re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}",
             video_url=video_url,

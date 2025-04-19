@@ -26,7 +26,7 @@ async def _(event: MessageEvent):
         "referer": "https://weibo.com/",
     }
 
-    await weibo.send(f"{pub_prefix}{video_info.title} - {video_info.author.name}")
+    await weibo.send(f"{pub_prefix}{video_info.title} - {video_info.author}")
     if video_info.video_url:
         video_path = await download_video(video_info.video_url, ext_headers=ext_headers)
         await weibo.finish(get_video_seg(video_path))

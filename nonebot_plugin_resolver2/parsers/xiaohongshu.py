@@ -7,7 +7,7 @@ import aiohttp
 from ..config import rconfig
 from ..constant import COMMON_HEADER
 from ..exception import ParseException
-from .data import ParseResult, VideoAuthor
+from .data import ParseResult
 from .utils import get_redirect_url
 
 
@@ -89,5 +89,5 @@ class XiaoHongShuParser:
             cover_url="",
             video_url=video_url,
             pic_urls=img_urls,
-            author=VideoAuthor(name=note_data["user"]["nickname"]),
+            author=note_data["user"]["nickname"],
         )
