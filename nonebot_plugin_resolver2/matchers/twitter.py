@@ -20,8 +20,8 @@ twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 @handle_exception(twitter)
 async def _(event: MessageEvent):
     msg: str = event.message.extract_plain_text().strip()
-
-    matched = re.search(r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]*)", msg)
+    pattern = r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]+)"
+    matched = re.search(pattern, msg)
     if not matched:
         logger.info("没有匹配到 x.com 的 url, 忽略")
         return

@@ -56,17 +56,19 @@ def _(event: MessageEvent, state: T_State) -> None:
         logger.debug("json 卡片解析失败")
         return
 
-    meta: dict[str, Any] | None = data.get("meta", None)
+    meta: dict[str, Any] | None = data.get("meta")
     if meta is None:
         return
 
-    # 提取链接
-    if detail := meta.get("detail_1"):
-        text = detail.get("qqdocurl")
-    elif news := meta.get("news"):
-        text = news.get("jumpUrl")
-    elif music := meta.get("music"):
-        text = music.get("jumpUrl")
+    key_mapping = {
+        "detail_1": "qqdocurl",
+        "news": "jumpUrl",
+        "music": "jumpUrl",
+    }
+    for key1, key2 in key_mapping.items():
+        if item := meta.get(key1):
+            text = item.get(key2)
+            break
     else:
         return
 
