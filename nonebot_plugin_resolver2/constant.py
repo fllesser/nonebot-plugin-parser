@@ -20,4 +20,4 @@ ANDROID_HEADER: Final[dict[str, str]] = {
 VIDEO_MAX_MB: Final[int] = 100
 
 # 解析列表文件名
-DISABLE_GROUPS: Final[str] = "disable_group_list.json"
+DISABLED_GROUPS: Final[str] = "disable_group_list.json"
