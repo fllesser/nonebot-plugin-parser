@@ -11,7 +11,7 @@
 <a href="https://pypi.python.org/pypi/nonebot-plugin-resolver2">
     <img src="https://img.shields.io/pypi/v/nonebot-plugin-resolver2.svg" alt="pypi">
 </a>
-<img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="python">
+<img src="https://img.shields.io/badge/python-3.10|3.11|3.12|3.13-blue.svg" alt="python">
 <a href="https://github.com/astral-sh/ruff">
     <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json" alt="ruff">
 </a>
@@ -21,8 +21,9 @@
 <a href="https://onebot.dev/">
 <img src="https://img.shields.io/badge/OneBot-v11-black?style=social&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABABAMAAABYR2ztAAAAIVBMVEUAAAAAAAADAwMHBwceHh4UFBQNDQ0ZGRkoKCgvLy8iIiLWSdWYAAAAAXRSTlMAQObYZgAAAQVJREFUSMftlM0RgjAQhV+0ATYK6i1Xb+iMd0qgBEqgBEuwBOxU2QDKsjvojQPvkJ/ZL5sXkgWrFirK4MibYUdE3OR2nEpuKz1/q8CdNxNQgthZCXYVLjyoDQftaKuniHHWRnPh2GCUetR2/9HsMAXyUT4/3UHwtQT2AggSCGKeSAsFnxBIOuAggdh3AKTL7pDuCyABcMb0aQP7aM4AnAbc/wHwA5D2wDHTTe56gIIOUA/4YYV2e1sg713PXdZJAuncdZMAGkAukU9OAn40O849+0ornPwT93rphWF0mgAbauUrEOthlX8Zu7P5A6kZyKCJy75hhw1Mgr9RAUvX7A3csGqZegEdniCx30c3agAAAABJRU5ErkJggg==" alt="onebot">
 </a>
-
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/fllesser/nonebot-plugin-resolver2/master.svg)](https://results.pre-commit.ci/latest/github/fllesser/nonebot-plugin-resolver2/master)
+<a href="https://results.pre-commit.ci/latest/github/fllesser/nonebot-plugin-resolver2/master">
+<img src="https://results.pre-commit.ci/badge/github/fllesser/nonebot-plugin-resolver2/master.svg" alt="pre-commit" />
+</a>
 
 </div>
 
