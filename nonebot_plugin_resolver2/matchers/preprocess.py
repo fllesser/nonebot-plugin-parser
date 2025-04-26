@@ -2,7 +2,7 @@ import json
 from typing import Any, Literal
 
 from nonebot import logger
-from nonebot.adapters.onebot.v11 import MessageEvent
+from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.message import event_preprocessor
 from nonebot.params import Depends
 from nonebot.rule import Rule
@@ -28,8 +28,64 @@ def _keyword(state: T_State) -> str:
     return state.get(R_KEYWORD_KEY) or ""
 
 
+URL_KEY_MAPPING = {
+    "detail_1": "qqdocurl",
+    "news": "jumpUrl",
+    "music": "jumpUrl",
+}
+
+CHAR_REPLACEMENTS = {"&#44;": ",", "\\": "", "&amp;": "&"}
+
+
+def _clean_url(url: str) -> str:
+    """清理 URL 中的特殊字符
+
+    Args:
+        url: 原始 URL
+
+    Returns:
+        str: 清理后的 URL
+    """
+    for old, new in CHAR_REPLACEMENTS.items():
+        url = url.replace(old, new)
+    return url
+
+
+def _extract_json_url(json_seg: MessageSegment) -> str | None:
+    """处理 JSON 类型的消息段，提取 URL
+
+    Args:
+        json_seg: JSON 类型的消息段
+
+    Returns:
+        Optional[str]: 提取的 URL，如果提取失败则返回 None
+    """
+    data_str: str | None = json_seg.data.get("data")
+    if not data_str:
+        return None
+
+    # 处理转义字符
+    data_str = data_str.replace("&#44;", ",")
+
+    try:
+        data: dict[str, Any] = json.loads(data_str)
+    except json.JSONDecodeError:
+        logger.debug("json 卡片解析失败")
+        return None
+
+    meta: dict[str, Any] | None = data.get("meta")
+    if not meta:
+        return None
+
+    for key1, key2 in URL_KEY_MAPPING.items():
+        if item := meta.get(key1):
+            if url := item.get(key2):
+                return _clean_url(url)
+    return None
+
+
 @event_preprocessor
-def _(event: MessageEvent, state: T_State) -> None:
+def extract_msg_text(event: MessageEvent, state: T_State) -> None:
     message = event.get_message()
     text: str | None = None
 
@@ -42,39 +98,41 @@ def _(event: MessageEvent, state: T_State) -> None:
     json_seg = next((seg for seg in message if seg.type == "json"), None)
     if json_seg is None:
         return
+    if url := _extract_json_url(json_seg):
+        state[R_EXTRACT_KEY] = url
 
-    data_str: str | None = json_seg.data.get("data")
+    # data_str: str | None = json_seg.data.get("data")
 
-    if not data_str:
-        return
-    # 处理转义字符
-    data_str = data_str.replace("&#44;", ",")
+    # if not data_str:
+    #     return
+    # # 处理转义字符
+    # data_str = data_str.replace("&#44;", ",")
 
-    try:
-        data: dict[str, Any] = json.loads(data_str)
-    except json.JSONDecodeError:
-        logger.debug("json 卡片解析失败")
-        return
+    # try:
+    #     data: dict[str, Any] = json.loads(data_str)
+    # except json.JSONDecodeError:
+    #     logger.debug("json 卡片解析失败")
+    #     return
 
-    meta: dict[str, Any] | None = data.get("meta")
-    if meta is None:
-        return
+    # meta: dict[str, Any] | None = data.get("meta")
+    # if meta is None:
+    #     return
 
-    key_mapping = {
-        "detail_1": "qqdocurl",
-        "news": "jumpUrl",
-        "music": "jumpUrl",
-    }
-    for key1, key2 in key_mapping.items():
-        if item := meta.get(key1):
-            text = item.get(key2)
-            break
-    else:
-        return
+    # key_mapping = {
+    #     "detail_1": "qqdocurl",
+    #     "news": "jumpUrl",
+    #     "music": "jumpUrl",
+    # }
+    # for key1, key2 in key_mapping.items():
+    #     if item := meta.get(key1):
+    #         text = item.get(key2)
+    #         break
+    # else:
+    #     return
 
-    if not text:
-        return
-    state[R_EXTRACT_KEY] = text.replace("\\", "").replace("&amp;", "&")
+    # if not text:
+    #     return
+    # state[R_EXTRACT_KEY] = text.replace("\\", "").replace("&amp;", "&")
 
 
 class RKeywordsRule:
