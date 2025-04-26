@@ -19,12 +19,10 @@ xhs_parser = XiaoHongShuParser()
 @xiaohongshu.handle()
 @handle_exception(xiaohongshu)
 async def _(text: str = ExtractText()):
-    matched = re.search(
-        r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*",
-        text,
-    )
+    pattern = r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*"
+    matched = re.search(pattern, text)
     if not matched:
-        logger.info(f"{text} ignored")
+        logger.info(f"{text} 不是可达的小红书链接，忽略")
         return
     # 解析 url
     parse_result = await xhs_parser.parse_url(matched.group(0))

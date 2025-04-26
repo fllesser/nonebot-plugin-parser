@@ -14,12 +14,12 @@ from nonebot.permission import SUPERUSER
 from nonebot.rule import to_me
 
 from ..config import store
-from ..constant import DISABLE_GROUPS
+from ..constant import DISABLED_GROUPS
 
 
 def load_or_initialize_set() -> set[int]:
     """加载或初始化关闭解析的名单"""
-    data_file = store.get_plugin_data_file(DISABLE_GROUPS)
+    data_file = store.get_plugin_data_file(DISABLED_GROUPS)
     # 判断是否存在
     if not data_file.exists():
         data_file.write_text(json.dumps([]))
@@ -28,7 +28,7 @@ def load_or_initialize_set() -> set[int]:
 
 def save_disabled_groups():
     """保存关闭解析的名单"""
-    data_file = store.get_plugin_data_file(DISABLE_GROUPS)
+    data_file = store.get_plugin_data_file(DISABLED_GROUPS)
     data_file.write_text(json.dumps(list(disabled_group_set)))
 
 

@@ -18,7 +18,6 @@ weibo = on_keyword(keywords={"weibo.com", "m.weibo.cn"}, rule=Rule(is_not_in_dis
 @handle_exception(weibo)
 async def _(event: MessageEvent):
     message = event.message.extract_plain_text().strip()
-    pub_prefix = f"{NICKNAME}解析 | 微博 - "
     video_info = await weibo_parser.parse_share_url(message)
 
     ext_headers = {
@@ -26,7 +25,7 @@ async def _(event: MessageEvent):
         "referer": "https://weibo.com/",
     }
 
-    await weibo.send(f"{pub_prefix}{video_info.title} - {video_info.author}")
+    await weibo.send(f"{NICKNAME}解析 | 微博 - {video_info.title} - {video_info.author}")
     if video_info.video_url:
         video_path = await download_video(video_info.video_url, ext_headers=ext_headers)
         await weibo.finish(get_video_seg(video_path))
