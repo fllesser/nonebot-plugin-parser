@@ -95,44 +95,9 @@ def extract_msg_text(event: MessageEvent, state: T_State) -> None:
         return
 
     # 提取json数据
-    json_seg = next((seg for seg in message if seg.type == "json"), None)
-    if json_seg is None:
-        return
-    if url := _extract_json_url(json_seg):
-        state[R_EXTRACT_KEY] = url
-
-    # data_str: str | None = json_seg.data.get("data")
-
-    # if not data_str:
-    #     return
-    # # 处理转义字符
-    # data_str = data_str.replace("&#44;", ",")
-
-    # try:
-    #     data: dict[str, Any] = json.loads(data_str)
-    # except json.JSONDecodeError:
-    #     logger.debug("json 卡片解析失败")
-    #     return
-
-    # meta: dict[str, Any] | None = data.get("meta")
-    # if meta is None:
-    #     return
-
-    # key_mapping = {
-    #     "detail_1": "qqdocurl",
-    #     "news": "jumpUrl",
-    #     "music": "jumpUrl",
-    # }
-    # for key1, key2 in key_mapping.items():
-    #     if item := meta.get(key1):
-    #         text = item.get(key2)
-    #         break
-    # else:
-    #     return
-
-    # if not text:
-    #     return
-    # state[R_EXTRACT_KEY] = text.replace("\\", "").replace("&amp;", "&")
+    if json_seg := next((seg for seg in message if seg.type == "json"), None):
+        if url := _extract_json_url(json_seg):
+            state[R_EXTRACT_KEY] = url
 
 
 class RKeywordsRule:
