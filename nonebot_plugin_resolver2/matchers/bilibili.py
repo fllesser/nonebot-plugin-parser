@@ -46,12 +46,13 @@ parser = BilibiliParser()
 @handle_exception(bilibili)
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
     pub_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
-    match = PATTERNS[keyword].search(text)
-    if not match:
+    matched = PATTERNS[keyword].search(text)
+    if not matched:
         logger.info(f"{text} 中的链接或 BV/av 号无效, 忽略")
         return
-    url, video_id, page_num = str(match.group(0)), str(match.group(1)), match.group(2)
-
+    url, video_id, page_num = str(matched.group(0)), str(matched.group(1)), matched.group(2)
+    # 是否附加链接
+    need_join_link = keyword != "bilibili"
     # 短链重定向地址
     if keyword in ("b23", "bili2233"):
         b23url = url
@@ -143,7 +144,10 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             logger.info(f"不支持的链接: {url}")
             await bilibili.finish()
 
-    join_link = "" if url.startswith("http") else f" https://www.bilibili.com/video/{video_id}"
+    join_link = ""
+    if need_join_link:
+        url_id = f"av{video_id}" if keyword in ("av", "/av") else video_id
+        join_link = f" https://www.bilibili.com/video/{url_id}"
     await bilibili.send(f"{pub_prefix}视频{join_link}")
     # 获取分集数
     page_num = int(page_num) if page_num else 1
