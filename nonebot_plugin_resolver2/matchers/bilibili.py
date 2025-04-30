@@ -61,10 +61,10 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             return
 
     # 链接中是否包含BV，av号
-    if url and (id_type := next((i for i in ("/BV", "/av") if i in url), None)):
-        if match := PATTERNS[id_type].search(url):
+    if id_type := next((i for i in ("/BV", "/av") if i in url), None):
+        if matched := PATTERNS[id_type].search(url):
             keyword = id_type
-            video_id = str(match.group(1))
+            video_id = str(matched.group(1))
     # 预发送消息列表
     segs: list[Message | MessageSegment | str] = []
     # 如果不是视频
