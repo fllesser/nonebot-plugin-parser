@@ -45,10 +45,10 @@ parser = BilibiliParser()
 @bilibili.handle()
 @handle_exception(bilibili)
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
-    share_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
+    pub_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
     match = PATTERNS[keyword].search(text)
     if not match:
-        logger.info(f"{text} 中的链接或id无效, 忽略")
+        logger.info(f"{text} 中的链接或 BV/av 号无效, 忽略")
         return
     url, video_id, page_num = str(match.group(0)), str(match.group(1)), match.group(2)
 
@@ -73,11 +73,11 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         if "t.bilibili.com" in url or "/opus" in url:
             matched = re.search(r"/(\d+)", url)
             if not matched:
-                logger.warning(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
+                logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
                 return
             opus_id = int(matched.group(1))
             img_lst, text = await parser.parse_opus(opus_id)
-            await bilibili.send(f"{share_prefix}动态")
+            await bilibili.send(f"{pub_prefix}动态")
             segs = [text]
             if img_lst:
                 paths = await download_imgs_without_raise(img_lst)
@@ -94,8 +94,8 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             room_id = int(matched.group(1))
             title, cover, keyframe = await parser.parse_live(room_id)
             if not title:
-                await bilibili.finish(f"{share_prefix}直播 - 未找到直播间信息")
-            res = f"{share_prefix}直播 {title}"
+                await bilibili.finish(f"{pub_prefix}直播 - 未找到直播间信息")
+            res = f"{pub_prefix}直播 {title}"
             res += get_img_seg(await download_img(cover)) if cover else ""
             res += get_img_seg(await download_img(keyframe)) if keyframe else ""
             await bilibili.finish(res)
@@ -103,11 +103,11 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         elif "/read" in url:
             matched = re.search(r"read/cv(\d+)", url)
             if not matched:
-                logger.warning(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
+                logger.info(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
                 return
             read_id = int(matched.group(1))
             texts, urls = await parser.parse_read(read_id)
-            await bilibili.send(f"{share_prefix}专栏")
+            await bilibili.send(f"{pub_prefix}专栏")
             # 并发下载
             paths = await download_imgs_without_raise(urls)
             # 反转路径列表，pop 时，则为原始顺序，提高性能
@@ -126,12 +126,12 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             # https://space.bilibili.com/22990202/favlist?fid=2344812202
             matched = re.search(r"favlist\?fid=(\d+)", url)
             if not matched:
-                logger.warning(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
+                logger.info(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
                 return
             fav_id = int(matched.group(1))
             # 获取收藏夹内容，并下载封面
             texts, urls = await parser.parse_favlist(fav_id)
-            await bilibili.send(f"{share_prefix}收藏夹\n正在为你找出相关链接请稍等...")
+            await bilibili.send(f"{pub_prefix}收藏夹\n正在为你找出相关链接请稍等...")
             paths: list[Path] = await download_imgs_without_raise(urls)
             segs = []
             # 组合 text 和 image
@@ -140,10 +140,11 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             await send_segments(segs)
             await bilibili.finish()
         else:
-            logger.warning(f"不支持的链接: {url}")
+            logger.info(f"不支持的链接: {url}")
             await bilibili.finish()
 
-    await bilibili.send(f"{share_prefix}视频")
+    join_link = "" if url.startswith("http") else f" https://www.bilibili.com/video/{video_id}"
+    await bilibili.send(f"{pub_prefix}视频{join_link}")
     # 获取分集数
     page_num = int(page_num) if page_num else 1
     if url and (matched := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
