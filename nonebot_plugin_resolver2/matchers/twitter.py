@@ -1,9 +1,10 @@
+import asyncio
 import re
 from typing import Any
 
 import aiohttp
 from nonebot import logger, on_keyword
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
 from ..config import NICKNAME, PROXY
@@ -29,32 +30,24 @@ async def _(event: MessageEvent):
 
     await twitter.send(f"{NICKNAME}解析 | 小蓝鸟")
 
-    video_urls, pic_urls = await parse_x_url(x_url)
+    video_url, pic_urls = await parse_x_url(x_url)
 
-    segments: list[Message | MessageSegment | str] = []
-
-    # 下载视频
-    for video_url in video_urls:
-        print(video_url)
+    if video_url:
         video_path = await download_video(url=video_url, proxy=PROXY)
-        segments.append(get_video_seg(video_path))
+        await twitter.send(get_video_seg(video_path))
 
-    # 下载图片
-    for pic_url in pic_urls:
-        img_path = await download_img(url=pic_url, proxy=PROXY)
-        segments.append(get_img_seg(img_path))
-
-    # 发送合并转发消息
-    if segments:
-        await send_segments(segments)
+    if pic_urls:
+        tasks = [download_img(url=pic_url, proxy=PROXY) for pic_url in pic_urls]
+        img_paths = await asyncio.gather(*tasks)
+        await send_segments([get_img_seg(img_path) for img_path in img_paths])
 
 
-async def parse_x_url(x_url: str) -> tuple[list[str], list[str]]:
+async def parse_x_url(x_url: str) -> tuple[str, list[str]]:
     """
     解析 X (Twitter) 链接获取视频和图片URL
     @author: biupiaa
     Returns:
-        tuple[list[str], list[str]]: (视频URL列表, 图片URL列表)
+        tuple[str, list[str]]: (视频 URL, 图片 URL 列表)
     """
 
     async def x_req(url: str) -> dict[str, Any]:
@@ -75,24 +68,22 @@ async def parse_x_url(x_url: str) -> tuple[list[str], list[str]]:
         raise ParseException("解析失败")
 
     html_content = resp.get("data", "")
-    video_urls = []
-    img_urls = []
-
     # 提取视频链接 (获取最高清晰度的视频)
     pattern = re.compile(
-        r'<a\s+.*?href="(https?://dl\.snapcdn\.app/get\?token=.*?)"\s+rel="nofollow"\s+class="tw-button-dl button dl-success".*?>.*?下载 MP4 \((\d+p)\)</a>',
+        r'<a\s+.*?href="(https?://dl\.snapcdn\.app/get\?token=.*?)"\s+rel="nofollow"\s+class="tw-button-dl button dl-success".*?>.*?下载 MP4 \((\d+p)\)</a>',  # noqa: E501
         re.DOTALL,  # 允许.匹配换行符
     )
-    video_pattern = pattern.findall(html_content)
+    video_matches = pattern.findall(html_content)
     # 转换为带数值的元组以便排序
-    processed = [(url, resolution, int(resolution.replace("p", ""))) for url, resolution in video_pattern]
-    sorted_video_links = sorted(processed, key=lambda x: x[1], reverse=True)[0]
-    if sorted_video_links:
-        video_urls.append(sorted_video_links[0])
+    if video_matches:
+        best_video_url = max(
+            ((str(url), int(resolution.replace("p", ""))) for url, resolution in video_matches), key=lambda x: x[1]
+        )[0]
+        # 最高质量视频
+        return best_video_url, []
 
     # 提取图片链接
     img_urls = re.findall(r'<img src="(https://pbs\.twimg\.com/media/[^"]+)"', html_content)
-    if not video_urls and not img_urls:
-        raise ParseException("未找到可下载的媒体内容")
-
-    return video_urls, img_urls
+    if img_urls:
+        return "", img_urls
+    raise ParseException("未找到可下载的媒体内容")
