@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-resolver2"
-version = "1.8.7"
+version = "1.8.8"
 description = "NoneBot2 链接分享解析器自动解析, BV号/链接/小程序/卡片 | B站/抖音/网易云/微博/小红书/youtube/tiktok/twitter/acfun"
 authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
 urls = { Repository = "https://github.com/fllesser/nonebot-plugin-resolver2" }

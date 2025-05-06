@@ -35,41 +35,31 @@ jobs:
         sudo apt-get install -y ffmpeg
     
     - name: Install Dependences 
-      run: | 
-        uv sync --group test
+      run: uv sync --group test
 
     - name: Run Load Tests
-      run: |
-        uv run pytest tests/test_load.py
+      run: uv run pytest tests/test_load.py
 
     - name: Run Bilibili Tests
-      run: |
-        uv run pytest tests/test_bilibili.py
+      run: uv run pytest tests/test_bilibili.py
 
     - name: Run Encode Tests
-      run: |
-        uv run pytest tests/test_bilibili_need_ck.py::test_encode_h264_video
+      run: uv run pytest tests/test_bilibili_need_ck.py::test_encode_h264_video
 
     # - name: Run Douyin Tests
-    #   run: |
-    #     uv run pytest tests/test_douyin.py
+    #   run: uv run pytest tests/test_douyin.py
     
     # - name: Run Xiaohongshu Tests
-    #   run: |
-    #     uv run pytest tests/test_xhs.py
+    #   run: uv run pytest tests/test_xhs.py
     
     - name: Run Weibo Tests
-      run: |
-        uv run pytest tests/test_weibo.py
+      run: uv run pytest tests/test_weibo.py
     
-    # - name: Run Twitter Tests
-    #   run: |
-    #     uv run pytest tests/test_x.py
+    - name: Run Twitter Tests
+      run: uv run pytest tests/test_x.py
   
     - name: Run Acfun Tests
-      run: |
-        uv run pytest tests/test_acfun.py
+      run: uv run pytest tests/test_acfun.py
 
     - name: Run NCM Tests
-      run: |
-        uv run pytest tests/test_ncm.py
+      run: uv run pytest tests/test_ncm.py
