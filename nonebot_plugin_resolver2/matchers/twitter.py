@@ -6,12 +6,12 @@ from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
 from nonebot.rule import Rule
 
-from .filter import is_not_in_disabled_groups
-from .helper import get_img_seg, get_video_seg, send_segments
 from ..config import NICKNAME, PROXY
 from ..constant import COMMON_HEADER
 from ..download import download_img, download_video
 from ..exception import ParseException, handle_exception
+from .filter import is_not_in_disabled_groups
+from .helper import get_img_seg, get_video_seg, send_segments
 
 twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -65,10 +65,7 @@ async def parse_x_url(x_url: str) -> tuple[list[str], list[str]]:
             "Referer": "https://xdown.app/",
             **COMMON_HEADER,
         }
-        data = {
-            "q": url,
-            "lang": "zh-cn"
-        }
+        data = {"q": url, "lang": "zh-cn"}
         async with aiohttp.ClientSession() as session:
             async with session.post("https://xdown.app/api/ajaxSearch", headers=headers, data=data) as response:
                 return await response.json()
@@ -84,14 +81,11 @@ async def parse_x_url(x_url: str) -> tuple[list[str], list[str]]:
     # 提取视频链接 (获取最高清晰度的视频)
     pattern = re.compile(
         r'<a\s+.*?href="(https?://dl\.snapcdn\.app/get\?token=.*?)"\s+rel="nofollow"\s+class="tw-button-dl button dl-success".*?>.*?下载 MP4 \((\d+p)\)</a>',
-        re.DOTALL  # 允许.匹配换行符
+        re.DOTALL,  # 允许.匹配换行符
     )
     video_pattern = pattern.findall(html_content)
     # 转换为带数值的元组以便排序
-    processed = [
-        (url, resolution, int(resolution.replace('p', '')))
-        for url, resolution in video_pattern
-    ]
+    processed = [(url, resolution, int(resolution.replace("p", ""))) for url, resolution in video_pattern]
     sorted_video_links = sorted(processed, key=lambda x: x[1], reverse=True)[0]
     if sorted_video_links:
         video_urls.append(sorted_video_links[0])
