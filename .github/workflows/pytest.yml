@@ -1,4 +1,4 @@
-name: Test Parse Share Url
+name: Pytest
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   pull_request:
 
 jobs:
-  load-test:
+  plugin-load:
     runs-on: ubuntu-latest
     env:
       LOG_LEVEL: DEBUG
@@ -37,7 +37,7 @@ jobs:
       run: uv run pytest tests/test_load.py
 
   bilibili-test:
-    needs: load-test
+    needs: plugin-load
     uses: ./.github/workflows/test-common.yml
     with:
       python-version: "3.12"
@@ -71,31 +71,25 @@ jobs:
     #   run: uv run pytest tests/test_bilibili_need_ck.py::test_encode_h264_video
 
   weibo-test:
-    needs: load-test
+    needs: plugin-load
     uses: ./.github/workflows/test-common.yml
     with:
       python-version: "3.12"
       job-name: "Weibo Tests"
       test-file: "tests/test_weibo.py"
 
-  x-test:
-    needs: load-test
+  twitter-test:
+    needs: plugin-load
     uses: ./.github/workflows/test-common.yml
     with:
       python-version: "3.12"
-      job-name: "X Tests"
+      job-name: "Twitter Tests"
       test-file: "tests/test_x.py"
 
-  xhs-test:
-    needs: load-test
-    uses: ./.github/workflows/test-common.yml
-    with:
-      python-version: "3.12"
-      job-name: "Xiaohongshu Tests"
-      test-file: "tests/test_xhs.py"
+
 
   acfun-test:
-    needs: load-test
+    needs: plugin-load
     uses: ./.github/workflows/test-common.yml
     with:
       python-version: "3.12"
@@ -103,7 +97,7 @@ jobs:
       test-file: "tests/test_acfun.py"
 
   ncm-test:
-    needs: load-test
+    needs: plugin-load
     uses: ./.github/workflows/test-common.yml
     with:
       python-version: "3.12"
@@ -111,9 +105,17 @@ jobs:
       test-file: "tests/test_ncm.py"
 
   douyin-test:
-    needs: load-test
+    needs: plugin-load
     uses: ./.github/workflows/test-common.yml
     with:
       python-version: "3.12"
       job-name: "Douyin Tests"
       test-file: "tests/test_douyin.py"
+      
+  xhs-test:
+    needs: plugin-load
+    uses: ./.github/workflows/test-common.yml
+    with:
+      python-version: "3.12"
+      job-name: "Xiaohongshu Tests"
+      test-file: "tests/test_xhs.py"
