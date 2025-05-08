@@ -32,13 +32,13 @@ async def test_pip(app: App):
     from nonebot import require
     from nonebot.adapters.onebot.v11 import Adapter as OnebotV11Adapter
 
-    assert require("nonebot_plugin_template")
+    assert require("nonebot_plugin_parser")
 
     event = make_onebot_msg(Message("pip install nonebot2"))
     try:
-        from nonebot_plugin_template import pip
+        from nonebot_plugin_parser import pip
     except ImportError:
-        pytest.skip("nonebot_plugin_template.pip not found")
+        pytest.skip("nonebot_plugin_parser.pip not found")
 
     async with app.test_matcher(pip) as ctx:
         adapter = nonebot.get_adapter(OnebotV11Adapter)

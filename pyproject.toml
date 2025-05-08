@@ -1,10 +1,10 @@
 [project]
-name = "nonebot-plugin-template"
+name = "nonebot-plugin-parser"
 version = "0.1.0"
 description = "插件描述"
 readme = "README.md"
-authors = [{ name = "owner", email = "owner@gmail.com" }]
-urls = { Repository = "https://github.com/owner/nonebot-plugin-template" }
+authors = [{ name = "fllesser", email = "fllesser@gmail.com" }]
+urls = { Repository = "https://github.com/fllesser/nonebot-plugin-parser" }
 requires-python = ">=3.10,<3.13"
 dependencies = [
   "nonebot2>=2.4.2,<3.0.0",
