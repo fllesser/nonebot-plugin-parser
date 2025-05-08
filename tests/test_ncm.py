@@ -34,4 +34,3 @@ async def test_ncm():
         logger.success(f"{url} | 网易云音乐解析成功")
 
     await asyncio.gather(*[test_parse_ncm(url) for url in urls])
-
