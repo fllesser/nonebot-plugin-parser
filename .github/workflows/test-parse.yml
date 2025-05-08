@@ -9,7 +9,7 @@ on:
   pull_request:
 
 jobs:
-  parse-url-test:
+  load-test:
     runs-on: ubuntu-latest
     env:
       LOG_LEVEL: DEBUG
@@ -19,6 +19,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13"
 
     steps:
     - name: Checkout repository
@@ -29,37 +30,90 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Install ffmpeg
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg
-    
     - name: Install Dependences 
       run: uv sync --group test
 
     - name: Run Load Tests
       run: uv run pytest tests/test_load.py
 
-    - name: Run Bilibili Tests
-      run: uv run pytest tests/test_bilibili.py
-
-    - name: Run Encode Tests
-      run: uv run pytest tests/test_bilibili_need_ck.py::test_encode_h264_video
-
-    # - name: Run Douyin Tests
-    #   run: uv run pytest tests/test_douyin.py
+  bilibili-test:
+    needs: load-test
+    uses: ./.github/workflows/test-common.yml
+    with:
+      python-version: "3.12"
+      job-name: "Bilibili Tests"
+      test-file: "tests/test_bilibili.py"
+    # needs: load-test
+    # runs-on: ubuntu-latest
+    # env:
+    #   LOG_LEVEL: DEBUG
+    # steps:
+    # - name: Checkout repository
+    #   uses: actions/checkout@v4
     
-    # - name: Run Xiaohongshu Tests
-    #   run: uv run pytest tests/test_xhs.py
+    # - name: Install uv and set the python version
+    #   uses: astral-sh/setup-uv@v6
+    #   with:
+    #     python-version: "3.12"
     
-    - name: Run Weibo Tests
-      run: uv run pytest tests/test_weibo.py
+    # - name: Install ffmpeg
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y ffmpeg
     
-    - name: Run Twitter Tests
-      run: uv run pytest tests/test_x.py
-  
-    - name: Run Acfun Tests
-      run: uv run pytest tests/test_acfun.py
+    # - name: Install Dependences 
+    #   run: uv sync --group test
 
-    - name: Run NCM Tests
-      run: uv run pytest tests/test_ncm.py
+    # - name: Run Bilibili Tests
+    #   run: uv run pytest tests/test_bilibili.py
+
+    # - name: Run Encode Tests
+    #   run: uv run pytest tests/test_bilibili_need_ck.py::test_encode_h264_video
+
+  weibo-test:
+    needs: load-test
+    uses: ./.github/workflows/test-common.yml
+    with:
+      python-version: "3.12"
+      job-name: "Weibo Tests"
+      test-file: "tests/test_weibo.py"
+
+  x-test:
+    needs: load-test
+    uses: ./.github/workflows/test-common.yml
+    with:
+      python-version: "3.12"
+      job-name: "X Tests"
+      test-file: "tests/test_x.py"
+
+  xhs-test:
+    needs: load-test
+    uses: ./.github/workflows/test-common.yml
+    with:
+      python-version: "3.12"
+      job-name: "Xiaohongshu Tests"
+      test-file: "tests/test_xhs.py"
+
+  acfun-test:
+    needs: load-test
+    uses: ./.github/workflows/test-common.yml
+    with:
+      python-version: "3.12"
+      job-name: "Acfun Tests"
+      test-file: "tests/test_acfun.py"
+
+  ncm-test:
+    needs: load-test
+    uses: ./.github/workflows/test-common.yml
+    with:
+      python-version: "3.12"
+      job-name: "NCM Tests"
+      test-file: "tests/test_ncm.py"
+
+  douyin-test:
+    needs: load-test
+    uses: ./.github/workflows/test-common.yml
+    with:
+      python-version: "3.12"
+      job-name: "Douyin Tests"
+      test-file: "tests/test_douyin.py"

@@ -1,0 +1,35 @@
+name: Test Common Configuration
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        required: true
+        type: string
+      job-name:
+        required: true
+        type: string
+      test-file:
+        required: true
+        type: string
+
+jobs:
+  test:
+    name: ${{ inputs.job-name }}
+    runs-on: ubuntu-latest
+    env:
+      LOG_LEVEL: DEBUG
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Install uv and set the python version
+      uses: astral-sh/setup-uv@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+    
+    - name: Install Dependences 
+      run: uv sync --group test
+
+    - name: Run Tests
+      run: uv run pytest ${{ inputs.test-file }} 
