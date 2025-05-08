@@ -1,3 +1,5 @@
+import asyncio
+
 from nonebot import logger
 import pytest
 
@@ -8,15 +10,18 @@ async def test_parse_acfun_url():
 
     urls = ["https://www.acfun.cn/v/ac46593564", "https://www.acfun.cn/v/ac40867941"]
     acfun_parser = AcfunParser()
-    for url in urls:
+
+    async def parse_acfun_url(url: str) -> None:
         acid = int(url.split("/")[-1].split("ac")[1])
-        logger.info(f"开始解析 acfun 视频 {acid}")
+        logger.info(f"{url} | 开始解析视频 acid: {acid}")
         m3u8s_url, video_desc = await acfun_parser.parse_url(url)
         assert m3u8s_url
         assert video_desc
-        logger.debug(f"m3u8s_url: {m3u8s_url}, video_desc: {video_desc}")
+        logger.debug(f"{url} | m3u8s_url: {m3u8s_url}, video_desc: {video_desc}")
 
-        logger.info(f"开始下载 acfun 视频 {acid}")
+        logger.info(f"{url} | 开始下载视频")
         video_file = await acfun_parser.download_video(m3u8s_url, acid)
         assert video_file
-        logger.info(f"acfun 视频 {acid} 下载成功, 文件大小: {video_file.stat().st_size / 1024 / 1024:.2f} MB")
+        logger.info(f"{url} | 视频下载成功, 文件大小: {video_file.stat().st_size / 1024 / 1024:.2f} MB")
+
+    await asyncio.gather(*[parse_acfun_url(url) for url in urls])

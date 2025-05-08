@@ -1,12 +1,10 @@
+import asyncio
+
 from nonebot import logger
 
 
 async def test_xiaohongshu():
-    """
-    xiaohongshu:
-    - https://xhslink.com/a/zGL52ubtpJ20
-    - https://www.xiaohongshu.com/discovery/item/6469c95c0000000012031f3c?source=webshare&xhsshare=pc_web&xsec_token=ABkMJSd3a0BPMgj5BMkZcggIq1FxU8vYNcNW_-MhfDyq0=&xsec_source=pc_share
-    """
+    """小红书解析测试"""
     # 需要 ck 才能解析， 暂时不测试
     from nonebot_plugin_resolver2.parsers import XiaoHongShuParser
 
@@ -15,12 +13,15 @@ async def test_xiaohongshu():
         "https://www.xiaohongshu.com/discovery/item/67cdaecd000000000b0153f8?source=webshare&xhsshare=pc_web&xsec_token=ABTvdTfbnDYQGDDB-aS-b3qgxOzsq22vIUcGzW6N5j8eQ=&xsec_source=pc_share",
         "https://www.xiaohongshu.com/explore/67ebf78f000000001c0050a1?app_platform=ios&app_version=8.77&share_from_user_hidden=true&xsec_source=app_share&type=normal&xsec_token=CBUGDKBemo2y6D0IIli9maqDaaazIQjzPrk2BVRi0FqLk=&author_share=1&xhsshare=QQ&shareRedId=N0pIOUc1PDk2NzUyOTgwNjY0OTdFNktO&apptime=1744081452&share_id=00207b217b7b472588141b083af74c7a",
     ]
-    for url in urls:
-        logger.info(f"开始解析小红书: {url}")
+
+    async def test_parse_url(url: str) -> None:
+        logger.info(f"{url} | 开始解析小红书")
         parse_result = await xhs_parser.parse_url(url)
         assert parse_result.title
-        logger.debug(f"title_desc: {parse_result.title}")
+        logger.debug(f"{url} | title_desc: {parse_result.title}")
         assert parse_result.pic_urls or parse_result.video_url
-        logger.debug(f"img_urls: {parse_result.pic_urls}")
+        logger.debug(f"{url} | img_urls: {parse_result.pic_urls}")
         logger.debug(f"video_url: {parse_result.video_url}")
-        logger.success(f"小红书解析成功 {url}")
+        logger.success(f"{url} | 小红书解析成功")
+
+    await asyncio.gather(*[test_parse_url(url) for url in urls])

@@ -1,3 +1,5 @@
+import asyncio
+
 from nonebot import logger
 import pytest
 
@@ -17,18 +19,21 @@ async def test_douyin_common_video():
         "https://v.douyin.com/iDHWnyTP",
         "https://www.douyin.com/video/7440422807663660328",
     ]
-    for url in common_urls:
-        logger.info(f"开始解析抖音视频 {url}")
+
+    async def test_parse_share_url(url: str) -> None:
+        logger.info(f"{url} | 开始解析抖音视频")
         video_info = await douyin_parser.parse_share_url(url)
-        logger.debug(f"title: {video_info.title}")
+        logger.debug(f"{url} | title: {video_info.title}")
         assert video_info.title
-        logger.debug(f"author: {video_info.author}")
+        logger.debug(f"{url} | author: {video_info.author}")
         assert video_info.author
-        logger.debug(f"cover_url: {video_info.cover_url}")
+        logger.debug(f"{url} | cover_url: {video_info.cover_url}")
         assert video_info.cover_url
-        logger.debug(f"video_url: {video_info.video_url}")
+        logger.debug(f"{url} | video_url: {video_info.video_url}")
         assert video_info.video_url
-        logger.success(f"抖音视频解析成功 {url}")
+        logger.success(f"{url} | 抖音视频解析成功")
+
+    await asyncio.gather(*[test_parse_share_url(url) for url in common_urls])
 
 
 @pytest.mark.asyncio
@@ -71,18 +76,21 @@ async def test_douyin_note():
         "https://www.douyin.com/note/7469411074119322899",
         "https://v.douyin.com/iP6Uu1Kh",
     ]
-    for url in note_urls:
-        logger.info(f"开始解析抖音图文 {url}")
+
+    async def test_parse_share_url(url: str) -> None:
+        logger.info(f"{url} | 开始解析抖音图文")
         video_info = await douyin_parser.parse_share_url(url)
-        logger.debug(f"title: {video_info.title}")
+        logger.debug(f"{url} | title: {video_info.title}")
         assert video_info.title
-        logger.debug(f"author: {video_info.author}")
+        logger.debug(f"{url} | author: {video_info.author}")
         assert video_info.author
-        logger.debug(f"cover_url: {video_info.cover_url}")
+        logger.debug(f"{url} | cover_url: {video_info.cover_url}")
         assert video_info.cover_url
-        logger.debug(f"images: {video_info.pic_urls}")
+        logger.debug(f"{url} | images: {video_info.pic_urls}")
         assert video_info.pic_urls
-        logger.success(f"抖音图文解析成功 {url}")
+        logger.success(f"{url} | 抖音图文解析成功")
+
+    await asyncio.gather(*[test_parse_share_url(url) for url in note_urls])
 
 
 @pytest.mark.asyncio
@@ -122,8 +130,9 @@ async def test_douyin_oversea():
 
     from nonebot_plugin_resolver2.constant import IOS_HEADER
 
+    url = "https://m.douyin.com/share/note/7484675353898667274"
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://m.douyin.com/share/note/7484675353898667274", headers=IOS_HEADER) as response:
+        async with session.get(url, headers=IOS_HEADER) as response:
             # headers
             logger.debug("headers")
             for key, value in response.headers.items():
