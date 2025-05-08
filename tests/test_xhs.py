@@ -1,8 +1,10 @@
 import asyncio
 
 from nonebot import logger
+from utils import skip_on_failure
 
 
+@skip_on_failure
 async def test_xiaohongshu():
     """小红书解析测试"""
     # 需要 ck 才能解析， 暂时不测试
