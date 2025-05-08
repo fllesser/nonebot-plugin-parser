@@ -5,7 +5,7 @@ description = "插件描述"
 readme = "README.md"
 authors = [{ name = "owner", email = "owner@gmail.com" }]
 urls = { Repository = "https://github.com/owner/nonebot-plugin-template" }
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
   "nonebot2>=2.4.2,<3.0.0",
 
