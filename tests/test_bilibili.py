@@ -1,3 +1,6 @@
+import asyncio
+import re
+
 from nonebot import logger
 import pytest
 
@@ -41,21 +44,28 @@ async def test_bilibili_opus():
     from nonebot_plugin_resolver2.download import download_imgs_without_raise
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
-    logger.info(
-        "开始解析B站动态 https://www.bilibili.com/opus/998440765151510535, https://www.bilibili.com/opus/1040093151889457152"
-    )
-    # - https://www.bilibili.com/opus/998440765151510535
-    # - https://www.bilibili.com/opus/1040093151889457152
-    opus_ids = [998440765151510535, 1040093151889457152]
-    bilibili_parser = BilibiliParser()
-    for opus_id in opus_ids:
-        urls, orig_text = await bilibili_parser.parse_opus(opus_id)
-        assert urls
-        logger.debug(urls)
+    opus_urls = [
+        "https://www.bilibili.com/opus/998440765151510535",
+        "https://www.bilibili.com/opus/1040093151889457152",
+    ]
 
-        files = await download_imgs_without_raise(urls)
-        assert len(files) == len(urls)
+    bilibili_parser = BilibiliParser()
+
+    async def test_parse_opus(opus_url: str) -> None:
+        matched = re.search(r"opus/(\d+)", opus_url)
+        assert matched
+        opus_id = int(matched.group(1))
+        logger.info(f"{opus_url} | 开始解析哔哩哔哩动态 opus_id: {opus_id}")
+
+        pic_urls, orig_text = await bilibili_parser.parse_opus(opus_id)
+        assert pic_urls
+        logger.debug(f"{opus_url} | pic_urls: {pic_urls}")
+
+        files = await download_imgs_without_raise(pic_urls)
+        assert len(files) == len(pic_urls)
 
         assert orig_text
-        logger.debug(orig_text)
+        logger.debug(f"{opus_url} | original_text: {orig_text}")
+
+    await asyncio.gather(*[test_parse_opus(opus_url) for opus_url in opus_urls])
     logger.success("B站动态解析成功")
