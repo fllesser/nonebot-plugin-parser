@@ -21,23 +21,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: pytest
-        uses: ./.github/actions/pytest
+      - name: setup-python
+        uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
-          job-name: "Plugin Load"
-          test-file: "tests/test_load.py"
+      - name: pytest
+        run: uv run pytest tests/test_load.py
+
 
   bilibili-test:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: setup-python
+        uses: ./.github/actions/setup-python
+      
       - name: pytest
-        uses: ./.github/actions/pytest
-        with:
-          job-name: "Bilibili Tests"
-          test-file: "tests/test_bilibili.py"
+        run: uv run pytest tests/test_bilibili.py
 
 
   weibo-test:
@@ -45,11 +47,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: setup-python
+        uses: ./.github/actions/setup-python
+      
       - name: pytest
-        uses: ./.github/actions/pytest
-        with:
-          job-name: "Weibo Tests"
-          test-file: "tests/test_weibo.py"
+        run: uv run pytest tests/test_weibo.py
 
 
   twitter-test:
@@ -57,11 +59,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: setup-python
+        uses: ./.github/actions/setup-python
+      
       - name: pytest
-        uses: ./.github/actions/pytest
-        with:
-          job-name: "Twitter Tests"
-          test-file: "tests/test_x.py"
+        run: uv run pytest tests/test_x.py
 
 
 
@@ -70,41 +72,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: setup-python
+        uses: ./.github/actions/setup-python
+      
       - name: pytest
-        uses: ./.github/actions/pytest
-        with:
-          job-name: "Acfun Tests"
-          test-file: "tests/test_acfun.py"
+        run: uv run pytest tests/test_acfun.py
 
   ncm-test:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: setup-python
+        uses: ./.github/actions/setup-python
+      
       - name: pytest
-        uses: ./.github/actions/pytest
-        with:
-          job-name: "NCM Tests"
-          test-file: "tests/test_ncm.py"
+        run: uv run pytest tests/test_ncm.py
 
   douyin-test:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: setup-python
+        uses: ./.github/actions/setup-python
+      
       - name: pytest
-        uses: ./.github/actions/pytest
-        with:
-          job-name: "Douyin Tests"
-          test-file: "tests/test_douyin.py"
+        run: uv run pytest tests/test_douyin.py
       
   xhs-test:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: setup-python
+        uses: ./.github/actions/setup-python
+      
       - name: pytest
-        uses: ./.github/actions/pytest
-        with:
-          job-name: "Xiaohongshu Tests"
-          test-file: "tests/test_xhs.py"
+        run: uv run pytest tests/test_xhs.py

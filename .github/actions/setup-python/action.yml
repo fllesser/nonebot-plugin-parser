@@ -1,17 +1,11 @@
-name: Pytest
-description: Pytest
+name: setup-python
+description: setup-python
 
 inputs:
   python-version:
     description: python version
     required: false
     default: "3.12"
-  job-name:
-    description: job name
-    required: true
-  test-file:
-    description: test file
-    required: true
 
 runs:
   using: composite
@@ -23,8 +17,4 @@ runs:
 
     - name: Install Dependences
       run: uv sync --group test
-      shell: bash
-
-    - name: Run Tests
-      run: uv run pytest ${{ inputs.test-file }}
       shell: bash
