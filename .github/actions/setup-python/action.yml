@@ -1,0 +1,20 @@
+name: setup-python
+description: setup-python
+
+inputs:
+  python-version:
+    description: python version
+    required: false
+    default: "3.12"
+
+runs:
+  using: composite
+  steps:
+    - name: Install uv and set the python version
+      uses: astral-sh/setup-uv@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Dependences
+      run: uv sync --group test
+      shell: bash
