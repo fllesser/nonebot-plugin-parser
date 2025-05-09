@@ -151,6 +151,15 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 
 ## 贡献者
 [![All Contributors](https://img.shields.io/github/all-contributors/fllesser/nonebot-plugin-resolver2?color=ee8449&style=flat-square)](#contributors)
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
 
 ## 致谢
 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
