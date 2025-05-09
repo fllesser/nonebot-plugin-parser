@@ -1,4 +1,4 @@
-name: Pytest
+name: test load and parse
 
 on:
   push:
@@ -38,41 +38,16 @@ jobs:
 
   bilibili-test:
     needs: plugin-load
-    uses: ./.github/action/pytest.yml
+    uses: ./.github/actions/pytest.yml
     with:
       python-version: "3.12"
       job-name: "Bilibili Tests"
       test-file: "tests/test_bilibili.py"
-    # needs: load-test
-    # runs-on: ubuntu-latest
-    # env:
-    #   LOG_LEVEL: DEBUG
-    # steps:
-    # - name: Checkout repository
-    #   uses: actions/checkout@v4
-    
-    # - name: Install uv and set the python version
-    #   uses: astral-sh/setup-uv@v6
-    #   with:
-    #     python-version: "3.12"
-    
-    # - name: Install ffmpeg
-    #   run: |
-    #     sudo apt-get update
-    #     sudo apt-get install -y ffmpeg
-    
-    # - name: Install Dependences 
-    #   run: uv sync --group test
 
-    # - name: Run Bilibili Tests
-    #   run: uv run pytest tests/test_bilibili.py
-
-    # - name: Run Encode Tests
-    #   run: uv run pytest tests/test_bilibili_need_ck.py::test_encode_h264_video
 
   weibo-test:
     needs: plugin-load
-    uses: ./.github/action/pytest.yml
+    uses: ./.github/actions/pytest.yml
     with:
       python-version: "3.12"
       job-name: "Weibo Tests"
@@ -80,7 +55,7 @@ jobs:
 
   twitter-test:
     needs: plugin-load
-    uses: ./.github/action/pytest.yml
+    uses: ./.github/actions/pytest.yml
     with:
       python-version: "3.12"
       job-name: "Twitter Tests"
@@ -90,7 +65,7 @@ jobs:
 
   acfun-test:
     needs: plugin-load
-    uses: ./.github/action/pytest.yml
+    uses: ./.github/actions/pytest.yml
     with:
       python-version: "3.12"
       job-name: "Acfun Tests"
@@ -98,7 +73,7 @@ jobs:
 
   ncm-test:
     needs: plugin-load
-    uses: ./.github/action/pytest.yml
+    uses: ./.github/actions/pytest.yml
     with:
       python-version: "3.12"
       job-name: "NCM Tests"
@@ -106,7 +81,7 @@ jobs:
 
   douyin-test:
     needs: plugin-load
-    uses: ./.github/action/pytest.yml
+    uses: ./.github/actions/pytest.yml
     with:
       python-version: "3.12"
       job-name: "Douyin Tests"
@@ -114,7 +89,7 @@ jobs:
       
   xhs-test:
     needs: plugin-load
-    uses: ./.github/action/pytest.yml
+    uses: ./.github/actions/pytest.yml
     with:
       python-version: "3.12"
       job-name: "Xiaohongshu Tests"

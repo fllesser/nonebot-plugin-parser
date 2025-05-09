@@ -1,4 +1,4 @@
-name: Test Common Configuration
+name: Pytest Configuration
 
 on:
   workflow_call:
