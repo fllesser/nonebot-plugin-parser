@@ -20,8 +20,8 @@ jobs:
           - "3.13"
 
     steps:
-      - name: pytest
-        uses: ./.github/actions/pytest
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pytest
         with:
           python-version: ${{ matrix.python-version }}
           job-name: "Plugin Load"
@@ -31,8 +31,8 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - name: pytest
-        uses: ./.github/actions/pytest
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pytest
         with:
           job-name: "Bilibili Tests"
           test-file: "tests/test_bilibili.py"
@@ -42,8 +42,8 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - name: pytest
-        uses: ./.github/actions/pytest
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pytest
         with:
           job-name: "Weibo Tests"
           test-file: "tests/test_weibo.py"
@@ -53,8 +53,8 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - name: pytest
-        uses: ./.github/actions/pytest
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pytest
         with:
           job-name: "Twitter Tests"
           test-file: "tests/test_x.py"
@@ -65,8 +65,8 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - name: pytest
-        uses: ./.github/actions/pytest
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pytest
         with:
           job-name: "Acfun Tests"
           test-file: "tests/test_acfun.py"
@@ -75,8 +75,8 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - name: pytest
-        uses: ./.github/actions/pytest
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pytest
         with:
           job-name: "NCM Tests"
           test-file: "tests/test_ncm.py"
@@ -85,8 +85,8 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - name: pytest
-        uses: ./.github/actions/pytest
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pytest
         with:
           job-name: "Douyin Tests"
           test-file: "tests/test_douyin.py"
@@ -95,8 +95,8 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - name: pytest
-        uses: ./.github/actions/pytest
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pytest
         with:
           job-name: "Xiaohongshu Tests"
           test-file: "tests/test_xhs.py"
