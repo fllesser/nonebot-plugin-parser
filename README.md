@@ -149,6 +149,9 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 |   bm BV...   |         USER          |  否   |   -   |     下载 b站 音乐      |
 
 
+## 贡献者
+[![All Contributors](https://img.shields.io/github/all-contributors/fllesser/nonebot-plugin-resolver2?color=ee8449&style=flat-square)](#contributors)
+
 ## 致谢
 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
 [parse-video-py](https://github.com/wujunwei928/parse-video-py)
