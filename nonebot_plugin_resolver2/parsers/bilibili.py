@@ -272,18 +272,26 @@ class BilibiliParser:
             page_index (int): 页索引 = 页码 - 1
         """
 
-        from bilibili_api.video import VideoDownloadURLDataDetecter
+        from bilibili_api.video import (
+            AudioStreamDownloadURL,
+            VideoDownloadURLDataDetecter,
+            VideoQuality,
+            VideoStreamDownloadURL,
+        )
 
         if video is None:
             video = self.parse_video(bvid=bvid, avid=avid)
         # 获取下载数据
         download_url_data = await video.get_download_url(page_index=page_index)
         detecter = VideoDownloadURLDataDetecter(download_url_data)
-        streams = detecter.detect_best_streams()
+        streams = detecter.detect_best_streams(video_max_quality=VideoQuality._1080P, no_dolby_video=True, no_hdr=True)
         video_stream = streams[0]
+        assert isinstance(video_stream, VideoStreamDownloadURL)
         audio_stream = streams[1]
+        assert isinstance(audio_stream, AudioStreamDownloadURL)
         if video_stream is None or audio_stream is None:
-            raise ParseException("未找到视频或音频流")
+            raise ParseException("未找到可下载的视频流或音频流")
+        logger.debug(f"视频流质量 {video_stream.video_quality.name}, 音频流质量 {audio_stream.audio_quality.name}")
         return video_stream.url, audio_stream.url
 
     def _extra_bili_info(self, video_info: dict[str, Any]) -> str:
