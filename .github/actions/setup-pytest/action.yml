@@ -1,5 +1,5 @@
-name: setup-python
-description: setup-python
+name: setup-pytest
+description: setup-pytest
 
 inputs:
   python-version:

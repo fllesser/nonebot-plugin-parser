@@ -1,4 +1,4 @@
-name: test load and parse
+name: pytest
 
 on:
   push:
@@ -21,8 +21,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: setup-python
-        uses: ./.github/actions/setup-python
+      - name: setup-pytest
+        uses: ./.github/actions/setup-pytest
         with:
           python-version: ${{ matrix.python-version }}
       - name: pytest
@@ -35,8 +35,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: setup-python
-        uses: ./.github/actions/setup-python
+      - name: setup-pytest
+        uses: ./.github/actions/setup-pytest
       
       - name: pytest
         run: uv run pytest tests/test_bilibili.py
@@ -47,8 +47,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: setup-python
-        uses: ./.github/actions/setup-python
+      - name: setup-pytest
+        uses: ./.github/actions/setup-pytest
       
       - name: pytest
         run: uv run pytest tests/test_weibo.py
@@ -59,8 +59,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: setup-python
-        uses: ./.github/actions/setup-python
+      - name: setup-pytest
+        uses: ./.github/actions/setup-pytest
       
       - name: pytest
         run: uv run pytest tests/test_x.py
@@ -72,8 +72,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: setup-python
-        uses: ./.github/actions/setup-python
+      - name: setup-pytest
+        uses: ./.github/actions/setup-pytest
       
       - name: pytest
         run: uv run pytest tests/test_acfun.py
@@ -83,8 +83,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: setup-python
-        uses: ./.github/actions/setup-python
+      - name: setup-pytest
+        uses: ./.github/actions/setup-pytest
       
       - name: pytest
         run: uv run pytest tests/test_ncm.py
@@ -94,8 +94,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: setup-python
-        uses: ./.github/actions/setup-python
+      - name: setup-pytest
+        uses: ./.github/actions/setup-pytest
       
       - name: pytest
         run: uv run pytest tests/test_douyin.py
@@ -105,8 +105,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: setup-python
-        uses: ./.github/actions/setup-python
+      - name: setup-pytest
+        uses: ./.github/actions/setup-pytest
       
       - name: pytest
         run: uv run pytest tests/test_xhs.py
