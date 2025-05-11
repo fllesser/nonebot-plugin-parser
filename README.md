@@ -148,19 +148,6 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 | 查看关闭解析 |       SUPERUSER       |  否   |   -   | 获取已经关闭解析的群聊 |
 |   bm BV...   |         USER          |  否   |   -   |     下载 b站 音乐      |
 
-
-## 贡献者
-[![All Contributors](https://img.shields.io/github/all-contributors/fllesser/nonebot-plugin-resolver2?color=ee8449&style=flat-square)](#contributors)
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-
 ## 致谢
 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
 [parse-video-py](https://github.com/wujunwei928/parse-video-py)
