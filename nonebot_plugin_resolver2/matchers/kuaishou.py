@@ -1,6 +1,7 @@
 import re
 
-from nonebot import logger, on_message
+from nonebot import logger, on_message, get_driver
+from nonebot.adapters.onebot.v11 import Message
 
 from ..config import NICKNAME
 from ..download import download_img, download_video
@@ -12,6 +13,17 @@ from .preprocess import ExtractText, Keyword, r_keywords
 
 # 初始化快手解析器
 parser = KuaishouParser()
+
+# 注册关闭会话的回调函数
+driver = get_driver()
+
+@driver.on_shutdown
+async def _():
+    try:
+        await parser.close()
+        logger.debug("已关闭快手解析器会话")
+    except Exception as e:
+        logger.error(f"关闭快手解析器会话时出错: {e}")
 
 # 定义匹配规则
 kuaishou = on_message(
@@ -39,6 +51,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         match = pattern.search(text)
         if match:
             matched_url = match.group(0)
+            logger.debug(f"匹配到快手链接: {matched_url}, 类型: {pattern_key}")
             break
 
     if not matched_url:
@@ -47,13 +60,23 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
     # 解析视频信息
     try:
+        logger.debug(f"开始解析快手链接: {matched_url}")
         video_info = await parser.parse_url(matched_url)
+        logger.debug(f"快手视频标题: {video_info.title}")
+
+        # 构建消息段列表，确保类型正确
+        segments = []
+        segments.append(f"{prefix}\n{video_info.title}")
 
         # 下载封面图
-        cover_path = await download_img(video_info.cover_url)
-
-        # 构建消息段
-        segments = [f"{prefix}\n{video_info.title}", get_img_seg(cover_path)]
+        if video_info.cover_url:
+            logger.debug(f"开始下载快手视频封面: {video_info.cover_url}")
+            cover_path = await download_img(video_info.cover_url)
+            logger.debug(f"封面下载完成: {cover_path}")
+            # 添加图片消息段
+            segments.append(get_img_seg(cover_path))
+        else:
+            logger.warning("未获取到视频封面URL")
 
         # 如果有作者信息，添加到消息中
         if video_info.author:
@@ -64,9 +87,12 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
         # 下载视频
         if video_info.video_url:
+            logger.debug(f"开始下载快手视频: {video_info.video_url}")
             video_path = await download_video(video_info.video_url)
+            logger.debug(f"视频下载完成: {video_path}")
             await kuaishou.send(get_video_seg(video_path))
         else:
+            logger.warning("未获取到视频URL")
             await kuaishou.finish("视频链接获取失败")
 
     except Exception as e:
