@@ -3,7 +3,6 @@ import urllib.parse
 
 import aiohttp
 
-from ..config import PROXY
 from ..constant import COMMON_HEADER
 from ..exception import ParseException
 from .data import ParseResult
@@ -37,11 +36,11 @@ class KuaishouParser:
         api_url = self.api_url.format(encoded_url)
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(api_url, headers=self.headers, proxy=PROXY) as resp:
+            async with session.get(api_url, headers=self.headers) as resp:
                 if resp.status != 200:
                     raise ParseException(f"解析API返回错误状态码: {resp.status}")
 
-            result = await resp.json()
+                result = await resp.json()
 
             # 根据API返回示例，成功时code应为0
             if result.get("code") != 0 or not result.get("data"):
