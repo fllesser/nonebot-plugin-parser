@@ -1,6 +1,7 @@
 import re
 
 from nonebot import logger, on_message
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
 from ..download import download_img, download_video
@@ -46,8 +47,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     logger.debug(f"快手视频标题: {video_info.title}")
 
     # 构建消息段列表，确保类型正确
-    segments = []
-    segments.append(f"{prefix}{video_info.title}")
+    segments: list[Message | MessageSegment | str] = [f"{prefix}{video_info.title}"]
 
     # 下载封面图
     if video_info.cover_url:
