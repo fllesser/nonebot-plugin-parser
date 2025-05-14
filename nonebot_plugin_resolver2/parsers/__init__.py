@@ -1,6 +1,7 @@
 from .acfun import AcfunParser as AcfunParser
 from .bilibili import BilibiliParser as BilibiliParser
 from .douyin import DouyinParser as DouyinParser
+from .kuaishou import KuaishouParser as KuaishouParser
 from .kugou import KuGouParser as KuGouParser
 from .ncm import NCMParser as NCMParser
 from .utils import get_redirect_url as get_redirect_url
@@ -11,6 +12,7 @@ __all__ = [
     "AcfunParser",
     "BilibiliParser",
     "DouyinParser",
+    "KuaishouParser",
     "KuGouParser",
     "NCMParser",
     "WeiBoParser",

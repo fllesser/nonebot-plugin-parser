@@ -3,6 +3,7 @@ from nonebot.matcher import Matcher
 from .acfun import acfun
 from .bilibili import bilibili
 from .douyin import douyin
+from .kuaishou import kuaishou
 from .kugou import kugou
 from .ncm import ncm
 from .tiktok import tiktok
@@ -15,6 +16,7 @@ resolvers: dict[str, type[Matcher]] = {
     "bilibili": bilibili,
     "acfun": acfun,
     "douyin": douyin,
+    "kuaishou": kuaishou,
     "ytb": ytb,
     "kugou": kugou,
     "ncm": ncm,

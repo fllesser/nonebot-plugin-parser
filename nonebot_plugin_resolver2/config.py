@@ -15,6 +15,7 @@ MatcherNames = Literal[
     "douyin",
     "ytb",
     "kugou",
+    "kuaishou",
     "ncm",
     "twitter",
     "tiktok",
