@@ -19,7 +19,7 @@ async def test_kuaishou_video():
     test_urls = [
         "https://www.kuaishou.com/short-video/3xhjgcmir24m4nm",
         # "https://v.kuaishou.com/1ff8QP" （该短链接失效）
-        "https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc"
+        "https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc",
     ]
 
     async def test_parse_url(url: str) -> None:
