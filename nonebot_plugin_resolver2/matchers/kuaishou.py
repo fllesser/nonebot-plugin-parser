@@ -1,6 +1,6 @@
 import re
 
-from nonebot import get_driver, logger, on_message
+from nonebot import logger, on_message
 
 from ..config import NICKNAME
 from ..download import download_img, download_video
@@ -12,18 +12,6 @@ from .preprocess import ExtractText, Keyword, r_keywords
 
 # 初始化快手解析器
 parser = KuaishouParser()
-
-# 注册关闭会话的回调函数
-driver = get_driver()
-
-
-@driver.on_shutdown
-async def _():
-    try:
-        await parser.close()
-        logger.debug("已关闭快手解析器会话")
-    except Exception as e:
-        logger.error(f"关闭快手解析器会话时出错: {e}")
 
 
 # 定义匹配规则
