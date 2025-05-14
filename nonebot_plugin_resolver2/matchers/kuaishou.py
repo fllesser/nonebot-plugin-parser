@@ -1,9 +1,8 @@
 import re
 
 from nonebot import logger, on_message
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
-from ..config import NICKNAME, plugin_cache_dir
+from ..config import NICKNAME
 from ..download import download_img, download_video
 from ..exception import handle_exception
 from ..parsers import KuaishouParser
@@ -33,7 +32,7 @@ PATTERNS = {
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
     """处理快手视频链接"""
     prefix = f"{NICKNAME}解析 | 快手视频 - "
-    
+
     # 尝试匹配链接
     matched_url = None
     for pattern_key, pattern in PATTERNS.items():
@@ -41,40 +40,35 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         if match:
             matched_url = match.group(0)
             break
-            
+
     if not matched_url:
         logger.info(f"未找到有效的快手链接: {text}")
         return
-    
 
-    
     # 解析视频信息
     try:
         video_info = await parser.parse_url(matched_url)
-        
+
         # 下载封面图
         cover_path = await download_img(video_info.cover_url)
-        
+
         # 构建消息段
-        segments = [
-            f"{prefix}\n{video_info.title}",
-            get_img_seg(cover_path)
-        ]
-        
+        segments = [f"{prefix}\n{video_info.title}", get_img_seg(cover_path)]
+
         # 如果有作者信息，添加到消息中
         if video_info.author:
             segments.append(f"作者: {video_info.author}")
-        
+
         # 发送视频信息
         await send_segments(segments)
-        
+
         # 下载视频
         if video_info.video_url:
             video_path = await download_video(video_info.video_url)
             await kuaishou.send(get_video_seg(video_path))
         else:
             await kuaishou.finish("视频链接获取失败")
-            
+
     except Exception as e:
         logger.error(f"快手视频解析失败: {e}")
-        await kuaishou.finish(f"{prefix}解析失败: {str(e)}") 
+        await kuaishou.finish(f"{prefix}解析失败: {e!s}")
