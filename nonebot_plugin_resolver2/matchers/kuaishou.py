@@ -28,15 +28,15 @@ async def _():
 
 # 定义匹配规则
 kuaishou = on_message(
-    rule=is_not_in_disabled_groups & r_keywords("kuaishou", "kuaishou.com", "v.kuaishou.com"),
+    rule=is_not_in_disabled_groups & r_keywords("v.kuaishou.com", "kuaishou", "chenzhongtech"),
     priority=5,
 )
 
 # 匹配的正则表达式
 PATTERNS = {
+    "v.kuaishou.com": re.compile(r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
     "kuaishou": re.compile(r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
-    "kuaishou_short": re.compile(r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
-    "kuaishou_fw": re.compile(r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+"),
+    "chenzhongtech": re.compile(r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+"),
 }
 
 
@@ -46,56 +46,44 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     """处理快手视频链接"""
     prefix = f"{NICKNAME}解析 | 快手视频 - "
 
-    # 尝试匹配链接
-    matched_url = None
-    for pattern_key, pattern in PATTERNS.items():
-        match = pattern.search(text)
-        if match:
-            matched_url = match.group(0)
-            logger.debug(f"匹配到快手链接: {matched_url}, 类型: {pattern_key}")
-            break
-
-    if not matched_url:
+    matched = PATTERNS[keyword].search(text)
+    if not matched:
         logger.info(f"未找到有效的快手链接: {text}")
         return
 
-    # 解析视频信息
-    try:
-        logger.debug(f"开始解析快手链接: {matched_url}")
-        video_info = await parser.parse_url(matched_url)
-        logger.debug(f"快手视频标题: {video_info.title}")
+    url = matched.group(0)
 
-        # 构建消息段列表，确保类型正确
-        segments = []
-        segments.append(f"{prefix}\n{video_info.title}")
+    logger.debug(f"开始解析快手链接: {url}")
+    video_info = await parser.parse_url(url)
+    logger.debug(f"快手视频标题: {video_info.title}")
 
-        # 下载封面图
-        if video_info.cover_url:
-            logger.debug(f"开始下载快手视频封面: {video_info.cover_url}")
-            cover_path = await download_img(video_info.cover_url)
-            logger.debug(f"封面下载完成: {cover_path}")
-            # 添加图片消息段
-            segments.append(get_img_seg(cover_path))
-        else:
-            logger.warning("未获取到视频封面URL")
+    # 构建消息段列表，确保类型正确
+    segments = []
+    segments.append(f"{prefix}{video_info.title}")
 
-        # 如果有作者信息，添加到消息中
-        if video_info.author:
-            segments.append(f"作者: {video_info.author}")
+    # 下载封面图
+    if video_info.cover_url:
+        logger.debug(f"开始下载快手视频封面: {video_info.cover_url}")
+        cover_path = await download_img(video_info.cover_url)
+        logger.debug(f"封面下载完成: {cover_path}")
+        # 添加图片消息段
+        segments.append(get_img_seg(cover_path))
+    else:
+        logger.warning("未获取到视频封面URL")
 
-        # 发送视频信息
-        await send_segments(segments)
+    # 如果有作者信息，添加到消息中
+    if video_info.author:
+        segments.append(f"作者: {video_info.author}")
 
-        # 下载视频
-        if video_info.video_url:
-            logger.debug(f"开始下载快手视频: {video_info.video_url}")
-            video_path = await download_video(video_info.video_url)
-            logger.debug(f"视频下载完成: {video_path}")
-            await kuaishou.send(get_video_seg(video_path))
-        else:
-            logger.warning("未获取到视频URL")
-            await kuaishou.finish("视频链接获取失败")
+    # 发送视频信息
+    await send_segments(segments)
 
-    except Exception as e:
-        logger.error(f"快手视频解析失败: {e}")
-        await kuaishou.finish(f"{prefix}解析失败: {e!s}")
+    # 下载视频
+    if video_info.video_url:
+        logger.debug(f"开始下载快手视频: {video_info.video_url}")
+        video_path = await download_video(video_info.video_url)
+        logger.debug(f"视频下载完成: {video_path}")
+        await kuaishou.send(get_video_seg(video_path))
+    else:
+        logger.warning("未获取到视频URL")
+        await kuaishou.finish("视频链接获取失败")
