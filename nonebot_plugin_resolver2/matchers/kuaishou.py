@@ -1,7 +1,6 @@
 import re
 
-from nonebot import logger, on_message, get_driver
-from nonebot.adapters.onebot.v11 import Message
+from nonebot import get_driver, logger, on_message
 
 from ..config import NICKNAME
 from ..download import download_img, download_video
@@ -17,6 +16,7 @@ parser = KuaishouParser()
 # 注册关闭会话的回调函数
 driver = get_driver()
 
+
 @driver.on_shutdown
 async def _():
     try:
@@ -24,6 +24,7 @@ async def _():
         logger.debug("已关闭快手解析器会话")
     except Exception as e:
         logger.error(f"关闭快手解析器会话时出错: {e}")
+
 
 # 定义匹配规则
 kuaishou = on_message(

@@ -136,10 +136,10 @@ class KuaishouParser:
             # 验证响应状态码，确保请求成功
             if not 200 <= resp.status < 300:
                 raise ParseException(f"解析短链接失败，状态码: {resp.status}")
-            
+
             if not resp.real_url:
                 raise ParseException("解析短链接失败，未获取到真实URL")
-                
+
             return str(resp.real_url)
 
     async def close(self):
