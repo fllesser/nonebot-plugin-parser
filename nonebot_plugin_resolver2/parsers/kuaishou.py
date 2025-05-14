@@ -45,7 +45,10 @@ class KuaishouParser:
         api_url = self.api_url.format(standard_url)
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(api_url, headers=self.headers, proxy=PROXY) as resp:
+            if PROXY:
+                async with session.get(api_url, headers=self.headers, proxy=PROXY) as resp:
+            else:
+                async with session.get(api_url, headers=self.headers) as resp:
                 if resp.status != 200:
                     raise ParseException(f"解析API返回错误状态码: {resp.status}")
 
