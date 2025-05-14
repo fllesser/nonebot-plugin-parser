@@ -282,6 +282,15 @@ async def encode_video_to_h264(video_path: Path) -> Path:
         str(output_path),
     ]
     await exec_ffmpeg_cmd(cmd)
-    logger.success(f"视频重新编码为 H.264 成功: {output_path}, 大小: {output_path.stat().st_size / 1024 / 1024:.2f}MB")
+    logger.success(f"视频重新编码为 H.264 成功: {output_path}, {fmt_size(output_path)}")
     await safe_unlink(video_path)
     return output_path
+
+
+def fmt_size(file_path: Path) -> str:
+    """获取视频大小
+
+    Args:
+        video_path (Path): 视频路径
+    """
+    return f"大小: {file_path.stat().st_size / 1024 / 1024:.2f} MB"

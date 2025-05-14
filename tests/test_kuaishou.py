@@ -12,6 +12,7 @@ async def test_kuaishou_video():
     - https://v.kuaishou.com/1ff8QP
     - https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
     """
+    from nonebot_plugin_resolver2.download import download_video, fmt_size
     from nonebot_plugin_resolver2.parsers import KuaishouParser
 
     kuaishou_parser = KuaishouParser()
@@ -19,7 +20,7 @@ async def test_kuaishou_video():
     test_urls = [
         "https://www.kuaishou.com/short-video/3xhjgcmir24m4nm",
         # "https://v.kuaishou.com/1ff8QP" （该短链接失效）
-        "https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc"
+        "https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc",
     ]
 
     async def test_parse_url(url: str) -> None:
@@ -34,6 +35,10 @@ async def test_kuaishou_video():
 
         logger.debug(f"{url} | video_url: {video_info.video_url}")
         assert video_info.video_url, "视频URL为空"
+
+        # 下载视频
+        video_path = await download_video(video_info.video_url)
+        logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size}")
 
         if video_info.author:
             logger.debug(f"{url} | author: {video_info.author}")
