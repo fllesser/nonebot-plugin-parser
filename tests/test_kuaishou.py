@@ -38,7 +38,7 @@ async def test_kuaishou_video():
 
         # 下载视频
         video_path = await download_video(video_info.video_url)
-        logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size}")
+        logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
 
         if video_info.author:
             logger.debug(f"{url} | author: {video_info.author}")
