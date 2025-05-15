@@ -47,13 +47,17 @@ class KuaishouParser:
                 raise ParseException(f"解析API返回错误: {result.get('msg', '未知错误')}")
 
             data = result["data"]
+            video_url = data.get("url")
+            if not video_url:
+                raise ParseException("未获取到视频直链")
+
             return ParseResult(
                 # 字段名称与回退值
                 title=data.get("title", "未知标题"),
                 cover_url=data.get("imageUrl", ""),
-                video_url=data.get("url", ""),
+                video_url=video_url,
                 # API可能不提供作者信息
-                author=data.get("name", ""),
+                author=data.get("name", "无名"),
             )
 
     async def _extract_video_id(self, url: str) -> str:
