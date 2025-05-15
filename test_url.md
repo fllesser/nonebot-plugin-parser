@@ -4,6 +4,11 @@ youtube:
 kugou:
 - https://www.kugou.com/mixsong/j3pry11.html
 
+kuaishou:
+- https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
+- https://v.kuaishou.com/2yAnzeZ
+- https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
+
 bilibili:
 - https://www.bilibili.com/opus/998440765151510535
 - https://www.bilibili.com/opus/1040093151889457152

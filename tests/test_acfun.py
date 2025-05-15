@@ -6,6 +6,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_parse_acfun_url():
+    from nonebot_plugin_resolver2.download import fmt_size
     from nonebot_plugin_resolver2.parsers import AcfunParser
 
     urls = ["https://www.acfun.cn/v/ac46593564", "https://www.acfun.cn/v/ac40867941"]
@@ -22,6 +23,6 @@ async def test_parse_acfun_url():
         logger.info(f"{url} | 开始下载视频")
         video_file = await acfun_parser.download_video(m3u8s_url, acid)
         assert video_file
-        logger.info(f"{url} | 视频下载成功, 文件大小: {video_file.stat().st_size / 1024 / 1024:.2f} MB")
+        logger.info(f"{url} | 视频下载成功, 视频{fmt_size(video_file)}")
 
     await asyncio.gather(*[parse_acfun_url(url) for url in urls])
