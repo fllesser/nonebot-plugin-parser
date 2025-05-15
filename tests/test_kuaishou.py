@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_kuaishou_video():
+async def test_parse_by_api():
     """
     测试快手视频解析
     - https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
@@ -25,7 +25,7 @@ async def test_kuaishou_video():
 
     async def test_parse_url(url: str) -> None:
         logger.info(f"{url} | 开始解析快手视频")
-        video_info = await kuaishou_parser.parse_url(url)
+        video_info = await kuaishou_parser.parse_url_by_api(url)
 
         logger.debug(f"{url} | title: {video_info.title}")
         assert video_info.title, "视频标题为空"

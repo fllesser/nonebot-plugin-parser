@@ -26,6 +26,17 @@ class KuaishouParser:
         Returns:
             ParseResult: 快手视频信息
         """
+        raise NotImplementedError
+
+    async def parse_url_by_api(self, url: str) -> ParseResult:
+        """解析快手链接获取视频信息
+
+        Args:
+            url: 快手视频链接
+
+        Returns:
+            ParseResult: 快手视频信息
+        """
         video_id = await self._extract_video_id(url)
         if not video_id:
             raise ParseException("无法从链接中提取视频ID")

@@ -10,11 +10,8 @@ from .filter import is_not_in_disabled_groups
 from .helper import get_img_seg, get_video_seg
 from .preprocess import ExtractText, Keyword, r_keywords
 
-# 初始化快手解析器
 parser = KuaishouParser()
 
-
-# 定义匹配规则
 kuaishou = on_message(
     rule=is_not_in_disabled_groups & r_keywords("v.kuaishou.com", "kuaishou", "chenzhongtech"),
     priority=5,
@@ -36,8 +33,6 @@ PATTERNS = {
 @handle_exception(kuaishou)
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
     """处理快手视频链接"""
-    prefix = f"{NICKNAME}解析 | 快手 - "
-
     matched = PATTERNS[keyword].search(text)
     if not matched:
         logger.info(f"无有效的快手链接: {text}")
@@ -45,9 +40,9 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
     url = matched.group(0)
 
-    video_info = await parser.parse_url(url)
+    video_info = await parser.parse_url_by_api(url)
 
-    msg = f"{prefix}{video_info.title}-{video_info.author}"
+    msg = f"{NICKNAME}解析 | 快手 - {video_info.title}-{video_info.author}"
     if video_info.cover_url:
         # 下载封面
         cover_path = await download_img(video_info.cover_url)
