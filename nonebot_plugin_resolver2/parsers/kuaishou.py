@@ -81,4 +81,3 @@ class KuaishouParser:
             return matched.group(1)
 
         raise ParseException("无法从链接中提取视频ID")
-
