@@ -6,6 +6,7 @@ import aiohttp
 from ..constant import COMMON_HEADER
 from ..exception import ParseException
 from .data import ParseResult
+from .utils import get_redirect_url
 
 
 class KuaishouParser:
@@ -71,32 +72,13 @@ class KuaishouParser:
         """
         # 处理可能的短链接
         if "v.kuaishou.com" in url:
-            url = await self._resolve_short_url(url)
+            url = await get_redirect_url(url)
 
         # 提取视频ID - 使用walrus operator和索引替代group()
-        if "/fw/photo/" in url and (match := re.search(r"/fw/photo/([^/?]+)", url)):
-            return match[1]
-        elif "short-video" in url and (match := re.search(r"short-video/([^/?]+)", url)):
-            return match[1]
+        if "/fw/photo/" in url and (matched := re.search(r"/fw/photo/([^/?]+)", url)):
+            return matched.group(1)
+        elif "short-video" in url and (matched := re.search(r"short-video/([^/?]+)", url)):
+            return matched.group(1)
 
         raise ParseException("无法从链接中提取视频ID")
 
-    async def _resolve_short_url(self, url: str) -> str:
-        """解析短链接
-
-        Args:
-            url: 快手短链接
-
-        Returns:
-            str: 真实链接
-        """
-        async with aiohttp.ClientSession() as session:
-            async with session.head(url, headers=self.headers, allow_redirects=True) as resp:
-                # 验证响应状态码，确保请求成功
-                if not 200 <= resp.status < 300:
-                    raise ParseException(f"解析短链接失败，状态码: {resp.status}")
-
-            if not resp.real_url:
-                raise ParseException("解析短链接失败，未获取到真实URL")
-
-            return str(resp.real_url)

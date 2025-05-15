@@ -6,7 +6,7 @@ kugou:
 
 kuaishou:
 - https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
-- https://v.kuaishou.com/1ff8QP （该短链接失效）
+- https://v.kuaishou.com/2yAnzeZ
 - https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
 
 bilibili:

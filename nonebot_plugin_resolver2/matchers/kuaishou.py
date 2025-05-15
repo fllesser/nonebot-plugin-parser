@@ -23,7 +23,7 @@ kuaishou = on_message(
 
 # 匹配的正则表达式
 PATTERNS = {
-    # - https://v.kuaishou.com/1ff8QP （该短链接失效）
+    # - https://v.kuaishou.com/2yAnzeZ
     "v.kuaishou.com": re.compile(r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
     # - https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
     "kuaishou": re.compile(r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
@@ -45,9 +45,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
     url = matched.group(0)
 
-    logger.debug(f"开始解析快手链接: {url}")
     video_info = await parser.parse_url(url)
-    logger.debug(f"快手视频标题: {video_info.title}")
 
     msg = f"{prefix}{video_info.title}-{video_info.author}"
     if video_info.cover_url:
