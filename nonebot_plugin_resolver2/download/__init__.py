@@ -182,6 +182,7 @@ async def download_imgs_without_raise(
     Args:
         urls (list[str]): urls
         ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
+        proxy (str | None, optional): proxy url. Defaults to None.
 
     Returns:
         list[Path]: image file paths
