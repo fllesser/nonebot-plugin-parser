@@ -6,7 +6,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_x():
-    from nonebot_plugin_resolver2.download import download_img, download_video
+    from nonebot_plugin_resolver2.download import download_imgs_without_raise, download_video
     from nonebot_plugin_resolver2.matchers.twitter import parse_x_url
 
     urls = [
@@ -25,8 +25,7 @@ async def test_x():
             logger.success(f"{url} | 视频解析并下载成功")
         if pic_urls:
             logger.info(f"{url} | 解析为图片: {pic_urls}")
-            tasks = [download_img(url=pic_url) for pic_url in pic_urls]
-            img_paths = await asyncio.gather(*tasks)
+            img_paths = await download_imgs_without_raise(pic_urls)
             assert len(img_paths) == len(pic_urls)
             for img_path in img_paths:
                 assert img_path.exists()

@@ -1,4 +1,3 @@
-import asyncio
 import re
 from typing import Any
 
@@ -9,7 +8,7 @@ from nonebot.rule import Rule
 
 from ..config import NICKNAME, PROXY
 from ..constant import COMMON_HEADER
-from ..download import download_img, download_video
+from ..download import download_imgs_without_raise, download_video
 from ..exception import ParseException, handle_exception
 from .filter import is_not_in_disabled_groups
 from .helper import get_img_seg, get_video_seg, send_segments
@@ -33,12 +32,11 @@ async def _(event: MessageEvent):
     video_url, pic_urls = await parse_x_url(x_url)
 
     if video_url:
-        video_path = await download_video(url=video_url, proxy=PROXY)
+        video_path = await download_video(video_url, proxy=PROXY)
         await twitter.send(get_video_seg(video_path))
 
     if pic_urls:
-        tasks = [download_img(url=pic_url, proxy=PROXY) for pic_url in pic_urls]
-        img_paths = await asyncio.gather(*tasks)
+        img_paths = await download_imgs_without_raise(pic_urls, proxy=PROXY)
         await send_segments([get_img_seg(img_path) for img_path in img_paths])
 
 
