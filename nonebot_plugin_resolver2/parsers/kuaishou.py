@@ -1,9 +1,10 @@
+import json
 import re
 import urllib.parse
 
 import aiohttp
 
-from ..constant import COMMON_HEADER
+from ..constant import COMMON_HEADER, IOS_HEADER
 from ..exception import ParseException
 from .data import ParseResult
 from .utils import get_redirect_url
@@ -14,6 +15,10 @@ class KuaishouParser:
 
     def __init__(self):
         self.headers = COMMON_HEADER
+        self.v_headers = {
+            **IOS_HEADER,
+            "Referer": "https://v.kuaishou.com/",
+        }
         # 通用第三方解析API
         self.api_url = "http://47.99.158.118/video-crack/v2/parse?content={}"
 
@@ -26,7 +31,65 @@ class KuaishouParser:
         Returns:
             ParseResult: 快手视频信息
         """
-        raise NotImplementedError
+        location_url = await get_redirect_url(url, headers=self.v_headers)
+
+        if len(location_url) <= 0:
+            raise ParseException("failed to get location url from url")
+
+        # /fw/long-video/ 返回结果不一样, 统一替换为 /fw/photo/ 请求
+        location_url = location_url.replace("/fw/long-video/", "/fw/photo/")
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(location_url, headers=self.v_headers) as resp:
+                resp.raise_for_status()
+                response_text = await resp.text()
+
+                pattern = r"window.INIT_STATE\s*=\s*(.*?)</script>"
+                searched = re.search(pattern, response_text)
+
+        if not searched or len(searched.groups()) < 1:
+            raise ParseException("failed to parse video JSON info from HTML")
+
+        json_text = searched.group(1).strip()
+        json_data = json.loads(json_text)
+
+        photo_data = {}
+        for json_item in json_data.values():
+            if "result" in json_item and "photo" in json_item:
+                photo_data = json_item
+                break
+
+        if not photo_data:
+            raise ParseException("failed to parse photo info from INIT_STATE")
+
+        # 判断result状态
+        if (result_code := photo_data["result"]) != 1:
+            raise ParseException(f"获取作品信息失败: {result_code}")
+
+        data = photo_data["photo"]
+
+        # 获取视频地址
+        video_url = ""
+        if "mainMvUrls" in data and len(data["mainMvUrls"]) > 0:
+            video_url = data["mainMvUrls"][0]["url"]
+
+        # 获取图集
+        ext_params_atlas = data.get("ext_params", {}).get("atlas", {})
+        atlas_cdn_list = ext_params_atlas.get("cdn", [])
+        atlas_list = ext_params_atlas.get("list", [])
+        images = []
+        if len(atlas_cdn_list) > 0 and len(atlas_list) > 0:
+            for atlas in atlas_list:
+                images.append(f"https://{atlas_cdn_list[0]}/{atlas}")
+
+        video_info = ParseResult(
+            video_url=video_url,
+            cover_url=data["coverUrls"][0]["url"],
+            title=data["caption"],
+            author=data["userName"],
+            pic_urls=images,
+        )
+        return video_info
 
     async def parse_url_by_api(self, url: str) -> ParseResult:
         """解析快手链接获取视频信息
