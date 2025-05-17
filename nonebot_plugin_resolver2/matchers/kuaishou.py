@@ -1,13 +1,14 @@
 import re
 
 from nonebot import logger, on_message
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
-from ..download import download_img, download_video
+from ..download import download_img, download_imgs_without_raise, download_video
 from ..exception import handle_exception
 from ..parsers import KuaishouParser
 from .filter import is_not_in_disabled_groups
-from .helper import get_img_seg, get_video_seg
+from .helper import get_img_seg, get_video_seg, send_segments
 from .preprocess import ExtractText, Keyword, r_keywords
 
 parser = KuaishouParser()
@@ -40,13 +41,19 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
     url = matched.group(0)
 
-    video_info = await parser.parse_url_by_api(url)
+    video_info = await parser.parse_url(url)
 
     msg = f"{NICKNAME}解析 | 快手 - {video_info.title}-{video_info.author}"
     if video_info.cover_url:
         # 下载封面
         cover_path = await download_img(video_info.cover_url)
         msg += get_img_seg(cover_path)
+
     await kuaishou.send(msg)
-    video_path = await download_video(video_info.video_url)
-    await kuaishou.send(get_video_seg(video_path))
+    if video_info.video_url:
+        video_path = await download_video(video_info.video_url)
+        await kuaishou.send(get_video_seg(video_path))
+    if video_info.pic_urls:
+        img_paths = await download_imgs_without_raise(video_info.pic_urls)
+        segs: list[str | Message | MessageSegment] = [get_img_seg(img_path) for img_path in img_paths]
+        await send_segments(segs)
