@@ -44,14 +44,17 @@ class KuaishouParser:
                 resp.raise_for_status()
                 response_text = await resp.text()
 
-                pattern = r"window.INIT_STATE\s*=\s*(.*?)</script>"
+                pattern = r"window\.INIT_STATE\s*=\s*(.*?)</script>"
                 searched = re.search(pattern, response_text)
 
         if not searched or len(searched.groups()) < 1:
             raise ParseException("failed to parse video JSON info from HTML")
 
         json_text = searched.group(1).strip()
-        json_data = json.loads(json_text)
+        try:
+            json_data = json.loads(json_text)
+        except json.JSONDecodeError as e:
+            raise ParseException("failed to parse INIT_STATE payload") from e
 
         photo_data = {}
         for json_item in json_data.values():
