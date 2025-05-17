@@ -17,7 +17,7 @@ twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 
 
 @twitter.handle()
-@handle_exception(twitter)
+@handle_exception()
 async def _(event: MessageEvent):
     msg: str = event.message.extract_plain_text().strip()
     pattern = r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]+)"

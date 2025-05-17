@@ -16,7 +16,7 @@ parser = KuGouParser()
 
 
 @kugou.handle()
-@handle_exception(kugou)
+@handle_exception()
 async def _(text: str = ExtractText()):
     pub_prefix = f"{NICKNAME}解析 | 酷狗音乐 - "
     # https://t1.kugou.com/song.html?id=1hfw6baEmV3

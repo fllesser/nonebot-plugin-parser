@@ -43,7 +43,7 @@ parser = BilibiliParser()
 
 
 @bilibili.handle()
-@handle_exception(bilibili)
+@handle_exception()
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
     pub_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
     matched = PATTERNS[keyword].search(text)

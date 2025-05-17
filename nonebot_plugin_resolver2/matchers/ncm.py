@@ -15,7 +15,7 @@ parser = NCMParser()
 
 
 @ncm.handle()
-@handle_exception(ncm)
+@handle_exception()
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
     result = await parser.parse_ncm(text)
     detail = f"{NICKNAME}解析 | 网易云 - {result.title}-{result.author}"

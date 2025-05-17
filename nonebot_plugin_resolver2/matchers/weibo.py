@@ -15,7 +15,7 @@ weibo = on_keyword(keywords={"weibo.com", "m.weibo.cn"}, rule=Rule(is_not_in_dis
 
 
 @weibo.handle()
-@handle_exception(weibo)
+@handle_exception()
 async def _(event: MessageEvent):
     message = event.message.extract_plain_text().strip()
     video_info = await weibo_parser.parse_share_url(message)

@@ -19,7 +19,7 @@ douyin_parser = DouyinParser()
 
 
 @douyin.handle()
-@handle_exception(douyin)
+@handle_exception()
 async def _(event: MessageEvent):
     # 消息
     msg: str = event.message.extract_plain_text().strip()
