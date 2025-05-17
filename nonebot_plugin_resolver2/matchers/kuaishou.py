@@ -30,7 +30,7 @@ PATTERNS = {
 
 
 @kuaishou.handle()
-@handle_exception(kuaishou)
+@handle_exception()
 async def _(text: str = ExtractText(), keyword: str = Keyword()):
     """处理快手视频链接"""
     matched = PATTERNS[keyword].search(text)

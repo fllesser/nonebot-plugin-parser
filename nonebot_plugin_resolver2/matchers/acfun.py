@@ -16,7 +16,7 @@ parser = AcfunParser()
 
 
 @acfun.handle()
-@handle_exception(acfun)
+@handle_exception()
 async def _(event: MessageEvent) -> None:
     message: str = event.message.extract_plain_text().strip()
     matched = re.search(r"(?:ac=|/ac)(\d+)", message)

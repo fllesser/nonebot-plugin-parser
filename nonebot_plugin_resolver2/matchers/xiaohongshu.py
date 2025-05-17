@@ -17,7 +17,7 @@ xhs_parser = XiaoHongShuParser()
 
 
 @xiaohongshu.handle()
-@handle_exception(xiaohongshu)
+@handle_exception()
 async def _(text: str = ExtractText()):
     pattern = r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*"
     matched = re.search(pattern, text)

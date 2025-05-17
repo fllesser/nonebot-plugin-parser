@@ -15,7 +15,7 @@ tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disabled_groups
 
 
 @tiktok.handle()
-@handle_exception(tiktok)
+@handle_exception()
 async def _(event: MessageEvent):
     # 消息
     message: str = event.message.extract_plain_text().strip()

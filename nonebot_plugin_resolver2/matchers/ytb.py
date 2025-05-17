@@ -19,7 +19,7 @@ ytb = on_keyword(keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disab
 
 
 @ytb.handle()
-@handle_exception(ytb)
+@handle_exception()
 async def _(event: MessageEvent, state: T_State):
     message = event.message.extract_plain_text().strip()
     pattern = (
