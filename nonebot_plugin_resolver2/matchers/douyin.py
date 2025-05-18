@@ -24,7 +24,7 @@ async def _(event: MessageEvent):
     # 消息
     msg: str = event.message.extract_plain_text().strip()
     # 正则匹配
-    reg = r"https://(v\.douyin\.com/[a-zA-Z0-9_\-]+|www\.douyin\.com/(video|note)/[0-9]+)"
+    reg = r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+|https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+"
     matched = re.search(reg, msg)
     if not matched:
         logger.warning("douyin url is incomplete, ignored")
