@@ -2,9 +2,8 @@ import asyncio
 from pathlib import Path
 import re
 
-from nonebot import logger, on_keyword
-from nonebot.adapters.onebot.v11 import Message, MessageEvent, MessageSegment
-from nonebot.rule import Rule
+from nonebot import logger, on_message
+from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
 from ..download import download_imgs_without_raise, download_video
@@ -12,43 +11,47 @@ from ..exception import handle_exception
 from ..parsers import DouyinParser
 from .filter import is_not_in_disabled_groups
 from .helper import get_img_seg, get_video_seg, send_segments
+from .preprocess import ExtractText, Keyword, r_keywords
 
-douyin = on_keyword(keywords={"douyin.com"}, rule=Rule(is_not_in_disabled_groups))
+# douyin = on_keyword(keywords={"douyin.com"}, rule=Rule(is_not_in_disabled_groups))
+douyin = on_message(rule=is_not_in_disabled_groups & r_keywords("v.douyin", "douyin"))
+parser = DouyinParser()
 
-douyin_parser = DouyinParser()
+PATTERNS: dict[str, re.Pattern] = {
+    "v.douyin": re.compile(r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
+    "douyin": re.compile(r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+"),
+}
 
 
 @douyin.handle()
 @handle_exception()
-async def _(event: MessageEvent):
-    # 消息
-    msg: str = event.message.extract_plain_text().strip()
+async def _(text: str = ExtractText(), keyword: str = Keyword()):
     # 正则匹配
-    reg = r"https://(v\.douyin\.com/[a-zA-Z0-9_\-]+|www\.douyin\.com/(video|note)/[0-9]+)"
-    matched = re.search(reg, msg)
+    matched = PATTERNS[keyword].search(text)
     if not matched:
-        logger.warning("douyin url is incomplete, ignored")
+        logger.warning(f"{text} 中的链接无效, 忽略")
         return
     share_url = matched.group(0)
-    video_info = await douyin_parser.parse_share_url(share_url)
-    await douyin.send(f"{NICKNAME}解析 | 抖音 - {video_info.title}")
+    parse_result = await parser.parse_share_url(share_url)
+    await douyin.send(f"{NICKNAME}解析 | 抖音 - {parse_result.title}")
 
     segs: list[MessageSegment | Message | str] = []
     # 存在普通图片
-    if video_info.pic_urls:
-        paths: list[Path] = await download_imgs_without_raise(video_info.pic_urls)
+    if parse_result.pic_urls:
+        paths = await download_imgs_without_raise(parse_result.pic_urls)
         segs.extend(get_img_seg(path) for path in paths)
     # 存在动态图片
-    if video_info.dynamic_urls:
+    if parse_result.dynamic_urls:
         # 并发下载动态图片
-        video_download_tasks = [asyncio.create_task(download_video(url)) for url in video_info.dynamic_urls]
-        video_download_results = await asyncio.gather(*video_download_tasks, return_exceptions=True)
-        video_seg_lst = [get_video_seg(seg) for seg in video_download_results if isinstance(seg, Path)]
-        segs.extend(video_seg_lst)
+        video_paths = await asyncio.gather(
+            *[download_video(url) for url in parse_result.dynamic_urls], return_exceptions=True
+        )
+        video_segs = [get_video_seg(p) for p in video_paths if isinstance(p, Path)]
+        segs.extend(video_segs)
     if segs:
         await send_segments(segs)
         await douyin.finish()
     # 存在视频
-    if video_url := video_info.video_url:
+    if video_url := parse_result.video_url:
         video_path = await download_video(video_url)
         await douyin.finish(get_video_seg(video_path))
