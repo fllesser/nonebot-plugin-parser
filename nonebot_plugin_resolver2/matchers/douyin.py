@@ -4,7 +4,6 @@ import re
 
 from nonebot import logger, on_message
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
-from nonebot.rule import Rule
 
 from ..config import NICKNAME
 from ..download import download_imgs_without_raise, download_video
@@ -15,7 +14,7 @@ from .helper import get_img_seg, get_video_seg, send_segments
 from .preprocess import ExtractText, Keyword, r_keywords
 
 # douyin = on_keyword(keywords={"douyin.com"}, rule=Rule(is_not_in_disabled_groups))
-douyin = on_message(rule=Rule(is_not_in_disabled_groups & r_keywords("v.douyin", "douyin")))
+douyin = on_message(rule=is_not_in_disabled_groups & r_keywords("v.douyin", "douyin"))
 parser = DouyinParser()
 
 PATTERNS: dict[str, re.Pattern] = {
