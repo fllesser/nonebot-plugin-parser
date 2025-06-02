@@ -193,7 +193,9 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             )
             await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
         else:
-            video_path = await download_video(video_info.video_url, video_name=file_name, ext_headers=parser.headers)
+            video_path = await download_video(
+                video_info.video_url, video_name=f"{file_name}.mp4", ext_headers=parser.headers
+            )
 
     # 发送视频
     try:
