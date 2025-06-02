@@ -286,12 +286,13 @@ class BilibiliParser:
         detecter = VideoDownloadURLDataDetecter(download_url_data)
         streams = detecter.detect_best_streams(video_max_quality=VideoQuality._1080P, no_dolby_video=True, no_hdr=True)
         video_stream = streams[0]
-        assert isinstance(video_stream, VideoStreamDownloadURL)
+        if not isinstance(video_stream, VideoStreamDownloadURL):
+            raise ParseException("未找到可下载的视频流")
+        logger.debug(f"视频流质量: {video_stream.video_quality.name}")
         audio_stream = streams[1]
-        assert isinstance(audio_stream, AudioStreamDownloadURL)
-        if video_stream is None or audio_stream is None:
-            raise ParseException("未找到可下载的视频流或音频流")
-        logger.debug(f"视频流质量 {video_stream.video_quality.name}, 音频流质量 {audio_stream.audio_quality.name}")
+        if not isinstance(audio_stream, AudioStreamDownloadURL):
+            return video_stream.url, ""
+        logger.debug(f"音频流质量: {audio_stream.audio_quality.name}")
         return video_stream.url, audio_stream.url
 
     def _extra_bili_info(self, video_info: dict[str, Any]) -> str:
