@@ -12,11 +12,12 @@ from ..download import (
     download_file_by_stream,
     download_img,
     download_imgs_without_raise,
+    download_video,
     encode_video_to_h264,
     merge_av,
 )
 from ..download.utils import keep_zh_en_num
-from ..exception import handle_exception
+from ..exception import ParseException, handle_exception
 from ..parsers import BilibiliParser, get_redirect_url
 from .filter import is_not_in_disabled_groups
 from .helper import get_file_seg, get_img_seg, get_record_seg, get_video_seg, send_segments
@@ -176,20 +177,24 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         logger.info(f"video duration > {DURATION_MAXIMUM}, ignore download")
         return
     # 下载视频和音频
-    file_name_prefix = f"{video_id}-{page_num}"
-    video_path = plugin_cache_dir / f"{file_name_prefix}.mp4"
+    file_name = f"{video_id}-{page_num}"
+    video_path = plugin_cache_dir / f"{file_name}.mp4"
 
     if not video_path.exists():
         # 下载视频和音频
-        v_path, a_path = await asyncio.gather(
-            download_file_by_stream(
-                video_info.video_url, file_name=f"{file_name_prefix}-video.m4s", ext_headers=parser.headers
-            ),
-            download_file_by_stream(
-                video_info.audio_url, file_name=f"{file_name_prefix}-audio.m4s", ext_headers=parser.headers
-            ),
-        )
-        await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
+        if video_info.audio_url:
+            v_path, a_path = await asyncio.gather(
+                download_file_by_stream(
+                    video_info.video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers
+                ),
+                download_file_by_stream(
+                    video_info.audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers
+                ),
+            )
+            await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
+        else:
+            video_path = await download_video(video_info.video_url, video_name=file_name, ext_headers=parser.headers)
+
     # 发送视频
     try:
         await bilibili.send(get_video_seg(video_path))
@@ -218,6 +223,8 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     # 处理分 p
     p_num = int(p_num) if p_num else 1
     video_info = await parser.parse_video_info(bvid=bvid, page_num=p_num)
+    if not video_info.audio_url:
+        raise ParseException("没有可供下载的音频流")
     # 音频文件名
     video_title = keep_zh_en_num(video_info.title)
     audio_name = f"{video_title}.mp3"

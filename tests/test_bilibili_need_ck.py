@@ -68,3 +68,12 @@ async def test_encode_h264_video():
     video_h264_path = await encode_video_to_h264(video_path)
     assert not video_path.exists()
     assert video_h264_path.exists()
+
+
+async def test_no_audio_video():
+    from nonebot_plugin_resolver2.parsers import BilibiliParser
+
+    bilibili_parser = BilibiliParser()
+
+    video_url, _ = await bilibili_parser.parse_video_download_url(bvid="BV1gRjMziELt")
+    logger.debug(f"video_url: {video_url}")
