@@ -212,6 +212,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
 
 @bili_music.handle()
+@handle_exception()
 async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     text = args.extract_plain_text().strip()
     matched = re.match(r"^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?$", text)
