@@ -23,7 +23,6 @@ async def test_ncm():
         assert result.audio_url
         audio_path = await download_audio(result.audio_url)
         assert audio_path
-        logger.debug(audio_path)
         logger.success(f"{url} | 网易云音乐解析成功")
 
     await asyncio.gather(*[test_parse_ncm(url) for url in urls])
