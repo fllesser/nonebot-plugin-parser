@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-resolver2"
-version = "1.9.1"
+version = "1.9.2"
 description = "NoneBot2 链接分享解析器自动解析, BV号/链接/小程序/卡片 | B站/抖音/网易云/微博/小红书/youtube/tiktok/twitter/acfun"
 authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
 urls = { Repository = "https://github.com/fllesser/nonebot-plugin-resolver2" }
@@ -20,17 +20,17 @@ dependencies = [
   "curl_cffi>=0.8.0,<1.0.0",
   "tqdm>=4.67.1,<5.0.0",
   "aiofiles>=24.1.0",
-  "yt-dlp>=2025.4.30",
+  "yt-dlp>=2025.5.22",
   "nonebot2>=2.4.2,<3.0.0",
   "nonebot-adapter-onebot>=2.4.6,<3.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
-  "bilibili-api-python>=17.1.4,<18.0.0",
+  "bilibili-api-python>=17.2.1,<18.0.0",
 ]
 
 
 [dependency-groups]
-dev = ["nonebot2[fastapi]>=2.4.2,<3.0.0", "ruff>=0.11.8,<1.0.0"]
+dev = ["nonebot2[fastapi]>=2.4.2,<3.0.0", "ruff>=0.11.12,<1.0.0"]
 
 test = [
   "nonebot2[fastapi]>=2.4.2,<3.0.0",
