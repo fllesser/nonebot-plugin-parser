@@ -71,7 +71,7 @@ async def test_parse():
         if video_info.video_url:
             logger.debug(f"{url} | video_url: {video_info.video_url}")
             # 下载视频
-            video_path = await download_video(video_info.video_url)
+            video_path = await download_video(video_info.video_url, ext_headers=parser.v_headers)
             logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
 
         if video_info.pic_urls:
