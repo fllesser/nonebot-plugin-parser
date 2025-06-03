@@ -21,8 +21,7 @@ jobs:
         python-version: "3.12"
       
     - name: Build a binary wheel and a source tarball
-      run: >-
-        uv build 
+      run: uv build 
 
     - name: Publish distribution to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
