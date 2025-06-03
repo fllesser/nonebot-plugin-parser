@@ -12,17 +12,17 @@ class WeiBoParser:
     async def parse_share_url(self, share_url: str) -> ParseResult:
         """解析微博分享链接"""
         # https://video.weibo.com/show?fid=1034:5145615399845897
-        if match := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
-            return await self.parse_fid(match.group(1))
+        if matched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
+            return await self.parse_fid(matched.group(1))
         # https://m.weibo.cn/detail/4976424138313924
-        elif match := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", share_url):
-            weibo_id = match.group(1)
+        elif matched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", share_url):
+            weibo_id = matched.group(1)
         # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934
-        elif match := re.search(r"mid=([A-Za-z\d]+)", share_url):
-            weibo_id = self._mid2id(match.group(1))
+        elif matched := re.search(r"mid=([A-Za-z\d]+)", share_url):
+            weibo_id = self._mid2id(matched.group(1))
         # https://weibo.com/1707895270/5006106478773472
-        elif match := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", share_url):
-            weibo_id = match.group(1)
+        elif matched := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", share_url):
+            weibo_id = matched.group(1)
         # 无法获取到id则返回失败信息
         else:
             raise ParseException("无法获取到微博的 id")

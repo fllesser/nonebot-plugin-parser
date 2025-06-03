@@ -1,7 +1,6 @@
 import asyncio
 
 from nonebot import logger
-from nonebot.exception import FinishedException
 import pytest
 
 
@@ -12,19 +11,12 @@ async def test_ncm():
 
     parser = NCMParser()
 
-    urls = [
-        "https://st.music.163.com/listen-together/multishare/index.html?roomId=5766146a1616391e83da2c195811fb07_1744109168288&inviterUid=1868906482",
-        "https://music.163.com/song?id=1948109333",
-    ]
+    urls = ["https://music.163.com/song?id=1948109333"]
 
     async def test_parse_ncm(url: str) -> None:
         logger.info(f"{url} | 开始解析网易云音乐")
-        try:
-            result = await parser.parse_ncm(url)
-            logger.debug(f"{url} | result: {result}")
-        except FinishedException:
-            logger.warning(f"{url} | 解析失败")
-            return
+        result = await parser.parse_ncm(url)
+        logger.debug(f"{url} | result: {result}")
 
         # 下载音频
         assert result.audio_url

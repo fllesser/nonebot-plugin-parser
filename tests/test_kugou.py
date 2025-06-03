@@ -1,7 +1,6 @@
 import asyncio
 
 from nonebot import logger
-from nonebot.exception import FinishedException
 import pytest
 
 
@@ -16,12 +15,9 @@ async def test_ncm():
 
     async def test_parse_ncm(url: str) -> None:
         logger.info(f"{url} | 开始解析酷狗音乐")
-        try:
-            result = await parser.parse_share_url(url)
-            logger.debug(f"{url} | result: {result}")
-        except FinishedException:
-            logger.warning(f"{url} | 解析失败")
-            return
+
+        result = await parser.parse_share_url(url)
+        logger.debug(f"{url} | result: {result}")
 
         # 下载音频
         assert result.audio_url
