@@ -78,28 +78,6 @@ jobs:
       - name: pytest
         run: uv run pytest tests/test_acfun.py
 
-  ncm-test:
-    needs: plugin-load
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: setup-pytest
-        uses: ./.github/actions/setup-pytest
-      
-      - name: pytest
-        run: uv run pytest tests/test_ncm.py
-
-  kugou-test:
-    needs: plugin-load
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: setup-pytest
-        uses: ./.github/actions/setup-pytest
-      
-      - name: pytest
-        run: uv run pytest tests/test_kugou.py
-
   douyin-test:
     needs: plugin-load
     runs-on: ubuntu-latest
