@@ -70,6 +70,7 @@ async def test_encode_h264_video():
     assert video_h264_path.exists()
 
 
+@pytest.mark.asyncio
 async def test_no_audio_video():
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 

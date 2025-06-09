@@ -4,8 +4,6 @@ from .acfun import acfun
 from .bilibili import bilibili
 from .douyin import douyin
 from .kuaishou import kuaishou
-from .kugou import kugou
-from .ncm import ncm
 from .tiktok import tiktok
 from .twitter import twitter
 from .weibo import weibo
@@ -18,8 +16,6 @@ resolvers: dict[str, type[Matcher]] = {
     "douyin": douyin,
     "kuaishou": kuaishou,
     "ytb": ytb,
-    "kugou": kugou,
-    "ncm": ncm,
     "twitter": twitter,
     "tiktok": tiktok,
     "weibo": weibo,

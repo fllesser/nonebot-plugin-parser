@@ -71,13 +71,13 @@ async def test_parse():
         if video_info.video_url:
             logger.debug(f"{url} | video_url: {video_info.video_url}")
             # 下载视频
-            video_path = await download_video(video_info.video_url)
+            video_path = await download_video(video_info.video_url, ext_headers=parser.v_headers)
             logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
 
         if video_info.pic_urls:
             logger.debug(f"{url} | pic_urls: {video_info.pic_urls}")
             # 下载图片
-            img_paths = await download_imgs_without_raise(video_info.pic_urls)
+            img_paths = await download_imgs_without_raise(video_info.pic_urls, ext_headers=parser.v_headers)
             logger.debug(f"{url} | 图片下载完成: {img_paths}")
             assert len(img_paths) == len(video_info.pic_urls), "图片下载数量不一致"
 
