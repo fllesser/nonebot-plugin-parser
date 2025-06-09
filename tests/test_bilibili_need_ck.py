@@ -77,4 +77,5 @@ async def test_no_audio_video():
     bilibili_parser = BilibiliParser()
 
     video_url, _ = await bilibili_parser.parse_video_download_url(bvid="BV1gRjMziELt")
+
     logger.debug(f"video_url: {video_url}")

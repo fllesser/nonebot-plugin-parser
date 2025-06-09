@@ -3,7 +3,7 @@ import re
 from typing import Any
 
 from bilibili_api import HEADERS, Credential
-from bilibili_api.video import Video
+from bilibili_api.video import Video, VideoCodecs
 from nonebot import logger
 
 from ..exception import ParseException
@@ -284,11 +284,14 @@ class BilibiliParser:
         # 获取下载数据
         download_url_data = await video.get_download_url(page_index=page_index)
         detecter = VideoDownloadURLDataDetecter(download_url_data)
-        streams = detecter.detect_best_streams(video_max_quality=VideoQuality._1080P, no_dolby_video=True, no_hdr=True)
+        streams = detecter.detect_best_streams(
+            video_max_quality=VideoQuality._1080P, codecs=[VideoCodecs.AVC], no_dolby_video=True, no_hdr=True
+        )
         video_stream = streams[0]
         if not isinstance(video_stream, VideoStreamDownloadURL):
             raise ParseException("未找到可下载的视频流")
         logger.debug(f"视频流质量: {video_stream.video_quality.name}")
+        logger.debug(f"视频流编码: {video_stream.video_codecs}")
         audio_stream = streams[1]
         if not isinstance(audio_stream, AudioStreamDownloadURL):
             return video_stream.url, ""
