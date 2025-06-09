@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
+from bilibili_api.video import VideoCodecs
 from nonebot import get_driver, get_plugin_config, require
 from pydantic import BaseModel
 
@@ -27,6 +28,8 @@ class Config(BaseModel):
     r_xhs_ck: str | None = None
     # bilibili cookies
     r_bili_ck: str | None = None
+    # B站视频编码
+    r_bili_video_codes: VideoCodecs = VideoCodecs.AVC
     # youtube cookies
     r_ytb_ck: str | None = None
     # 代理

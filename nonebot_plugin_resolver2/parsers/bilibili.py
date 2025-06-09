@@ -6,6 +6,7 @@ from bilibili_api import HEADERS, Credential
 from bilibili_api.video import Video
 from nonebot import logger
 
+from ..config import rconfig
 from ..exception import ParseException
 
 
@@ -284,11 +285,13 @@ class BilibiliParser:
         # 获取下载数据
         download_url_data = await video.get_download_url(page_index=page_index)
         detecter = VideoDownloadURLDataDetecter(download_url_data)
-        streams = detecter.detect_best_streams(video_max_quality=VideoQuality._1080P, no_dolby_video=True, no_hdr=True)
+        streams = detecter.detect_best_streams(
+            video_max_quality=VideoQuality._1080P, codecs=[rconfig.r_bili_video_codes], no_dolby_video=True, no_hdr=True
+        )
         video_stream = streams[0]
         if not isinstance(video_stream, VideoStreamDownloadURL):
             raise ParseException("未找到可下载的视频流")
-        logger.debug(f"视频流质量: {video_stream.video_quality.name}")
+        logger.debug(f"视频流质量: {video_stream.video_quality.name}, 编码: {video_stream.video_codecs}")
         audio_stream = streams[1]
         if not isinstance(audio_stream, AudioStreamDownloadURL):
             return video_stream.url, ""
