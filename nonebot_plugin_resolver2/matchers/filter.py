@@ -38,6 +38,8 @@ disabled_group_set: set[int] = load_or_initialize_set()
 
 # Rule
 def is_not_in_disabled_groups(event: MessageEvent) -> bool:
+    if event.self_id == event.user_id:
+        return False
     return True if not isinstance(event, GroupMessageEvent) else event.group_id not in disabled_group_set
 
 
