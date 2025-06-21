@@ -167,7 +167,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         video_info.ai_summary,
     ]
     await send_segments(segs)
-    
+
     if video_info.video_duration > DURATION_MAXIMUM:
         await bilibili.send(
             f"⚠️ 当前视频时长 {video_info.video_duration // 60} 分钟, "
