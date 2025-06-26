@@ -263,7 +263,12 @@ class BilibiliParser:
         )
 
     async def parse_video_download_url(
-        self, *, video: Video | None = None, bvid: str | None = None, avid: int | None = None, page_index: int = 0
+        self,
+        *,
+        video: Video | None = None,
+        bvid: str | None = None,
+        avid: int | None = None,
+        page_index: int = 0,
     ) -> tuple[str, str]:
         """解析视频下载链接
 
@@ -286,7 +291,10 @@ class BilibiliParser:
         download_url_data = await video.get_download_url(page_index=page_index)
         detecter = VideoDownloadURLDataDetecter(download_url_data)
         streams = detecter.detect_best_streams(
-            video_max_quality=VideoQuality._1080P, codecs=[rconfig.r_bili_video_codes], no_dolby_video=True, no_hdr=True
+            video_max_quality=VideoQuality._1080P,
+            codecs=rconfig.r_bili_video_codes,
+            no_dolby_video=True,
+            no_hdr=True,
         )
         video_stream = streams[0]
         if not isinstance(video_stream, VideoStreamDownloadURL):

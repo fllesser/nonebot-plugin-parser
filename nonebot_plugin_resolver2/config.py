@@ -28,8 +28,6 @@ class Config(BaseModel):
     r_xhs_ck: str | None = None
     # bilibili cookies
     r_bili_ck: str | None = None
-    # B站视频编码
-    r_bili_video_codes: VideoCodecs = VideoCodecs.AVC
     # youtube cookies
     r_ytb_ck: str | None = None
     # 代理
@@ -46,6 +44,8 @@ class Config(BaseModel):
     r_video_duration_maximum: int = 480
     # 禁止的解析器
     r_disable_resolvers: list[MatcherNames] = []
+    # B站视频编码
+    r_bili_video_codes: list[VideoCodecs] = [VideoCodecs.AVC, VideoCodecs.AV1, VideoCodecs.HEV]
 
 
 plugin_cache_dir: Path = store.get_plugin_cache_dir()
