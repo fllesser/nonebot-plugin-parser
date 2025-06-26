@@ -3,6 +3,7 @@ from pathlib import Path
 
 import aiofiles
 import aiohttp
+import httpx
 from nonebot import logger
 from tqdm.asyncio import tqdm
 
@@ -23,7 +24,7 @@ async def _get_session() -> aiohttp.ClientSession:
     return _SESSION
 
 
-async def download_file_by_stream(
+async def download_file_by_stream_depecated(
     url: str,
     *,
     file_name: str | None = None,
@@ -90,7 +91,7 @@ async def download_file_by_stream(
     return file_path
 
 
-async def download_file_with_stream_by_httpx(
+async def download_file_by_stream(
     url: str,
     *,
     file_name: str | None = None,
@@ -111,7 +112,6 @@ async def download_file_with_stream_by_httpx(
         aiohttp.ClientError: When download fails
         asyncio.TimeoutError: When download times out
     """
-    import httpx
 
     if not file_name:
         file_name = generate_file_name(url)
@@ -131,7 +131,7 @@ async def download_file_with_stream_by_httpx(
                 content_length = int(content_length) if content_length else None
                 if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
                     logger.warning(f"预下载 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB 限制, 取消下载")
-                    raise DownloadException("音视频流大小超过配置限制，取消下载")
+                    raise DownloadException("媒体大小超过配置限制，取消下载")
                 with tqdm(
                     total=content_length,  # 为 None 时，无进度条
                     unit="B",
@@ -156,7 +156,6 @@ async def download_video(
     url: str,
     *,
     video_name: str | None = None,
-    proxy: str | None = None,
     ext_headers: dict[str, str] | None = None,
 ) -> Path:
     """download video file by url with stream
@@ -164,7 +163,6 @@ async def download_video(
     Args:
         url (str): url address
         video_name (str | None, optional): video name. Defaults to get name by parse url.
-        proxy (str | None, optional): proxy url. Defaults to None.
         ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
 
     Returns:
@@ -176,14 +174,13 @@ async def download_video(
     """
     if video_name is None:
         video_name = generate_file_name(url, ".mp4")
-    return await download_file_by_stream(url, file_name=video_name, proxy=proxy, ext_headers=ext_headers)
+    return await download_file_by_stream(url, file_name=video_name, ext_headers=ext_headers)
 
 
 async def download_audio(
     url: str,
     *,
     audio_name: str | None = None,
-    proxy: str | None = None,
     ext_headers: dict[str, str] | None = None,
 ) -> Path:
     """download audio file by url with stream
@@ -191,7 +188,6 @@ async def download_audio(
     Args:
         url (str): url address
         audio_name (str | None, optional): audio name. Defaults to get name by parse_url_resource_name.
-        proxy (str | None, optional): proxy url. Defaults to None.
         ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
 
     Returns:
@@ -203,14 +199,13 @@ async def download_audio(
     """
     if audio_name is None:
         audio_name = generate_file_name(url, ".mp3")
-    return await download_file_by_stream(url, file_name=audio_name, proxy=proxy, ext_headers=ext_headers)
+    return await download_file_by_stream(url, file_name=audio_name, ext_headers=ext_headers)
 
 
 async def download_img(
     url: str,
     *,
     img_name: str | None = None,
-    proxy: str | None = None,
     ext_headers: dict[str, str] | None = None,
 ) -> Path:
     """download image file by url with stream
@@ -218,7 +213,6 @@ async def download_img(
     Args:
         url (str): url
         img_name (str, optional): image name. Defaults to None.
-        proxy (str, optional): proxy url. Defaults to None.
         ext_headers (dict[str, str], optional): ext headers. Defaults to None.
 
     Returns:
@@ -230,27 +224,25 @@ async def download_img(
     """
     if img_name is None:
         img_name = generate_file_name(url, ".jpg")
-    return await download_file_by_stream(url, file_name=img_name, proxy=proxy, ext_headers=ext_headers)
+    return await download_file_by_stream(url, file_name=img_name, ext_headers=ext_headers)
 
 
 async def download_imgs_without_raise(
     urls: list[str],
     *,
     ext_headers: dict[str, str] | None = None,
-    proxy: str | None = None,
 ) -> list[Path]:
     """download images without raise
 
     Args:
         urls (list[str]): urls
         ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
-        proxy (str | None, optional): proxy url. Defaults to None.
 
     Returns:
         list[Path]: image file paths
     """
     paths_or_errs = await asyncio.gather(
-        *[download_img(url, ext_headers=ext_headers, proxy=proxy) for url in urls], return_exceptions=True
+        *[download_img(url, ext_headers=ext_headers) for url in urls], return_exceptions=True
     )
     return [p for p in paths_or_errs if isinstance(p, Path)]
 
