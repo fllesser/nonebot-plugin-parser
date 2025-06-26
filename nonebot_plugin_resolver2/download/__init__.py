@@ -90,6 +90,68 @@ async def download_file_by_stream(
     return file_path
 
 
+async def download_file_with_stream_by_httpx(
+    url: str,
+    *,
+    file_name: str | None = None,
+    ext_headers: dict[str, str] | None = None,
+) -> Path:
+    """download file by url with stream
+
+    Args:
+        url (str): url address
+        file_name (str | None, optional): file name. Defaults to get name by parse_url_resource_name.
+        proxy (str | None, optional): proxy url. Defaults to None.
+        ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
+
+    Returns:
+        Path: file path
+
+    Raises:
+        aiohttp.ClientError: When download fails
+        asyncio.TimeoutError: When download times out
+    """
+    import httpx
+
+    if not file_name:
+        file_name = generate_file_name(url)
+    file_path = plugin_cache_dir / file_name
+
+    # 如果文件存在，则直接返回
+    if file_path.exists():
+        return file_path
+
+    headers = {**COMMON_HEADER, **(ext_headers or {})}
+
+    try:
+        async with httpx.AsyncClient(timeout=300) as client:
+            async with client.stream("GET", url, headers=headers) as response:
+                response.raise_for_status()
+                content_length = response.headers.get("Content-Length")
+                content_length = int(content_length) if content_length else None
+                if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
+                    logger.warning(f"预下载 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB 限制, 取消下载")
+                    raise DownloadException("音视频流大小超过配置限制，取消下载")
+                with tqdm(
+                    total=content_length,  # 为 None 时，无进度条
+                    unit="B",
+                    unit_scale=True,
+                    unit_divisor=1024,
+                    dynamic_ncols=True,
+                    colour="green",
+                    desc=file_name,
+                ) as bar:
+                    async with aiofiles.open(file_path, "wb") as file:
+                        async for chunk in response.aiter_bytes(1024 * 1024):
+                            await file.write(chunk)
+                            bar.update(len(chunk))
+    except httpx.TimeoutException:
+        await safe_unlink(file_path)
+        logger.error(f"url: {url}, file_path: {file_path} 下载超时")
+        raise DownloadException("媒体下载超时")
+    return file_path
+
+
 async def download_video(
     url: str,
     *,
