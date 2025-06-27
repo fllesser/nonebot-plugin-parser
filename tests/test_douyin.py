@@ -72,6 +72,7 @@ async def test_douyin_note():
     https://www.douyin.com/note/7469411074119322899
     https://v.douyin.com/iP6Uu1Kh
     """
+    from nonebot_plugin_resolver2.download import download_imgs_without_raise
     from nonebot_plugin_resolver2.parsers import DouyinParser
 
     douyin_parser = DouyinParser()
@@ -79,6 +80,7 @@ async def test_douyin_note():
     note_urls = [
         "https://www.douyin.com/note/7469411074119322899",
         "https://v.douyin.com/iP6Uu1Kh",
+        "https://v.douyin.com/LBbstVV4vVg/",
     ]
 
     async def test_parse_share_url(url: str) -> None:
@@ -93,6 +95,9 @@ async def test_douyin_note():
         logger.debug(f"{url} | images: {video_info.pic_urls}")
         assert video_info.pic_urls
         logger.success(f"{url} | 抖音图文解析成功")
+        pic_paths = await download_imgs_without_raise(video_info.pic_urls)
+        logger.debug(f"{url} | pic_paths: {pic_paths}")
+        assert len(pic_paths) == len(video_info.pic_urls)
 
     await asyncio.gather(*[test_parse_share_url(url) for url in note_urls])
 
