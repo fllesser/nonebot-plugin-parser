@@ -65,7 +65,6 @@ async def test_douyin_old_video():
 
 
 @pytest.mark.asyncio
-@skip_on_failure
 async def test_douyin_note():
     """
     测试普通图文

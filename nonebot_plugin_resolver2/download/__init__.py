@@ -45,8 +45,8 @@ async def download_file_by_stream(
     headers = {**COMMON_HEADER, **(ext_headers or {})}
 
     try:
-        async with httpx.AsyncClient(timeout=300) as client:
-            async with client.stream("GET", url, headers=headers) as response:
+        async with httpx.AsyncClient(timeout=300, headers=headers, verify=False) as client:
+            async with client.stream("GET", url, follow_redirects=True) as response:
                 response.raise_for_status()
                 content_length = response.headers.get("Content-Length")
                 content_length = int(content_length) if content_length else None
