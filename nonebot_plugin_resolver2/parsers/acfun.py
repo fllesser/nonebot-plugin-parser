@@ -1,10 +1,9 @@
-import asyncio
 import json
 from pathlib import Path
 import re
 
 import aiofiles
-import aiohttp
+import httpx
 
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..download.utils import safe_unlink
@@ -28,10 +27,10 @@ class AcfunParser:
         # 拼接查询参数
         url = f"{url}?quickViewId=videoInfo_new&ajaxpipe=1"
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.headers) as resp:
-                resp.raise_for_status()
-                raw = await resp.text()
+        async with httpx.AsyncClient(headers=self.headers) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            raw = response.text
 
         matched = re.search(r"window\.videoInfo =(.*?)</script>", raw)
         if not matched:
@@ -74,7 +73,7 @@ class AcfunParser:
 
         try:
             max_size_in_bytes = MAX_SIZE * 1024 * 1024
-            async with aiofiles.open(video_file, "wb") as f, aiohttp.ClientSession() as session:
+            async with aiofiles.open(video_file, "wb") as f, httpx.AsyncClient() as client:
                 total_size = 0
                 with tqdm(
                     unit="B",
@@ -84,20 +83,17 @@ class AcfunParser:
                     desc=video_file.name,
                 ) as bar:
                     for url in m3u8_full_urls:
-                        async with session.get(url, headers=self.headers) as resp:
-                            async for chunk in resp.content.iter_chunked(1024 * 1024):
+                        async with client.stream("GET", url, headers=self.headers) as response:
+                            async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
                                 await f.write(chunk)
                                 total_size += len(chunk)
                                 bar.update(len(chunk))
                         if total_size > max_size_in_bytes:
                             # 直接截断
                             break
-        except aiohttp.ClientError as e:
+        except httpx.HTTPError as e:
             await safe_unlink(video_file)
             raise DownloadException(f"下载 acfun 视频失败: {e}")
-        except asyncio.TimeoutError:
-            await safe_unlink(video_file)
-            raise DownloadException("下载 acfun 视频超时")
         return video_file
 
     async def _parse_m3u8(self, m3u8_url: str):
@@ -109,9 +105,9 @@ class AcfunParser:
         Returns:
             list[str]: 视频链接
         """
-        async with aiohttp.ClientSession() as session:
-            async with session.get(m3u8_url, headers=self.headers) as resp:
-                m3u8_file = await resp.text()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(m3u8_url, headers=self.headers)
+            m3u8_file = response.text
         # 分离ts文件链接
         raw_pieces = re.split(r"\n#EXTINF:.{8},\n", m3u8_file)
         # 过滤头部\

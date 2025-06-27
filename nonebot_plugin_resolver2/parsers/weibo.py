@@ -1,7 +1,7 @@
 import math
 import re
 
-import aiohttp
+import httpx
 
 from ..constant import COMMON_HEADER
 from ..exception import ParseException
@@ -40,10 +40,10 @@ class WeiBoParser:
             **COMMON_HEADER,
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + fid + '"}}'
-        async with aiohttp.ClientSession() as session:
-            async with session.post(req_url, headers=headers, data=post_content) as response:
-                response.raise_for_status()
-                json_data = await response.json()
+        async with httpx.AsyncClient(headers=headers) as client:
+            response = await client.post(req_url, content=post_content)
+            response.raise_for_status()
+            json_data = response.json()
         data = json_data["data"]["Component_Play_Playinfo"]
 
         video_url = data["stream_url"]
@@ -75,13 +75,13 @@ class WeiBoParser:
         }
 
         # 请求数据
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://m.weibo.cn/statuses/show?id={weibo_id}", headers=headers) as resp:
-                if resp.status != 200:
-                    raise ParseException(f"获取数据失败 {resp.status} {resp.reason}")
-                if "application/json" not in resp.headers.get("content-type", ""):
-                    raise ParseException("获取数据失败 content-type is not application/json")
-                resp = await resp.json()
+        async with httpx.AsyncClient(headers=headers) as client:
+            response = await client.get(f"https://m.weibo.cn/statuses/show?id={weibo_id}")
+            if response.status_code != 200:
+                raise ParseException(f"获取数据失败 {response.status_code} {response.reason_phrase}")
+            if "application/json" not in response.headers.get("content-type", ""):
+                raise ParseException("获取数据失败 content-type is not application/json")
+            resp = response.json()
 
         weibo_data = resp["data"]
         text, status_title, source, region_name, pics, page_info = (

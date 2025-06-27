@@ -137,19 +137,19 @@ async def test_douyin_slides():
 @pytest.mark.asyncio
 @skip_on_failure
 async def test_douyin_oversea():
-    import aiohttp
+    import httpx
 
     from nonebot_plugin_resolver2.constant import IOS_HEADER
 
     url = "https://m.douyin.com/share/note/7484675353898667274"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=IOS_HEADER) as response:
-            # headers
-            # logger.debug("headers")
-            # for key, value in response.headers.items():
-            #     logger.debug(f"{key}: {value}")
-            logger.debug(f"status: {response.status}")
-            response.raise_for_status()
-            text = await response.text()
-            assert "window._ROUTER_DATA" in text
-            # logger.debug(text)
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=IOS_HEADER)
+        # headers
+        # logger.debug("headers")
+        # for key, value in response.headers.items():
+        #     logger.debug(f"{key}: {value}")
+        logger.debug(f"status: {response.status_code}")
+        response.raise_for_status()
+        text = response.text
+        assert "window._ROUTER_DATA" in text
+        # logger.debug(text)
