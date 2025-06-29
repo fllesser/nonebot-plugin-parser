@@ -29,8 +29,8 @@ async def _(event: MessageEvent):
 
     # 如果 prefix 是 vt 或 vm，则需要重定向
     if prefix == "vt" or prefix == "vm":
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, follow_redirects=False)
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            response = await client.get(url)
             url = response.headers.get("Location")
 
     pub_prefix = f"{NICKNAME}解析 | TikTok - "

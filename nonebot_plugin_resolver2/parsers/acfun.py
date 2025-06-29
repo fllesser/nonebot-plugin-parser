@@ -73,7 +73,7 @@ class AcfunParser:
 
         try:
             max_size_in_bytes = MAX_SIZE * 1024 * 1024
-            async with aiofiles.open(video_file, "wb") as f, httpx.AsyncClient() as client:
+            async with aiofiles.open(video_file, "wb") as f, httpx.AsyncClient(headers=self.headers) as client:
                 total_size = 0
                 with tqdm(
                     unit="B",
@@ -83,7 +83,7 @@ class AcfunParser:
                     desc=video_file.name,
                 ) as bar:
                     for url in m3u8_full_urls:
-                        async with client.stream("GET", url, headers=self.headers) as response:
+                        async with client.stream("GET", url) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
                                 await f.write(chunk)
                                 total_size += len(chunk)
@@ -105,8 +105,8 @@ class AcfunParser:
         Returns:
             list[str]: 视频链接
         """
-        async with httpx.AsyncClient() as client:
-            response = await client.get(m3u8_url, headers=self.headers)
+        async with httpx.AsyncClient(headers=self.headers) as client:
+            response = await client.get(m3u8_url)
             m3u8_file = response.text
         # 分离ts文件链接
         raw_pieces = re.split(r"\n#EXTINF:.{8},\n", m3u8_file)

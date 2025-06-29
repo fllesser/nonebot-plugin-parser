@@ -137,8 +137,8 @@ async def test_douyin_oversea():
     from nonebot_plugin_resolver2.constant import IOS_HEADER
 
     url = "https://m.douyin.com/share/note/7484675353898667274"
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=IOS_HEADER)
+    async with httpx.AsyncClient(headers=IOS_HEADER) as client:
+        response = await client.get(url)
         # headers
         # logger.debug("headers")
         # for key, value in response.headers.items():

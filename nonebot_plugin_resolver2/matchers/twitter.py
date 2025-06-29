@@ -58,7 +58,8 @@ async def parse_x_url(x_url: str) -> tuple[str, list[str]]:
         }
         data = {"q": url, "lang": "zh-cn"}
         async with httpx.AsyncClient(headers=headers) as client:
-            response = await client.post("https://xdown.app/api/ajaxSearch", data=data)
+            url = "https://xdown.app/api/ajaxSearch"
+            response = await client.post(url, data=data)
             return response.json()
 
     resp = await x_req(x_url)
