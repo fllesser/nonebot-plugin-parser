@@ -155,13 +155,12 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     if url and (matched := re.search(r"(?:&|\?)p=(\d{1,3})", url)):
         page_num = int(matched.group(1))
     # 视频
-    kw = {}
+    id_arg = {}
     if keyword in ("av", "/av"):
-        kw["avid"] = int(video_id)
+        id_arg["avid"] = int(video_id)
     else:
-        kw["bvid"] = video_id
-    kw["page_num"] = page_num
-    video_info = await parser.parse_video_info(**kw)
+        id_arg["bvid"] = video_id
+    video_info = await parser.parse_video_info(**id_arg, page_num=page_num)
 
     segs = [
         video_info.title,
