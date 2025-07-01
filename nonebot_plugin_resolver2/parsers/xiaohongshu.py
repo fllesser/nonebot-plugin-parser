@@ -81,7 +81,13 @@ class XiaoHongShuParser:
             image_list = note_data["imageList"]
             img_urls = [item["urlDefault"] for item in image_list]
         elif resource_type == "video":
-            video_url = note_data["video"]["media"]["stream"]["h264"][0]["masterUrl"]
+            stream = note_data["video"]["media"]["stream"]
+            for code in ("h264", "h265", "av1"):
+                if item := stream.get(code):
+                    video_url = item[0]["masterUrl"]
+                    break
+            if not video_url:
+                raise ParseException("小红书视频解析失败")
         else:
             raise ParseException(f"不支持的小红书链接类型: {resource_type}")
         return ParseResult(
