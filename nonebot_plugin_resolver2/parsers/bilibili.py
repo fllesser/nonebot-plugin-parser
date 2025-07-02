@@ -52,9 +52,13 @@ class BilibiliParser:
     async def credential(self) -> Credential | None:
         if not self._credential:
             self._init_credential()
-        if not self._credential or not await self._credential.check_valid():
+            if not self._credential:
+                return None
+
+        if not await self._credential.check_valid():
             logger.warning("哔哩哔哩 cookie 已过期, 请重新配置哔哩哔哩 cookie")
             return None
+
         if await self._credential.check_refresh():
             logger.info("哔哩哔哩 cookie 需要刷新, 即将刷新哔哩哔哩 cookie")
             await self._credential.refresh()
