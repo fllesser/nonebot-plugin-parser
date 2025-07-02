@@ -26,8 +26,7 @@ class BilibiliVideoInfo:
 class BilibiliParser:
     def __init__(self):
         self.headers = HEADERS
-        self.credential: Credential | None = None
-        self._init_credential()
+        self._credential: Credential | None = None
 
     def _init_credential(self):
         """初始化 bilibili api"""
@@ -47,7 +46,20 @@ class BilibiliParser:
         if not rconfig.r_bili_ck:
             logger.warning("未配置哔哩哔哩 cookie, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
             return
-        self.credential = Credential.from_cookies(ck2dict(rconfig.r_bili_ck))
+        self._credential = Credential.from_cookies(ck2dict(rconfig.r_bili_ck))
+
+    @property
+    async def credential(self) -> Credential | None:
+        if not self._credential:
+            self._init_credential()
+        if not self._credential or not await self._credential.check_valid():
+            logger.warning("哔哩哔哩 cookie 已过期, 请重新配置哔哩哔哩 cookie")
+            return None
+        if await self._credential.check_refresh():
+            logger.info("哔哩哔哩 cookie 需要刷新, 即将刷新哔哩哔哩 cookie")
+            await self._credential.refresh()
+            logger.info("哔哩哔哩 cookie 刷新成功")
+        return self._credential
 
     async def parse_opus(self, opus_id: int) -> tuple[list[str], str]:
         """解析动态信息
@@ -60,7 +72,7 @@ class BilibiliParser:
         """
         from bilibili_api.opus import Opus
 
-        opus = Opus(opus_id, self.credential)
+        opus = Opus(opus_id, await self.credential)
         opus_info = await opus.get_info()
         if not isinstance(opus_info, dict):
             raise ParseException("获取动态信息失败")
@@ -94,7 +106,7 @@ class BilibiliParser:
         """
         from bilibili_api.live import LiveRoom
 
-        room = LiveRoom(room_display_id=room_id, credential=self.credential)
+        room = LiveRoom(room_display_id=room_id, credential=await self.credential)
         room_info: dict[str, Any] = (await room.get_room_info())["room_info"]
         title, cover, keyframe = (
             room_info["title"],
@@ -179,7 +191,7 @@ class BilibiliParser:
             texts.append(f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}")
         return texts, urls
 
-    def parse_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
+    async def parse_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
         """解析视频信息
 
         Args:
@@ -187,9 +199,9 @@ class BilibiliParser:
             avid (int | None): avid
         """
         if avid:
-            return Video(aid=avid, credential=self.credential)
+            return Video(aid=avid, credential=await self.credential)
         elif bvid:
-            return Video(bvid=bvid, credential=self.credential)
+            return Video(bvid=bvid, credential=await self.credential)
         else:
             raise ParseException("avid 和 bvid 至少指定一项")
 
@@ -208,7 +220,7 @@ class BilibiliParser:
             page_num (int): 页码
         """
 
-        video = self.parse_video(bvid=bvid, avid=avid)
+        video = await self.parse_video(bvid=bvid, avid=avid)
         video_info: dict[str, Any] = await video.get_info()
 
         video_duration: int = int(video_info["duration"])
@@ -244,9 +256,9 @@ class BilibiliParser:
             f"📝 简介：{video_info['desc']}\n"
             f"🏄‍♂️ {online['total']} 人正在观看，{online['count']} 人在网页端观看"
         )
-        ai_summary: str = "未配置 ck 无法使用 AI 总结"
+        ai_summary: str = "未配置哔哩哔哩 cookie, 无法使用 AI 总结"
         # 获取 AI 总结
-        if self.credential:
+        if self._credential:
             cid = await video.get_cid(page_idx)
             ai_conclusion = await video.get_ai_conclusion(cid)
             ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "").strip()
@@ -286,7 +298,7 @@ class BilibiliParser:
         )
 
         if video is None:
-            video = self.parse_video(bvid=bvid, avid=avid)
+            video = await self.parse_video(bvid=bvid, avid=avid)
         # 获取下载数据
         download_url_data = await video.get_download_url(page_index=page_index)
         detecter = VideoDownloadURLDataDetecter(download_url_data)
