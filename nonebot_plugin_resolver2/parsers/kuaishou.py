@@ -2,7 +2,7 @@ import json
 import re
 import urllib.parse
 
-import aiohttp
+import httpx
 
 from ..constant import COMMON_HEADER, IOS_HEADER
 from ..exception import ParseException
@@ -39,13 +39,13 @@ class KuaishouParser:
         # /fw/long-video/ 返回结果不一样, 统一替换为 /fw/photo/ 请求
         location_url = location_url.replace("/fw/long-video/", "/fw/photo/")
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(location_url, headers=self.v_headers) as resp:
-                resp.raise_for_status()
-                response_text = await resp.text()
+        async with httpx.AsyncClient(headers=self.v_headers) as client:
+            response = await client.get(location_url)
+            response.raise_for_status()
+            response_text = response.text
 
-                pattern = r"window\.INIT_STATE\s*=\s*(.*?)</script>"
-                searched = re.search(pattern, response_text)
+            pattern = r"window\.INIT_STATE\s*=\s*(.*?)</script>"
+            searched = re.search(pattern, response_text)
 
         if not searched or len(searched.groups()) < 1:
             raise ParseException("failed to parse video JSON info from HTML")
@@ -105,7 +105,7 @@ class KuaishouParser:
         """
         video_id = await self._extract_video_id(url)
         if not video_id:
-            raise ParseException("无法从链接中提取视频ID")
+            raise ParseException("无法从链接中提取视频 ID")
 
         # 构造标准链接格式，用于API解析
         standard_url = f"https://www.kuaishou.com/short-video/{video_id}"
@@ -113,12 +113,12 @@ class KuaishouParser:
         encoded_url = urllib.parse.quote(standard_url)
         api_url = self.api_url.format(encoded_url)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(api_url, headers=self.headers) as resp:
-                if resp.status != 200:
-                    raise ParseException(f"解析API返回错误状态码: {resp.status}")
+        async with httpx.AsyncClient(headers=self.headers) as client:
+            response = await client.get(api_url)
+            if response.status_code != 200:
+                raise ParseException(f"解析 API 返回错误状态码: {response.status_code}")
 
-                result = await resp.json()
+            result = response.json()
 
             # 根据API返回示例，成功时code应为0
             if result.get("code") != 0 or not result.get("data"):

@@ -2,7 +2,7 @@ import json
 import re
 from urllib.parse import parse_qs, urlparse
 
-import aiohttp
+import httpx
 
 from ..config import rconfig
 from ..constant import COMMON_HEADER
@@ -49,12 +49,12 @@ class XiaoHongShuParser:
         # 提取 xsec_source 和 xsec_token
         xsec_source = params.get("xsec_source", [None])[0] or "pc_feed"
         xsec_token = params.get("xsec_token", [None])[0]
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"https://www.xiaohongshu.com/explore/{xhs_id}?xsec_source={xsec_source}&xsec_token={xsec_token}",
-                headers=self.headers,
-            ) as resp:
-                html = await resp.text()
+
+        # 构造完整 URL
+        url = f"https://www.xiaohongshu.com/explore/{xhs_id}?xsec_source={xsec_source}&xsec_token={xsec_token}"
+        async with httpx.AsyncClient(headers=self.headers) as client:
+            response = await client.get(url)
+            html = response.text
 
         pattern = r"window.__INITIAL_STATE__=(.*?)</script>"
         matched = re.search(pattern, html)

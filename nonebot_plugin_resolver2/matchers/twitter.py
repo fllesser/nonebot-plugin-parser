@@ -1,12 +1,12 @@
 import re
 from typing import Any
 
-import aiohttp
+import httpx
 from nonebot import logger, on_keyword
 from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
-from ..config import NICKNAME, PROXY
+from ..config import NICKNAME
 from ..constant import COMMON_HEADER
 from ..download import download_imgs_without_raise, download_video
 from ..exception import ParseException, handle_exception
@@ -32,11 +32,11 @@ async def _(event: MessageEvent):
     video_url, pic_urls = await parse_x_url(x_url)
 
     if video_url:
-        video_path = await download_video(video_url, proxy=PROXY)
+        video_path = await download_video(video_url)
         await twitter.send(get_video_seg(video_path))
 
     if pic_urls:
-        img_paths = await download_imgs_without_raise(pic_urls, proxy=PROXY)
+        img_paths = await download_imgs_without_raise(pic_urls)
         await send_segments([get_img_seg(img_path) for img_path in img_paths])
 
 
@@ -57,9 +57,10 @@ async def parse_x_url(x_url: str) -> tuple[str, list[str]]:
             **COMMON_HEADER,
         }
         data = {"q": url, "lang": "zh-cn"}
-        async with aiohttp.ClientSession() as session:
-            async with session.post("https://xdown.app/api/ajaxSearch", headers=headers, data=data) as response:
-                return await response.json()
+        async with httpx.AsyncClient(headers=headers) as client:
+            url = "https://xdown.app/api/ajaxSearch"
+            response = await client.post(url, data=data)
+            return response.json()
 
     resp = await x_req(x_url)
     if resp.get("status") != "ok":

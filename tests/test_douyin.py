@@ -65,7 +65,6 @@ async def test_douyin_old_video():
 
 
 @pytest.mark.asyncio
-@skip_on_failure
 async def test_douyin_note():
     """
     测试普通图文
@@ -79,6 +78,7 @@ async def test_douyin_note():
     note_urls = [
         "https://www.douyin.com/note/7469411074119322899",
         "https://v.douyin.com/iP6Uu1Kh",
+        "https://v.douyin.com/LBbstVV4vVg/",
     ]
 
     async def test_parse_share_url(url: str) -> None:
@@ -132,19 +132,19 @@ async def test_douyin_slides():
 @pytest.mark.asyncio
 @skip_on_failure
 async def test_douyin_oversea():
-    import aiohttp
+    import httpx
 
     from nonebot_plugin_resolver2.constant import IOS_HEADER
 
     url = "https://m.douyin.com/share/note/7484675353898667274"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url, headers=IOS_HEADER) as response:
-            # headers
-            # logger.debug("headers")
-            # for key, value in response.headers.items():
-            #     logger.debug(f"{key}: {value}")
-            logger.debug(f"status: {response.status}")
-            response.raise_for_status()
-            text = await response.text()
-            assert "window._ROUTER_DATA" in text
-            # logger.debug(text)
+    async with httpx.AsyncClient(headers=IOS_HEADER) as client:
+        response = await client.get(url)
+        # headers
+        # logger.debug("headers")
+        # for key, value in response.headers.items():
+        #     logger.debug(f"{key}: {value}")
+        logger.debug(f"status: {response.status_code}")
+        response.raise_for_status()
+        text = response.text
+        assert "window._ROUTER_DATA" in text
+        # logger.debug(text)

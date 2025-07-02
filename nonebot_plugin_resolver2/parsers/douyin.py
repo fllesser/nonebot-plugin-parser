@@ -2,7 +2,7 @@ import json
 import re
 from typing import Any
 
-import aiohttp
+import httpx
 from nonebot import logger
 
 from ..exception import ParseException
@@ -52,10 +52,10 @@ class DouyinParser:
         raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
     async def parse_video(self, url: str) -> ParseResult:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.ios_headers, ssl=False) as response:
-                response.raise_for_status()
-                text = await response.text()
+        async with httpx.AsyncClient(headers=self.ios_headers, verify=False) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            text = response.text
         data: dict[str, Any] = self._format_response(text)
         # 获取图集图片地址
         images: list[str] = []
@@ -132,10 +132,10 @@ class DouyinParser:
             "aweme_ids": f"[{video_id}]",
             "request_source": "200",
         }
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params, headers=self.android_headers, ssl=False) as resp:
-                resp.raise_for_status()
-                resp = await resp.json()
+        async with httpx.AsyncClient(headers=self.android_headers, verify=False) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            resp = response.json()
         detail = resp.get("aweme_details")
         if not detail:
             raise ParseException("can't find aweme_details in json")
