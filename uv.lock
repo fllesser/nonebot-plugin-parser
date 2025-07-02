@@ -84,7 +84,7 @@ wheels = [
 
 [[package]]
 name = "bilibili-api-python"
-version = "17.2.1"
+version = "17.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "apscheduler" },
@@ -100,9 +100,9 @@ dependencies = [
     { name = "qrcode-terminal" },
     { name = "yarl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b3/95/741982d5e752bf9ccb5bddc1d03250cf66fa8a0c980cc2b3c1ca0df03b1c/bilibili_api_python-17.2.1.tar.gz", hash = "sha256:967f87360730dca3e9385f448bc4dae2fadbfad18ab04e3fbd28a6fe2a0aa602", size = 1408365, upload-time = "2025-05-30T14:35:03.757Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/28/59/f4f238a7e3a73583b13f1de54f158cc75241a6a612be2e6cf8ee12c92813/bilibili_api_python-17.3.0.tar.gz", hash = "sha256:4659f3df0b34db7c79322c1a6c6478800447d1b75482e7288b120c46a8fe67ae", size = 1411556, upload-time = "2025-06-30T13:21:17.397Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/fc/138226b8de579fd4dd441a1f271e56c7e1792cb35ab2a07c6c33cdfd3b1d/bilibili_api_python-17.2.1-py3-none-any.whl", hash = "sha256:7ee0403c18a35068b69f0f59a69ecee7c22461a2c0552560b5185b1d304777bb", size = 375434, upload-time = "2025-05-30T14:35:02.373Z" },
+    { url = "https://files.pythonhosted.org/packages/b1/52/957fc90a5cd6bfb3564ec5f068f960e8674fb8bd596426af73554ed676de/bilibili_api_python-17.3.0-py3-none-any.whl", hash = "sha256:8a7af3883cf5ce53825a236a49719858331054ee35cd788538df2bde712feccc", size = 379456, upload-time = "2025-06-30T13:21:16.226Z" },
 ]
 
 [[package]]
@@ -787,7 +787,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
-    { name = "bilibili-api-python", specifier = ">=17.2.1,<18.0.0" },
+    { name = "bilibili-api-python", specifier = ">=17.3.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.8.0,<1.0.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6,<3.0.0" },
