@@ -47,7 +47,7 @@ plugins = ["nonebot_plugin_resolver2"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
-pythonpath = [".", "nonebot_plugin_resolver2", "tests"]
+pythonpath = ["src"]
 addopts = [
   "-v",               # 详细输出
   "-s",               # 显示打印信息
@@ -112,11 +112,15 @@ pythonVersion = "3.10"
 pythonPlatform = "All"
 defineConstant = { PYDANTIC_V2 = true }
 executionEnvironments = [
-  { root = "./tests", extraPaths = [
-    "./",
-  ] },
-  { root = "./" },
+    { root = "./tests", extraPaths = [
+        "./src",
+    ] },
+    { root = "./src" },
 ]
 typeCheckingMode = "standard"
 reportShadowedImports = false
 disableBytesTypePromotions = true
+
+[build-system]
+requires = ["uv_build>=0.7.19,<0.8.0"]
+build-backend = "uv_build"
