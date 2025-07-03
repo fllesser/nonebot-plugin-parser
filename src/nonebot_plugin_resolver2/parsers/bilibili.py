@@ -2,11 +2,12 @@ from dataclasses import dataclass
 import re
 from typing import Any
 
-from bilibili_api import HEADERS, Credential
+from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.video import Video
 from nonebot import logger
 
 from ..config import rconfig
+from ..cookie import ck2dict
 from ..exception import ParseException
 
 
@@ -31,11 +32,6 @@ class BilibiliParser:
     def _init_credential(self):
         """初始化 bilibili api"""
 
-        from bilibili_api import request_settings, select_client
-
-        from ..config import rconfig
-        from ..cookie import ck2dict
-
         # 选择客户端
         select_client("curl_cffi")
         # 模仿浏览器
@@ -50,6 +46,8 @@ class BilibiliParser:
 
     @property
     async def credential(self) -> Credential | None:
+        """获取哔哩哔哩登录凭证"""
+
         if not self._credential:
             self._init_credential()
             if not self._credential:
