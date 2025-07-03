@@ -6,6 +6,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
 from ..config import NICKNAME
+from ..constant import COMMON_TIMEOUT
 from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..exception import handle_exception
 from .filter import is_not_in_disabled_groups
@@ -29,7 +30,7 @@ async def _(event: MessageEvent):
 
     # 如果 prefix 是 vt 或 vm，则需要重定向
     if prefix == "vt" or prefix == "vm":
-        async with httpx.AsyncClient(follow_redirects=True) as client:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(url)
             url = response.headers.get("Location")
 

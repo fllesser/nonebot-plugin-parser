@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 from nonebot import logger
 
+from ..constant import COMMON_TIMEOUT
 from ..exception import ParseException
 from .data import ANDROID_HEADER, IOS_HEADER, ParseResult
 from .utils import get_redirect_url
@@ -52,7 +53,7 @@ class DouyinParser:
         raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
     async def parse_video(self, url: str) -> ParseResult:
-        async with httpx.AsyncClient(headers=self.ios_headers, verify=False) as client:
+        async with httpx.AsyncClient(headers=self.ios_headers, verify=False, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(url)
             response.raise_for_status()
             text = response.text

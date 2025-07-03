@@ -5,7 +5,7 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 
 from ..config import rconfig
-from ..constant import COMMON_HEADER
+from ..constant import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
 from .data import ParseResult
 from .utils import get_redirect_url
@@ -52,7 +52,7 @@ class XiaoHongShuParser:
 
         # 构造完整 URL
         url = f"https://www.xiaohongshu.com/explore/{xhs_id}?xsec_source={xsec_source}&xsec_token={xsec_token}"
-        async with httpx.AsyncClient(headers=self.headers) as client:
+        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(url)
             html = response.text
 
