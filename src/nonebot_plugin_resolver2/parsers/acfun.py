@@ -27,7 +27,7 @@ class AcfunParser:
         # 拼接查询参数
         url = f"{url}?quickViewId=videoInfo_new&ajaxpipe=1"
 
-        async with httpx.AsyncClient(headers=self.headers) as client:
+        async with httpx.AsyncClient(headers=self.headers, timeout=20) as client:
             response = await client.get(url)
             response.raise_for_status()
             raw = response.text

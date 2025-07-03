@@ -758,7 +758,7 @@ wheels = [
 [[package]]
 name = "nonebot-plugin-resolver2"
 version = "1.10.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "bilibili-api-python" },

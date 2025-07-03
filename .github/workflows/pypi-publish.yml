@@ -19,6 +19,7 @@ jobs:
       uses: astral-sh/setup-uv@v6
       with:
         python-version: "3.12"
+        version: "latest"
       
     - name: Build a binary wheel and a source tarball
       run: uv build 
