@@ -57,6 +57,7 @@ class BilibiliParser:
 
         if not await self._credential.check_valid():
             logger.warning("哔哩哔哩 cookie 已过期, 请重新配置哔哩哔哩 cookie")
+            self._credential = None
             return None
 
         if await self._credential.check_refresh():
