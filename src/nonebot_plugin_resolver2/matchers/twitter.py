@@ -7,7 +7,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
 from ..config import NICKNAME
-from ..constant import COMMON_HEADER
+from ..constant import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import download_imgs_without_raise, download_video
 from ..exception import ParseException, handle_exception
 from .filter import is_not_in_disabled_groups
@@ -57,7 +57,7 @@ async def parse_x_url(x_url: str) -> tuple[str, list[str]]:
             **COMMON_HEADER,
         }
         data = {"q": url, "lang": "zh-cn"}
-        async with httpx.AsyncClient(headers=headers) as client:
+        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
             url = "https://xdown.app/api/ajaxSearch"
             response = await client.post(url, data=data)
             return response.json()

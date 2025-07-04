@@ -7,7 +7,7 @@ from nonebot import logger
 from tqdm.asyncio import tqdm
 
 from ..config import MAX_SIZE, plugin_cache_dir
-from ..constant import COMMON_HEADER
+from ..constant import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException
 from .utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
 
@@ -45,7 +45,7 @@ async def download_file_by_stream(
     headers = {**COMMON_HEADER, **(ext_headers or {})}
 
     try:
-        async with httpx.AsyncClient(timeout=300, headers=headers, verify=False) as client:
+        async with httpx.AsyncClient(headers=headers, timeout=DOWNLOAD_TIMEOUT, verify=False) as client:
             async with client.stream("GET", url, follow_redirects=True) as response:
                 response.raise_for_status()
                 content_length = response.headers.get("Content-Length")
@@ -53,15 +53,7 @@ async def download_file_by_stream(
                 if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
                     logger.warning(f"预下载 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB 限制, 取消下载")
                     raise DownloadException("媒体大小超过配置限制，取消下载")
-                with tqdm(
-                    total=content_length,  # 为 None 时，无进度条
-                    unit="B",
-                    unit_scale=True,
-                    unit_divisor=1024,
-                    dynamic_ncols=True,
-                    colour="green",
-                    desc=file_name,
-                ) as bar:
+                with get_progress_bar(file_name, content_length) as bar:
                     async with aiofiles.open(file_path, "wb") as file:
                         async for chunk in response.aiter_bytes(1024 * 1024):
                             await file.write(chunk)
@@ -75,6 +67,18 @@ async def download_file_by_stream(
         logger.error(f"url: {url}, file_path: {file_path} 下载失败: {exc}")
         raise DownloadException(f"媒体下载失败 {exc}")
     return file_path
+
+
+def get_progress_bar(desc: str, total: int | None = None) -> tqdm:
+    return tqdm(
+        total=total,
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+        dynamic_ncols=True,
+        colour="green",
+        desc=desc,
+    )
 
 
 async def download_video(

@@ -3,7 +3,7 @@ import re
 
 import httpx
 
-from ..constant import COMMON_HEADER
+from ..constant import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
 from .data import ParseResult
 
@@ -40,7 +40,7 @@ class WeiBoParser:
             **COMMON_HEADER,
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + fid + '"}}'
-        async with httpx.AsyncClient(headers=headers) as client:
+        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.post(req_url, content=post_content)
             response.raise_for_status()
             json_data = response.json()
@@ -75,7 +75,7 @@ class WeiBoParser:
         }
 
         # 请求数据
-        async with httpx.AsyncClient(headers=headers) as client:
+        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(f"https://m.weibo.cn/statuses/show?id={weibo_id}")
             if response.status_code != 200:
                 raise ParseException(f"获取数据失败 {response.status_code} {response.reason_phrase}")

@@ -6,6 +6,8 @@ import aiofiles
 import httpx
 
 from ..config import MAX_SIZE, plugin_cache_dir
+from ..constant import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
+from ..download import get_progress_bar
 from ..download.utils import safe_unlink
 from ..exception import DownloadException, ParseException
 from .data import COMMON_HEADER
@@ -27,7 +29,7 @@ class AcfunParser:
         # 拼接查询参数
         url = f"{url}?quickViewId=videoInfo_new&ajaxpipe=1"
 
-        async with httpx.AsyncClient(headers=self.headers, timeout=20) as client:
+        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(url)
             response.raise_for_status()
             raw = response.text
@@ -64,7 +66,6 @@ class AcfunParser:
         Returns:
             Path: 下载的mp4文件
         """
-        from tqdm.asyncio import tqdm
 
         m3u8_full_urls = await self._parse_m3u8(m3u8s_url)
         video_file = plugin_cache_dir / f"acfun_{acid}.mp4"
@@ -73,15 +74,12 @@ class AcfunParser:
 
         try:
             max_size_in_bytes = MAX_SIZE * 1024 * 1024
-            async with aiofiles.open(video_file, "wb") as f, httpx.AsyncClient(headers=self.headers) as client:
+            async with (
+                aiofiles.open(video_file, "wb") as f,
+                httpx.AsyncClient(headers=self.headers, timeout=DOWNLOAD_TIMEOUT) as client,
+            ):
                 total_size = 0
-                with tqdm(
-                    unit="B",
-                    unit_scale=True,
-                    unit_divisor=1024,
-                    dynamic_ncols=True,
-                    desc=video_file.name,
-                ) as bar:
+                with get_progress_bar(video_file.name) as bar:
                     for url in m3u8_full_urls:
                         async with client.stream("GET", url) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
@@ -105,7 +103,7 @@ class AcfunParser:
         Returns:
             list[str]: 视频链接
         """
-        async with httpx.AsyncClient(headers=self.headers) as client:
+        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(m3u8_url)
             m3u8_file = response.text
         # 分离ts文件链接

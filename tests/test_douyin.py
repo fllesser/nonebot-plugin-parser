@@ -134,10 +134,10 @@ async def test_douyin_slides():
 async def test_douyin_oversea():
     import httpx
 
-    from nonebot_plugin_resolver2.constant import IOS_HEADER
+    from nonebot_plugin_resolver2.constant import COMMON_TIMEOUT, IOS_HEADER
 
     url = "https://m.douyin.com/share/note/7484675353898667274"
-    async with httpx.AsyncClient(headers=IOS_HEADER) as client:
+    async with httpx.AsyncClient(headers=IOS_HEADER, timeout=COMMON_TIMEOUT) as client:
         response = await client.get(url)
         # headers
         # logger.debug("headers")

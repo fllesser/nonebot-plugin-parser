@@ -28,16 +28,15 @@ class BilibiliParser:
     def __init__(self):
         self.headers = HEADERS
         self._credential: Credential | None = None
-
-    def _init_credential(self):
-        """初始化 bilibili api"""
-
         # 选择客户端
         select_client("curl_cffi")
         # 模仿浏览器
         request_settings.set("impersonate", "chrome131")
         # 第二参数数值参考 curl_cffi 文档
         # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
+
+    def _init_credential(self):
+        """初始化 bilibili api"""
 
         if not rconfig.r_bili_ck:
             logger.warning("未配置哔哩哔哩 cookie, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
@@ -55,13 +54,17 @@ class BilibiliParser:
 
         if not await self._credential.check_valid():
             logger.warning("哔哩哔哩 cookie 已过期, 请重新配置哔哩哔哩 cookie")
-            self._credential = None
             return None
 
         if await self._credential.check_refresh():
-            logger.info("哔哩哔哩 cookie 需要刷新, 即将刷新哔哩哔哩 cookie")
-            await self._credential.refresh()
-            logger.info("哔哩哔哩 cookie 刷新成功")
+            logger.info("哔哩哔哩 cookie 需要刷新")
+            if self._credential.ac_time_value:
+                await self._credential.refresh()
+                logger.info("哔哩哔哩 cookie 刷新成功")
+            else:
+                logger.warning("哔哩哔哩 cookie 刷新需要 SESSDATA 和 ac_time_value")
+                return None
+
         return self._credential
 
     async def parse_opus(self, opus_id: int) -> tuple[list[str], str]:
@@ -261,7 +264,7 @@ class BilibiliParser:
         )
         ai_summary: str = "未配置哔哩哔哩 cookie, 无法使用 AI 总结"
         # 获取 AI 总结
-        if self._credential:
+        if await self.credential:
             cid = await video.get_cid(page_idx)
             ai_conclusion = await video.get_ai_conclusion(cid)
             ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "").strip()

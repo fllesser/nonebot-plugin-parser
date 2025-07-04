@@ -4,7 +4,7 @@ import urllib.parse
 
 import httpx
 
-from ..constant import COMMON_HEADER, IOS_HEADER
+from ..constant import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..exception import ParseException
 from .data import ParseResult
 from .utils import get_redirect_url
@@ -39,7 +39,7 @@ class KuaishouParser:
         # /fw/long-video/ 返回结果不一样, 统一替换为 /fw/photo/ 请求
         location_url = location_url.replace("/fw/long-video/", "/fw/photo/")
 
-        async with httpx.AsyncClient(headers=self.v_headers) as client:
+        async with httpx.AsyncClient(headers=self.v_headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(location_url)
             response.raise_for_status()
             response_text = response.text
@@ -113,7 +113,7 @@ class KuaishouParser:
         encoded_url = urllib.parse.quote(standard_url)
         api_url = self.api_url.format(encoded_url)
 
-        async with httpx.AsyncClient(headers=self.headers) as client:
+        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(api_url)
             if response.status_code != 200:
                 raise ParseException(f"解析 API 返回错误状态码: {response.status_code}")
