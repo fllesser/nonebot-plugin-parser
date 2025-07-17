@@ -139,6 +139,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             # 组合 text 和 image
             for path, text in zip(paths, texts):
                 segs.append(get_img_seg(path) + text)
+            assert len(segs) > 0
             await send_segments(segs)
             await bilibili.finish()
         else:
