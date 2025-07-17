@@ -3,6 +3,7 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 import httpx
+from nonebot import logger
 
 from ..config import rconfig
 from ..constant import COMMON_HEADER, COMMON_TIMEOUT
@@ -66,14 +67,11 @@ class XiaoHongShuParser:
         json_obj = json.loads(json_str)
         try:
             note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
-        except KeyError:
+            resource_type, note_title, note_desc = note_data["type"], note_data["title"], note_data["desc"]
+        except KeyError as e:
+            logger.error(f"小红书解析失败: {e}")
             raise ParseException("小红书 cookie 可能已失效")
-        # 资源类型 normal 图，video 视频
-        resource_type = note_data["type"]
-        # 标题
-        note_title = note_data["title"]
-        # 描述
-        note_desc = note_data["desc"]
+
         title_desc = f"{note_title}\n{note_desc}"
         img_urls = []
         video_url = ""
