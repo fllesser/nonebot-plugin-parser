@@ -60,7 +60,7 @@ async def download_file_by_stream(
                             bar.update(len(chunk))
     except httpx.HTTPError as exc:
         await safe_unlink(file_path)
-        logger.error(f"下载失败: url: {url}, file_path: {file_path} exc: {exc}")
+        logger.exception(f"下载失败: url: {url}, file_path: {file_path}")
         raise DownloadException(f"媒体下载失败: {exc}")
     return file_path
 
