@@ -58,14 +58,10 @@ async def download_file_by_stream(
                         async for chunk in response.aiter_bytes(1024 * 1024):
                             await file.write(chunk)
                             bar.update(len(chunk))
-    except httpx.TimeoutException:
+    except httpx.HTTPError as exc:
         await safe_unlink(file_path)
-        logger.error(f"url: {url}, file_path: {file_path} 下载超时")
-        raise DownloadException("媒体下载超时")
-    except httpx.RequestError as exc:
-        await safe_unlink(file_path)
-        logger.error(f"url: {url}, file_path: {file_path} 下载失败: {exc}")
-        raise DownloadException(f"媒体下载失败 {exc}")
+        logger.error(f"下载失败: url: {url}, file_path: {file_path} exc: {exc}")
+        raise DownloadException(f"媒体下载失败: {exc}")
     return file_path
 
 
