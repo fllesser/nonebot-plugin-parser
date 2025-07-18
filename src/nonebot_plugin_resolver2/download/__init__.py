@@ -6,10 +6,12 @@ import httpx
 from nonebot import logger
 from tqdm.asyncio import tqdm
 
-from ..config import MAX_SIZE, plugin_cache_dir
+from ..config import MAX_SIZE, plugin_cache_dir,PROXY
 from ..constant import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException
 from .utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
+
+import ssl #我也不知道为什么要导入一个未使用的库，但不导入就会出问题
 
 
 async def download_file_by_stream(
@@ -17,6 +19,7 @@ async def download_file_by_stream(
     *,
     file_name: str | None = None,
     ext_headers: dict[str, str] | None = None,
+    proxy: bool,
 ) -> Path:
     """download file by url with stream
 
@@ -45,7 +48,10 @@ async def download_file_by_stream(
     headers = {**COMMON_HEADER, **(ext_headers or {})}
 
     try:
-        async with httpx.AsyncClient(headers=headers, timeout=DOWNLOAD_TIMEOUT, verify=False) as client:
+        client_args = {"headers": headers,"timeout": DOWNLOAD_TIMEOUT,"verify": False}
+        if proxy:
+            client_args["proxy"] = PROXY
+        async with httpx.AsyncClient(**client_args) as client:
             async with client.stream("GET", url, follow_redirects=True) as response:
                 response.raise_for_status()
                 content_length = response.headers.get("Content-Length")
@@ -132,6 +138,7 @@ async def download_img(
     *,
     img_name: str | None = None,
     ext_headers: dict[str, str] | None = None,
+    proxy: bool,
 ) -> Path:
     """download image file by url with stream
 
@@ -149,13 +156,14 @@ async def download_img(
     """
     if img_name is None:
         img_name = generate_file_name(url, ".jpg")
-    return await download_file_by_stream(url, file_name=img_name, ext_headers=ext_headers)
+    return await download_file_by_stream(url, file_name=img_name, ext_headers=ext_headers,proxy=proxy)
 
 
 async def download_imgs_without_raise(
     urls: list[str],
     *,
     ext_headers: dict[str, str] | None = None,
+    proxy: bool,
 ) -> list[Path]:
     """download images without raise
 
@@ -167,7 +175,7 @@ async def download_imgs_without_raise(
         list[Path]: image file paths
     """
     paths_or_errs = await asyncio.gather(
-        *[download_img(url, ext_headers=ext_headers) for url in urls], return_exceptions=True
+        *[download_img(url, ext_headers=ext_headers,proxy=proxy) for url in urls], return_exceptions=True
     )
     return [p for p in paths_or_errs if isinstance(p, Path)]
 
