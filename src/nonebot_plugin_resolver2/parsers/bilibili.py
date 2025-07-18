@@ -262,9 +262,9 @@ class BilibiliParser:
             f"📝 简介：{video_info['desc']}\n"
             f"🏄‍♂️ {online['total']} 人正在观看，{online['count']} 人在网页端观看"
         )
-        ai_summary: str = "未配置哔哩哔哩 cookie, 无法使用 AI 总结"
+        ai_summary: str = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
         # 获取 AI 总结
-        if await self.credential:
+        if self._credential:
             cid = await video.get_cid(page_idx)
             ai_conclusion = await video.get_ai_conclusion(cid)
             ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "").strip()
