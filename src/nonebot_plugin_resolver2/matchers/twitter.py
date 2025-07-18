@@ -36,7 +36,7 @@ async def _(event: MessageEvent):
         await twitter.send(get_video_seg(video_path))
 
     if pic_urls:
-        img_paths = await download_imgs_without_raise(pic_urls,proxy=True)
+        img_paths = await download_imgs_without_raise(pic_urls, proxy=True)
         assert len(img_paths) > 0
         await send_segments([get_img_seg(img_path) for img_path in img_paths])
 

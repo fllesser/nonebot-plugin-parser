@@ -1,17 +1,16 @@
 import asyncio
 from pathlib import Path
+import ssl  # 我也不知道为什么要导入一个未使用的库，但不导入就会出问题
 
 import aiofiles
 import httpx
 from nonebot import logger
 from tqdm.asyncio import tqdm
 
-from ..config import MAX_SIZE, plugin_cache_dir,PROXY
+from ..config import MAX_SIZE, PROXY, plugin_cache_dir
 from ..constant import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException
 from .utils import exec_ffmpeg_cmd, generate_file_name, safe_unlink
-
-import ssl #我也不知道为什么要导入一个未使用的库，但不导入就会出问题
 
 
 async def download_file_by_stream(
@@ -48,7 +47,7 @@ async def download_file_by_stream(
     headers = {**COMMON_HEADER, **(ext_headers or {})}
 
     try:
-        client_args = {"headers": headers,"timeout": DOWNLOAD_TIMEOUT,"verify": False}
+        client_args = {"headers": headers, "timeout": DOWNLOAD_TIMEOUT, "verify": False}
         if proxy:
             client_args["proxy"] = PROXY
         async with httpx.AsyncClient(**client_args) as client:
@@ -156,7 +155,7 @@ async def download_img(
     """
     if img_name is None:
         img_name = generate_file_name(url, ".jpg")
-    return await download_file_by_stream(url, file_name=img_name, ext_headers=ext_headers,proxy=proxy)
+    return await download_file_by_stream(url, file_name=img_name, ext_headers=ext_headers, proxy=proxy)
 
 
 async def download_imgs_without_raise(
@@ -175,7 +174,7 @@ async def download_imgs_without_raise(
         list[Path]: image file paths
     """
     paths_or_errs = await asyncio.gather(
-        *[download_img(url, ext_headers=ext_headers,proxy=proxy) for url in urls], return_exceptions=True
+        *[download_img(url, ext_headers=ext_headers, proxy=proxy) for url in urls], return_exceptions=True
     )
     return [p for p in paths_or_errs if isinstance(p, Path)]
 
