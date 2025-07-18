@@ -19,14 +19,14 @@ async def download_file_by_stream(
     *,
     file_name: str | None = None,
     ext_headers: dict[str, str] | None = None,
-    proxy: bool,
+    proxy: bool = False,
 ) -> Path:
     """download file by url with stream
 
     Args:
         url (str): url address
         file_name (str | None, optional): file name. Defaults to get name by parse_url_resource_name.
-        proxy (str | None, optional): proxy url. Defaults to None.
+        proxy (bool): 是否使用全局变量中配置的proxy.
         ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
 
     Returns:
@@ -138,7 +138,7 @@ async def download_img(
     *,
     img_name: str | None = None,
     ext_headers: dict[str, str] | None = None,
-    proxy: bool,
+    proxy: bool = False,
 ) -> Path:
     """download image file by url with stream
 
@@ -163,7 +163,7 @@ async def download_imgs_without_raise(
     urls: list[str],
     *,
     ext_headers: dict[str, str] | None = None,
-    proxy: bool,
+    proxy: bool = False,
 ) -> list[Path]:
     """download images without raise
 
