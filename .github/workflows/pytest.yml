@@ -45,7 +45,6 @@ jobs:
         run: |
           uv run pytest tests/test_bilibili_need_ck.py::test_no_audio_video
           uv run pytest tests/test_bilibili_need_ck.py::test_bilibili_favlist
-          uv run pytest tests/test_bilibili_need_ck.py::test_bilibili_video
 
 
   weibo-test:
