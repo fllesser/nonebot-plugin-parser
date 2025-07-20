@@ -8,7 +8,7 @@ from ..download import stream_downloader
 from ..exception import handle_exception
 from ..parsers import KuaishouParser
 from .filter import is_not_in_disabled_groups
-from .helper import OnebotHelper
+from .helper import obhelper
 from .preprocess import ExtractText, Keyword, r_keywords
 
 parser = KuaishouParser()
@@ -47,14 +47,14 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     if video_info.cover_url:
         # 下载封面
         cover_path = await stream_downloader.download_img(video_info.cover_url)
-        msg += OnebotHelper.get_img_seg(cover_path)
+        msg += obhelper.get_img_seg(cover_path)
 
     await kuaishou.send(msg)
     if video_info.video_url:
         video_path = await stream_downloader.download_video(video_info.video_url)
-        await kuaishou.send(OnebotHelper.get_video_seg(video_path))
+        await kuaishou.send(obhelper.get_video_seg(video_path))
     if video_info.pic_urls:
         img_paths = await stream_downloader.download_imgs_without_raise(video_info.pic_urls)
-        segs: list[str | Message | MessageSegment] = [OnebotHelper.get_img_seg(img_path) for img_path in img_paths]
+        segs: list[str | Message | MessageSegment] = [obhelper.get_img_seg(img_path) for img_path in img_paths]
         assert len(segs) > 0
-        await OnebotHelper.send_segments(segs)
+        await obhelper.send_segments(segs)

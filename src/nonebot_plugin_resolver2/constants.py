@@ -17,10 +17,6 @@ ANDROID_HEADER: Final[dict[str, str]] = {
     "Chrome/132.0.0.0 Mobile Safari/537.36 Edg/132.0.0.0"
 }
 
-
-# 视频最大大小（MB）
-VIDEO_MAX_MB: Final[int] = 100
-
 # 解析列表文件名
 DISABLED_GROUPS: Final[str] = "disable_group_list.json"
 

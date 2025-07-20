@@ -6,10 +6,9 @@ from nonebot.adapters.onebot.v11 import GroupMessageEvent, Message, MessageEvent
 from nonebot.internal.matcher import current_bot, current_event
 
 from ..config import NEED_FORWARD, NICKNAME, USE_BASE64
-from ..constant import VIDEO_MAX_MB
 
 
-class OnebotHelper:
+class obhelper:
     @staticmethod
     def construct_nodes(user_id: int, segments: list[Message | MessageSegment | str]) -> Message:
         """构造节点
@@ -91,7 +90,7 @@ class OnebotHelper:
         file = video_path.read_bytes() if USE_BASE64 else video_path
         if file_size_byte_count == 0:
             seg = MessageSegment.text("视频文件大小为0")
-        elif file_size_byte_count > VIDEO_MAX_MB * 1024 * 1024:
+        elif file_size_byte_count > 100 * 1024 * 1024:
             # 转为文件 Seg
             seg = cls.get_file_seg(file, display_name=video_path.name)
         else:

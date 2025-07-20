@@ -8,7 +8,7 @@ from ..download import stream_downloader
 from ..exception import handle_exception
 from ..parsers import XiaoHongShuParser
 from .filter import is_not_in_disabled_groups
-from .helper import OnebotHelper
+from .helper import obhelper
 from .preprocess import ExtractText, r_keywords
 
 xiaohongshu = on_message(rule=is_not_in_disabled_groups & r_keywords("xiaohongshu.com", "xhslink.com"))
@@ -33,11 +33,11 @@ async def _(text: str = ExtractText()):
         # 发送图片
         segs: list[MessageSegment | Message | str] = [
             parse_result.title,
-            *(OnebotHelper.get_img_seg(img_path) for img_path in img_path_list),
+            *(obhelper.get_img_seg(img_path) for img_path in img_path_list),
         ]
-        await OnebotHelper.send_segments(segs)
+        await obhelper.send_segments(segs)
     # 如果是视频
     elif parse_result.video_url:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 视频 - {parse_result.title}")
         video_path = await stream_downloader.download_video(parse_result.video_url)
-        await xiaohongshu.finish(OnebotHelper.get_video_seg(video_path))
+        await xiaohongshu.finish(obhelper.get_video_seg(video_path))
