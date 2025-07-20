@@ -44,7 +44,8 @@ async def _(event: MessageEvent):
 
     try:
         video_path = await ytdlp_download_video(url=url)
-    except Exception as e:
-        await tiktok.finish(f"{pub_prefix}下载视频失败 {e}")
+    except Exception:
+        logger.error(f"tiktok video download failed | {url}", exc_info=True)
+        await tiktok.finish(f"{pub_prefix}下载视频失败")
 
     await tiktok.send(get_video_seg(video_path))

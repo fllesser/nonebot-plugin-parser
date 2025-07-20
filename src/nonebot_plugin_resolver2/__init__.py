@@ -58,7 +58,7 @@ async def clean_plugin_cache():
     try:
         files = [f for f in plugin_cache_dir.iterdir() if f.is_file()]
         if not files:
-            logger.info("no cache files to clean")
+            logger.info("No cache files to clean")
             return
 
         # 并发删除文件
@@ -66,5 +66,5 @@ async def clean_plugin_cache():
         await asyncio.gather(*tasks)
 
         logger.info(f"Successfully cleaned {len(files)} cache files")
-    except Exception as e:
-        logger.error(f"Error while cleaning cache: {e}")
+    except Exception:
+        logger.error("Error while cleaning cache files", exc_info=True)
