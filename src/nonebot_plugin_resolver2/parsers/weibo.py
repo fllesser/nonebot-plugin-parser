@@ -3,7 +3,7 @@ import re
 
 import httpx
 
-from ..constant import COMMON_HEADER, COMMON_TIMEOUT
+from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
 from .data import ParseResult
 

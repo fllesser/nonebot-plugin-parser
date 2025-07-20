@@ -7,7 +7,7 @@ from nonebot import logger
 from tqdm.asyncio import tqdm
 
 from ..config import MAX_SIZE, plugin_cache_dir
-from ..constant import COMMON_HEADER, DOWNLOAD_TIMEOUT
+from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException
 from ..utils import safe_unlink
 from .utils import generate_file_name

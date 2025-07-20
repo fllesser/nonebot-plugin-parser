@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 
-from ..constant import ANDROID_HEADER as ANDROID_HEADER
-from ..constant import COMMON_HEADER as COMMON_HEADER
-from ..constant import IOS_HEADER as IOS_HEADER
+from ..constants import ANDROID_HEADER as ANDROID_HEADER
+from ..constants import COMMON_HEADER as COMMON_HEADER
+from ..constants import IOS_HEADER as IOS_HEADER
 
 
 @dataclass

@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 from nonebot import logger
 
-from ..constant import COMMON_TIMEOUT
+from ..constants import COMMON_TIMEOUT
 from ..exception import ParseException
 from .data import ANDROID_HEADER, IOS_HEADER, ParseResult
 from .utils import get_redirect_url

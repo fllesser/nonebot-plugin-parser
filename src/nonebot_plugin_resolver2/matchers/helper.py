@@ -89,7 +89,7 @@ class obhelper:
         file_size_byte_count = int(video_path.stat().st_size)
         file = video_path.read_bytes() if USE_BASE64 else video_path
         if file_size_byte_count == 0:
-            seg = MessageSegment.text("视频文件大小为0")
+            seg = MessageSegment.text("视频文件大小为 0")
         elif file_size_byte_count > 100 * 1024 * 1024:
             # 转为文件 Seg
             seg = cls.get_file_seg(file, display_name=video_path.name)

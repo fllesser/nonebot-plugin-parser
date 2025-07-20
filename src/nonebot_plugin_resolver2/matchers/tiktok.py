@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
 from ..config import NICKNAME
-from ..constant import COMMON_TIMEOUT
+from ..constants import COMMON_TIMEOUT
 from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..exception import handle_exception
 from .filter import is_not_in_disabled_groups

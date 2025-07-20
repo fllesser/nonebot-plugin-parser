@@ -6,7 +6,7 @@ import aiofiles
 import httpx
 
 from ..config import MAX_SIZE, plugin_cache_dir
-from ..constant import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
+from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
 from ..download import stream_downloader
 from ..download.utils import safe_unlink
 from ..exception import DownloadException, ParseException

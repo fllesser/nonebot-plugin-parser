@@ -1,6 +1,6 @@
 import httpx
 
-from ..constant import COMMON_HEADER
+from ..constants import COMMON_HEADER
 
 
 async def get_redirect_url(url: str, headers: dict[str, str] | None = None) -> str:

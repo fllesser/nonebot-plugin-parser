@@ -7,7 +7,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
 from ..config import NICKNAME
-from ..constant import COMMON_HEADER, COMMON_TIMEOUT
+from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import stream_downloader
 from ..exception import ParseException, handle_exception
 from .filter import is_not_in_disabled_groups

@@ -14,7 +14,7 @@ from nonebot.permission import SUPERUSER
 from nonebot.rule import to_me
 
 from ..config import store
-from ..constant import DISABLED_GROUPS
+from ..constants import DISABLED_GROUPS
 
 
 def load_or_initialize_set() -> set[int]:
@@ -38,11 +38,11 @@ disabled_group_set: set[int] = load_or_initialize_set()
 
 # Rule
 def is_not_in_disabled_groups(event: MessageEvent) -> bool:
-    return True if not isinstance(event, GroupMessageEvent) else event.group_id not in disabled_group_set
+    return event.group_id not in disabled_group_set if isinstance(event, GroupMessageEvent) else True
 
 
 @on_command("开启所有解析", permission=SUPERUSER, block=True).handle()
-async def _(matcher: Matcher, bot: Bot, event: PrivateMessageEvent):
+async def _(matcher: Matcher, event: PrivateMessageEvent):
     """开启所有解析"""
     disabled_group_set.clear()
     save_disabled_groups()
@@ -64,7 +64,7 @@ async def _(matcher: Matcher, bot: Bot, event: PrivateMessageEvent):
     permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER,
     block=True,
 ).handle()
-async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
+async def _(matcher: Matcher, event: GroupMessageEvent):
     """开启解析"""
     gid = event.group_id
     if gid in disabled_group_set:
@@ -81,7 +81,7 @@ async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
     permission=GROUP_ADMIN | GROUP_OWNER | SUPERUSER,
     block=True,
 ).handle()
-async def _(matcher: Matcher, bot: Bot, event: GroupMessageEvent):
+async def _(matcher: Matcher, event: GroupMessageEvent):
     """关闭解析"""
     gid = event.group_id
     if gid not in disabled_group_set:
