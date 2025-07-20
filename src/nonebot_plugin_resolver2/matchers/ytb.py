@@ -36,8 +36,9 @@ async def _(event: MessageEvent, state: T_State):
     try:
         info_dict = await get_video_info(url, ytb_cookies_file)
         title = info_dict.get("title", "未知")
-    except Exception as e:
-        await ytb.finish(f"{NICKNAME}解析 | 油管 - 标题获取出错: {e}")
+    except Exception:
+        logger.error(f"油管标题获取失败 | {url}", exc_info=True)
+        await ytb.finish(f"{NICKNAME}解析 | 油管 - 标题获取出错")
     await ytb.send(f"{NICKNAME}解析 | 油管 - {title}")
     state["url"] = url
     state["title"] = title
@@ -69,9 +70,9 @@ async def _(
             video_path = await ytdlp_download_video(url, ytb_cookies_file)
         else:
             audio_path = await ytdlp_download_audio(url, ytb_cookies_file)
-    except Exception as e:
+    except Exception:
         media_type = "视频" if is_video else "音频"
-        logger.error(f"{media_type}下载失败 | {url} | {e}", exc_info=True)
+        logger.error(f"{media_type}下载失败 | {url}", exc_info=True)
         await ytb.finish(f"{media_type}下载失败", reply_message=True)
     # 发送视频或音频
     if video_path:

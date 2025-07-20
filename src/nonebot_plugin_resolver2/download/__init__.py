@@ -58,10 +58,10 @@ async def download_file_by_stream(
                         async for chunk in response.aiter_bytes(1024 * 1024):
                             await file.write(chunk)
                             bar.update(len(chunk))
-    except httpx.HTTPError as exc:
+    except httpx.HTTPError:
         await safe_unlink(file_path)
         logger.exception(f"下载失败: url: {url}, file_path: {file_path}")
-        raise DownloadException(f"媒体下载失败: {exc}")
+        raise DownloadException("媒体下载失败")
     return file_path
 
 
