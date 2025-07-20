@@ -8,7 +8,7 @@ from ..config import NICKNAME
 from ..exception import handle_exception
 from ..parsers import AcfunParser
 from .filter import is_not_in_disabled_groups
-from .helper import get_video_seg
+from .helper import OnebotHelper
 
 acfun = on_keyword(keywords={"acfun.cn"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -29,4 +29,4 @@ async def _(event: MessageEvent) -> None:
     await acfun.send(f"{NICKNAME}解析 | 猴山 - {video_desc}")
 
     video_file = await parser.download_video(m3u8_url, acid)
-    await acfun.send(get_video_seg(video_file))
+    await acfun.send(OnebotHelper.get_video_seg(video_file))

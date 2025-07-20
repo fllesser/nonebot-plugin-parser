@@ -6,7 +6,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_weibo_pics():
-    from nonebot_plugin_resolver2.download import download_imgs_without_raise, download_video
+    from nonebot_plugin_resolver2.download import StreamDownloader
     from nonebot_plugin_resolver2.parsers import WeiBoParser
 
     weibo_parser = WeiBoParser()
@@ -30,10 +30,10 @@ async def test_weibo_pics():
         assert video_info.video_url or video_info.pic_urls
         logger.success(f"{url} | 微博解析成功")
         if video_info.video_url:
-            await download_video(video_info.video_url, ext_headers=ext_headers)
+            await StreamDownloader.download_video(video_info.video_url, ext_headers=ext_headers)
             logger.success(f"{url} | 微博视频下载成功")
         if video_info.pic_urls:
-            files = await download_imgs_without_raise(video_info.pic_urls, ext_headers=ext_headers)
+            files = await StreamDownloader.download_imgs_without_raise(video_info.pic_urls, ext_headers=ext_headers)
             assert len(files) == len(video_info.pic_urls)
             logger.success(f"{url} | 微博图片下载成功")
 

@@ -4,7 +4,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_bilibili_favlist():
-    from nonebot_plugin_resolver2.download import download_imgs_without_raise
+    from nonebot_plugin_resolver2.download import StreamDownloader
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
     logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
@@ -19,7 +19,7 @@ async def test_bilibili_favlist():
     assert urls
     logger.debug(urls)
 
-    files = await download_imgs_without_raise(urls)
+    files = await StreamDownloader.download_imgs_without_raise(urls)
     assert len(files) == len(urls)
     logger.success("B站收藏夹解析成功")
 
@@ -52,15 +52,16 @@ async def test_encode_h264_video():
 
     from bilibili_api import HEADERS
 
-    from nonebot_plugin_resolver2.download import download_file_by_stream, encode_video_to_h264, merge_av
+    from nonebot_plugin_resolver2.download import StreamDownloader
+    from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
     bvid = "BV1VLk9YDEzB"
     bilibili_parser = BilibiliParser()
     video_url, audio_url = await bilibili_parser.parse_video_download_url(bvid=bvid)
     v_path, a_path = await asyncio.gather(
-        download_file_by_stream(video_url, file_name=f"{bvid}-video.m4s", ext_headers=HEADERS),
-        download_file_by_stream(audio_url, file_name=f"{bvid}-audio.m4s", ext_headers=HEADERS),
+        StreamDownloader.download_file_by_stream(video_url, file_name=f"{bvid}-video.m4s", ext_headers=HEADERS),
+        StreamDownloader.download_file_by_stream(audio_url, file_name=f"{bvid}-audio.m4s", ext_headers=HEADERS),
     )
 
     video_path = Path(__file__).parent / f"{bvid}.mp4"

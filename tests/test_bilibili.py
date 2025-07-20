@@ -43,7 +43,7 @@ async def test_bilibili_read():
 
 @pytest.mark.asyncio
 async def test_bilibili_opus():
-    from nonebot_plugin_resolver2.download import download_imgs_without_raise
+    from nonebot_plugin_resolver2.download import StreamDownloader
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
     opus_urls = [
@@ -63,7 +63,7 @@ async def test_bilibili_opus():
         assert pic_urls
         logger.debug(f"{opus_url} | pic_urls: {pic_urls}")
 
-        files = await download_imgs_without_raise(pic_urls)
+        files = await StreamDownloader.download_imgs_without_raise(pic_urls)
         assert len(files) == len(pic_urls)
 
         assert orig_text

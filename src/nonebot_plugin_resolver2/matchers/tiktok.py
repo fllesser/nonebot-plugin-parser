@@ -10,7 +10,7 @@ from ..constant import COMMON_TIMEOUT
 from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..exception import handle_exception
 from .filter import is_not_in_disabled_groups
-from .helper import get_video_seg
+from .helper import OnebotHelper
 
 tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -48,4 +48,4 @@ async def _(event: MessageEvent):
         logger.error(f"tiktok video download failed | {url}", exc_info=True)
         await tiktok.finish(f"{pub_prefix}下载视频失败")
 
-    await tiktok.send(get_video_seg(video_path))
+    await tiktok.send(OnebotHelper.get_video_seg(video_path))
