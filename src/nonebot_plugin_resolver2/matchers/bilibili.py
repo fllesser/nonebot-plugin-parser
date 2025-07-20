@@ -8,7 +8,7 @@ from nonebot.adapters.onebot.v11.exception import ActionFailed
 from nonebot.params import CommandArg
 
 from ..config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
-from ..download import StreamDownloader
+from ..download import stream_downloader
 from ..download.utils import encode_video_to_h264, merge_av
 from ..exception import ParseException, handle_exception
 from ..parsers import BilibiliParser, get_redirect_url
@@ -76,7 +76,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             await bilibili.send(f"{pub_prefix}动态")
             segs = [text]
             if img_lst:
-                paths = await StreamDownloader.download_imgs_without_raise(img_lst)
+                paths = await stream_downloader.download_imgs_without_raise(img_lst)
                 segs.extend(OnebotHelper.get_img_seg(path) for path in paths)
             await OnebotHelper.send_segments(segs)
             await bilibili.finish()
@@ -92,8 +92,8 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             if not title:
                 await bilibili.finish(f"{pub_prefix}直播 - 未找到直播间信息")
             res = f"{pub_prefix}直播 {title}"
-            res += OnebotHelper.get_img_seg(await StreamDownloader.download_img(cover)) if cover else ""
-            res += OnebotHelper.get_img_seg(await StreamDownloader.download_img(keyframe)) if keyframe else ""
+            res += OnebotHelper.get_img_seg(await stream_downloader.download_img(cover)) if cover else ""
+            res += OnebotHelper.get_img_seg(await stream_downloader.download_img(keyframe)) if keyframe else ""
             await bilibili.finish(res)
         # 专栏解析
         elif "/read" in url:
@@ -105,7 +105,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             texts, urls = await parser.parse_read(read_id)
             await bilibili.send(f"{pub_prefix}专栏")
             # 并发下载
-            paths = await StreamDownloader.download_imgs_without_raise(urls)
+            paths = await stream_downloader.download_imgs_without_raise(urls)
             # 反转路径列表，pop 时，则为原始顺序，提高性能
             paths.reverse()
             segs = []
@@ -128,7 +128,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             # 获取收藏夹内容，并下载封面
             texts, urls = await parser.parse_favlist(fav_id)
             await bilibili.send(f"{pub_prefix}收藏夹\n正在为你找出相关链接请稍等...")
-            paths: list[Path] = await StreamDownloader.download_imgs_without_raise(urls)
+            paths: list[Path] = await stream_downloader.download_imgs_without_raise(urls)
             segs = []
             # 组合 text 和 image
             for path, text in zip(paths, texts):
@@ -159,7 +159,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
     segs = [
         video_info.title,
-        OnebotHelper.get_img_seg(await StreamDownloader.download_img(video_info.cover_url)),
+        OnebotHelper.get_img_seg(await stream_downloader.download_img(video_info.cover_url)),
         video_info.display_info,
         video_info.ai_summary,
     ]
@@ -181,16 +181,16 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         # 下载视频和音频
         if video_info.audio_url:
             v_path, a_path = await asyncio.gather(
-                StreamDownloader.download_file_by_stream(
+                stream_downloader.download_file_by_stream(
                     video_info.video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers
                 ),
-                StreamDownloader.download_file_by_stream(
+                stream_downloader.download_file_by_stream(
                     video_info.audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers
                 ),
             )
             await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
         else:
-            video_path = await StreamDownloader.download_video(
+            video_path = await stream_downloader.download_video(
                 video_info.video_url, video_name=f"{file_name}.mp4", ext_headers=parser.headers
             )
 
@@ -231,7 +231,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     audio_path = plugin_cache_dir / audio_name
     # 下载
     if not audio_path.exists():
-        await StreamDownloader.download_file_by_stream(
+        await stream_downloader.download_file_by_stream(
             video_info.audio_url, file_name=audio_name, ext_headers=parser.headers
         )
 

@@ -4,7 +4,7 @@ from nonebot import logger, on_message
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
-from ..download import StreamDownloader
+from ..download import stream_downloader
 from ..exception import handle_exception
 from ..parsers import XiaoHongShuParser
 from .filter import is_not_in_disabled_groups
@@ -29,7 +29,7 @@ async def _(text: str = ExtractText()):
     # 如果是图文
     if parse_result.pic_urls:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 图文")
-        img_path_list = await StreamDownloader.download_imgs_without_raise(parse_result.pic_urls)
+        img_path_list = await stream_downloader.download_imgs_without_raise(parse_result.pic_urls)
         # 发送图片
         segs: list[MessageSegment | Message | str] = [
             parse_result.title,
@@ -39,5 +39,5 @@ async def _(text: str = ExtractText()):
     # 如果是视频
     elif parse_result.video_url:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 视频 - {parse_result.title}")
-        video_path = await StreamDownloader.download_video(parse_result.video_url)
+        video_path = await stream_downloader.download_video(parse_result.video_url)
         await xiaohongshu.finish(OnebotHelper.get_video_seg(video_path))

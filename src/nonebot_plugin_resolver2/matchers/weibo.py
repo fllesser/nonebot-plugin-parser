@@ -3,7 +3,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
 from ..config import NICKNAME
-from ..download import StreamDownloader
+from ..download import stream_downloader
 from ..exception import handle_exception
 from ..parsers import WeiBoParser
 from .filter import is_not_in_disabled_groups
@@ -27,9 +27,9 @@ async def _(event: MessageEvent):
 
     await weibo.send(f"{NICKNAME}解析 | 微博 - {video_info.title} - {video_info.author}")
     if video_info.video_url:
-        video_path = await StreamDownloader.download_video(video_info.video_url, ext_headers=ext_headers)
+        video_path = await stream_downloader.download_video(video_info.video_url, ext_headers=ext_headers)
         await weibo.finish(OnebotHelper.get_video_seg(video_path))
     if video_info.pic_urls:
-        image_paths = await StreamDownloader.download_imgs_without_raise(video_info.pic_urls, ext_headers=ext_headers)
+        image_paths = await stream_downloader.download_imgs_without_raise(video_info.pic_urls, ext_headers=ext_headers)
         if image_paths:
             await OnebotHelper.send_segments([OnebotHelper.get_img_seg(path) for path in image_paths])

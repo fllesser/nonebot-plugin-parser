@@ -16,8 +16,6 @@ from .utils import generate_file_name
 class StreamDownloader:
     """Downloader class for downloading files with stream"""
 
-    _instance: "StreamDownloader | None" = None
-
     def __init__(self):
         # httpx.AsyncClient
         self.client = httpx.AsyncClient(
@@ -25,15 +23,8 @@ class StreamDownloader:
             verify=False,
         )
 
-    @classmethod
-    def _get_instance(cls) -> "StreamDownloader":
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
-
-    @classmethod
     async def download_file_by_stream(
-        cls,
+        self,
         url: str,
         *,
         file_name: str | None = None,
@@ -53,7 +44,6 @@ class StreamDownloader:
         Raises:
             httpx.HTTPError: When download fails
         """
-        downloader = cls._get_instance()
 
         if not file_name:
             file_name = generate_file_name(url)
@@ -66,14 +56,14 @@ class StreamDownloader:
         headers = {**COMMON_HEADER, **(ext_headers or {})}
 
         try:
-            async with downloader.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
+            async with self.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
                 response.raise_for_status()
                 content_length = response.headers.get("Content-Length")
                 content_length = int(content_length) if content_length else None
                 if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
                     logger.warning(f"预下载 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB 限制, 取消下载")
                     raise DownloadException("媒体大小超过配置限制，取消下载")
-                with cls.get_progress_bar(file_name, content_length) as bar:
+                with self.get_progress_bar(file_name, content_length) as bar:
                     async with aiofiles.open(file_path, "wb") as file:
                         async for chunk in response.aiter_bytes(1024 * 1024):
                             await file.write(chunk)
@@ -105,9 +95,8 @@ class StreamDownloader:
             desc=desc,
         )
 
-    @classmethod
     async def download_video(
-        cls,
+        self,
         url: str,
         *,
         video_name: str | None = None,
@@ -128,11 +117,10 @@ class StreamDownloader:
         """
         if video_name is None:
             video_name = generate_file_name(url, ".mp4")
-        return await cls.download_file_by_stream(url, file_name=video_name, ext_headers=ext_headers)
+        return await self.download_file_by_stream(url, file_name=video_name, ext_headers=ext_headers)
 
-    @classmethod
     async def download_audio(
-        cls,
+        self,
         url: str,
         *,
         audio_name: str | None = None,
@@ -153,11 +141,10 @@ class StreamDownloader:
         """
         if audio_name is None:
             audio_name = generate_file_name(url, ".mp3")
-        return await cls.download_file_by_stream(url, file_name=audio_name, ext_headers=ext_headers)
+        return await self.download_file_by_stream(url, file_name=audio_name, ext_headers=ext_headers)
 
-    @classmethod
     async def download_img(
-        cls,
+        self,
         url: str,
         *,
         img_name: str | None = None,
@@ -178,11 +165,10 @@ class StreamDownloader:
         """
         if img_name is None:
             img_name = generate_file_name(url, ".jpg")
-        return await cls.download_file_by_stream(url, file_name=img_name, ext_headers=ext_headers)
+        return await self.download_file_by_stream(url, file_name=img_name, ext_headers=ext_headers)
 
-    @classmethod
     async def download_imgs_without_raise(
-        cls,
+        self,
         urls: list[str],
         *,
         ext_headers: dict[str, str] | None = None,
@@ -197,6 +183,9 @@ class StreamDownloader:
             list[Path]: image file paths
         """
         paths_or_errs = await asyncio.gather(
-            *[cls.download_img(url, ext_headers=ext_headers) for url in urls], return_exceptions=True
+            *[self.download_img(url, ext_headers=ext_headers) for url in urls], return_exceptions=True
         )
         return [p for p in paths_or_errs if isinstance(p, Path)]
+
+
+stream_downloader = StreamDownloader()

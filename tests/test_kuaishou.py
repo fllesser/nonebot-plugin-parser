@@ -7,7 +7,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_parse_by_api():
     """测试快手视频解析 based on api"""
-    from nonebot_plugin_resolver2.download import StreamDownloader
+    from nonebot_plugin_resolver2.download import stream_downloader
     from nonebot_plugin_resolver2.download.utils import fmt_size
     from nonebot_plugin_resolver2.parsers import KuaishouParser
 
@@ -33,7 +33,7 @@ async def test_parse_by_api():
         assert video_info.video_url, "视频URL为空"
 
         # 下载视频
-        video_path = await StreamDownloader.download_video(video_info.video_url)
+        video_path = await stream_downloader.download_video(video_info.video_url)
         logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
 
         if video_info.author:
@@ -47,7 +47,7 @@ async def test_parse_by_api():
 @pytest.mark.asyncio
 async def test_parse():
     """测试快手视频解析"""
-    from nonebot_plugin_resolver2.download import StreamDownloader
+    from nonebot_plugin_resolver2.download import stream_downloader
     from nonebot_plugin_resolver2.download.utils import fmt_size
     from nonebot_plugin_resolver2.parsers import KuaishouParser
 
@@ -73,13 +73,13 @@ async def test_parse():
         if video_info.video_url:
             logger.debug(f"{url} | video_url: {video_info.video_url}")
             # 下载视频
-            video_path = await StreamDownloader.download_video(video_info.video_url, ext_headers=parser.v_headers)
+            video_path = await stream_downloader.download_video(video_info.video_url, ext_headers=parser.v_headers)
             logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
 
         if video_info.pic_urls:
             logger.debug(f"{url} | pic_urls: {video_info.pic_urls}")
             # 下载图片
-            img_paths = await StreamDownloader.download_imgs_without_raise(
+            img_paths = await stream_downloader.download_imgs_without_raise(
                 video_info.pic_urls, ext_headers=parser.v_headers
             )
             logger.debug(f"{url} | 图片下载完成: {img_paths}")
