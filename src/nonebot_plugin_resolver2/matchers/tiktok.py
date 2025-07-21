@@ -48,4 +48,4 @@ async def _(event: MessageEvent):
         logger.error(f"tiktok video download failed | {url}", exc_info=True)
         await tiktok.finish(f"{pub_prefix}下载视频失败")
 
-    await tiktok.send(obhelper.get_video_seg(video_path))
+    await tiktok.send(obhelper.video_seg(video_path))

@@ -35,7 +35,6 @@ class StreamDownloader:
         Args:
             url (str): url address
             file_name (str | None, optional): file name. Defaults to get name by parse_url_resource_name.
-            proxy (str | None, optional): proxy url. Defaults to None.
             ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
 
         Returns:
@@ -188,4 +187,4 @@ class StreamDownloader:
         return [p for p in paths_or_errs if isinstance(p, Path)]
 
 
-stream_downloader = StreamDownloader()
+DOWNLOADER: StreamDownloader = StreamDownloader()

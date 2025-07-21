@@ -7,7 +7,7 @@ import httpx
 
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
-from ..download import stream_downloader
+from ..download import DOWNLOADER
 from ..download.utils import safe_unlink
 from ..exception import DownloadException, ParseException
 from .data import COMMON_HEADER
@@ -79,7 +79,7 @@ class AcfunParser:
                 httpx.AsyncClient(headers=self.headers, timeout=DOWNLOAD_TIMEOUT) as client,
             ):
                 total_size = 0
-                with stream_downloader.get_progress_bar(video_file.name) as bar:
+                with DOWNLOADER.get_progress_bar(video_file.name) as bar:
                     for url in m3u8_full_urls:
                         async with client.stream("GET", url) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):

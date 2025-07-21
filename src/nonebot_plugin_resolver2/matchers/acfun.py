@@ -29,4 +29,4 @@ async def _(event: MessageEvent) -> None:
     await acfun.send(f"{NICKNAME}解析 | 猴山 - {video_desc}")
 
     video_file = await parser.download_video(m3u8_url, acid)
-    await acfun.send(obhelper.get_video_seg(video_file))
+    await acfun.send(obhelper.video_seg(video_file))

@@ -52,7 +52,7 @@ class obhelper:
             await bot.send(event, message=message)
 
     @staticmethod
-    def get_img_seg(img_path: Path) -> MessageSegment:
+    def img_seg(img_path: Path) -> MessageSegment:
         """获取图片 Seg
 
         Args:
@@ -65,7 +65,7 @@ class obhelper:
         return MessageSegment.image(file)
 
     @staticmethod
-    def get_record_seg(audio_path: Path) -> MessageSegment:
+    def record_seg(audio_path: Path) -> MessageSegment:
         """获取语音 Seg
 
         Args:
@@ -78,7 +78,7 @@ class obhelper:
         return MessageSegment.record(file)
 
     @classmethod
-    def get_video_seg(cls, video_path: Path) -> MessageSegment:
+    def video_seg(cls, video_path: Path) -> MessageSegment:
         """获取视频 Seg
 
         Returns:
@@ -92,13 +92,13 @@ class obhelper:
             seg = MessageSegment.text("视频文件大小为 0")
         elif file_size_byte_count > 100 * 1024 * 1024:
             # 转为文件 Seg
-            seg = cls.get_file_seg(file, display_name=video_path.name)
+            seg = cls.file_seg(file, display_name=video_path.name)
         else:
             seg = MessageSegment.video(file)
         return seg
 
     @staticmethod
-    def get_file_seg(file: Path | bytes, display_name: str = "") -> MessageSegment:
+    def file_seg(file: Path | bytes, display_name: str = "") -> MessageSegment:
         """获取文件 Seg
 
         Args:

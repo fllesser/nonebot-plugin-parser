@@ -6,7 +6,7 @@ from nonebot import logger, on_message
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
-from ..download import stream_downloader
+from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import DouyinParser
 from .filter import is_not_in_disabled_groups
@@ -38,20 +38,20 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
     segs: list[MessageSegment | Message | str] = []
     # 存在普通图片
     if parse_result.pic_urls:
-        paths = await stream_downloader.download_imgs_without_raise(parse_result.pic_urls)
-        segs.extend(obhelper.get_img_seg(path) for path in paths)
+        paths = await DOWNLOADER.download_imgs_without_raise(parse_result.pic_urls)
+        segs.extend(obhelper.img_seg(path) for path in paths)
     # 存在动态图片
     if parse_result.dynamic_urls:
         # 并发下载动态图片
         video_paths = await asyncio.gather(
-            *[stream_downloader.download_video(url) for url in parse_result.dynamic_urls], return_exceptions=True
+            *[DOWNLOADER.download_video(url) for url in parse_result.dynamic_urls], return_exceptions=True
         )
-        video_segs = [obhelper.get_video_seg(p) for p in video_paths if isinstance(p, Path)]
+        video_segs = [obhelper.video_seg(p) for p in video_paths if isinstance(p, Path)]
         segs.extend(video_segs)
     if segs:
         await obhelper.send_segments(segs)
         await douyin.finish()
     # 存在视频
     if video_url := parse_result.video_url:
-        video_path = await stream_downloader.download_video(video_url)
-        await douyin.finish(obhelper.get_video_seg(video_path))
+        video_path = await DOWNLOADER.download_video(video_url)
+        await douyin.finish(obhelper.video_seg(video_path))
