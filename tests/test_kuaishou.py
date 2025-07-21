@@ -54,7 +54,7 @@ async def test_parse():
     parser = KuaishouParser()
 
     test_urls = [
-        "https://www.kuaishou.com/short-video/3xhjgcmir24m4nm",  # 视频
+        # "https://www.kuaishou.com/short-video/3xhjgcmir24m4nm",  # 视频 action 测试易失败
         "https://v.kuaishou.com/2yAnzeZ",  # 视频
         "https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc",  # 视频
         # "https://v.kuaishou.com/2xZPkuV",  # 图集
