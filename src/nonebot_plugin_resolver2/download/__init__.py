@@ -59,14 +59,17 @@ class StreamDownloader:
                 response.raise_for_status()
                 content_length = response.headers.get("Content-Length")
                 content_length = int(content_length) if content_length else None
+
                 if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
                     logger.warning(f"预下载 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB 限制, 取消下载")
                     raise DownloadException("媒体大小超过配置限制，取消下载")
+
                 with self.get_progress_bar(file_name, content_length) as bar:
                     async with aiofiles.open(file_path, "wb") as file:
                         async for chunk in response.aiter_bytes(1024 * 1024):
                             await file.write(chunk)
                             bar.update(len(chunk))
+
         except httpx.HTTPError:
             await safe_unlink(file_path)
             logger.exception(f"下载失败 | url: {url}, file_path: {file_path}")
