@@ -118,7 +118,6 @@ async def encode_video_to_h264(video_path: Path) -> Path:
     return output_path
 
 
-@staticmethod
 def fmt_size(file_path: Path) -> str:
     """格式化文件大小
 
