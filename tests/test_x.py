@@ -6,7 +6,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_x():
-    from nonebot_plugin_resolver2.download import download_imgs_without_raise, download_video
+    from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.matchers.twitter import parse_x_url
 
     urls = [
@@ -20,12 +20,12 @@ async def test_x():
         video_url, pic_urls = await parse_x_url(url)
         if video_url:
             logger.info(f"{url} | 解析为视频: {video_url}")
-            video_path = await download_video(video_url)
+            video_path = await DOWNLOADER.download_video(video_url)
             assert video_path.exists()
             logger.success(f"{url} | 视频解析并下载成功")
         if pic_urls:
             logger.info(f"{url} | 解析为图片: {pic_urls}")
-            img_paths = await download_imgs_without_raise(pic_urls)
+            img_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
             assert len(img_paths) == len(pic_urls)
             for img_path in img_paths:
                 assert img_path.exists()

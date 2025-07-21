@@ -9,11 +9,11 @@ from nonebot.rule import Rule
 from nonebot.typing import T_State
 
 from ..config import NEED_UPLOAD, NICKNAME, ytb_cookies_file
-from ..download.utils import keep_zh_en_num
 from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 from ..exception import handle_exception
+from ..utils import keep_zh_en_num
 from .filter import is_not_in_disabled_groups
-from .helper import get_file_seg, get_record_seg, get_video_seg
+from .helper import obhelper
 
 ytb = on_keyword(keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -76,9 +76,9 @@ async def _(
         await ytb.finish(f"{media_type}下载失败", reply_message=True)
     # 发送视频或音频
     if video_path:
-        await ytb.send(get_video_seg(video_path))
+        await ytb.send(obhelper.video_seg(video_path))
     elif audio_path:
-        await ytb.send(get_record_seg(audio_path))
+        await ytb.send(obhelper.record_seg(audio_path))
         if NEED_UPLOAD:
             file_name = f"{keep_zh_en_num(title)}.flac"
-            await ytb.send(get_file_seg(audio_path, file_name))
+            await ytb.send(obhelper.file_seg(audio_path, file_name))

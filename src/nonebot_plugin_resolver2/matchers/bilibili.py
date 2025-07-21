@@ -8,19 +8,13 @@ from nonebot.adapters.onebot.v11.exception import ActionFailed
 from nonebot.params import CommandArg
 
 from ..config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
-from ..download import (
-    download_file_by_stream,
-    download_img,
-    download_imgs_without_raise,
-    download_video,
-    encode_video_to_h264,
-    merge_av,
-)
-from ..download.utils import keep_zh_en_num
+from ..download import DOWNLOADER
+from ..download.utils import encode_video_to_h264, merge_av
 from ..exception import ParseException, handle_exception
 from ..parsers import BilibiliParser, get_redirect_url
+from ..utils import keep_zh_en_num
 from .filter import is_not_in_disabled_groups
-from .helper import get_file_seg, get_img_seg, get_record_seg, get_video_seg, send_segments
+from .helper import obhelper
 from .preprocess import ExtractText, Keyword, r_keywords
 
 bilibili = on_message(
@@ -82,9 +76,9 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             await bilibili.send(f"{pub_prefix}动态")
             segs = [text]
             if img_lst:
-                paths = await download_imgs_without_raise(img_lst)
-                segs.extend(get_img_seg(path) for path in paths)
-            await send_segments(segs)
+                paths = await DOWNLOADER.download_imgs_without_raise(img_lst)
+                segs.extend(obhelper.img_seg(path) for path in paths)
+            await obhelper.send_segments(segs)
             await bilibili.finish()
         # 直播间解析
         elif "/live" in url:
@@ -98,8 +92,8 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             if not title:
                 await bilibili.finish(f"{pub_prefix}直播 - 未找到直播间信息")
             res = f"{pub_prefix}直播 {title}"
-            res += get_img_seg(await download_img(cover)) if cover else ""
-            res += get_img_seg(await download_img(keyframe)) if keyframe else ""
+            res += obhelper.img_seg(await DOWNLOADER.download_img(cover)) if cover else ""
+            res += obhelper.img_seg(await DOWNLOADER.download_img(keyframe)) if keyframe else ""
             await bilibili.finish(res)
         # 专栏解析
         elif "/read" in url:
@@ -111,7 +105,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             texts, urls = await parser.parse_read(read_id)
             await bilibili.send(f"{pub_prefix}专栏")
             # 并发下载
-            paths = await download_imgs_without_raise(urls)
+            paths = await DOWNLOADER.download_imgs_without_raise(urls)
             # 反转路径列表，pop 时，则为原始顺序，提高性能
             paths.reverse()
             segs = []
@@ -119,9 +113,9 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
                 if text:
                     segs.append(text)
                 else:
-                    segs.append(get_img_seg(paths.pop()))
+                    segs.append(obhelper.img_seg(paths.pop()))
             if segs:
-                await send_segments(segs)
+                await obhelper.send_segments(segs)
                 await bilibili.finish()
         # 收藏夹解析
         elif "/favlist" in url:
@@ -134,13 +128,13 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             # 获取收藏夹内容，并下载封面
             texts, urls = await parser.parse_favlist(fav_id)
             await bilibili.send(f"{pub_prefix}收藏夹\n正在为你找出相关链接请稍等...")
-            paths: list[Path] = await download_imgs_without_raise(urls)
+            paths: list[Path] = await DOWNLOADER.download_imgs_without_raise(urls)
             segs = []
             # 组合 text 和 image
             for path, text in zip(paths, texts):
-                segs.append(get_img_seg(path) + text)
+                segs.append(obhelper.img_seg(path) + text)
             assert len(segs) > 0
-            await send_segments(segs)
+            await obhelper.send_segments(segs)
             await bilibili.finish()
         else:
             logger.info(f"不支持的链接: {url}")
@@ -165,7 +159,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
     segs = [
         video_info.title,
-        get_img_seg(await download_img(video_info.cover_url)),
+        obhelper.img_seg(await DOWNLOADER.download_img(video_info.cover_url)),
         video_info.display_info,
         video_info.ai_summary,
     ]
@@ -174,7 +168,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
             f"⚠️ 当前视频时长 {video_info.video_duration // 60} 分钟, "
             f"超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!"
         )
-    await send_segments(segs)
+    await obhelper.send_segments(segs)
 
     if video_info.video_duration > DURATION_MAXIMUM:
         logger.info(f"video duration > {DURATION_MAXIMUM}, ignore download")
@@ -187,22 +181,22 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         # 下载视频和音频
         if video_info.audio_url:
             v_path, a_path = await asyncio.gather(
-                download_file_by_stream(
+                DOWNLOADER.download_file_by_stream(
                     video_info.video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers
                 ),
-                download_file_by_stream(
+                DOWNLOADER.download_file_by_stream(
                     video_info.audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers
                 ),
             )
             await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
         else:
-            video_path = await download_video(
+            video_path = await DOWNLOADER.download_video(
                 video_info.video_url, video_name=f"{file_name}.mp4", ext_headers=parser.headers
             )
 
     # 发送视频
     try:
-        await bilibili.send(get_video_seg(video_path))
+        await bilibili.send(obhelper.video_seg(video_path))
     except ActionFailed as e:
         message: str = e.info.get("message", "")
         # 无缩略图
@@ -211,7 +205,7 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
         # 重新编码为 h264
         logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
         h264_video_path = await encode_video_to_h264(video_path)
-        await bilibili.send(get_video_seg(h264_video_path))
+        await bilibili.send(obhelper.video_seg(h264_video_path))
 
 
 @bili_music.handle()
@@ -237,10 +231,10 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     audio_path = plugin_cache_dir / audio_name
     # 下载
     if not audio_path.exists():
-        await download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=parser.headers)
+        await DOWNLOADER.download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=parser.headers)
 
     # 发送音频
-    await bili_music.send(get_record_seg(audio_path))
+    await bili_music.send(obhelper.record_seg(audio_path))
     # 上传音频
     if NEED_UPLOAD:
-        await bili_music.send(get_file_seg(audio_path))
+        await bili_music.send(obhelper.file_seg(audio_path))

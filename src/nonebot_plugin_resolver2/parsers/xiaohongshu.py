@@ -6,7 +6,7 @@ import httpx
 from nonebot import logger
 
 from ..config import rconfig
-from ..constant import COMMON_HEADER, COMMON_TIMEOUT
+from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
 from .data import ParseResult
 from .utils import get_redirect_url

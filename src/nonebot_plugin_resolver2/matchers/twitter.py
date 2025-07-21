@@ -7,11 +7,11 @@ from nonebot.adapters.onebot.v11 import MessageEvent
 from nonebot.rule import Rule
 
 from ..config import NICKNAME
-from ..constant import COMMON_HEADER, COMMON_TIMEOUT
-from ..download import download_imgs_without_raise, download_video
+from ..constants import COMMON_HEADER, COMMON_TIMEOUT
+from ..download import DOWNLOADER
 from ..exception import ParseException, handle_exception
 from .filter import is_not_in_disabled_groups
-from .helper import get_img_seg, get_video_seg, send_segments
+from .helper import obhelper
 
 twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
 
@@ -32,13 +32,13 @@ async def _(event: MessageEvent):
     video_url, pic_urls = await parse_x_url(x_url)
 
     if video_url:
-        video_path = await download_video(video_url)
-        await twitter.send(get_video_seg(video_path))
+        video_path = await DOWNLOADER.download_video(video_url)
+        await twitter.send(obhelper.video_seg(video_path))
 
     if pic_urls:
-        img_paths = await download_imgs_without_raise(pic_urls)
+        img_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
         assert len(img_paths) > 0
-        await send_segments([get_img_seg(img_path) for img_path in img_paths])
+        await obhelper.send_segments([obhelper.img_seg(img_path) for img_path in img_paths])
 
 
 async def parse_x_url(x_url: str) -> tuple[str, list[str]]:

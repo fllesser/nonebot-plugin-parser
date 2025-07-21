@@ -1,12 +1,14 @@
 import httpx
 
-from ..constant import COMMON_HEADER
+from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 
 
 async def get_redirect_url(url: str, headers: dict[str, str] | None = None) -> str:
     """获取重定向后的URL"""
     headers = headers or COMMON_HEADER
-    async with httpx.AsyncClient(headers=headers, verify=False, follow_redirects=False) as client:
+    async with httpx.AsyncClient(
+        headers=headers, verify=False, follow_redirects=False, timeout=COMMON_TIMEOUT
+    ) as client:
         response = await client.get(url)
         if response.status_code >= 400:
             response.raise_for_status()

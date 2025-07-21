@@ -17,13 +17,9 @@ ANDROID_HEADER: Final[dict[str, str]] = {
     "Chrome/132.0.0.0 Mobile Safari/537.36 Edg/132.0.0.0"
 }
 
-
-# 视频最大大小（MB）
-VIDEO_MAX_MB: Final[int] = 100
-
 # 解析列表文件名
 DISABLED_GROUPS: Final[str] = "disable_group_list.json"
 
 COMMON_TIMEOUT: Final[httpx.Timeout] = httpx.Timeout(connect=15.0, read=20.0, write=10.0, pool=10.0)
 
-DOWNLOAD_TIMEOUT: Final[httpx.Timeout] = httpx.Timeout(connect=10.0, read=240.0, write=10.0, pool=10.0)
+DOWNLOAD_TIMEOUT: Final[httpx.Timeout] = httpx.Timeout(connect=15.0, read=240.0, write=10.0, pool=10.0)
