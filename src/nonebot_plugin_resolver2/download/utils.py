@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 from nonebot import logger
 
-from ..utils import exec_cmd, safe_unlink
+from ..utils import exec_ffmpeg_cmd, safe_unlink
 
 
 async def merge_av(
@@ -39,7 +39,7 @@ async def merge_av(
         str(output_path),
     ]
 
-    await exec_cmd(cmd)
+    await exec_ffmpeg_cmd(cmd)
     await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
 
 
@@ -83,7 +83,7 @@ async def merge_av_h264(
         str(output_path),
     ]
 
-    await exec_cmd(cmd)
+    await exec_ffmpeg_cmd(cmd)
     await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
 
 
@@ -112,7 +112,7 @@ async def encode_video_to_h264(video_path: Path) -> Path:
         "23",
         str(output_path),
     ]
-    await exec_cmd(cmd)
+    await exec_ffmpeg_cmd(cmd)
     logger.success(f"视频重新编码为 H.264 成功: {output_path}, {fmt_size(output_path)}")
     await safe_unlink(video_path)
     return output_path

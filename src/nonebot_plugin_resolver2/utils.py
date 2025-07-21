@@ -22,7 +22,7 @@ async def safe_unlink(path: Path):
         logger.error(f"删除 {path} 失败", exc_info=True)
 
 
-async def exec_cmd(cmd: list[str]) -> None:
+async def exec_ffmpeg_cmd(cmd: list[str]) -> None:
     """执行命令
 
     Args:
