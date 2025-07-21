@@ -17,8 +17,9 @@ class StreamDownloader:
     """Downloader class for downloading files with stream"""
 
     def __init__(self):
-        # httpx.AsyncClient
-        self.client = httpx.AsyncClient(
+        self.headers: dict[str, str] = COMMON_HEADER.copy()
+        self.cache_dir: Path = plugin_cache_dir
+        self.client: httpx.AsyncClient = httpx.AsyncClient(
             timeout=DOWNLOAD_TIMEOUT,
             verify=False,
         )
@@ -46,13 +47,13 @@ class StreamDownloader:
 
         if not file_name:
             file_name = generate_file_name(url)
-        file_path = plugin_cache_dir / file_name
+        file_path = self.cache_dir / file_name
 
         # 如果文件存在，则直接返回
         if file_path.exists():
             return file_path
 
-        headers = {**COMMON_HEADER, **(ext_headers or {})}
+        headers = {**self.headers, **(ext_headers or {})}
 
         try:
             async with self.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
