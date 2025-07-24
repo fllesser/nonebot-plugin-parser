@@ -40,13 +40,15 @@ class BilibiliParser:
         """初始化 bilibili api"""
 
         if not rconfig.r_bili_ck:
-            logger.warning("未配置哔哩哔哩 cookie, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
+            logger.warning("未配置 r_bili_ck, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
             return None
 
         credential = Credential.from_cookies(ck2dict(rconfig.r_bili_ck))
         if not await credential.check_valid() and self._cookies_file.exists():
+            logger.info(f"r_bili_ck 已过期, 尝试从 {self._cookies_file} 加载")
             credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
         else:
+            logger.info(f"r_bili_ck 有效, 保存到 {self._cookies_file}")
             self._cookies_file.write_text(json.dumps(credential.get_cookies()))
 
         return credential
@@ -68,8 +70,8 @@ class BilibiliParser:
             logger.info("哔哩哔哩 cookies 需要刷新")
             if self._credential.has_ac_time_value() and self._credential.has_bili_jct():
                 await self._credential.refresh()
+                logger.info(f"哔哩哔哩 cookies 刷新成功, 保存到 {self._cookies_file}")
                 self._cookies_file.write_text(json.dumps(self._credential.get_cookies()))
-                logger.info("哔哩哔哩 cookies 刷新成功")
             else:
                 logger.warning("哔哩哔哩 cookies 刷新需要包含 SESSDATA, ac_time_value, bili_jct")
 
