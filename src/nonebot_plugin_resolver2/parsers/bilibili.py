@@ -3,7 +3,7 @@ import json
 import re
 from typing import Any
 
-from bilibili_api import Credential, request_settings, select_client
+from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.video import Video
 from nonebot import logger
 
@@ -27,6 +27,7 @@ class BilibiliVideoInfo:
 
 class BilibiliParser:
     def __init__(self):
+        self.headers = HEADERS.copy()
         self._credential: Credential | None = None
         self._cookies_file = plugin_config_dir / "bilibili_cookies.json"
         # 选择客户端
