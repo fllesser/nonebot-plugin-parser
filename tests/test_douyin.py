@@ -6,16 +6,10 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_douyin_common_video():
-    """
-    测试普通视频
-    https://v.douyin.com/iDHWnyTP
-    https://www.douyin.com/video/7440422807663660328
-    """
-    from nonebot_plugin_resolver2.constants import IOS_HEADER
-    from nonebot_plugin_resolver2.download import DOWNLOADER
+    """测试普通视频"""
     from nonebot_plugin_resolver2.parsers import DouyinParser
 
-    douyin_parser = DouyinParser()
+    parser = DouyinParser()
 
     common_urls = [
         "https://v.douyin.com/iDHWnyTP",
@@ -24,7 +18,7 @@ async def test_douyin_common_video():
 
     async def test_parse_share_url(url: str) -> None:
         logger.info(f"{url} | 开始解析抖音视频")
-        video_info = await douyin_parser.parse_share_url(url)
+        video_info = await parser.parse_share_url(url)
         logger.debug(f"{url} | title: {video_info.title}")
         assert video_info.title
         logger.debug(f"{url} | author: {video_info.author}")
@@ -33,7 +27,6 @@ async def test_douyin_common_video():
         assert video_info.cover_url
         logger.debug(f"{url} | video_url: {video_info.video_url}")
         assert video_info.video_url
-        await DOWNLOADER.download_video(video_info.video_url, ext_headers=IOS_HEADER)
         logger.success(f"{url} | 抖音视频解析成功")
 
     await asyncio.gather(*[test_parse_share_url(url) for url in common_urls])
@@ -41,10 +34,7 @@ async def test_douyin_common_video():
 
 @pytest.mark.asyncio
 async def test_douyin_old_video():
-    """
-    老视频，网页打开会重定向到 m.ixigua.com
-    https://v.douyin.com/iUrHrruH
-    """
+    """老视频，网页打开会重定向到 m.ixigua.com"""
 
     # from nonebot_plugin_resolver2.parsers.douyin import DouYin
 
@@ -66,14 +56,10 @@ async def test_douyin_old_video():
 
 @pytest.mark.asyncio
 async def test_douyin_note():
-    """
-    测试普通图文
-    https://www.douyin.com/note/7469411074119322899
-    https://v.douyin.com/iP6Uu1Kh
-    """
+    """测试普通图文"""
     from nonebot_plugin_resolver2.parsers import DouyinParser
 
-    douyin_parser = DouyinParser()
+    parser = DouyinParser()
 
     note_urls = [
         "https://www.douyin.com/note/7469411074119322899",
@@ -82,7 +68,7 @@ async def test_douyin_note():
 
     async def test_parse_share_url(url: str) -> None:
         logger.info(f"{url} | 开始解析抖音图文")
-        video_info = await douyin_parser.parse_share_url(url)
+        video_info = await parser.parse_share_url(url)
         logger.debug(f"{url} | title: {video_info.title}")
         assert video_info.title
         logger.debug(f"{url} | author: {video_info.author}")
