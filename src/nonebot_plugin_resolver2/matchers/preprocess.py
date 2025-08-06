@@ -10,6 +10,7 @@ from nonebot.typing import T_State
 
 R_KEYWORD_KEY: Literal["_r_keyword"] = "_r_keyword"
 R_EXTRACT_KEY: Literal["_r_extract"] = "_r_extract"
+R_EXCEPT_STR: str = "当前QQ版本不支持此应用，请升级"
 
 
 def ExtractText() -> str:
@@ -89,8 +90,11 @@ def extract_msg_text(event: MessageEvent, state: T_State) -> None:
     message = event.get_message()
     text: str | None = None
 
+    
+
     # 提取纯文本
-    if text := message.extract_plain_text().strip():
+    # 排除部分情况下Lagrange端多出“版本不支持”纯文本消息段导致不解析
+    if (text := message.extract_plain_text().strip()) and text != R_EXCEPT_STR:
         state[R_EXTRACT_KEY] = text
         return
 
