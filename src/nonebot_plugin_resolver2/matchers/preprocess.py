@@ -90,8 +90,6 @@ def extract_msg_text(event: MessageEvent, state: T_State) -> None:
     message = event.get_message()
     text: str | None = None
 
-    
-
     # 提取纯文本
     # 排除部分情况下Lagrange端多出“版本不支持”纯文本消息段导致不解析
     if (text := message.extract_plain_text().strip()) and text != R_EXCEPT_STR:
