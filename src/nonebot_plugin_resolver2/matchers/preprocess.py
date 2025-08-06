@@ -93,6 +93,7 @@ def extract_msg_text(event: MessageEvent, state: T_State) -> None:
     if json_seg := next((seg for seg in message if seg.type == "json"), None):
         if url := _extract_json_url(json_seg):
             state[R_EXTRACT_KEY] = url
+            return
     # 提取纯文本
     if text := message.extract_plain_text().strip():
         state[R_EXTRACT_KEY] = text
