@@ -10,7 +10,6 @@ from nonebot.typing import T_State
 
 R_KEYWORD_KEY: Literal["_r_keyword"] = "_r_keyword"
 R_EXTRACT_KEY: Literal["_r_extract"] = "_r_extract"
-R_EXCEPT_STR: str = "当前QQ版本不支持此应用，请升级"
 
 
 def ExtractText() -> str:
@@ -59,7 +58,7 @@ def _extract_json_url(json_seg: MessageSegment) -> str | None:
         json_seg: JSON 类型的消息段
 
     Returns:
-        Optional[str]: 提取的 URL，如果提取失败则返回 None
+        Optional[str]: 提取的 URL, 如果提取失败则返回 None
     """
     data_str: str | None = json_seg.data.get("data")
     if not data_str:
@@ -90,16 +89,13 @@ def extract_msg_text(event: MessageEvent, state: T_State) -> None:
     message = event.get_message()
     text: str | None = None
 
-    # 提取纯文本
-    # 排除部分情况下Lagrange端多出“版本不支持”纯文本消息段导致不解析
-    if (text := message.extract_plain_text().strip()) and text != R_EXCEPT_STR:
-        state[R_EXTRACT_KEY] = text
-        return
-
     # 提取json数据
     if json_seg := next((seg for seg in message if seg.type == "json"), None):
         if url := _extract_json_url(json_seg):
             state[R_EXTRACT_KEY] = url
+    # 提取纯文本
+    if text := message.extract_plain_text().strip():
+        state[R_EXTRACT_KEY] = text
 
 
 class RKeywordsRule:
