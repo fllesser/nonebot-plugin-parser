@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 
 [[package]]
@@ -769,7 +769,7 @@ wheels = [
 
 [[package]]
 name = "nonebot-plugin-resolver2"
-version = "1.11.1"
+version = "1.11.2"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },

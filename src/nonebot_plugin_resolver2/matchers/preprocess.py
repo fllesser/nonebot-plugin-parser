@@ -58,7 +58,7 @@ def _extract_json_url(json_seg: MessageSegment) -> str | None:
         json_seg: JSON 类型的消息段
 
     Returns:
-        Optional[str]: 提取的 URL，如果提取失败则返回 None
+        Optional[str]: 提取的 URL, 如果提取失败则返回 None
     """
     data_str: str | None = json_seg.data.get("data")
     if not data_str:
@@ -89,15 +89,14 @@ def extract_msg_text(event: MessageEvent, state: T_State) -> None:
     message = event.get_message()
     text: str | None = None
 
-    # 提取纯文本
-    if text := message.extract_plain_text().strip():
-        state[R_EXTRACT_KEY] = text
-        return
-
     # 提取json数据
     if json_seg := next((seg for seg in message if seg.type == "json"), None):
         if url := _extract_json_url(json_seg):
             state[R_EXTRACT_KEY] = url
+            return
+    # 提取纯文本
+    if text := message.extract_plain_text().strip():
+        state[R_EXTRACT_KEY] = text
 
 
 class RKeywordsRule:
