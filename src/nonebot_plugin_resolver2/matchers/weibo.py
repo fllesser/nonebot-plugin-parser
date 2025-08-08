@@ -22,7 +22,7 @@ weibo = on_message(
 @weibo.handle()
 @handle_exception()
 async def _(event: MessageEvent):
-    if len(event.message) == 1 and event.message[0].type == "json": # 处理QQ小程序消息
+    if len(event.message) == 1 and event.message[0].type == "json":  # 处理QQ小程序消息
         try:
             data = json.loads(event.message[0].data["data"])
             message = data["meta"]["detail_1"]["qqdocurl"]
