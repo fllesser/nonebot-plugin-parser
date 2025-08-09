@@ -14,6 +14,7 @@ xiaohongshu = on_url_keyword("xiaohongshu.com", "xhslink.com")
 
 parser = XiaoHongShuParser()
 
+
 @xiaohongshu.handle()
 @handle_exception()
 async def _(text: str = ExtractText()):
