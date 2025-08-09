@@ -28,7 +28,6 @@ jobs:
       - name: pytest
         run: uv run pytest tests/test_load.py
 
-
   bilibili-test:
     needs: plugin-load
     runs-on: ubuntu-latest
@@ -39,13 +38,12 @@ jobs:
         uses: ./.github/actions/setup-pytest
       
       - name: opus, read, live tests
-        run: |
-          uv run pytest tests/test_bilibili.py
+        run: uv run pytest tests/test_bilibili.py
+
       - name: no audio video, favlist, video tests
         run: |
           uv run pytest tests/test_bilibili_need_ck.py::test_no_audio_video
           uv run pytest tests/test_bilibili_need_ck.py::test_bilibili_favlist
-
 
   weibo-test:
     needs: plugin-load
@@ -58,7 +56,6 @@ jobs:
       - name: pytest
         run: uv run pytest tests/test_weibo.py
 
-
   twitter-test:
     needs: plugin-load
     runs-on: ubuntu-latest
@@ -69,8 +66,6 @@ jobs:
       
       - name: pytest
         run: uv run pytest tests/test_x.py
-
-
 
   acfun-test:
     needs: plugin-load
@@ -94,16 +89,16 @@ jobs:
       - name: pytest
         run: uv run pytest tests/test_douyin.py
       
-  # xhs-test:
-  #   needs: plugin-load
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: setup-pytest
-  #       uses: ./.github/actions/setup-pytest
+  xhs-test:
+    needs: plugin-load
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup-pytest
+        uses: ./.github/actions/setup-pytest
       
-  #     - name: pytest
-  #       run: uv run pytest tests/test_xhs.py
+      - name: pytest
+        run: uv run pytest tests/test_xhs.py
   
   kuaishou-test:
     needs: plugin-load
