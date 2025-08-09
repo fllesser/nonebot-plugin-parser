@@ -2,34 +2,30 @@ from pathlib import Path
 import re
 from typing import Any
 
-from nonebot import logger, on_keyword
+from nonebot import logger
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
 from nonebot.params import PausePromptResult
-from nonebot.rule import Rule
 from nonebot.typing import T_State
 
 from ..config import NEED_UPLOAD, NICKNAME, ytb_cookies_file
 from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 from ..exception import handle_exception
 from ..utils import keep_zh_en_num
-from .filter import is_not_in_disabled_groups
 from .helper import obhelper
+from .preprocess import ExtractText, on_url_keyword
 
-ytb = on_keyword(keywords={"youtube.com", "youtu.be"}, rule=Rule(is_not_in_disabled_groups))
+ytb = on_url_keyword("youtube.com", "youtu.be")
 
 
 @ytb.handle()
 @handle_exception()
-async def _(event: MessageEvent, state: T_State):
-    message = event.message.extract_plain_text().strip()
-    pattern = (
-        # https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz
-        # https://www.youtube.com/watch?v=1LnPnmKALL8&list=RD8AxpdwegNKc&index=2
-        r"(?:https?://)?(?:www\.)?(?:youtube\.com|youtu\.be)/[A-Za-z\d\._\?%&\+\-=/#]+"
-    )
-    matched = re.search(pattern, message)
+async def _(state: T_State, text: str = ExtractText()):
+    # https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz
+    # https://www.youtube.com/watch?v=1LnPnmKALL8&list=RD8AxpdwegNKc&index=2
+    pattern = r"(?:https?://)?(?:www\.)?(?:youtube\.com|youtu\.be)/[A-Za-z\d\._\?%&\+\-=/#]+"
+    matched = re.search(pattern, text)
     if not matched:
-        logger.warning(f"{message} 中的链接不支持，已忽略")
+        logger.warning(f"{text} 中的链接不支持，已忽略")
         await ytb.finish()
 
     url = matched.group(0)

@@ -1,16 +1,13 @@
 youtube:
 - https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz
 
-kugou:
-- https://www.kugou.com/mixsong/j3pry11.html
-
 kuaishou:
 视频：
 - https://www.kuaishou.com/short-video/3xhjgcmir24m4nm 
 - https://v.kuaishou.com/2yAnzeZ
 - https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
 图集：
-- https://v.kuaishou.com/2xZPkuV
+- https://v.kuaishou.com/2xZPkuV  链接失效
 
 bilibili:
 - https://www.bilibili.com/opus/998440765151510535
@@ -60,8 +57,7 @@ douyin:
   - https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
 
 xiaohongshu:
-- http://xhslink.com/a/WHdZNpdzwbl7
-- https://www.xiaohongshu.com/discovery/item/67c41945000000002802b2e2?source=webshare&xhsshare=pc_web&xsec_token=ABS6rGbAmdjNtTuLqfAB2aR0oDioMqDezM4Hx5EeDFGSI=&xsec_source=pc_share
+- https://www.xiaohongshu.com/discovery/item/685fd0e00000000024008b56?app_platform=android&ignoreEngage=true&app_version=8.87.6&share_from_user_hidden=true&xsec_source=app_share&type=video&xsec_token=CBc7kDk5WA32hs6hpCZ4jOhP1n0l8OeJ0kOeeUOoEHPl8%3D&author_share=1&xhsshare=QQ&shareRedId=N0w7NTk7ND82NzUyOTgwNjY0OTc4Sz9N&apptime=1751343431&share_id=c644022d3b18407d95807a10b14f0658&share_channel=qq&qq_aio_chat_type=2
 
 weibo:
 - https://video.weibo.com/show?fid=1034:5145615399845897

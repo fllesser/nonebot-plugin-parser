@@ -60,7 +60,7 @@ class XiaoHongShuParser:
         pattern = r"window.__INITIAL_STATE__=(.*?)</script>"
         matched = re.search(pattern, html)
         if not matched:
-            raise ParseException("小红书 cookie 可能已失效")
+            raise ParseException("小红书分享链接失效或内容已删除")
 
         json_str = matched.group(1)
         json_str = json_str.replace("undefined", "null")

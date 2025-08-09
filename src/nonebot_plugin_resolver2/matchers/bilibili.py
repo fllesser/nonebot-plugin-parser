@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 import re
 
-from nonebot import logger, on_command, on_message
+from nonebot import logger, on_command
 from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
 from nonebot.adapters.onebot.v11.exception import ActionFailed
 from nonebot.params import CommandArg
@@ -15,14 +15,11 @@ from ..parsers import BilibiliParser, get_redirect_url
 from ..utils import keep_zh_en_num
 from .filter import is_not_in_disabled_groups
 from .helper import obhelper
-from .preprocess import ExtractText, Keyword, r_keywords
+from .preprocess import ExtractText, Keyword, on_url_keyword
 
-bilibili = on_message(
-    rule=is_not_in_disabled_groups & r_keywords("bilibili", "bili2233", "b23", "BV", "av"),
-    priority=5,
-)
+bilibili = on_url_keyword("bilibili", "bili2233", "b23", "BV", "av")
 
-bili_music = on_command(cmd="bm", block=True)
+bili_music = on_command(cmd="bm", block=True, rule=is_not_in_disabled_groups)
 
 PATTERNS: dict[str, re.Pattern] = {
     "BV": re.compile(r"(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?"),

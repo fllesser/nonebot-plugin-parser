@@ -1,27 +1,24 @@
 import re
 
 import httpx
-from nonebot import logger, on_keyword
-from nonebot.adapters.onebot.v11 import MessageEvent
-from nonebot.rule import Rule
+from nonebot import logger
 
 from ..config import NICKNAME
 from ..constants import COMMON_TIMEOUT
 from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..exception import handle_exception
-from .filter import is_not_in_disabled_groups
 from .helper import obhelper
+from .preprocess import ExtractText, on_url_keyword
 
-tiktok = on_keyword(keywords={"tiktok.com"}, rule=Rule(is_not_in_disabled_groups))
+tiktok = on_url_keyword("tiktok.com")
 
 
 @tiktok.handle()
 @handle_exception()
-async def _(event: MessageEvent):
+async def _(text: str = ExtractText()):
     # 消息
-    message: str = event.message.extract_plain_text().strip()
     url_reg = r"(?:http:|https:)\/\/(www|vt|vm).tiktok.com\/[A-Za-z\d._?%&+\-=\/#@]*"
-    matched = re.search(url_reg, message)
+    matched = re.search(url_reg, text)
     if not matched:
         logger.warning("tiktok url is incomplete, ignored")
         await tiktok.finish()

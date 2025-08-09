@@ -2,19 +2,18 @@ import asyncio
 from pathlib import Path
 import re
 
-from nonebot import logger, on_message
+from nonebot import logger
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
 from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import DouyinParser
-from .filter import is_not_in_disabled_groups
 from .helper import obhelper
-from .preprocess import ExtractText, Keyword, r_keywords
+from .preprocess import ExtractText, Keyword, on_url_keyword
 
-# douyin = on_keyword(keywords={"douyin.com"}, rule=Rule(is_not_in_disabled_groups))
-douyin = on_message(rule=is_not_in_disabled_groups & r_keywords("v.douyin", "douyin"))
+douyin = on_url_keyword("v.douyin", "douyin")
+
 parser = DouyinParser()
 
 PATTERNS: dict[str, re.Pattern] = {

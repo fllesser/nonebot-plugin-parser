@@ -2,26 +2,23 @@ import re
 from typing import Any
 
 import httpx
-from nonebot import logger, on_keyword
-from nonebot.adapters.onebot.v11 import MessageEvent
-from nonebot.rule import Rule
+from nonebot import logger
 
 from ..config import NICKNAME
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException, handle_exception
-from .filter import is_not_in_disabled_groups
 from .helper import obhelper
+from .preprocess import ExtractText, on_url_keyword
 
-twitter = on_keyword(keywords={"x.com"}, rule=Rule(is_not_in_disabled_groups))
+twitter = on_url_keyword("x.com")
 
 
 @twitter.handle()
 @handle_exception()
-async def _(event: MessageEvent):
-    msg: str = event.message.extract_plain_text().strip()
+async def _(text: str = ExtractText()):
     pattern = r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]+)"
-    matched = re.search(pattern, msg)
+    matched = re.search(pattern, text)
     if not matched:
         logger.info("没有匹配到 x.com 的 url, 忽略")
         return
