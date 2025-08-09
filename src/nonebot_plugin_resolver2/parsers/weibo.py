@@ -9,6 +9,12 @@ from .data import ParseResult
 
 
 class WeiBoParser:
+    def __init__(self):
+        self.ext_headers = {
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
+            "referer": "https://weibo.com/",
+        }
+
     async def parse_share_url(self, share_url: str) -> ParseResult:
         """解析微博分享链接"""
         # https://video.weibo.com/show?fid=1034:5145615399845897
