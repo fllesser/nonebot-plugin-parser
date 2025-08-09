@@ -1,23 +1,18 @@
 import re
 
-from nonebot import logger, on_message
+from nonebot import logger
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
 from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import KuaishouParser
-from .filter import is_not_in_disabled_groups
 from .helper import obhelper
-from .preprocess import ExtractText, Keyword, r_keywords
+from .preprocess import ExtractText, Keyword, on_url_keyword
 
 parser = KuaishouParser()
 
-kuaishou = on_message(
-    rule=is_not_in_disabled_groups & r_keywords("v.kuaishou.com", "kuaishou", "chenzhongtech"),
-    priority=5,
-)
-
+kuaishou = on_url_keyword("v.kuaishou.com", "kuaishou", "chenzhongtech")
 
 # 匹配的正则表达式
 PATTERNS = {

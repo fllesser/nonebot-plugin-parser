@@ -1,20 +1,18 @@
 import re
 
-from nonebot import logger, on_message
+from nonebot import logger
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
 from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import XiaoHongShuParser
-from .filter import is_not_in_disabled_groups
 from .helper import obhelper
-from .preprocess import ExtractText, r_keywords
+from .preprocess import ExtractText, on_url_keyword
 
-xiaohongshu = on_message(rule=is_not_in_disabled_groups & r_keywords("xiaohongshu.com", "xhslink.com"))
+xiaohongshu = on_url_keyword("xiaohongshu.com", "xhslink.com")
 
-xhs_parser = XiaoHongShuParser()
-
+parser = XiaoHongShuParser()
 
 @xiaohongshu.handle()
 @handle_exception()
@@ -25,7 +23,7 @@ async def _(text: str = ExtractText()):
         logger.info(f"{text} 不是可达的小红书链接，忽略")
         return
     # 解析 url
-    parse_result = await xhs_parser.parse_url(matched.group(0))
+    parse_result = await parser.parse_url(matched.group(0))
     # 如果是图文
     if parse_result.pic_urls:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 图文")

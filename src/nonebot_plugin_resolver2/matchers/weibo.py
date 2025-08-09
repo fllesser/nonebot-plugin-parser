@@ -1,19 +1,13 @@
-from nonebot import on_message
-
 from ..config import NICKNAME
 from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import WeiBoParser
-from .filter import is_not_in_disabled_groups
 from .helper import obhelper
-from .preprocess import ExtractText, r_keywords
+from .preprocess import ExtractText, on_url_keyword
 
 weibo_parser = WeiBoParser()
 
-weibo = on_message(
-    rule=is_not_in_disabled_groups & r_keywords("weibo.com", "m.weibo.cn"),
-    priority=5,
-)
+weibo = on_url_keyword("weibo.com", "m.weibo.cn")
 
 
 @weibo.handle()

@@ -1,12 +1,15 @@
 import json
 from typing import Any, Literal
 
-from nonebot import logger
+from nonebot import logger, on_message
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
+from nonebot.matcher import Matcher
 from nonebot.message import event_preprocessor
 from nonebot.params import Depends
 from nonebot.rule import Rule
 from nonebot.typing import T_State
+
+from .filter import is_not_in_disabled_groups
 
 R_KEYWORD_KEY: Literal["_r_keyword"] = "_r_keyword"
 R_EXTRACT_KEY: Literal["_r_extract"] = "_r_extract"
@@ -17,7 +20,7 @@ def ExtractText() -> str:
 
 
 def _extact_text(state: T_State) -> str:
-    return state.get(R_EXTRACT_KEY) or ""
+    return state.get(R_EXTRACT_KEY, "")
 
 
 def Keyword() -> str:
@@ -25,7 +28,7 @@ def Keyword() -> str:
 
 
 def _keyword(state: T_State) -> str:
-    return state.get(R_KEYWORD_KEY) or ""
+    return state.get(R_KEYWORD_KEY, "")
 
 
 URL_KEY_MAPPING = {
@@ -99,7 +102,7 @@ def extract_msg_text(event: MessageEvent, state: T_State) -> None:
         state[R_EXTRACT_KEY] = text
 
 
-class RKeywordsRule:
+class UrlKeywordsRule:
     """检查消息是否含有关键词 增强版"""
 
     __slots__ = ("keywords",)
@@ -108,10 +111,10 @@ class RKeywordsRule:
         self.keywords = keywords
 
     def __repr__(self) -> str:
-        return f"RKeywords(keywords={self.keywords})"
+        return f"UrlKeywords(keywords={self.keywords})"
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, RKeywordsRule) and frozenset(self.keywords) == frozenset(other.keywords)
+        return isinstance(other, UrlKeywordsRule) and frozenset(self.keywords) == frozenset(other.keywords)
 
     def __hash__(self) -> int:
         return hash(frozenset(self.keywords))
@@ -125,5 +128,9 @@ class RKeywordsRule:
         return False
 
 
-def r_keywords(*keywords: str) -> Rule:
-    return Rule(RKeywordsRule(*keywords))
+def url_keywords(*keywords: str) -> Rule:
+    return Rule(UrlKeywordsRule(*keywords))
+
+
+def on_url_keyword(*keywords: str, priority: int = 5) -> type[Matcher]:
+    return on_message(rule=is_not_in_disabled_groups & url_keywords(*keywords), priority=priority)
