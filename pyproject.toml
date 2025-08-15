@@ -20,7 +20,7 @@ dependencies = [
   "curl_cffi>=0.8.0,<1.0.0",
   "tqdm>=4.67.1,<5.0.0",
   "aiofiles>=24.1.0",
-  "yt-dlp>=2025.7.21",
+  "yt-dlp>=2025.8.11",
   "nonebot2>=2.4.2,<3.0.0",
   "nonebot-adapter-onebot>=2.4.6,<3.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
@@ -112,10 +112,10 @@ pythonVersion = "3.10"
 pythonPlatform = "All"
 defineConstant = { PYDANTIC_V2 = true }
 executionEnvironments = [
-    { root = "./tests", extraPaths = [
-        "./src",
-    ] },
-    { root = "./src" },
+  { root = "./tests", extraPaths = [
+    "./src",
+  ] },
+  { root = "./src" },
 ]
 typeCheckingMode = "standard"
 reportShadowedImports = false
@@ -124,3 +124,15 @@ disableBytesTypePromotions = true
 [build-system]
 requires = ["uv_build>=0.8.0,<0.9.0"]
 build-backend = "uv_build"
+
+
+[tool.bumpversion]
+current_version = "1.11.5"
+commit = true
+message = "🔖 release: bump vesion from {current_version} to {new_version}"
+tag = true
+
+[[tool.bumpversion.files]]
+filename = "uv.lock"
+search = "name = \"nonebot-plugin-resolver2\"\nversion = \"{current_version}\""
+replace = "name = \"nonebot-plugin-resolver2\"\nversion = \"{new_version}\""

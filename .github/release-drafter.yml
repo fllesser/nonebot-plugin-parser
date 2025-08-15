@@ -1,0 +1,48 @@
+template: $CHANGES
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+exclude-labels:
+  - "dependencies"
+  - "skip-changelog"
+autolabeler:
+  - label: "bug"
+    branch:
+      - '/fix\/.+/'
+  - label: "change"
+    branch:
+      - '/change\/.+/'
+  - label: "enhancement"
+    branch:
+      - '/feature\/.+/'
+      - '/feat\/.+/'
+      - '/improve\/.+/'
+  - label: "ci"
+    files:
+      - .github/**/*
+  - label: "breaking-change"
+    title:
+      - "/.+!:.+/"
+categories:
+  - title: 💥 Breaking Changes
+    labels:
+      - breaking-change
+  - title: 🚀 Features
+    labels:
+      - enhancement
+  - title: 🐛 Bug Fixes
+    labels:
+      - bug
+  - title: 💫 Others
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
+version-resolver:
+  major:
+    labels:
+      - "major"
+  minor:
+    labels:
+      - "minor"
+  patch:
+    labels:
+      - "patch"
+  default: patch
