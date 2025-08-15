@@ -20,7 +20,7 @@ jobs:
           - "3.13"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup-pytest
         uses: ./.github/actions/setup-pytest
         with:
@@ -32,7 +32,7 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: setup-pytest
         uses: ./.github/actions/setup-pytest
@@ -49,7 +49,7 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup-pytest
         uses: ./.github/actions/setup-pytest
       
@@ -60,7 +60,7 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup-pytest
         uses: ./.github/actions/setup-pytest
       
@@ -71,7 +71,7 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup-pytest
         uses: ./.github/actions/setup-pytest
       
@@ -82,7 +82,7 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup-pytest
         uses: ./.github/actions/setup-pytest
       
@@ -93,7 +93,7 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup-pytest
         uses: ./.github/actions/setup-pytest
       
@@ -104,7 +104,7 @@ jobs:
     needs: plugin-load
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup-pytest
         uses: ./.github/actions/setup-pytest
       
