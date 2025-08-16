@@ -133,4 +133,8 @@ def url_keywords(*keywords: str) -> Rule:
 
 
 def on_url_keyword(*keywords: str, priority: int = 5) -> type[Matcher]:
-    return on_message(rule=is_not_in_disabled_groups & url_keywords(*keywords), priority=priority, _depth=1)  # pyright: ignore[reportCallIssue]
+    return on_message(
+        rule=is_not_in_disabled_groups & url_keywords(*keywords),
+        priority=priority,
+        _depth=1,  # pyright: ignore[reportCallIssue]
+    )
