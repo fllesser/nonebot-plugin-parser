@@ -21,6 +21,7 @@ async def test_weibo_pics():
         "https://weibo.com/7207262816/O70aCbjnd",
         "http://m.weibo.cn/status/5112672433738061",
         "https://m.weibo.cn/status/5155768539808352",
+        "https://weibo.com/1694917363/Q0KtXh6z2",
     ]
 
     async def test_parse_share_url(url: str) -> None:
