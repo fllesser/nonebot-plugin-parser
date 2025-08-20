@@ -91,19 +91,12 @@ class WeiBoParser:
 
         weibo_data = WeiboData(**resp["data"])
 
-        source = weibo_data.source
-        title = weibo_data.status_title
-        text = weibo_data.text
-        region_name = weibo_data.region_name
-        pics = [x.large.url for x in weibo_data.pics] if weibo_data.pics else []
-        video_url = weibo_data.get_video_url() or ""
-
         return ParseResult(
-            author=source,
+            author=weibo_data.source,
             cover_url="",
-            title=f"{re.sub(r'<[^>]+>', '', text)}\n{title}\n{source}\t{region_name if region_name else ''}",
-            video_url=video_url,
-            pic_urls=pics,
+            title=weibo_data.status_title or "",
+            video_url=weibo_data.get_video_url() or "",
+            pic_urls=weibo_data.get_pics(),
         )
 
     def _base62_encode(self, number: int) -> str:
@@ -180,3 +173,10 @@ class WeiboData(BaseModel):
         if self.retweeted_status and self.retweeted_status.page_info and self.retweeted_status.page_info.urls:
             return self.retweeted_status.page_info.urls.get_video_url()
         return None
+
+    def get_pics(self) -> list[str]:
+        if self.pics:
+            return [x.large.url for x in self.pics]
+        if self.retweeted_status and self.retweeted_status.pics:
+            return [x.large.url for x in self.retweeted_status.pics]
+        return []
