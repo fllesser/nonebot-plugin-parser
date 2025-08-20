@@ -89,30 +89,19 @@ class WeiBoParser:
                 raise ParseException("获取数据失败 content-type is not application/json")
             resp = response.json()
 
-        weibo_data = resp["data"]
-        text, status_title, source, region_name, pics, page_info = (
-            weibo_data.get(key)
-            for key in [
-                "text",
-                "status_title",
-                "source",
-                "region_name",
-                "pics",
-                "page_info",
-            ]
-        )
-        video_url = ""
-        # 图集
-        if pics:
-            pics = [x["large"]["url"] for x in pics]
-        else:
-            videos = page_info.get("urls")
-            video_url: str = videos.get("mp4_720p_mp4") or videos.get("mp4_hd_mp4") if videos else ""
+        weibo_data = WeiboData(**resp["data"])
+
+        source = weibo_data.source
+        title = weibo_data.status_title
+        text = weibo_data.text
+        region_name = weibo_data.region_name
+        pics = [x.large.url for x in weibo_data.pics] if weibo_data.pics else []
+        video_url = weibo_data.get_video_url() or ""
 
         return ParseResult(
             author=source,
             cover_url="",
-            title=f"{re.sub(r'<[^>]+>', '', text)}\n{status_title}\n{source}\t{region_name if region_name else ''}",
+            title=f"{re.sub(r'<[^>]+>', '', text)}\n{title}\n{source}\t{region_name if region_name else ''}",
             video_url=video_url,
             pic_urls=pics,
         )
@@ -148,3 +137,46 @@ class WeiBoParser:
 
         result.reverse()  # 反转结果数组
         return "".join(result)  # 将结果数组连接成字符串
+
+
+from pydantic import BaseModel
+
+
+class LargeInPic(BaseModel):
+    url: str
+
+
+class Pic(BaseModel):
+    url: str
+    large: LargeInPic
+
+
+class Urls(BaseModel):
+    mp4_720p_mp4: str | None = None
+    mp4_hd_mp4: str | None = None
+    mp4_ld_mp4: str | None = None
+
+    def get_video_url(self) -> str | None:
+        return self.mp4_720p_mp4 or self.mp4_hd_mp4 or self.mp4_ld_mp4 or None
+
+
+class PageInfo(BaseModel):
+    urls: Urls | None = None
+
+
+class WeiboData(BaseModel):
+    text: str
+    source: str
+    region_name: str
+
+    status_title: str | None = None
+    pics: list[Pic] | None = None
+    page_info: PageInfo | None = None
+    retweeted_status: "WeiboData | None" = None
+
+    def get_video_url(self) -> str | None:
+        if self.page_info and self.page_info.urls:
+            return self.page_info.urls.get_video_url()
+        if self.retweeted_status and self.retweeted_status.page_info and self.retweeted_status.page_info.urls:
+            return self.retweeted_status.page_info.urls.get_video_url()
+        return None
