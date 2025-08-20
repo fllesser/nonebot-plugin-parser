@@ -8,7 +8,7 @@ from nonebot import logger
 from ..config import rconfig
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
-from .data import ParseResult
+from .data import ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
@@ -88,10 +88,10 @@ class XiaoHongShuParser:
                 raise ParseException("小红书视频解析失败")
         else:
             raise ParseException(f"不支持的小红书链接类型: {resource_type}")
+
         return ParseResult(
             title=title_desc,
             cover_url="",
-            video_url=video_url,
-            pic_urls=img_urls,
+            content=VideoContent(video_url=video_url) if video_url else ImageContent(pic_urls=img_urls),
             author=note_data["user"]["nickname"],
         )

@@ -26,9 +26,9 @@ async def _(text: str = ExtractText()):
     # 解析 url
     parse_result = await parser.parse_url(matched.group(0))
     # 如果是图文
-    if parse_result.pic_urls:
+    if pic_urls := parse_result.pic_urls:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 图文")
-        img_path_list = await DOWNLOADER.download_imgs_without_raise(parse_result.pic_urls)
+        img_path_list = await DOWNLOADER.download_imgs_without_raise(pic_urls)
         # 发送图片
         segs: list[MessageSegment | Message | str] = [
             parse_result.title,
@@ -36,7 +36,7 @@ async def _(text: str = ExtractText()):
         ]
         await obhelper.send_segments(segs)
     # 如果是视频
-    elif parse_result.video_url:
+    elif video_url := parse_result.video_url:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 视频 - {parse_result.title}")
-        video_path = await DOWNLOADER.download_video(parse_result.video_url)
+        video_path = await DOWNLOADER.download_video(video_url)
         await xiaohongshu.finish(obhelper.video_seg(video_path))

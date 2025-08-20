@@ -36,20 +36,23 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
     segs: list[MessageSegment | Message | str] = []
     # 存在普通图片
-    if parse_result.pic_urls:
-        paths = await DOWNLOADER.download_imgs_without_raise(parse_result.pic_urls)
+    if pic_urls := parse_result.pic_urls:
+        paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
         segs.extend(obhelper.img_seg(path) for path in paths)
+
     # 存在动态图片
-    if parse_result.dynamic_urls:
+    if dynamic_urls := parse_result.dynamic_urls:
         # 并发下载动态图片
         video_paths = await asyncio.gather(
-            *[DOWNLOADER.download_video(url) for url in parse_result.dynamic_urls], return_exceptions=True
+            *[DOWNLOADER.download_video(url) for url in dynamic_urls], return_exceptions=True
         )
         video_segs = [obhelper.video_seg(p) for p in video_paths if isinstance(p, Path)]
         segs.extend(video_segs)
+
     if segs:
         await obhelper.send_segments(segs)
         await douyin.finish()
+
     # 存在视频
     if video_url := parse_result.video_url:
         video_path = await DOWNLOADER.download_video(video_url)

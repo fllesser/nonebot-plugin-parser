@@ -7,7 +7,7 @@ from nonebot import logger
 
 from ..constants import COMMON_TIMEOUT
 from ..exception import ParseException
-from .data import ANDROID_HEADER, IOS_HEADER, ParseResult
+from .data import ANDROID_HEADER, IOS_HEADER, ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
@@ -80,19 +80,15 @@ class DouyinParser:
             # 获取重定向后的mp4视频地址
             video_url = await get_redirect_url(video_url)
 
-        share_info = ParseResult(
+        image_content = ImageContent(pic_urls=images) if images else None
+        video_content = VideoContent(video_url=video_url) if video_url else None
+
+        return ParseResult(
             title=data["desc"],
             cover_url=data["video"]["cover"]["url_list"][0],
-            pic_urls=images,
-            video_url=video_url,
             author=data["author"]["nickname"],
-            # author=Author(
-            #     # uid=data["author"]["sec_uid"],
-            #     name=data["author"]["nickname"],
-            #     avatar=data["author"]["avatar_thumb"]["url_list"][0],
-            # ),
+            content=video_content or image_content,
         )
-        return share_info
 
     def _format_response(self, text: str) -> dict[str, Any]:
         pattern = re.compile(
@@ -155,10 +151,5 @@ class DouyinParser:
             title=title,
             cover_url="",
             author=data["author"]["nickname"],
-            # author=Author(
-            #     name=data["author"]["nickname"],
-            #     avatar=data["author"]["avatar_thumb"]["url_list"][0],
-            # ),
-            pic_urls=images,
-            dynamic_urls=dynamic_images,
+            content=ImageContent(pic_urls=images, dynamic_urls=dynamic_images),
         )

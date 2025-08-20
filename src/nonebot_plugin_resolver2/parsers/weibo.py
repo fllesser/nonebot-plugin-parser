@@ -5,7 +5,7 @@ import httpx
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
-from .data import ParseResult
+from .data import ImageContent, ParseResult, VideoContent
 
 
 class WeiBoParser:
@@ -58,18 +58,12 @@ class WeiBoParser:
             _, first_mp4_url = next(iter(data["urls"].items()))
             video_url = f"https:{first_mp4_url}"
 
-        video_info = ParseResult(
-            video_url=video_url,
-            cover_url="https:" + data["cover_image"],
+        return ParseResult(
             title=data["title"],
+            cover_url="https:" + data["cover_image"],
             author=data["author"],
-            # author=Author(
-            #     # uid=str(data["user"]["id"]),
-            #     name=data["author"],
-            #     avatar="https:" + data["avatar"],
-            # ),
+            content=VideoContent(video_url=video_url),
         )
-        return video_info
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
         """解析微博 id"""
@@ -91,12 +85,13 @@ class WeiBoParser:
 
         weibo_data = WeiboData(**resp["data"])
 
+        video_content = VideoContent(video_url=weibo_data.get_video_url() or "") if weibo_data.get_video_url() else None
+        image_content = ImageContent(pic_urls=weibo_data.get_pics()) if weibo_data.get_pics() else None
+
         return ParseResult(
-            author=weibo_data.source,
-            cover_url="",
             title=weibo_data.status_title or "",
-            video_url=weibo_data.get_video_url() or "",
-            pic_urls=weibo_data.get_pics(),
+            author=weibo_data.source,
+            content=video_content or image_content,
         )
 
     def _base62_encode(self, number: int) -> str:
