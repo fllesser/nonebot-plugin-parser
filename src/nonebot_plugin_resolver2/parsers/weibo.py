@@ -83,15 +83,18 @@ class WeiBoParser:
                 raise ParseException("获取数据失败 content-type is not application/json")
             resp = response.json()
 
-        weibo_data = WeiboData(**resp["data"])
-
-        video_content = VideoContent(video_url=weibo_data.get_video_url() or "") if weibo_data.get_video_url() else None
-        image_content = ImageContent(pic_urls=weibo_data.get_pics()) if weibo_data.get_pics() else None
+        weibo_data = WeiboData.model_validate(resp["data"])
+        if video_url := weibo_data.video_url:
+            content = VideoContent(video_url=video_url)
+        elif pic_urls := weibo_data.pic_urls:
+            content = ImageContent(pic_urls=pic_urls)
+        else:
+            content = None
 
         return ParseResult(
-            title=weibo_data.status_title or "",
+            title=weibo_data.title,
             author=weibo_data.source,
-            content=video_content or image_content,
+            content=content,
         )
 
     def _base62_encode(self, number: int) -> str:
@@ -162,14 +165,21 @@ class WeiboData(BaseModel):
     page_info: PageInfo | None = None
     retweeted_status: "WeiboData | None" = None
 
-    def get_video_url(self) -> str | None:
+    @property
+    def title(self) -> str:
+        # 去除 html 标签
+        return re.sub(r"<[^>]*>", "", self.text)
+
+    @property
+    def video_url(self) -> str | None:
         if self.page_info and self.page_info.urls:
             return self.page_info.urls.get_video_url()
         if self.retweeted_status and self.retweeted_status.page_info and self.retweeted_status.page_info.urls:
             return self.retweeted_status.page_info.urls.get_video_url()
         return None
 
-    def get_pics(self) -> list[str]:
+    @property
+    def pic_urls(self) -> list[str]:
         if self.pics:
             return [x.large.url for x in self.pics]
         if self.retweeted_status and self.retweeted_status.pics:
