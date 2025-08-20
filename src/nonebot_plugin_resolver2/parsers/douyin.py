@@ -47,9 +47,9 @@ class DouyinParser:
             except ParseException as e:
                 logger.warning(f"failed to parse {url[:60]}, error: {e}")
                 continue
-            except Exception as e:
-                logger.warning(f"failed to parse {url[:60]}, unknown error: {e}")
-                continue
+            # except Exception as e:
+            #     logger.warning(f"failed to parse {url[:60]}, unknown error: {e}")
+            #     continue
         raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
     async def parse_video(self, url: str) -> ParseResult:
@@ -77,25 +77,17 @@ class DouyinParser:
         # # 获取视频播放地址
         # video_url: str = data["video"]["play_addr"]["url_list"][0].replace("playwm", "play")
         video_data = VideoData.model_validate(data)
-
+        content = None
         if image_urls := video_data.images_urls:
-            image_content = ImageContent(pic_urls=image_urls)
-        else:
-            image_content = None
-
-        if video_url := video_data.video_url:
-            # 获取重定向后的mp4视频地址
-            video_url = await get_redirect_url(video_url)
-        else:
-            video_url = None
-
-        video_content = VideoContent(video_url=video_data.video_url) if video_data.video_url else None
+            content = ImageContent(pic_urls=image_urls)
+        elif video_url := video_data.video_url:
+            content = VideoContent(video_url=await get_redirect_url(video_url))
 
         return ParseResult(
             title=video_data.desc,
             cover_url=video_data.cover_url,
             author=video_data.author.nickname,
-            content=image_content or video_content,
+            content=content,
         )
 
     def _format_response(self, text: str) -> dict[str, Any]:
@@ -209,7 +201,7 @@ class VideoData(BaseModel):
 
     @property
     def video_url(self) -> str | None:
-        return self.video.play_addr.url_list[0] if self.video else None
+        return self.video.play_addr.url_list[0].replace("playwm", "play") if self.video else None
 
     @property
     def cover_url(self) -> str | None:
