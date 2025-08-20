@@ -75,19 +75,18 @@ class DouyinParser:
 
         # 获取视频播放地址
         video_url: str = data["video"]["play_addr"]["url_list"][0].replace("playwm", "play")
-
         if video_url:
             # 获取重定向后的mp4视频地址
             video_url = await get_redirect_url(video_url)
 
         image_content = ImageContent(pic_urls=images) if images else None
-        video_content = VideoContent(video_url=video_url) if video_url else None
+        video_content = VideoContent(video_url=video_url)
 
         return ParseResult(
             title=data["desc"],
             cover_url=data["video"]["cover"]["url_list"][0],
             author=data["author"]["nickname"],
-            content=video_content or image_content,
+            content=image_content or video_content,
         )
 
     def _format_response(self, text: str) -> dict[str, Any]:
