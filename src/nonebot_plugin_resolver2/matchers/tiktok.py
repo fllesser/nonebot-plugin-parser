@@ -8,13 +8,9 @@ from ..constants import COMMON_TIMEOUT
 from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..exception import handle_exception
 from .helper import obhelper
-from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
-KEY_PATTERN_MAPPING = KeyPatternMapping(
-    ("tiktok.com", r"(?:http:|https:)\/\/(www|vt|vm).tiktok.com\/[A-Za-z\d._?%&+\-=\/#@]*"),
-)
-
-tiktok = on_keyword_regex(KEY_PATTERN_MAPPING)
+tiktok = on_keyword_regex(("tiktok.com", r"(?:https?://)?(www|vt|vm)\.tiktok\.com\/[A-Za-z0-9._?%&+-=/#@]*"))
 
 
 @tiktok.handle()

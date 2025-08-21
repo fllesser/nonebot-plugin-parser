@@ -201,9 +201,9 @@ def keyword_regex(key_pattern_mapping: KeyPatternMapping) -> Rule:
     return Rule(KeywordRegexRule(key_pattern_mapping))
 
 
-def on_keyword_regex(key_pattern_mapping: KeyPatternMapping, priority: int = 5) -> type[Matcher]:
+def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5) -> type[Matcher]:
     return on_message(
-        rule=is_not_in_disabled_groups & keyword_regex(key_pattern_mapping),
+        rule=is_not_in_disabled_groups & keyword_regex(KeyPatternMapping(*args)),
         priority=priority,
         _depth=1,  # pyright: ignore[reportCallIssue]
     )

@@ -4,13 +4,9 @@ from ..config import NICKNAME
 from ..exception import handle_exception
 from ..parsers import AcfunParser
 from .helper import obhelper
-from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
-KEY_PATTERN_MAPPING = KeyPatternMapping(
-    ("acfun.cn", r"(?:ac=|/ac)(\d+)"),
-)
-
-acfun = on_keyword_regex(KEY_PATTERN_MAPPING)
+acfun = on_keyword_regex(("acfun.cn", r"(?:ac=|/ac)(\d+)"))
 
 parser = AcfunParser()
 

@@ -9,17 +9,14 @@ from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import DouyinParser
 from .helper import obhelper
-from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
 parser = DouyinParser()
 
-
-KEY_PATTERN_MAPPING = KeyPatternMapping(
+douyin = on_keyword_regex(
     ("v.douyin", r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
     ("douyin", r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+"),
 )
-
-douyin = on_keyword_regex(KEY_PATTERN_MAPPING)
 
 
 @douyin.handle()

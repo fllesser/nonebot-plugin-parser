@@ -8,13 +8,9 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException, handle_exception
 from .helper import obhelper
-from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
-KEY_PATTERN_MAPPING = KeyPatternMapping(
-    ("x.com", r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]+)"),
-)
-
-twitter = on_keyword_regex(KEY_PATTERN_MAPPING)
+twitter = on_keyword_regex(("x.com", r"https?://x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)"))
 
 
 @twitter.handle()

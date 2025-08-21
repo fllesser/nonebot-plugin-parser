@@ -7,14 +7,12 @@ from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import XiaoHongShuParser
 from .helper import obhelper
-from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
-KEY_PATTERN_MAPPING = KeyPatternMapping(
-    ("xiaohongshu.com", r"https?://(?:www\.)?xiaohongshu\.com/[^\s]*"),
-    ("xhslink.com", r"(http:|https:)\/\/xhslink.com\/[A-Za-z\d._?%&+\-=\/#@]*"),
+xiaohongshu = on_keyword_regex(
+    ("xiaohongshu.com", r"https?://(?:www\.)?xiaohongshu\.com/[A-Za-z0-9._?%&+=/#@-]*"),
+    ("xhslink.com", r"https?://xhslink\.com/[A-Za-z0-9._?%&+=/#@-]*"),
 )
-
-xiaohongshu = on_keyword_regex(KEY_PATTERN_MAPPING)
 
 parser = XiaoHongShuParser()
 

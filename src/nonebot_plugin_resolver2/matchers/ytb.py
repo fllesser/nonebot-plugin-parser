@@ -12,23 +12,20 @@ from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_downloa
 from ..exception import handle_exception
 from ..utils import keep_zh_en_num
 from .helper import obhelper
-from .preprocess import ExtractText, on_url_keyword
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
-ytb = on_url_keyword("youtube.com", "youtu.be")
+# https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz
+# https://www.youtube.com/watch?v=1LnPnmKALL8&list=RD8AxpdwegNKc&index=2
+ytb = on_keyword_regex(
+    ("youtube.com", r"https?://(?:www\.)?youtube\.com/[A-Za-z\d\._\?%&\+\-=/#]+"),
+    ("youtu.be", r"https?://(?:www\.)?youtu\.be/[A-Za-z\d\._\?%&\+\-=/#]+"),
+)
 
 
 @ytb.handle()
 @handle_exception()
-async def _(state: T_State, text: str = ExtractText()):
-    # https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz
-    # https://www.youtube.com/watch?v=1LnPnmKALL8&list=RD8AxpdwegNKc&index=2
-    pattern = r"(?:https?://)?(?:www\.)?(?:youtube\.com|youtu\.be)/[A-Za-z\d\._\?%&\+\-=/#]+"
-    matched = re.search(pattern, text)
-    if not matched:
-        logger.warning(f"{text} 中的链接不支持，已忽略")
-        await ytb.finish()
-
-    url = matched.group(0)
+async def _(state: T_State, searched: re.Match[str] = KeyPatternMatched()):
+    url = searched.group(0)
     try:
         info_dict = await get_video_info(url, ytb_cookies_file)
         title = info_dict.get("title", "未知")
