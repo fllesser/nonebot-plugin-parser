@@ -21,7 +21,7 @@ async def test_xiaohongshu():
         logger.info(f"{url} | 开始解析小红书")
         parse_result = await xhs_parser.parse_url(url)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
-        assert parse_result.text
+        assert parse_result.title
         logger.success(f"{url} | 小红书解析成功")
 
     await asyncio.gather(*[test_parse_url(url) for url in urls])
