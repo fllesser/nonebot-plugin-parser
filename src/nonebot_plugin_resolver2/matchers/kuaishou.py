@@ -7,12 +7,12 @@ from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import KuaishouParser
 from .helper import obhelper
-from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
 parser = KuaishouParser()
 
 
-KEY_PATTERN_MAPPING = KeyPatternMapping(
+kuaishou = on_keyword_regex(
     # - https://v.kuaishou.com/2yAnzeZ
     ("v.kuaishou.com", r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
     # - https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
@@ -20,8 +20,6 @@ KEY_PATTERN_MAPPING = KeyPatternMapping(
     # - https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
     ("chenzhongtech", r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+"),
 )
-
-kuaishou = on_keyword_regex(KEY_PATTERN_MAPPING)
 
 
 @kuaishou.handle()
