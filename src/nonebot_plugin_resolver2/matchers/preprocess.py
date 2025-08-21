@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Any, Literal
 
 from nonebot import logger, on_message
@@ -13,22 +14,31 @@ from .filter import is_not_in_disabled_groups
 
 R_KEYWORD_KEY: Literal["_r_keyword"] = "_r_keyword"
 R_EXTRACT_KEY: Literal["_r_extract"] = "_r_extract"
+R_KEY_REGEX_MATCHED_KEY: Literal["_r_key_regex_matched"] = "_r_key_regex_matched"
 
 
 def ExtractText() -> str:
     return Depends(_extact_text)
 
 
-def _extact_text(state: T_State) -> str:
-    return state.get(R_EXTRACT_KEY, "")
+def _extact_text(state: T_State) -> str | None:
+    return state.get(R_EXTRACT_KEY)
 
 
 def Keyword() -> str:
     return Depends(_keyword)
 
 
-def _keyword(state: T_State) -> str:
-    return state.get(R_KEYWORD_KEY, "")
+def _keyword(state: T_State) -> str | None:
+    return state.get(R_KEYWORD_KEY)
+
+
+def KeyPatternMatched() -> re.Match[str]:
+    return Depends(_key_pattern_matched)
+
+
+def _key_pattern_matched(state: T_State) -> re.Match[str] | None:
+    return state.get(R_KEY_REGEX_MATCHED_KEY)
 
 
 URL_KEY_MAPPING = {
@@ -135,6 +145,52 @@ def url_keywords(*keywords: str) -> Rule:
 def on_url_keyword(*keywords: str, priority: int = 5) -> type[Matcher]:
     return on_message(
         rule=is_not_in_disabled_groups & url_keywords(*keywords),
+        priority=priority,
+        block=False,
+        _depth=1,  # pyright: ignore[reportCallIssue]
+    )
+
+
+from collections import OrderedDict
+
+
+class KeywordRegexRule:
+    """检查消息是否含有关键词, 有关键词进行正则匹配"""
+
+    __slots__ = ("key_pattern_mappings",)
+
+    def __init__(self, key_pattern_mappings: OrderedDict[str, re.Pattern]):
+        self.key_pattern_mappings = key_pattern_mappings
+
+    def __repr__(self) -> str:
+        return f"KeywordRegex(key_pattern_mappings={self.key_pattern_mappings})"
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, KeywordRegexRule) and self.key_pattern_mappings == other.key_pattern_mappings
+
+    def __hash__(self) -> int:
+        return hash(frozenset(self.key_pattern_mappings.items()))
+
+    async def __call__(self, state: T_State, text: str = ExtractText()) -> bool:
+        if not text:
+            return False
+        for keyword, pattern in self.key_pattern_mappings.items():
+            if keyword not in text:
+                continue
+            if matched := pattern.search(text):
+                state[R_KEYWORD_KEY] = keyword
+                state[R_KEY_REGEX_MATCHED_KEY] = matched
+                return True
+        return False
+
+
+def keyword_regex(key_pattern_mappings: OrderedDict[str, re.Pattern]) -> Rule:
+    return Rule(KeywordRegexRule(key_pattern_mappings))
+
+
+def on_keyword_regex(key_pattern_mappings: OrderedDict[str, re.Pattern], priority: int = 5) -> type[Matcher]:
+    return on_message(
+        rule=is_not_in_disabled_groups & keyword_regex(key_pattern_mappings),
         priority=priority,
         _depth=1,  # pyright: ignore[reportCallIssue]
     )

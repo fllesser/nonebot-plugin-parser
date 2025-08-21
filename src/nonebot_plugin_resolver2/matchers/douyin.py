@@ -1,8 +1,8 @@
 import asyncio
+from collections import OrderedDict
 from pathlib import Path
 import re
 
-from nonebot import logger
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
@@ -10,27 +10,26 @@ from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import DouyinParser
 from .helper import obhelper
-from .preprocess import ExtractText, Keyword, on_url_keyword
+from .preprocess import KeyPatternMatched, on_url_keyword
 
 douyin = on_url_keyword("v.douyin", "douyin")
 
 parser = DouyinParser()
 
-PATTERNS: dict[str, re.Pattern] = {
-    "v.douyin": re.compile(r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
-    "douyin": re.compile(r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+"),
-}
+PATTERNS: OrderedDict[str, re.Pattern] = OrderedDict(
+    {
+        "v.douyin": re.compile(r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
+        "douyin": re.compile(
+            r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+"
+        ),
+    }
+)
 
 
 @douyin.handle()
 @handle_exception()
-async def _(text: str = ExtractText(), keyword: str = Keyword()):
-    # 正则匹配
-    matched = PATTERNS[keyword].search(text)
-    if not matched:
-        logger.warning(f"{text} 中的链接无效, 忽略")
-        return
-    share_url = matched.group(0)
+async def _(searched: re.Match[str] = KeyPatternMatched()):
+    share_url = searched.group(0)
     parse_result = await parser.parse_share_url(share_url)
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {parse_result.title}")
 

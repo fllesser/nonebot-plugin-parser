@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import re
 
 import httpx
@@ -8,22 +9,20 @@ from ..constants import COMMON_TIMEOUT
 from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..exception import handle_exception
 from .helper import obhelper
-from .preprocess import ExtractText, on_url_keyword
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
-tiktok = on_url_keyword("tiktok.com")
+PATTERNS = OrderedDict(
+    {"tiktok.com": re.compile(r"(?:http:|https:)\/\/(www|vt|vm).tiktok.com\/[A-Za-z\d._?%&+\-=\/#@]*")}
+)
+
+tiktok = on_keyword_regex(PATTERNS)
 
 
 @tiktok.handle()
 @handle_exception()
-async def _(text: str = ExtractText()):
-    # 消息
-    url_reg = r"(?:http:|https:)\/\/(www|vt|vm).tiktok.com\/[A-Za-z\d._?%&+\-=\/#@]*"
-    matched = re.search(url_reg, text)
-    if not matched:
-        logger.warning("tiktok url is incomplete, ignored")
-        await tiktok.finish()
+async def _(searched: re.Match[str] = KeyPatternMatched()):
     # 提取 url 和 prefix
-    url, prefix = matched.group(0), matched.group(1)
+    url, prefix = searched.group(0), searched.group(1)
 
     # 如果 prefix 是 vt 或 vm，则需要重定向
     if prefix == "vt" or prefix == "vm":
