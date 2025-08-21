@@ -1,6 +1,6 @@
+from collections import OrderedDict
 import re
 
-from nonebot import logger
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
 
 from ..config import NICKNAME
@@ -8,23 +8,25 @@ from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import XiaoHongShuParser
 from .helper import obhelper
-from .preprocess import ExtractText, on_url_keyword
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
-xiaohongshu = on_url_keyword("xiaohongshu.com", "xhslink.com")
+PATTERNS = OrderedDict(
+    {
+        "xiaohongshu.com": re.compile(r"(http:|https:)\/\/(www\.)xiaohongshu.com\/[A-Za-z\d._?%&+\-=\/#@]*"),
+        "xhslink.com": re.compile(r"(http:|https:)\/\/xhslink.com\/[A-Za-z\d._?%&+\-=\/#@]*"),
+    }
+)
+
+xiaohongshu = on_keyword_regex(PATTERNS)
 
 parser = XiaoHongShuParser()
 
 
 @xiaohongshu.handle()
 @handle_exception()
-async def _(text: str = ExtractText()):
-    pattern = r"(http:|https:)\/\/(xhslink|(www\.)xiaohongshu).com\/[A-Za-z\d._?%&+\-=\/#@]*"
-    matched = re.search(pattern, text)
-    if not matched:
-        logger.info(f"{text} 不是可达的小红书链接，忽略")
-        return
+async def _(searched: re.Match[str] = KeyPatternMatched()):
     # 解析 url
-    parse_result = await parser.parse_url(matched.group(0))
+    parse_result = await parser.parse_url(searched.group(0))
     # 如果是图文
     if pic_urls := parse_result.pic_urls:
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 图文")
