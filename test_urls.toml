@@ -1,0 +1,89 @@
+[youtube]
+urls = ["https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz"]
+
+[kuaishou]
+video_urls = [
+    "https://www.kuaishou.com/short-video/3xhjgcmir24m4nm",
+    "https://v.kuaishou.com/2yAnzeZ",
+    "https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc",
+]
+pic_urls = ["https://v.kuaishou.com/2xZPkuV"]
+
+[bilibili]
+opus_urls = [
+    "https://www.bilibili.com/opus/998440765151510535",
+    "https://www.bilibili.com/opus/1040093151889457152",
+    "https://b23.tv/YTg9oSw",
+]
+read_urls = ["https://www.bilibili.com/read/cv523868"]
+
+favlist_urls = [
+    "https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create",
+]
+live_urls = ["https://live.bilibili.com/23585383"]
+
+video_urls = [
+    "https://bili2233.cn/rnrwIyU",
+    "https://www.bilibili.com/video/BV1VLk9YDEzB",
+    "https://www.bilibili.com/video/BV1uCzoYEEir",
+    "https://www.bilibili.com/video/BV1584y167sD?p=40",
+    "https://www.bilibili.com/video/av605821754?p=40",
+]
+
+bvav = [
+    "BV1uCzoYEEir",
+    "av113706574811958",
+    "BV1584y167sD 40",
+    "av605821754 40",
+]
+
+[tiktok]
+video_urls = [
+    "https://www.tiktok.com/@xwc1897/video/7436010419002608928?is_from_webapp=1&sender_device=pc",
+    "https://www.tiktok.com/@mssethi.ss/video/7479816398814973227?is_from_webapp=1&sender_device=pc",
+]
+
+[acfun]
+video_urls = ["https://www.acfun.cn/v/ac46593564"]
+
+[x]
+video_urls = [
+    "https://x.com/fortnitegame/status/1870484479980052921?s=46",
+    "https://x.com/fortnitegame/status/1864640869900668940?s=46",
+]
+
+
+[douyin]
+video_urls = [
+    "https://v.douyin.com/_2ljF4AmKL8/",
+    "https://www.douyin.com/video/7521023890996514083",
+]
+
+note_urls = [
+    "https://www.douyin.com/note/7469411074119322899",
+    "https://v.douyin.com/iP6Uu1Kh",
+    "https://v.douyin.com/GeIocABVe5U/",
+]
+
+old_video_urls = ["https://v.douyin.com/iUrHrruH"]
+
+dynamic_image_urls = [
+    "https://v.douyin.com/iUrHrruH",
+    "https://www.douyin.com/note/7450744229229235491",
+]
+
+
+[xiaohongshu]
+urls = [
+    "https://www.xiaohongshu.com/discovery/item/685fd0e00000000024008b56?app_platform=android&ignoreEngage=true&app_version=8.87.6&share_from_user_hidden=true&xsec_source=app_share&type=video&xsec_token=CBc7kDk5WA32hs6hpCZ4jOhP1n0l8OeJ0kOeeUOoEHPl8%3D&author_share=1&xhsshare=QQ&shareRedId=N0w7NTk7ND82NzUyOTgwNjY0OTc4Sz9N&apptime=1751343431&share_id=c644022d3b18407d95807a10b14f0658&share_channel=qq&qq_aio_chat_type=2",
+    "http://xhslink.com/m/3RbKPhJlIB3",
+    "http://xhslink.com/m/1nhWDzSpHXB",
+]
+
+[weibo]
+urls = [
+    "https://video.weibo.com/show?fid=1034:5145615399845897",
+    "https://weibo.com/7207262816/P5kWdcfDe",
+    "https://weibo.com/7207262816/O70aCbjnd",
+    "https://weibo.com/7207262816/N70aCbjnd",
+]

@@ -891,6 +891,7 @@ test = [
     { name = "nonebug" },
     { name = "pytest-asyncio" },
     { name = "pytest-xdist" },
+    { name = "tomli" },
 ]
 
 [package.metadata]
@@ -919,6 +920,7 @@ test = [
     { name = "nonebug", specifier = ">=0.3.7,<1.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.1.0,<1.2.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0,<4.0.0" },
+    { name = "tomli", specifier = ">=2.2.1" },
 ]
 
 [[package]]
