@@ -50,6 +50,7 @@ douyin:
 - 普通图文
   - https://www.douyin.com/note/7469411074119322899
   - https://v.douyin.com/iP6Uu1Kh
+  - https://v.douyin.com/GeIocABVe5U/     # 含 'BV'，用于测试匹配
 - 老视频，网页打开会重定向到 m.ixigua.com
   - https://v.douyin.com/iUrHrruH
 - 含视频的图集
