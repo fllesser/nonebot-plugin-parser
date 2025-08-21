@@ -23,7 +23,6 @@ bilibili:
 - BV1uCzoYEEir
 - av113706574811958
 
-
 分p视频支持，未指定集数默认第一集
 - BV1584y167sD 40
 - av605821754 40
@@ -45,11 +44,12 @@ X:
 
 douyin:
 - 视频
-  - https://v.douyin.com/iDHWnyTP
-  - https://www.douyin.com/video/7440422807663660328
+  - https://v.douyin.com/_2ljF4AmKL8/
+  - https://www.douyin.com/video/7521023890996514083
 - 普通图文
   - https://www.douyin.com/note/7469411074119322899
   - https://v.douyin.com/iP6Uu1Kh
+  - https://v.douyin.com/GeIocABVe5U/     # 含 'BV'，用于测试匹配
 - 老视频，网页打开会重定向到 m.ixigua.com
   - https://v.douyin.com/iUrHrruH
 - 含视频的图集

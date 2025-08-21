@@ -2,27 +2,21 @@ import re
 from typing import Any
 
 import httpx
-from nonebot import logger
 
 from ..config import NICKNAME
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException, handle_exception
 from .helper import obhelper
-from .preprocess import ExtractText, on_url_keyword
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
-twitter = on_url_keyword("x.com")
+twitter = on_keyword_regex(("x.com", r"https?://x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)"))
 
 
 @twitter.handle()
 @handle_exception()
-async def _(text: str = ExtractText()):
-    pattern = r"https?:\/\/x.com\/[0-9-a-zA-Z_]{1,20}\/status\/([0-9]+)"
-    matched = re.search(pattern, text)
-    if not matched:
-        logger.info("没有匹配到 x.com 的 url, 忽略")
-        return
-    x_url = matched.group(0)
+async def _(searched: re.Match[str] = KeyPatternMatched()):
+    x_url = searched.group(0)
 
     await twitter.send(f"{NICKNAME}解析 | 小蓝鸟")
 

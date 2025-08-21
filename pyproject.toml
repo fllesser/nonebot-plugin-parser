@@ -42,6 +42,7 @@ test = [
   "nonebug>=0.3.7,<1.0.0",
   "pytest-xdist>=3.8.0,<4.0.0",
   "pytest-asyncio>=1.1.0,<1.2.0",
+  "tomli>=2.2.1",
 ]
 
 

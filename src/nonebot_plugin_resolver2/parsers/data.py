@@ -51,3 +51,6 @@ class ParseResult:
     @property
     def audio_url(self) -> str | None:
         return self.content.audio_url if isinstance(self.content, AudioContent) else None
+
+    def __str__(self) -> str:
+        return f"title: {self.title}\nauthor: {self.author}\ncover_url: {self.cover_url}\ncontent: {self.content}"

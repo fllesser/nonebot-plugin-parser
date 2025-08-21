@@ -15,34 +15,29 @@ from ..parsers import BilibiliParser, get_redirect_url
 from ..utils import keep_zh_en_num
 from .filter import is_not_in_disabled_groups
 from .helper import obhelper
-from .preprocess import ExtractText, Keyword, on_url_keyword
+from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
 
-bilibili = on_url_keyword("bilibili", "bili2233", "b23", "BV", "av", priority=10)
+# bilibili = on_url_keyword("bilibili", "bili2233", "b23", "BV", "av", priority=10)
 
 bili_music = on_command(cmd="bm", block=True, rule=is_not_in_disabled_groups)
 
-PATTERNS: dict[str, re.Pattern] = {
-    "BV": re.compile(r"(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?"),
-    "av": re.compile(r"av(\d{6,})(?:\s)?(\d{1,3})?"),
-    "/BV": re.compile(r"/(BV[1-9a-zA-Z]{10})()"),
-    "/av": re.compile(r"/av(\d{6,})()"),
-    "b23": re.compile(r"https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()"),
-    "bili2233": re.compile(r"https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()()"),
-    "bilibili": re.compile(r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"),
-}
+
+bilibili = on_keyword_regex(
+    ("bilibili", r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"),
+    ("bili2233", r"https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()()"),
+    ("b23", r"https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()"),
+    ("BV", r"(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?"),
+    ("av", r"av(\d{6,})(?:\s)?(\d{1,3})?"),
+)
 
 parser = BilibiliParser()
 
 
 @bilibili.handle()
 @handle_exception()
-async def _(text: str = ExtractText(), keyword: str = Keyword()):
+async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatched()):
     pub_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
-    matched = PATTERNS[keyword].search(text)
-    if not matched:
-        logger.info(f"{text} 中的链接或 BV/av 号无效, 忽略")
-        return
-    url, video_id, page_num = str(matched.group(0)), str(matched.group(1)), matched.group(2)
+    url, video_id, page_num = str(searched.group(0)), str(searched.group(1)), searched.group(2)
     # 是否附加链接
     need_join_link = keyword != "bilibili"
     # 短链重定向地址
@@ -55,7 +50,11 @@ async def _(text: str = ExtractText(), keyword: str = Keyword()):
 
     # 链接中是否包含BV，av号
     if id_type := next((i for i in ("/BV", "/av") if i in url), None):
-        if matched := PATTERNS[id_type].search(url):
+        patterns = {
+            "/BV": re.compile(r"/(BV[1-9a-zA-Z]{10})()"),
+            "/av": re.compile(r"/av(\d{6,})()"),
+        }
+        if matched := patterns[id_type].search(url):
             keyword = id_type
             video_id = str(matched.group(1))
     # 预发送消息列表
