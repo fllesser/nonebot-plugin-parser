@@ -16,7 +16,7 @@ from ..parsers import BilibiliParser, get_redirect_url
 from ..utils import keep_zh_en_num
 from .filter import is_not_in_disabled_groups
 from .helper import obhelper
-from .preprocess import ExtractText, KeyPatternMatched, Keyword, on_keyword_regex
+from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
 
 # bilibili = on_url_keyword("bilibili", "bili2233", "b23", "BV", "av", priority=10)
 
@@ -39,7 +39,7 @@ parser = BilibiliParser()
 
 @bilibili.handle()
 @handle_exception()
-async def _(text: str = ExtractText(), keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatched()):
+async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatched()):
     pub_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
     url, video_id, page_num = str(searched.group(0)), str(searched.group(1)), searched.group(2)
     # 是否附加链接
