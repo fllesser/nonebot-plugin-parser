@@ -45,8 +45,8 @@ X:
 
 douyin:
 - 视频
-  - https://v.douyin.com/iDHWnyTP
-  - https://www.douyin.com/video/7440422807663660328
+  - https://v.douyin.com/_2ljF4AmKL8/
+  - https://www.douyin.com/video/7521023890996514083
 - 普通图文
   - https://www.douyin.com/note/7469411074119322899
   - https://v.douyin.com/iP6Uu1Kh

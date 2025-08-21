@@ -11,10 +11,7 @@ async def test_douyin_common_video():
 
     parser = DouyinParser()
 
-    common_urls = [
-        "https://v.douyin.com/iDHWnyTP",
-        "https://www.douyin.com/video/7440422807663660328",
-    ]
+    common_urls = ["https://v.douyin.com/_2ljF4AmKL8/", "https://www.douyin.com/video/7521023890996514083"]
 
     async def test_parse_share_url(url: str) -> None:
         logger.info(f"{url} | 开始解析抖音视频")
