@@ -6,7 +6,7 @@ import httpx
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..exception import ParseException
-from .data import ParseResult
+from .data import ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
@@ -72,9 +72,10 @@ class KuaishouParser:
         data = photo_data["photo"]
 
         # 获取视频地址
-        video_url = ""
+        video_content = None
         if "mainMvUrls" in data and len(data["mainMvUrls"]) > 0:
             video_url = data["mainMvUrls"][0]["url"]
+            video_content = VideoContent(video_url=video_url)
 
         # 获取图集
         ext_params_atlas = data.get("ext_params", {}).get("atlas", {})
@@ -86,11 +87,10 @@ class KuaishouParser:
                 images.append(f"https://{atlas_cdn_list[0]}/{atlas}")
 
         video_info = ParseResult(
-            video_url=video_url,
-            cover_url=data["coverUrls"][0]["url"],
             title=data["caption"],
+            cover_url=data["coverUrls"][0]["url"],
             author=data["userName"],
-            pic_urls=images,
+            content=video_content or ImageContent(pic_urls=images),
         )
         return video_info
 
@@ -130,12 +130,10 @@ class KuaishouParser:
                 raise ParseException("未获取到视频直链")
 
             return ParseResult(
-                # 字段名称与回退值
                 title=data.get("title", "未知标题"),
-                cover_url=data.get("imageUrl", ""),
-                video_url=video_url,
-                # API可能不提供作者信息
+                cover_url=data.get("imageUrl"),
                 author=data.get("name", "无名"),
+                content=VideoContent(video_url=video_url),
             )
 
     async def _extract_video_id(self, url: str) -> str:

@@ -5,7 +5,7 @@ import httpx
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
-from .data import ParseResult
+from .data import ImageContent, ParseResult, VideoContent
 
 
 class WeiBoParser:
@@ -58,18 +58,12 @@ class WeiBoParser:
             _, first_mp4_url = next(iter(data["urls"].items()))
             video_url = f"https:{first_mp4_url}"
 
-        video_info = ParseResult(
-            video_url=video_url,
-            cover_url="https:" + data["cover_image"],
+        return ParseResult(
             title=data["title"],
+            cover_url="https:" + data["cover_image"],
             author=data["author"],
-            # author=Author(
-            #     # uid=str(data["user"]["id"]),
-            #     name=data["author"],
-            #     avatar="https:" + data["avatar"],
-            # ),
+            content=VideoContent(video_url=video_url),
         )
-        return video_info
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
         """解析微博 id"""
@@ -89,14 +83,18 @@ class WeiBoParser:
                 raise ParseException("获取数据失败 content-type is not application/json")
             resp = response.json()
 
-        weibo_data = WeiboData(**resp["data"])
+        weibo_data = WeiboData.model_validate(resp["data"])
+        if video_url := weibo_data.video_url:
+            content = VideoContent(video_url=video_url)
+        elif pic_urls := weibo_data.pic_urls:
+            content = ImageContent(pic_urls=pic_urls)
+        else:
+            content = None
 
         return ParseResult(
+            title=weibo_data.title,
             author=weibo_data.source,
-            cover_url="",
-            title=weibo_data.status_title or "",
-            video_url=weibo_data.get_video_url() or "",
-            pic_urls=weibo_data.get_pics(),
+            content=content,
         )
 
     def _base62_encode(self, number: int) -> str:
@@ -167,14 +165,21 @@ class WeiboData(BaseModel):
     page_info: PageInfo | None = None
     retweeted_status: "WeiboData | None" = None
 
-    def get_video_url(self) -> str | None:
+    @property
+    def title(self) -> str:
+        # 去除 html 标签
+        return re.sub(r"<[^>]*>", "", self.text)
+
+    @property
+    def video_url(self) -> str | None:
         if self.page_info and self.page_info.urls:
             return self.page_info.urls.get_video_url()
         if self.retweeted_status and self.retweeted_status.page_info and self.retweeted_status.page_info.urls:
             return self.retweeted_status.page_info.urls.get_video_url()
         return None
 
-    def get_pics(self) -> list[str]:
+    @property
+    def pic_urls(self) -> list[str]:
         if self.pics:
             return [x.large.url for x in self.pics]
         if self.retweeted_status and self.retweeted_status.pics:

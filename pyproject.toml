@@ -1,7 +1,7 @@
 [project]
 name = "nonebot-plugin-resolver2"
 version = "1.11.7"
-description = "NoneBot2 链接分享解析器自动解析, BV号/链接/小程序/卡片 | B站/抖音/网易云/微博/小红书/youtube/tiktok/twitter/acfun"
+description = "NoneBot2 链接分享解析器自动解析, BV号/链接/小程序/卡片 | B站/抖音/快手/微博/小红书/youtube/tiktok/twitter/acfun"
 authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
 urls = { Repository = "https://github.com/fllesser/nonebot-plugin-resolver2" }
 readme = "README.md"
@@ -20,7 +20,7 @@ dependencies = [
   "curl_cffi>=0.8.0,<1.0.0",
   "tqdm>=4.67.1,<5.0.0",
   "aiofiles>=24.1.0",
-  "yt-dlp>=2025.8.11",
+  "yt-dlp>=2025.8.20",
   "nonebot2>=2.4.2,<3.0.0",
   "nonebot-adapter-onebot>=2.4.6,<3.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
@@ -46,6 +46,9 @@ test = [
 
 
 [tool.nonebot]
+adapters = [
+  { "name" = "Onebot V11", module_name = "nonebot.adapters.onebot.v11" },
+]
 plugins = ["nonebot_plugin_resolver2"]
 
 

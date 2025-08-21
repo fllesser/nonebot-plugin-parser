@@ -13,7 +13,7 @@ from .matchers import resolvers
 
 __plugin_meta__ = PluginMetadata(
     name="链接分享自动解析",
-    description="BV号/链接/小程序/卡片 | B站/抖音/网易云/微博/小红书/youtube/tiktok/twitter/acfun",
+    description="BV号/链接/小程序/卡片 | B站/抖音/快手/微博/小红书/youtube/tiktok/twitter/acfun",
     usage="发送支持平台的(BV号/链接/小程序/卡片)即可",
     type="application",
     homepage="https://github.com/fllesser/nonebot-plugin-resolver2",
