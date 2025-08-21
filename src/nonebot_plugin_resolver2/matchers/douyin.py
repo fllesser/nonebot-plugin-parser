@@ -10,9 +10,7 @@ from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import DouyinParser
 from .helper import obhelper
-from .preprocess import KeyPatternMatched, on_url_keyword
-
-douyin = on_url_keyword("v.douyin", "douyin")
+from .preprocess import KeyPatternMatched, on_keyword_regex
 
 parser = DouyinParser()
 
@@ -24,6 +22,8 @@ PATTERNS: OrderedDict[str, re.Pattern] = OrderedDict(
         ),
     }
 )
+
+douyin = on_keyword_regex(PATTERNS)
 
 
 @douyin.handle()
