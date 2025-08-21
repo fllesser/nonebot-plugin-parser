@@ -158,7 +158,7 @@ class PageInfo(BaseModel):
 class WeiboData(BaseModel):
     text: str
     source: str
-    region_name: str
+    # region_name: str | None = None
 
     status_title: str | None = None
     pics: list[Pic] | None = None
