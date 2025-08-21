@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import re
 
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
@@ -8,16 +7,14 @@ from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import XiaoHongShuParser
 from .helper import obhelper
-from .preprocess import KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
 
-PATTERNS = OrderedDict(
-    {
-        "xiaohongshu.com": re.compile(r"(http:|https:)\/\/(www\.)xiaohongshu.com\/[A-Za-z\d._?%&+\-=\/#@]*"),
-        "xhslink.com": re.compile(r"(http:|https:)\/\/xhslink.com\/[A-Za-z\d._?%&+\-=\/#@]*"),
-    }
+KEY_PATTERN_MAPPING = KeyPatternMapping(
+    ("xiaohongshu.com", r"https?://(?:www\.)?xiaohongshu\.com/[^\s]*"),
+    ("xhslink.com", r"(http:|https:)\/\/xhslink.com\/[A-Za-z\d._?%&+\-=\/#@]*"),
 )
 
-xiaohongshu = on_keyword_regex(PATTERNS)
+xiaohongshu = on_keyword_regex(KEY_PATTERN_MAPPING)
 
 parser = XiaoHongShuParser()
 

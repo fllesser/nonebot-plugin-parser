@@ -1,5 +1,4 @@
 import asyncio
-from collections import OrderedDict
 from pathlib import Path
 import re
 
@@ -16,23 +15,21 @@ from ..parsers import BilibiliParser, get_redirect_url
 from ..utils import keep_zh_en_num
 from .filter import is_not_in_disabled_groups
 from .helper import obhelper
-from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
+from .preprocess import KeyPatternMapping, KeyPatternMatched, Keyword, on_keyword_regex
 
 # bilibili = on_url_keyword("bilibili", "bili2233", "b23", "BV", "av", priority=10)
 
 bili_music = on_command(cmd="bm", block=True, rule=is_not_in_disabled_groups)
 
-PATTERNS: OrderedDict[str, re.Pattern] = OrderedDict(
-    {
-        "bilibili": re.compile(r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"),
-        "bili2233": re.compile(r"https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()()"),
-        "b23": re.compile(r"https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()"),
-        "BV": re.compile(r"(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?"),
-        "av": re.compile(r"av(\d{6,})(?:\s)?(\d{1,3})?"),
-    }
+KEY_PATTERN_MAPPING = KeyPatternMapping(
+    ("bilibili", r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"),
+    ("bili2233", r"https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()()"),
+    ("b23", r"https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()"),
+    ("BV", r"(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?"),
+    ("av", r"av(\d{6,})(?:\s)?(\d{1,3})?"),
 )
 
-bilibili = on_keyword_regex(PATTERNS)
+bilibili = on_keyword_regex(KEY_PATTERN_MAPPING)
 
 parser = BilibiliParser()
 

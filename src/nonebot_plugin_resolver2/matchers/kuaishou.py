@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import re
 
 from nonebot.adapters.onebot.v11 import Message, MessageSegment
@@ -8,22 +7,21 @@ from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import KuaishouParser
 from .helper import obhelper
-from .preprocess import KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
 
 parser = KuaishouParser()
 
-PATTERNS = OrderedDict(
-    {
-        # - https://v.kuaishou.com/2yAnzeZ
-        "v.kuaishou.com": re.compile(r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
-        # - https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
-        "kuaishou": re.compile(r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
-        # - https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
-        "chenzhongtech": re.compile(r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+"),
-    }
+
+KEY_PATTERN_MAPPING = KeyPatternMapping(
+    # - https://v.kuaishou.com/2yAnzeZ
+    ("v.kuaishou.com", r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
+    # - https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
+    ("kuaishou", r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
+    # - https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
+    ("chenzhongtech", r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+"),
 )
 
-kuaishou = on_keyword_regex(PATTERNS)
+kuaishou = on_keyword_regex(KEY_PATTERN_MAPPING)
 
 
 @kuaishou.handle()

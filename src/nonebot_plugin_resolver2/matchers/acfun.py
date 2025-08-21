@@ -1,15 +1,16 @@
-from collections import OrderedDict
 import re
 
 from ..config import NICKNAME
 from ..exception import handle_exception
 from ..parsers import AcfunParser
 from .helper import obhelper
-from .preprocess import KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
 
-PATTERNS = OrderedDict({"acfun.cn": re.compile(r"(?:ac=|/ac)(\d+)")})
+KEY_PATTERN_MAPPING = KeyPatternMapping(
+    ("acfun.cn", r"(?:ac=|/ac)(\d+)"),
+)
 
-acfun = on_keyword_regex(PATTERNS)
+acfun = on_keyword_regex(KEY_PATTERN_MAPPING)
 
 parser = AcfunParser()
 

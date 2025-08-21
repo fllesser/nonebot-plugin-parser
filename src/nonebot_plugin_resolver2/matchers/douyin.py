@@ -1,5 +1,4 @@
 import asyncio
-from collections import OrderedDict
 from pathlib import Path
 import re
 
@@ -10,20 +9,17 @@ from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import DouyinParser
 from .helper import obhelper
-from .preprocess import KeyPatternMatched, on_keyword_regex
+from .preprocess import KeyPatternMapping, KeyPatternMatched, on_keyword_regex
 
 parser = DouyinParser()
 
-PATTERNS: OrderedDict[str, re.Pattern] = OrderedDict(
-    {
-        "v.douyin": re.compile(r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
-        "douyin": re.compile(
-            r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+"
-        ),
-    }
+
+KEY_PATTERN_MAPPING = KeyPatternMapping(
+    ("v.douyin", r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
+    ("douyin", r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+"),
 )
 
-douyin = on_keyword_regex(PATTERNS)
+douyin = on_keyword_regex(KEY_PATTERN_MAPPING)
 
 
 @douyin.handle()
