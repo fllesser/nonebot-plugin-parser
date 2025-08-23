@@ -151,42 +151,36 @@ def on_url_keyword(*keywords: str, priority: int = 5) -> type[Matcher]:
     )
 
 
-from collections import OrderedDict
-
-
-class KeyPatternMapping(OrderedDict[str, re.Pattern[str]]):
+class KeyPatternList(list[tuple[str, re.Pattern[str]]]):
     def __init__(self, *args: tuple[str, str | re.Pattern[str]]):
         super().__init__()
-        for key, value in args:
-            self[key] = re.compile(value) if isinstance(value, str) else value
-
-    def __setitem__(self, key: str, value: str | re.Pattern[str]) -> None:
-        if isinstance(value, str):
-            value = re.compile(value)
-        super().__setitem__(key, value)
+        for key, pattern in args:
+            if isinstance(pattern, str):
+                pattern = re.compile(pattern)
+            self.append((key, pattern))
 
 
 class KeywordRegexRule:
     """检查消息是否含有关键词, 有关键词进行正则匹配"""
 
-    __slots__ = ("key_pattern_mapping",)
+    __slots__ = ("key_pattern_list",)
 
-    def __init__(self, key_pattern_mapping: KeyPatternMapping):
-        self.key_pattern_mapping = key_pattern_mapping
+    def __init__(self, key_pattern_list: KeyPatternList):
+        self.key_pattern_list = key_pattern_list
 
     def __repr__(self) -> str:
-        return f"KeywordRegex(key_pattern_mapping={self.key_pattern_mapping})"
+        return f"KeywordRegex(key_pattern_list={self.key_pattern_list})"
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, KeywordRegexRule) and self.key_pattern_mapping == other.key_pattern_mapping
+        return isinstance(other, KeywordRegexRule) and self.key_pattern_list == other.key_pattern_list
 
     def __hash__(self) -> int:
-        return hash(frozenset(self.key_pattern_mapping.items()))
+        return hash(frozenset(self.key_pattern_list))
 
     async def __call__(self, state: T_State, text: str = ExtractText()) -> bool:
         if not text:
             return False
-        for keyword, pattern in self.key_pattern_mapping.items():
+        for keyword, pattern in self.key_pattern_list:
             if keyword not in text:
                 continue
             if matched := pattern.search(text):
@@ -197,13 +191,13 @@ class KeywordRegexRule:
         return False
 
 
-def keyword_regex(key_pattern_mapping: KeyPatternMapping) -> Rule:
-    return Rule(KeywordRegexRule(key_pattern_mapping))
+def keyword_regex(*args: tuple[str, str | re.Pattern[str]]) -> Rule:
+    return Rule(KeywordRegexRule(KeyPatternList(*args)))
 
 
 def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5) -> type[Matcher]:
     return on_message(
-        rule=is_not_in_disabled_groups & keyword_regex(KeyPatternMapping(*args)),
+        rule=is_not_in_disabled_groups & keyword_regex(*args),
         priority=priority,
         _depth=1,  # pyright: ignore[reportCallIssue]
     )
