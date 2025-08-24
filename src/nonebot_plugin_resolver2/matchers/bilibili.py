@@ -17,8 +17,6 @@ from .filter import is_not_in_disabled_groups
 from .helper import obhelper
 from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
 
-# bilibili = on_url_keyword("bilibili", "bili2233", "b23", "BV", "av", priority=10)
-
 bili_music = on_command(cmd="bm", block=True, rule=is_not_in_disabled_groups)
 
 

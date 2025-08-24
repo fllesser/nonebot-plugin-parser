@@ -59,23 +59,6 @@ class DouyinParser:
             text = response.text
         data: dict[str, Any] = self._format_response(text)
 
-        # # 获取图集图片地址
-        # images: list[str] = []
-        # # 如果data含有 images，并且 images 是一个列表
-        # if "images" in data and isinstance(data["images"], list):
-        #     # 获取每个图片的url_list中的第一个元素，非空时添加到images列表中
-        #     for img in data["images"]:
-        #         assert isinstance(img, dict)
-        #         if (
-        #             "url_list" in img
-        #             and isinstance(img["url_list"], list)
-        #             and len(img["url_list"]) > 0
-        #             and len(img["url_list"][0]) > 0
-        #         ):
-        #             images.append(img["url_list"][0])
-
-        # # 获取视频播放地址
-        # video_url: str = data["video"]["play_addr"]["url_list"][0].replace("playwm", "play")
         video_data = VideoData.model_validate(data)
         content = None
         if image_urls := video_data.images_urls:

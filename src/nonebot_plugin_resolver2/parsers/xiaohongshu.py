@@ -65,29 +65,7 @@ class XiaoHongShuParser:
         json_str = json_str.replace("undefined", "null")
 
         json_obj = json.loads(json_str)
-        # try:
-        #     note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
-        #     resource_type, note_title, note_desc = note_data["type"], note_data["title"], note_data["desc"]
-        # except KeyError as e:
-        #     logger.error(f"小红书解析失败: {e}")
-        #     raise ParseException("小红书 cookie 可能已失效")
 
-        # title_desc = f"{note_title}\n{note_desc}"
-        # img_urls = []
-        # video_url = ""
-        # if resource_type == "normal":
-        #     image_list = note_data["imageList"]
-        #     img_urls = [item["urlDefault"] for item in image_list]
-        # elif resource_type == "video":
-        #     stream = note_data["video"]["media"]["stream"]
-        #     for code in ("h264", "h265", "av1"):
-        #         if item := stream.get(code):
-        #             video_url = item[0]["masterUrl"]
-        #             break
-        #     if not video_url:
-        #         raise ParseException("小红书视频解析失败")
-        # else:
-        #     raise ParseException(f"不支持的小红书链接类型: {resource_type}")
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
         note_detail = NoteDetail.model_validate(note_data)
 
