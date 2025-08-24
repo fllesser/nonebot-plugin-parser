@@ -207,7 +207,7 @@ def keyword_regex(*args: tuple[str, str | re.Pattern[str]]) -> Rule:
 def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5) -> type[Matcher]:
     matcher = Matcher.new(
         "message",
-        Rule() & keyword_regex(*args),
+        is_not_in_disabled_groups & keyword_regex(*args),
         priority=priority,
         block=True,
         source=get_matcher_source(1),
