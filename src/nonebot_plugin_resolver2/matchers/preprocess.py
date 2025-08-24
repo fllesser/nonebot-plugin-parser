@@ -188,7 +188,7 @@ class KeywordRegexRule:
                 state[R_KEYWORD_KEY] = keyword
                 state[R_KEY_REGEX_MATCHED_KEY] = matched
                 return True
-            logger.debug(f"keyword '{keyword}' in '{text}', but not matched")
+            logger.debug(f"keyword '{keyword}' is in '{text}', but not matched")
         return False
 
 
