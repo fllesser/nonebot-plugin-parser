@@ -67,7 +67,7 @@ class XiaoHongShuParser:
         json_obj = json.loads(json_str)
 
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
-        note_detail = NoteDetail.model_validate(note_data)
+        note_detail = NoteDetail(**note_data)
 
         if video_url := note_detail.video_url:
             content = VideoContent(video_url=video_url)
