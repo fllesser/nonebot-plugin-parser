@@ -7,6 +7,7 @@ from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.matcher import Matcher
 from nonebot.message import event_preprocessor
 from nonebot.params import Depends
+from nonebot.plugin.on import get_matcher_source
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 
@@ -187,7 +188,7 @@ class KeywordRegexRule:
                 state[R_KEYWORD_KEY] = keyword
                 state[R_KEY_REGEX_MATCHED_KEY] = matched
                 return True
-            logger.debug(f"keyword '{keyword}' in '{text}', but not matched")
+            logger.debug(f"keyword '{keyword}' is in '{text}', but not matched")
         return False
 
 
@@ -195,9 +196,20 @@ def keyword_regex(*args: tuple[str, str | re.Pattern[str]]) -> Rule:
     return Rule(KeywordRegexRule(KeyPatternList(*args)))
 
 
+# def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5) -> type[Matcher]:
+#     return on_message(
+#         rule=is_not_in_disabled_groups & keyword_regex(*args),
+#         priority=priority,
+#         _depth=1,  # pyright: ignore[reportCallIssue]
+#     )
+
+
 def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5) -> type[Matcher]:
-    return on_message(
-        rule=is_not_in_disabled_groups & keyword_regex(*args),
+    matcher = Matcher.new(
+        "message",
+        is_not_in_disabled_groups & keyword_regex(*args),
         priority=priority,
-        _depth=1,  # pyright: ignore[reportCallIssue]
+        block=True,
+        source=get_matcher_source(1),
     )
+    return matcher
