@@ -59,7 +59,7 @@ class DouyinParser:
             text = response.text
         data: dict[str, Any] = self._format_response(text)
 
-        video_data = VideoData.model_validate(data)
+        video_data = VideoData(**data)
         content = None
         if image_urls := video_data.images_urls:
             content = ImageContent(pic_urls=image_urls)
@@ -119,7 +119,7 @@ class DouyinParser:
         detail = resp.get("aweme_details")
         if not detail:
             raise ParseException("can't find aweme_details in json")
-        slides_data = SlidesData.model_validate(detail[0])
+        slides_data = SlidesData(**detail[0])
 
         return ParseResult(
             title=slides_data.share_info.share_desc_info,

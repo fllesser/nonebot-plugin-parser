@@ -83,7 +83,7 @@ class WeiBoParser:
                 raise ParseException("获取数据失败 content-type is not application/json")
             resp = response.json()
 
-        weibo_data = WeiboData.model_validate(resp["data"])
+        weibo_data = WeiboData(**resp["data"])
         if video_url := weibo_data.video_url:
             content = VideoContent(video_url=video_url)
         elif pic_urls := weibo_data.pic_urls:
