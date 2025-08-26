@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 import re
 
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
+from nonebot.adapters.onebot.v11 import MessageSegment
 
 from ..config import NICKNAME
 from ..download import DOWNLOADER
@@ -26,7 +26,7 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
     parse_result = await parser.parse_share_url(share_url)
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {parse_result.title}")
 
-    segs: list[MessageSegment | Message | str] = []
+    segs: list[MessageSegment] = []
     # 存在普通图片
     if pic_urls := parse_result.pic_urls:
         paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
@@ -38,10 +38,9 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
         video_paths = await asyncio.gather(
             *[DOWNLOADER.download_video(url) for url in dynamic_urls], return_exceptions=True
         )
-        video_segs = [obhelper.video_seg(p) for p in video_paths if isinstance(p, Path)]
-        segs.extend(video_segs)
+        segs.extend(obhelper.video_seg(p) for p in video_paths if isinstance(p, Path))
 
-    if segs:
+    if len(segs) > 0:
         await obhelper.send_segments(segs)
         await douyin.finish()
 

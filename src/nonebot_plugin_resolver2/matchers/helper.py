@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, cast
 
@@ -10,11 +11,11 @@ from ..config import NEED_FORWARD, NICKNAME, USE_BASE64
 
 class obhelper:
     @staticmethod
-    def construct_nodes(user_id: int, segments: list[Message | MessageSegment | str]) -> Message:
+    def construct_nodes(user_id: int, segments: Sequence[Message | MessageSegment | str]) -> Message:
         """构造节点
 
         Args:
-            segments (MessageSegment | list[MessageSegment | Message | str]): 消息段
+            segments (Sequence[Message | MessageSegment | str]): 消息段
 
         Returns:
             Message: 消息
@@ -26,11 +27,11 @@ class obhelper:
         return Message([node(seg) for seg in segments])
 
     @classmethod
-    async def send_segments(cls, segments: list[Message | MessageSegment | str]) -> None:
+    async def send_segments(cls, segments: Sequence[Message | MessageSegment | str]) -> None:
         """发送消息段
 
         Args:
-            segments (list): 消息段
+            segments (Sequence[Message | MessageSegment | str]): 消息段
         """
         bot = current_bot.get()
         event: MessageEvent = cast(MessageEvent, current_event.get())
@@ -47,6 +48,7 @@ class obhelper:
             await bot.call_api(api, **kwargs)
 
         else:
+            segments = list(segments)
             segments[:-1] = [seg + "\n" if isinstance(seg, str) else seg for seg in segments[:-1]]
             message = sum(segments, Message())
             await bot.send(event, message=message)

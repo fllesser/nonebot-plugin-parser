@@ -1,7 +1,5 @@
 import re
 
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
-
 from ..config import NICKNAME
 from ..download import DOWNLOADER
 from ..exception import handle_exception
@@ -27,10 +25,7 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
         await xiaohongshu.send(f"{NICKNAME}解析 | 小红书 - 图文")
         img_path_list = await DOWNLOADER.download_imgs_without_raise(pic_urls)
         # 发送图片
-        segs: list[MessageSegment | Message | str] = [
-            parse_result.title,
-            *(obhelper.img_seg(img_path) for img_path in img_path_list),
-        ]
+        segs = [parse_result.title, *[obhelper.img_seg(img_path) for img_path in img_path_list]]
         await obhelper.send_segments(segs)
     # 如果是视频
     elif video_url := parse_result.video_url:
