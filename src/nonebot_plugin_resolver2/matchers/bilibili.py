@@ -99,20 +99,15 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
 
     if not video_path.exists():
         # 下载视频和音频
-        if video_info.audio_url:
+        video_url = video_info.video_url
+        if audio_url := video_info.audio_url:
             v_path, a_path = await asyncio.gather(
-                DOWNLOADER.download_file_by_stream(
-                    video_info.video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers
-                ),
-                DOWNLOADER.download_file_by_stream(
-                    video_info.audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers
-                ),
+                DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers),
+                DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers),
             )
             await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
         else:
-            video_path = await DOWNLOADER.download_video(
-                video_info.video_url, video_name=f"{file_name}.mp4", ext_headers=parser.headers
-            )
+            video_path = await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=parser.headers)
 
     # 发送视频
     try:
@@ -229,7 +224,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     audio_path = plugin_cache_dir / audio_name
     # 下载
     if not audio_path.exists():
-        await DOWNLOADER.download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=parser.headers)
+        await DOWNLOADER.streamd(video_info.audio_url, file_name=audio_name, ext_headers=parser.headers)
 
     # 发送音频
     await bili_music.send(obhelper.record_seg(audio_path))
