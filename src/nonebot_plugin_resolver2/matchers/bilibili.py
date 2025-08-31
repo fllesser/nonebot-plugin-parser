@@ -58,7 +58,8 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
 
     # 处理非视频链接
     if not video_id:
-        await handle_non_video(url)
+        await handle_others(url)
+        await bilibili.finish()
 
     join_link = ""
     if need_join_link:
@@ -124,7 +125,7 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
 
 
 # 处理 非视频
-async def handle_non_video(url: str):
+async def handle_others(url: str):
     pub_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
     segs: list[MessageSegment | Message | str] = []
     # 动态
@@ -141,7 +142,6 @@ async def handle_non_video(url: str):
             paths = await DOWNLOADER.download_imgs_without_raise(img_lst)
             segs.extend(obhelper.img_seg(path) for path in paths)
         await obhelper.send_segments(segs)
-        await bilibili.finish()
     # 直播间解析
     elif "/live" in url:
         # https://live.bilibili.com/30528999?hotRank=0
@@ -156,7 +156,6 @@ async def handle_non_video(url: str):
         res = f"{pub_prefix}直播 {title}"
         res += obhelper.img_seg(await DOWNLOADER.download_img(cover)) if cover else ""
         res += obhelper.img_seg(await DOWNLOADER.download_img(keyframe)) if keyframe else ""
-        await bilibili.finish(res)
     # 专栏解析
     elif "/read" in url:
         matched = re.search(r"read/cv(\d+)", url)
@@ -177,7 +176,6 @@ async def handle_non_video(url: str):
                 segs.append(obhelper.img_seg(paths.pop()))
         if segs:
             await obhelper.send_segments(segs)
-            await bilibili.finish()
     # 收藏夹解析
     elif "/favlist" in url:
         # https://space.bilibili.com/22990202/favlist?fid=2344812202
@@ -195,10 +193,8 @@ async def handle_non_video(url: str):
             segs.append(obhelper.img_seg(path) + text)
         assert len(segs) > 0
         await obhelper.send_segments(segs)
-        await bilibili.finish()
     else:
         logger.info(f"不支持的链接: {url}")
-        await bilibili.finish()
 
 
 @bili_music.handle()
