@@ -1,7 +1,5 @@
 import re
 
-from nonebot.adapters.onebot.v11 import Message, MessageSegment
-
 from ..config import NICKNAME
 from ..download import DOWNLOADER
 from ..exception import handle_exception
@@ -44,6 +42,6 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
 
     elif pic_urls := parse_result.pic_urls:
         img_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
-        segs: list[str | Message | MessageSegment] = [obhelper.img_seg(img_path) for img_path in img_paths]
+        segs = [obhelper.img_seg(img_path) for img_path in img_paths]
         assert len(segs) > 0
         await obhelper.send_segments(segs)

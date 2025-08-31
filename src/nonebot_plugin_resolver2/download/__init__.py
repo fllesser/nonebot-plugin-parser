@@ -24,7 +24,7 @@ class StreamDownloader:
             verify=False,
         )
 
-    async def download_file_by_stream(
+    async def streamd(
         self,
         url: str,
         *,
@@ -120,7 +120,7 @@ class StreamDownloader:
         """
         if video_name is None:
             video_name = generate_file_name(url, ".mp4")
-        return await self.download_file_by_stream(url, file_name=video_name, ext_headers=ext_headers)
+        return await self.streamd(url, file_name=video_name, ext_headers=ext_headers)
 
     async def download_audio(
         self,
@@ -144,7 +144,7 @@ class StreamDownloader:
         """
         if audio_name is None:
             audio_name = generate_file_name(url, ".mp3")
-        return await self.download_file_by_stream(url, file_name=audio_name, ext_headers=ext_headers)
+        return await self.streamd(url, file_name=audio_name, ext_headers=ext_headers)
 
     async def download_img(
         self,
@@ -168,7 +168,7 @@ class StreamDownloader:
         """
         if img_name is None:
             img_name = generate_file_name(url, ".jpg")
-        return await self.download_file_by_stream(url, file_name=img_name, ext_headers=ext_headers)
+        return await self.streamd(url, file_name=img_name, ext_headers=ext_headers)
 
     async def download_imgs_without_raise(
         self,

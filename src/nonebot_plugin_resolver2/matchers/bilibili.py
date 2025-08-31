@@ -55,84 +55,11 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
         if matched := patterns[id_type].search(url):
             keyword = id_type
             video_id = str(matched.group(1))
-    # 预发送消息列表
-    segs: list[Message | MessageSegment | str] = []
-    # 如果不是视频
+
+    # 处理非视频链接
     if not video_id:
-        # 动态
-        if "t.bilibili.com" in url or "/opus" in url:
-            matched = re.search(r"/(\d+)", url)
-            if not matched:
-                logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
-                return
-            opus_id = int(matched.group(1))
-            img_lst, text = await parser.parse_opus(opus_id)
-            await bilibili.send(f"{pub_prefix}动态")
-            segs = [text]
-            if img_lst:
-                paths = await DOWNLOADER.download_imgs_without_raise(img_lst)
-                segs.extend(obhelper.img_seg(path) for path in paths)
-            await obhelper.send_segments(segs)
-            await bilibili.finish()
-        # 直播间解析
-        elif "/live" in url:
-            # https://live.bilibili.com/30528999?hotRank=0
-            matched = re.search(r"/(\d+)", url)
-            if not matched:
-                logger.info(f"链接 {url} 无效 - 没有获取到直播间 id, 忽略")
-                return
-            room_id = int(matched.group(1))
-            title, cover, keyframe = await parser.parse_live(room_id)
-            if not title:
-                await bilibili.finish(f"{pub_prefix}直播 - 未找到直播间信息")
-            res = f"{pub_prefix}直播 {title}"
-            res += obhelper.img_seg(await DOWNLOADER.download_img(cover)) if cover else ""
-            res += obhelper.img_seg(await DOWNLOADER.download_img(keyframe)) if keyframe else ""
-            await bilibili.finish(res)
-        # 专栏解析
-        elif "/read" in url:
-            matched = re.search(r"read/cv(\d+)", url)
-            if not matched:
-                logger.info(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
-                return
-            read_id = int(matched.group(1))
-            texts, urls = await parser.parse_read(read_id)
-            await bilibili.send(f"{pub_prefix}专栏")
-            # 并发下载
-            paths = await DOWNLOADER.download_imgs_without_raise(urls)
-            # 反转路径列表，pop 时，则为原始顺序，提高性能
-            paths.reverse()
-            segs = []
-            for text in texts:
-                if text:
-                    segs.append(text)
-                else:
-                    segs.append(obhelper.img_seg(paths.pop()))
-            if segs:
-                await obhelper.send_segments(segs)
-                await bilibili.finish()
-        # 收藏夹解析
-        elif "/favlist" in url:
-            # https://space.bilibili.com/22990202/favlist?fid=2344812202
-            matched = re.search(r"favlist\?fid=(\d+)", url)
-            if not matched:
-                logger.info(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
-                return
-            fav_id = int(matched.group(1))
-            # 获取收藏夹内容，并下载封面
-            texts, urls = await parser.parse_favlist(fav_id)
-            await bilibili.send(f"{pub_prefix}收藏夹\n正在为你找出相关链接请稍等...")
-            paths: list[Path] = await DOWNLOADER.download_imgs_without_raise(urls)
-            segs = []
-            # 组合 text 和 image
-            for path, text in zip(paths, texts):
-                segs.append(obhelper.img_seg(path) + text)
-            assert len(segs) > 0
-            await obhelper.send_segments(segs)
-            await bilibili.finish()
-        else:
-            logger.info(f"不支持的链接: {url}")
-            await bilibili.finish()
+        await handle_others(url)
+        await bilibili.finish()
 
     join_link = ""
     if need_join_link:
@@ -151,7 +78,7 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
         id_arg["bvid"] = video_id
     video_info = await parser.parse_video_info(**id_arg, page_num=page_num)
 
-    segs = [
+    segs: list[MessageSegment | str] = [
         video_info.title,
         obhelper.img_seg(await DOWNLOADER.download_img(video_info.cover_url)),
         video_info.display_info,
@@ -173,20 +100,15 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
 
     if not video_path.exists():
         # 下载视频和音频
-        if video_info.audio_url:
+        video_url = video_info.video_url
+        if audio_url := video_info.audio_url:
             v_path, a_path = await asyncio.gather(
-                DOWNLOADER.download_file_by_stream(
-                    video_info.video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers
-                ),
-                DOWNLOADER.download_file_by_stream(
-                    video_info.audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers
-                ),
+                DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers),
+                DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers),
             )
             await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
         else:
-            video_path = await DOWNLOADER.download_video(
-                video_info.video_url, video_name=f"{file_name}.mp4", ext_headers=parser.headers
-            )
+            video_path = await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=parser.headers)
 
     # 发送视频
     try:
@@ -200,6 +122,79 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
         logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
         h264_video_path = await encode_video_to_h264(video_path)
         await bilibili.send(obhelper.video_seg(h264_video_path))
+
+
+# 处理 非视频
+async def handle_others(url: str):
+    pub_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
+    segs: list[MessageSegment | Message | str] = []
+    # 动态
+    if "t.bilibili.com" in url or "/opus" in url:
+        matched = re.search(r"/(\d+)", url)
+        if not matched:
+            logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
+            return
+        opus_id = int(matched.group(1))
+        img_lst, text = await parser.parse_opus(opus_id)
+        await bilibili.send(f"{pub_prefix}动态")
+        segs.append(text)
+        if img_lst:
+            paths = await DOWNLOADER.download_imgs_without_raise(img_lst)
+            segs.extend(obhelper.img_seg(path) for path in paths)
+        await obhelper.send_segments(segs)
+    # 直播间解析
+    elif "/live" in url:
+        # https://live.bilibili.com/30528999?hotRank=0
+        matched = re.search(r"/(\d+)", url)
+        if not matched:
+            logger.info(f"链接 {url} 无效 - 没有获取到直播间 id, 忽略")
+            return
+        room_id = int(matched.group(1))
+        title, cover, keyframe = await parser.parse_live(room_id)
+        if not title:
+            await bilibili.finish(f"{pub_prefix}直播 - 未找到直播间信息")
+        res = f"{pub_prefix}直播 {title}"
+        res += obhelper.img_seg(await DOWNLOADER.download_img(cover)) if cover else ""
+        res += obhelper.img_seg(await DOWNLOADER.download_img(keyframe)) if keyframe else ""
+    # 专栏解析
+    elif "/read" in url:
+        matched = re.search(r"read/cv(\d+)", url)
+        if not matched:
+            logger.info(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
+            return
+        read_id = int(matched.group(1))
+        texts, urls = await parser.parse_read(read_id)
+        await bilibili.send(f"{pub_prefix}专栏")
+        # 并发下载
+        paths = await DOWNLOADER.download_imgs_without_raise(urls)
+        # 反转路径列表，pop 时，则为原始顺序
+        paths.reverse()
+        for text in texts:
+            if text:
+                segs.append(text)
+            else:
+                segs.append(obhelper.img_seg(paths.pop()))
+        if segs:
+            await obhelper.send_segments(segs)
+    # 收藏夹解析
+    elif "/favlist" in url:
+        # https://space.bilibili.com/22990202/favlist?fid=2344812202
+        matched = re.search(r"favlist\?fid=(\d+)", url)
+        if not matched:
+            logger.info(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
+            return
+        fav_id = int(matched.group(1))
+        # 获取收藏夹内容，并下载封面
+        texts, urls = await parser.parse_favlist(fav_id)
+        await bilibili.send(f"{pub_prefix}收藏夹\n正在为你找出相关链接请稍等...")
+        paths: list[Path] = await DOWNLOADER.download_imgs_without_raise(urls)
+        # 组合 text 和 image
+        for path, text in zip(paths, texts):
+            segs.append(obhelper.img_seg(path) + text)
+        assert len(segs) > 0
+        await obhelper.send_segments(segs)
+    else:
+        logger.info(f"不支持的链接: {url}")
 
 
 @bili_music.handle()
@@ -225,7 +220,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     audio_path = plugin_cache_dir / audio_name
     # 下载
     if not audio_path.exists():
-        await DOWNLOADER.download_file_by_stream(video_info.audio_url, file_name=audio_name, ext_headers=parser.headers)
+        await DOWNLOADER.streamd(video_info.audio_url, file_name=audio_name, ext_headers=parser.headers)
 
     # 发送音频
     await bili_music.send(obhelper.record_seg(audio_path))

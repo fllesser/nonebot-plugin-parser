@@ -21,7 +21,7 @@ class BilibiliVideoInfo:
     cover_url: str
     video_duration: int
     video_url: str
-    audio_url: str
+    audio_url: str | None
     ai_summary: str
 
 
@@ -242,7 +242,6 @@ class BilibiliParser:
 
         video_duration: int = int(video_info["duration"])
 
-        display_info: str = ""
         cover_url: str | None = None
         title: str = video_info["title"]
         # 处理分 p
@@ -298,7 +297,7 @@ class BilibiliParser:
         bvid: str | None = None,
         avid: int | None = None,
         page_index: int = 0,
-    ) -> tuple[str, str]:
+    ) -> tuple[str, str | None]:
         """解析视频下载链接
 
         Args:
@@ -331,7 +330,7 @@ class BilibiliParser:
         logger.debug(f"视频流质量: {video_stream.video_quality.name}, 编码: {video_stream.video_codecs}")
         audio_stream = streams[1]
         if not isinstance(audio_stream, AudioStreamDownloadURL):
-            return video_stream.url, ""
+            return video_stream.url, None
         logger.debug(f"音频流质量: {audio_stream.audio_quality.name}")
         return video_stream.url, audio_stream.url
 
