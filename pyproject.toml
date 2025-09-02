@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-resolver2"
-version = "1.12.2"
+version = "1.12.3"
 description = "NoneBot2 链接分享解析器自动解析, BV号/链接/小程序/卡片 | B站/抖音/快手/微博/小红书/youtube/tiktok/twitter/acfun"
 authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
 urls = { Repository = "https://github.com/fllesser/nonebot-plugin-resolver2" }
@@ -136,7 +136,7 @@ build-backend = "uv_build"
 
 
 [tool.bumpversion]
-current_version = "1.12.2"
+current_version = "1.12.3"
 commit = true
 message = "🔖 release: bump vesion from {current_version} to {new_version}"
 tag = true
