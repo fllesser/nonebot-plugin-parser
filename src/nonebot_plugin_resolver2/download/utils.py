@@ -41,6 +41,7 @@ async def merge_av(
 
     await exec_ffmpeg_cmd(cmd)
     await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
+    logger.success(f"Merged {output_path.name}, {fmt_size(output_path)}")
 
 
 async def merge_av_h264(
@@ -56,7 +57,7 @@ async def merge_av_h264(
         a_path (Path): 音频文件路径
         output_path (Path): 输出文件路径
     """
-    logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
+    logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name} with H.264")
 
     # 修改命令以确保视频使用 H.264 编码
     cmd = [
@@ -85,6 +86,7 @@ async def merge_av_h264(
 
     await exec_ffmpeg_cmd(cmd)
     await asyncio.gather(safe_unlink(v_path), safe_unlink(a_path))
+    logger.success(f"Merged {output_path.name} with H.264, {fmt_size(output_path)}")
 
 
 async def encode_video_to_h264(video_path: Path) -> Path:

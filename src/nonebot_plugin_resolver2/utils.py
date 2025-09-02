@@ -19,7 +19,7 @@ async def safe_unlink(path: Path):
     try:
         await asyncio.to_thread(path.unlink, missing_ok=True)
     except Exception:
-        logger.error(f"删除 {path} 失败", exc_info=True)
+        logger.warning(f"删除 {path} 失败")
 
 
 async def exec_ffmpeg_cmd(cmd: list[str]) -> None:

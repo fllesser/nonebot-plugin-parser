@@ -33,7 +33,7 @@ def skip_on_failure(func):
         try:
             await func(*args, **kwargs)
         except Exception as e:
-            logger.error(f"测试 {func.__name__} 失败，已跳过", exc_info=True)
+            logger.exception(f"测试 {func.__name__} 失败，已跳过")
             pytest.skip(f"测试失败: {e}")
 
     return wrapper

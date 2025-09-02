@@ -47,9 +47,6 @@ class DouyinParser:
             except ParseException as e:
                 logger.warning(f"failed to parse {url[:60]}, error: {e}")
                 continue
-            # except Exception as e:
-            #     logger.warning(f"failed to parse {url[:60]}, unknown error: {e}")
-            #     continue
         raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
 
     async def parse_video(self, url: str) -> ParseResult:

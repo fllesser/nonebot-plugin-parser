@@ -30,7 +30,7 @@ async def _(state: T_State, searched: re.Match[str] = KeyPatternMatched()):
         info_dict = await get_video_info(url, ytb_cookies_file)
         title = info_dict.get("title", "未知")
     except Exception:
-        logger.error(f"油管标题获取失败 | {url}", exc_info=True)
+        logger.exception(f"油管标题获取失败 | {url}")
         await ytb.finish(f"{NICKNAME}解析 | 油管 - 标题获取出错")
     await ytb.send(f"{NICKNAME}解析 | 油管 - {title}")
     state["url"] = url
@@ -65,7 +65,7 @@ async def _(
             audio_path = await ytdlp_download_audio(url, ytb_cookies_file)
     except Exception:
         media_type = "视频" if is_video else "音频"
-        logger.error(f"{media_type}下载失败 | {url}", exc_info=True)
+        logger.exception(f"{media_type}下载失败 | {url}")
         await ytb.finish(f"{media_type}下载失败", reply_message=True)
     # 发送视频或音频
     if video_path:
