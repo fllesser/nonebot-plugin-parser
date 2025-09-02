@@ -84,7 +84,7 @@ def _extract_json_url(json_seg: MessageSegment) -> str | None:
     try:
         data: dict[str, Any] = json.loads(data_str)
     except json.JSONDecodeError:
-        logger.debug("json 卡片解析失败")
+        logger.exception("json 卡片解析失败")
         return None
 
     meta: dict[str, Any] | None = data.get("meta")

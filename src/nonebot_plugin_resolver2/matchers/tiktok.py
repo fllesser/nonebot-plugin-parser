@@ -36,7 +36,7 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
     try:
         video_path = await ytdlp_download_video(url=url)
     except Exception:
-        logger.error(f"tiktok video download failed | {url}", exc_info=True)
+        logger.exception(f"tiktok video download failed | {url}")
         await tiktok.finish(f"{pub_prefix}下载视频失败")
 
     await tiktok.send(obhelper.video_seg(video_path))

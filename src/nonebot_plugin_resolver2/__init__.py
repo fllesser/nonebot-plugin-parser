@@ -65,6 +65,6 @@ async def clean_plugin_cache():
         tasks = [safe_unlink(file) for file in files]
         await asyncio.gather(*tasks)
 
-        logger.info(f"Successfully cleaned {len(files)} cache files")
+        logger.success(f"Successfully cleaned {len(files)} cache files")
     except Exception:
-        logger.error("Error while cleaning cache files", exc_info=True)
+        logger.exception("Error while cleaning cache files")

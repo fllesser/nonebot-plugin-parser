@@ -4,6 +4,7 @@ import re
 
 import aiofiles
 import httpx
+from nonebot import logger
 
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
@@ -89,9 +90,10 @@ class AcfunParser:
                         if total_size > max_size_in_bytes:
                             # 直接截断
                             break
-        except httpx.HTTPError as e:
+        except httpx.HTTPError:
             await safe_unlink(video_file)
-            raise DownloadException(f"下载 acfun 视频失败: {e}")
+            logger.exception("acfun 视频下载失败")
+            raise DownloadException("acfun 视频下载失败")
         return video_file
 
     async def _parse_m3u8(self, m3u8_url: str):

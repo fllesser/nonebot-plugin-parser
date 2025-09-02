@@ -59,6 +59,8 @@ async def test_encode_h264_video():
     bvid = "BV1VLk9YDEzB"
     bilibili_parser = BilibiliParser()
     video_url, audio_url = await bilibili_parser.parse_video_download_url(bvid=bvid)
+    assert video_url is not None
+    assert audio_url is not None
     v_path, a_path = await asyncio.gather(
         DOWNLOADER.streamd(video_url, file_name=f"{bvid}-video.m4s", ext_headers=HEADERS),
         DOWNLOADER.streamd(audio_url, file_name=f"{bvid}-audio.m4s", ext_headers=HEADERS),

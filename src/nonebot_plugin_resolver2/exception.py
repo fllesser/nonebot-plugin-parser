@@ -31,7 +31,6 @@ def handle_exception(error_message: str | None = None):
                 return await func(*args, **kwargs)
             except (ParseException, DownloadException) as e:
                 matcher = current_matcher.get()
-                # logger.warning(f"{matcher.module_name}: {e}")
                 await matcher.finish(error_message or str(e))
 
         return wrapper

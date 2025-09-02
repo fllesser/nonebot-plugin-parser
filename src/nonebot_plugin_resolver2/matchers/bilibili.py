@@ -43,7 +43,7 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
         b23url = url
         url = await get_redirect_url(url, parser.headers)
         if url == b23url:
-            logger.info(f"链接 {url} 无效，忽略")
+            logger.warning(f"链接 {url} 无效，忽略")
             return
 
     # 链接中是否包含BV，av号
@@ -92,7 +92,7 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
     await obhelper.send_segments(segs)
 
     if video_info.video_duration > DURATION_MAXIMUM:
-        logger.info(f"video duration > {DURATION_MAXIMUM}, ignore download")
+        logger.warning(f"video duration > {DURATION_MAXIMUM}, ignore download")
         return
     # 下载视频和音频
     file_name = f"{video_id}-{page_num}"
@@ -132,7 +132,7 @@ async def handle_others(url: str):
     if "t.bilibili.com" in url or "/opus" in url:
         matched = re.search(r"/(\d+)", url)
         if not matched:
-            logger.info(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
+            logger.warning(f"链接 {url} 无效 - 没有获取到动态 id, 忽略")
             return
         opus_id = int(matched.group(1))
         img_lst, text = await parser.parse_opus(opus_id)
@@ -147,7 +147,7 @@ async def handle_others(url: str):
         # https://live.bilibili.com/30528999?hotRank=0
         matched = re.search(r"/(\d+)", url)
         if not matched:
-            logger.info(f"链接 {url} 无效 - 没有获取到直播间 id, 忽略")
+            logger.warning(f"链接 {url} 无效 - 没有获取到直播间 id, 忽略")
             return
         room_id = int(matched.group(1))
         title, cover, keyframe = await parser.parse_live(room_id)
@@ -160,7 +160,7 @@ async def handle_others(url: str):
     elif "/read" in url:
         matched = re.search(r"read/cv(\d+)", url)
         if not matched:
-            logger.info(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
+            logger.warning(f"链接 {url} 无效 - 没有获取到专栏 id, 忽略")
             return
         read_id = int(matched.group(1))
         texts, urls = await parser.parse_read(read_id)
@@ -181,7 +181,7 @@ async def handle_others(url: str):
         # https://space.bilibili.com/22990202/favlist?fid=2344812202
         matched = re.search(r"favlist\?fid=(\d+)", url)
         if not matched:
-            logger.info(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
+            logger.warning(f"链接 {url} 无效 - 没有获取到收藏夹 id, 忽略")
             return
         fav_id = int(matched.group(1))
         # 获取收藏夹内容，并下载封面
@@ -194,7 +194,7 @@ async def handle_others(url: str):
         assert len(segs) > 0
         await obhelper.send_segments(segs)
     else:
-        logger.info(f"不支持的链接: {url}")
+        logger.warning(f"不支持的链接: {url}")
 
 
 @bili_music.handle()
