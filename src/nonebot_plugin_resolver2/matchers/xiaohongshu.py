@@ -30,7 +30,7 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
         await obhelper.send_segments(segs)
     # 如果是视频
     elif video_url := parse_result.video_url:
-        msg = f"{msg_prefix}视频\n标题:{parse_result.title}"
+        msg = f"{msg_prefix}视频\n标题: {parse_result.title}"
         if cover_url := parse_result.cover_url:
             cover_path = await DOWNLOADER.download_img(cover_url)
             await xiaohongshu.send(msg + obhelper.img_seg(cover_path))
