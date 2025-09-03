@@ -71,12 +71,14 @@ class XiaoHongShuParser:
 
         if video_url := note_detail.video_url:
             content = VideoContent(video_url=video_url)
+            cover_url = note_detail.img_urls[0]
         else:
             content = ImageContent(pic_urls=note_detail.img_urls)
+            cover_url = None
 
         return ParseResult(
             title=note_detail.title_desc,
-            cover_url="",
+            cover_url=cover_url,
             content=content,
             author=note_detail.user.nickname,
         )
