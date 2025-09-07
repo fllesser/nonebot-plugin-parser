@@ -73,7 +73,7 @@ async def test_encode_h264_video():
 
     from bilibili_api import HEADERS
 
-    from nonebot_plugin_resolver2.config import store
+    from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av
     from nonebot_plugin_resolver2.parsers import BilibiliParser
@@ -92,7 +92,7 @@ async def test_encode_h264_video():
         logger.error("B站视频 BV1VLk9YDEzB 下载失败")
         return
 
-    video_path = store.get_plugin_cache_file(f"{bvid}.mp4")
+    video_path = plugin_cache_dir / f"{bvid}.mp4"
     await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
     video_h264_path = await encode_video_to_h264(video_path)
     assert not video_path.exists()
