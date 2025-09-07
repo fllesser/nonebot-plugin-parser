@@ -76,7 +76,12 @@ test = "uv run pytest --cov=src --cov-report xml --junitxml=./junit.xml -n auto"
 bump = "uv run bump-my-version bump"
 show-bump = "uv run bump-my-version show-bump"
 
+
 [tool.coverage.report]
+show_missing = true # 相当于 --cov-report=term-missing:cite[1]
+omit = [ # 排除不需要统计的文件
+  "src/nonebot_plugin_resolver2/matchers/*",
+]
 exclude_lines = [
   "raise NotImplementedError",
   "if TYPE_CHECKING:",
