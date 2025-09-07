@@ -65,7 +65,7 @@ async def test_bilibili_video():
 
         assert video_path.exists()
     except Exception:
-        logger.error("B站视频 BV1584y167sD p40 下载失败")
+        pytest.skip("B站视频 BV1584y167sD p40 下载失败")
 
 
 async def test_encode_h264_video():
@@ -89,8 +89,7 @@ async def test_encode_h264_video():
             DOWNLOADER.streamd(audio_url, file_name=f"{bvid}-audio.m4s", ext_headers=HEADERS),
         )
     except Exception:
-        logger.error("B站视频 BV1VLk9YDEzB 下载失败")
-        return
+        pytest.skip("B站视频 BV1VLk9YDEzB 下载失败")
 
     video_path = plugin_cache_dir / f"{bvid}.mp4"
     await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
