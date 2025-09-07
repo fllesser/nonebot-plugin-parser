@@ -2,7 +2,7 @@ import json
 import re
 from typing import Any, Literal
 
-from nonebot import logger, on_message
+from nonebot import logger
 from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.matcher import Matcher
 from nonebot.message import event_preprocessor
@@ -144,12 +144,14 @@ def url_keywords(*keywords: str) -> Rule:
 
 
 def on_url_keyword(*keywords: str, priority: int = 5) -> type[Matcher]:
-    return on_message(
-        rule=is_not_in_disabled_groups & url_keywords(*keywords),
+    matcher = Matcher.new(
+        "message",
+        is_not_in_disabled_groups & url_keywords(*keywords),
         priority=priority,
-        block=False,
-        _depth=1,  # pyright: ignore[reportCallIssue]
+        block=True,
+        source=get_matcher_source(1),
     )
+    return matcher
 
 
 class KeyPatternList(list[tuple[str, re.Pattern[str]]]):
@@ -194,14 +196,6 @@ class KeywordRegexRule:
 
 def keyword_regex(*args: tuple[str, str | re.Pattern[str]]) -> Rule:
     return Rule(KeywordRegexRule(KeyPatternList(*args)))
-
-
-# def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5) -> type[Matcher]:
-#     return on_message(
-#         rule=is_not_in_disabled_groups & keyword_regex(*args),
-#         priority=priority,
-#         _depth=1,  # pyright: ignore[reportCallIssue]
-#     )
 
 
 def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5) -> type[Matcher]:

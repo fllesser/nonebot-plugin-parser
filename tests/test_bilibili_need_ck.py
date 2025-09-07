@@ -45,8 +45,7 @@ async def test_bilibili_video():
     logger.success("B站视频 av605821754 p40 解析成功")
 
 
-@pytest.mark.asyncio
-async def test_encode_h264_video():
+async def encode_h264_video():
     import asyncio
     from pathlib import Path
 

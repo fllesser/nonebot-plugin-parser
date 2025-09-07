@@ -2,7 +2,6 @@ import asyncio
 
 from nonebot import logger
 import pytest
-from utils import TEST_URLS
 
 
 @pytest.mark.asyncio
@@ -10,7 +9,7 @@ async def test_parse_acfun_url():
     from nonebot_plugin_resolver2.download.utils import fmt_size
     from nonebot_plugin_resolver2.parsers import AcfunParser
 
-    urls = TEST_URLS["acfun"]["video_urls"]
+    urls = ["https://www.acfun.cn/v/ac46593564"]
     acfun_parser = AcfunParser()
 
     async def parse_acfun_url(url: str) -> None:
