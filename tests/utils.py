@@ -39,16 +39,16 @@ def skip_on_failure(func):
     return wrapper
 
 
-from typing import Any
+# from typing import Any
 
 
-def load_test_urls(path: str = "test_urls.toml") -> dict[str, Any]:
-    try:
-        import tomllib
-    except ImportError:
-        import tomli as tomllib
-    with open(path, "rb") as f:
-        return tomllib.load(f)
+# def load_test_urls(path: str = "test_urls.toml") -> dict[str, Any]:
+#     try:
+#         import tomllib
+#     except ImportError:
+#         import tomli as tomllib
+#     with open(path, "rb") as f:
+#         return tomllib.load(f)
 
 
-TEST_URLS = load_test_urls()
+# TEST_URLS = load_test_urls()

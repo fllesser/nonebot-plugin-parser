@@ -24,7 +24,9 @@ jobs:
       - name: setup-pytest
         uses: ./.github/actions/setup-pytest
         with:
+          enable-cache: true
           python-version: ${{ matrix.python-version }}
+          
       - name: pytest
         run: uv run pytest tests/test_load.py
 
