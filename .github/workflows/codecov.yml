@@ -35,12 +35,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install uv and set the python version
+      - name: setup uv
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
           python-version: ${{ matrix.python-version }}
           version: "latest"
+
+      - name: setup ffmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
 
       - name: Install Dependencies for test group
         run: uv sync --no-dev
