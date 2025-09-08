@@ -72,9 +72,9 @@ addopts = [
 ]
 
 [tool.poe.tasks]
-test = "uv run pytest --cov=src --cov-report xml --junitxml=./junit.xml -n auto"
-bump = "uv run bump-my-version bump"
-show-bump = "uv run bump-my-version show-bump"
+test = "pytest --cov=src --cov-report xml --junitxml=./junit.xml -n auto"
+bump = "bump-my-version bump"
+show-bump = "bump-my-version show-bump"
 
 
 [tool.coverage.report]
