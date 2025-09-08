@@ -1,4 +1,4 @@
-name: Code Coverage
+name: CI
 
 on:
   push:
@@ -12,6 +12,13 @@ on:
       - "uv.lock"
 
 jobs:
+
+  typos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5 # v5
+      - uses: crate-ci/typos@master
+
   test:
     name: Test
     runs-on: ubuntu-latest
