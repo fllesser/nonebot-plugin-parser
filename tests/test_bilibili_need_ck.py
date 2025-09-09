@@ -30,7 +30,7 @@ async def test_bilibili_video():
 
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.download.utils import merge_av
+    from nonebot_plugin_resolver2.download.utils import merge_av, merge_av_h264
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
     try:
@@ -60,6 +60,7 @@ async def test_bilibili_video():
                 DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers),
             )
             await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
+            await merge_av_h264(v_path=v_path, a_path=a_path, output_path=video_path)
         else:
             video_path = await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=parser.headers)
 
