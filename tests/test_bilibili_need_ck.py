@@ -1,8 +1,6 @@
 from nonebot import logger
 import pytest
 
-from nonebot_plugin_resolver2.download.utils import merge_av_h264
-
 
 @pytest.mark.asyncio
 async def test_bilibili_favlist():
@@ -32,7 +30,7 @@ async def test_bilibili_video():
 
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.download.utils import merge_av
+    from nonebot_plugin_resolver2.download.utils import merge_av, merge_av_h264
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
     try:
