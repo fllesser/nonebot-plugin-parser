@@ -19,10 +19,10 @@ R_KEY_REGEX_MATCHED_KEY: Literal["_r_key_regex_matched"] = "_r_key_regex_matched
 
 
 def ExtractText() -> str:
-    return Depends(_extact_text)
+    return Depends(_extract_text)
 
 
-def _extact_text(state: T_State) -> str | None:
+def _extract_text(state: T_State) -> str | None:
     return state.get(R_EXTRACT_KEY)
 
 
