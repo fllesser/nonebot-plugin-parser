@@ -8,5 +8,3 @@ async def test_ck2dict():
         "DedeUserID": "1234567890",
         "bili_uid": "1234567890",
     }
-
-
