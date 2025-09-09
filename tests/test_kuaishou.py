@@ -44,6 +44,7 @@ async def test_parse():
     """测试快手视频解析"""
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.download.utils import fmt_size
+    from nonebot_plugin_resolver2.exception import handle_exception
     from nonebot_plugin_resolver2.parsers import KuaishouParser
 
     parser = KuaishouParser()
@@ -55,6 +56,7 @@ async def test_parse():
         # "https://v.kuaishou.com/2xZPkuV",  # 图集
     ]
 
+    @handle_exception()
     async def test_parse_url(url: str) -> None:
         logger.info(f"{url} | 开始解析快手视频")
         parse_result = await parser.parse_url(url)
