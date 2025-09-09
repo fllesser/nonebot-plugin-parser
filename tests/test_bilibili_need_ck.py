@@ -1,6 +1,8 @@
 from nonebot import logger
 import pytest
 
+from nonebot_plugin_resolver2.download.utils import merge_av_h264
+
 
 @pytest.mark.asyncio
 async def test_bilibili_favlist():
@@ -60,6 +62,7 @@ async def test_bilibili_video():
                 DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers),
             )
             await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
+            await merge_av_h264(v_path=v_path, a_path=a_path, output_path=video_path)
         else:
             video_path = await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=parser.headers)
 
