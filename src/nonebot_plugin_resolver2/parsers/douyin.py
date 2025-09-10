@@ -47,12 +47,18 @@ class DouyinParser:
             except ParseException as e:
                 logger.warning(f"failed to parse {url[:60]}, error: {e}")
                 continue
-        raise ParseException("作品已删除，或资源直链获取失败, 请稍后再试")
+        raise ParseException("分享已删除或资源直链获取失败, 请稍后再试")
 
     async def parse_video(self, url: str) -> ParseResult:
-        async with httpx.AsyncClient(headers=self.ios_headers, verify=False, timeout=COMMON_TIMEOUT) as client:
+        async with httpx.AsyncClient(
+            headers=self.ios_headers,
+            timeout=COMMON_TIMEOUT,
+            follow_redirects=False,
+            verify=False,
+        ) as client:
             response = await client.get(url)
-            response.raise_for_status()
+            if response.status_code != 200:
+                raise ParseException(f"status: {response.status_code}")
             text = response.text
 
         video_data = self._extract_data(text)
