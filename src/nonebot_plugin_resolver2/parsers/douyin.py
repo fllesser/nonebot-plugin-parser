@@ -1,7 +1,6 @@
 import json
 import re
 from typing import Any
-from typing_extensions import deprecated
 
 import httpx
 from nonebot import logger
@@ -93,39 +92,6 @@ class DouyinParser:
 
         json_data = json.loads(matched.group(1).strip())
         return RouterData(**json_data).video_data
-
-    @deprecated("use _extract_video_data instead after v1.12.5")
-    def _format_response(self, text: str) -> dict[str, Any]:
-        pattern = re.compile(
-            pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
-            flags=re.DOTALL,
-        )
-        matched = pattern.search(text)
-
-        if not matched or not matched.group(1):
-            raise ParseException("can't find _ROUTER_DATA in html")
-
-        json_data = json.loads(matched.group(1).strip())
-        # 获取链接返回json数据进行视频和图集判断,如果指定类型不存在，抛出异常
-        # 返回的json数据中，视频字典类型为 video_(id)/page
-        VIDEO_ID_PAGE_KEY = "video_(id)/page"
-        # 返回的json数据中，视频字典类型为 note_(id)/page
-        NOTE_ID_PAGE_KEY = "note_(id)/page"
-        if VIDEO_ID_PAGE_KEY in json_data["loaderData"]:
-            original_video_info = json_data["loaderData"][VIDEO_ID_PAGE_KEY]["videoInfoRes"]
-        elif NOTE_ID_PAGE_KEY in json_data["loaderData"]:
-            original_video_info = json_data["loaderData"][NOTE_ID_PAGE_KEY]["videoInfoRes"]
-        else:
-            raise ParseException("failed to parse Videos or Photo Gallery info from json")
-
-        # 如果没有视频信息，获取并抛出异常
-        if len(original_video_info["item_list"]) == 0:
-            err_msg = "failed to parse video info from HTML"
-            if len(filter_list := original_video_info["filter_list"]) > 0:
-                err_msg = filter_list[0]["detail_msg"] or filter_list[0]["filter_reason"]
-            raise ParseException(err_msg)
-
-        return original_video_info["item_list"][0]
 
     async def parse_slides(self, video_id: str) -> ParseResult:
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
