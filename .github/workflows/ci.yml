@@ -61,6 +61,7 @@ jobs:
 
       - name: Run Pytest
         run: |
+          echo "UV_NO_SYNC: $UV_NO_SYNC"
           uv run poe test_parsers
           uv run poe test_others
 
@@ -76,5 +77,5 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           env_vars: PYTHON_VERSION,PYDANTIC_VERSION
-          files: ./coverage1.xml,./coverage2.xml # optional
+          files: ./coverage1.xml,./coverage2.xml
           use_oidc: true

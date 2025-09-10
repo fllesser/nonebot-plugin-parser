@@ -14,3 +14,9 @@ def test_keep_zh_en_num():
     from nonebot_plugin_resolver2.utils import keep_zh_en_num
 
     assert keep_zh_en_num("12#¥%……*3ab#*#@c测#**@@试") == "123abc测试"
+
+
+async def test_clean_plugin_cache():
+    from nonebot_plugin_resolver2 import clean_plugin_cache
+
+    await clean_plugin_cache()
