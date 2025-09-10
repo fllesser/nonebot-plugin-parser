@@ -26,17 +26,17 @@ jobs:
       id-token: write
       contents: read
     concurrency:
-      group: test-coverage-${{ github.ref }}-${{ matrix.python-version }}
+      group: test-coverage-${{ github.ref }}-${{ matrix.python-version }}-${{ matrix.os }}
       cancel-in-progress: true
 
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        # os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     env:
-      # OS: ${{ matrix.os }}
+      OS: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
 
     steps:
@@ -51,12 +51,15 @@ jobs:
 
       - name: setup ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v3
+        with:
+          ffmpeg-version: release
+          github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
 
       - name: Install Dependencies for test group
-        run: uv sync --no-dev
+        run: uv sync --no-dev --locked
 
       - name: Run Pytest
-        run: uv run --no-sync poe test
+        run: UV_NO_SYNC=1 uv run poe test
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}

@@ -42,7 +42,7 @@ test = [
   "nonebug>=0.3.7,<1.0.0",
   "pytest-xdist>=3.8.0,<4.0.0",
   "pytest-asyncio>=1.1.0,<1.2.0",
-  "pytest-cov>=6.3.0",
+  "pytest-cov>=7.0.0",
   "poethepoet>=0.36.0",
   "respx>=0.22.0",
 ]
@@ -86,7 +86,7 @@ exclude_lines = [
   "raise NotImplementedError",
   "if TYPE_CHECKING:",
   "@overload",
-  "except ImportError:",
+  "except",
 ]
 
 [tool.ruff]
