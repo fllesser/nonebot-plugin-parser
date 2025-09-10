@@ -1,6 +1,7 @@
 import json
 import re
 from typing import Any
+from typing_extensions import deprecated
 
 import httpx
 from nonebot import logger
@@ -54,9 +55,8 @@ class DouyinParser:
             response = await client.get(url)
             response.raise_for_status()
             text = response.text
-        data: dict[str, Any] = self._format_response(text)
 
-        video_data = VideoData(**data)
+        video_data = self._extract_data(text)
         content = None
         if image_urls := video_data.images_urls:
             content = ImageContent(pic_urls=image_urls)
@@ -70,6 +70,31 @@ class DouyinParser:
             content=content,
         )
 
+    def _extract_data(self, text: str) -> "VideoData":
+        """从html中提取视频数据
+
+        Args:
+            text (str): 网页源码
+
+        Raises:
+            ParseException: 解析失败
+
+        Returns:
+            VideoData: 数据
+        """
+        pattern = re.compile(
+            pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
+            flags=re.DOTALL,
+        )
+        matched = pattern.search(text)
+
+        if not matched or not matched.group(1):
+            raise ParseException("can't find _ROUTER_DATA in html")
+
+        json_data = json.loads(matched.group(1).strip())
+        return RouterData(**json_data).video_data
+
+    @deprecated("use _extract_video_data instead after v1.12.5")
     def _format_response(self, text: str) -> dict[str, Any]:
         pattern = re.compile(
             pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
@@ -81,7 +106,6 @@ class DouyinParser:
             raise ParseException("can't find _ROUTER_DATA in html")
 
         json_data = json.loads(matched.group(1).strip())
-
         # 获取链接返回json数据进行视频和图集判断,如果指定类型不存在，抛出异常
         # 返回的json数据中，视频字典类型为 video_(id)/page
         VIDEO_ID_PAGE_KEY = "video_(id)/page"
@@ -112,8 +136,10 @@ class DouyinParser:
         async with httpx.AsyncClient(headers=self.android_headers, verify=False) as client:
             response = await client.get(url, params=params)
             response.raise_for_status()
-            resp = response.json()
-        detail = resp.get("aweme_details")
+
+        resp_json = response.json()
+
+        detail = resp_json.get("aweme_details")
         if not detail:
             raise ParseException("can't find aweme_details in json")
         slides_data = SlidesData(**detail[0])
@@ -126,7 +152,7 @@ class DouyinParser:
         )
 
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PlayAddr(BaseModel):
@@ -186,3 +212,35 @@ class VideoData(BaseModel):
     @property
     def cover_url(self) -> str | None:
         return self.video.cover.url_list[0] if self.video else None
+
+
+class VideoInfoRes(BaseModel):
+    item_list: list[VideoData] = Field(default_factory=list)
+
+    @property
+    def video_data(self) -> VideoData:
+        if len(self.item_list) == 0:
+            raise ParseException("can't find data in videoInfoRes")
+        return self.item_list[0]
+
+
+class VideoOrNotePage(BaseModel):
+    videoInfoRes: VideoInfoRes
+
+
+class LoaderData(BaseModel):
+    video_page: VideoOrNotePage | None = Field(alias="video_(id)/page", default=None)
+    note_page: VideoOrNotePage | None = Field(alias="note_(id)/page", default=None)
+
+
+class RouterData(BaseModel):
+    loaderData: LoaderData
+    errors: dict[str, Any] | None = None
+
+    @property
+    def video_data(self) -> VideoData:
+        if page := self.loaderData.video_page:
+            return page.videoInfoRes.video_data
+        elif page := self.loaderData.note_page:
+            return page.videoInfoRes.video_data
+        raise ParseException("can't find video_(id)/page or note_(id)/page in router data")

@@ -49,24 +49,24 @@ async def test_bilibili_video():
         video_info = await parser.parse_video_info(avid=605821754, page_num=40)
         logger.debug(video_info)
         logger.success("B站视频 av605821754 p40 解析成功")
-
-        file_name = "BV1584y167sD-40"
-        video_path = plugin_cache_dir / f"{file_name}.mp4"
-        video_url = video_info.video_url
-
-        if audio_url := video_info.audio_url:
-            v_path, a_path = await asyncio.gather(
-                DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers),
-                DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers),
-            )
-            await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
-            await merge_av_h264(v_path=v_path, a_path=a_path, output_path=video_path)
-        else:
-            video_path = await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=parser.headers)
-
-        assert video_path.exists()
     except Exception:
-        pytest.skip("B站视频 BV1584y167sD p40 下载失败")
+        pytest.skip("B站视频 BV1584y167sD p40 解析失败(风控)")
+
+    file_name = "BV1584y167sD-40"
+    video_path = plugin_cache_dir / f"{file_name}.mp4"
+
+    video_url = video_info.video_url
+    audio_url = video_info.audio_url
+    assert audio_url is not None
+
+    v_path, a_path = await asyncio.gather(
+        DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers),
+        DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers),
+    )
+    await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
+    await merge_av_h264(v_path=v_path, a_path=a_path, output_path=video_path)
+
+    assert video_path.exists()
 
 
 async def test_encode_h264_video():
