@@ -10,8 +10,8 @@ async def test_bilibili_live():
     logger.info("开始解析B站直播 https://live.bilibili.com/6")
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
-    # https://live.bilibili.com/6
-    room_id = 6
+    # https://live.bilibili.com/1
+    room_id = 1
     bilibili_parser = BilibiliParser()
     title, cover, _ = await bilibili_parser.parse_live(room_id)
     assert title
