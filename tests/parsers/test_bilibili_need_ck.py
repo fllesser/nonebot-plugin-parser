@@ -30,25 +30,16 @@ async def test_bilibili_video():
 
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av
+    from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av, merge_av_h264
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
-    try:
-        logger.info("开始解析B站视频 BV1VLk9YDEzB")
-        parser = BilibiliParser()
-        video_info = await parser.parse_video_info(bvid="BV1VLk9YDEzB")
-        logger.debug(video_info)
-        logger.success("B站视频 BV1VLk9YDEzB 解析成功")
+    parser = BilibiliParser()
 
+    try:
         logger.info("开始解析B站视频 BV1584y167sD p40")
         video_info = await parser.parse_video_info(bvid="BV1584y167sD", page_num=40)
         logger.debug(video_info)
         logger.success("B站视频 BV1584y167sD p40 解析成功")
-
-        logger.info("开始解析B站视频 av605821754 p40")
-        video_info = await parser.parse_video_info(avid=605821754, page_num=40)
-        logger.debug(video_info)
-        logger.success("B站视频 av605821754 p40 解析成功")
     except Exception:
         pytest.skip("B站视频 BV1584y167sD p40 解析失败(风控)")
 
@@ -69,6 +60,29 @@ async def test_bilibili_video():
 
     video_h264_path = await encode_video_to_h264(video_path)
     assert video_h264_path.exists()
+
+    try:
+        logger.info("开始解析B站视频 av605821754 p41")
+        video_info = await parser.parse_video_info(avid=605821754, page_num=41)
+        logger.debug(video_info)
+        logger.success("B站视频 av605821754 p41 解析成功")
+    except Exception:
+        pytest.skip("B站视频 av605821754 p41 解析失败(风控)")
+
+    file_name = "av605821754-41"
+    video_path = plugin_cache_dir / f"{file_name}.mp4"
+
+    video_url = video_info.video_url
+    audio_url = video_info.audio_url
+    assert audio_url is not None
+
+    v_path, a_path = await asyncio.gather(
+        DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers),
+        DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers),
+    )
+
+    await merge_av_h264(v_path=v_path, a_path=a_path, output_path=video_path)
+    assert video_path.exists()
 
 
 async def test_encode_h264_video():
