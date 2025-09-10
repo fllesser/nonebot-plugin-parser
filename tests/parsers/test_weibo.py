@@ -38,6 +38,7 @@ async def test_weibo_video():
     weibo_parser = WeiBoParser()
 
     urls = [
+        "https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934",
         "https://video.weibo.com/show?fid=1034:5145615399845897",
         "https://weibo.com/7207262816/O70aCbjnd",
         "http://m.weibo.cn/status/5112672433738061",
