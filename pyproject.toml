@@ -72,7 +72,8 @@ addopts = [
 ]
 
 [tool.poe.tasks]
-test = "pytest --cov=src --cov-report xml --junitxml=./junit.xml -n auto"
+test_parsers = "pytest tests/parsers --cov=src --cov-report=xml:coverage1.xml --junitxml=./junit1.xml -n auto"
+test_others = "pytest tests/others --cov=src --cov-report=xml:coverage2.xml --junitxml=./junit2.xml -n auto"
 bump = "bump-my-version bump"
 show-bump = "bump-my-version show-bump"
 
@@ -87,6 +88,7 @@ exclude_lines = [
   "if TYPE_CHECKING:",
   "@overload",
   "except",
+  "raise",
 ]
 
 [tool.ruff]

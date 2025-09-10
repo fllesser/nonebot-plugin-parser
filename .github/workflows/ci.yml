@@ -38,6 +38,7 @@ jobs:
     env:
       OS: ${{ matrix.os }}
       PYTHON_VERSION: ${{ matrix.python-version }}
+      UV_NO_SYNC: 1
 
     steps:
       - uses: actions/checkout@v5
@@ -59,17 +60,21 @@ jobs:
         run: uv sync --no-dev --locked
 
       - name: Run Pytest
-        run: UV_NO_SYNC=1 uv run poe test
+        run: |
+          uv run poe test_parsers
+          uv run poe test_others
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
           env_vars: PYTHON_VERSION,PYDANTIC_VERSION
+          files: ./junit1.xml,./junit2.xml
           use_oidc: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           env_vars: PYTHON_VERSION,PYDANTIC_VERSION
+          files: ./coverage1.xml,./coverage2.xml # optional
           use_oidc: true

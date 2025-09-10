@@ -150,4 +150,4 @@ config
 
 # macOS
 .DS_Store
-junit.xml
+*junit.xml
