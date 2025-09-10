@@ -1,6 +1,8 @@
 from nonebot import logger
 import pytest
 
+from nonebot_plugin_resolver2.download.utils import encode_video_to_h264
+
 
 @pytest.mark.asyncio
 async def test_bilibili_favlist():
@@ -30,7 +32,7 @@ async def test_bilibili_video():
 
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.download.utils import merge_av, merge_av_h264
+    from nonebot_plugin_resolver2.download.utils import merge_av
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
     try:
@@ -63,10 +65,12 @@ async def test_bilibili_video():
         DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers),
         DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers),
     )
-    await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
-    await merge_av_h264(v_path=v_path, a_path=a_path, output_path=video_path)
 
+    await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
     assert video_path.exists()
+
+    video_h264_path = await encode_video_to_h264(video_path)
+    assert video_h264_path.exists()
 
 
 async def test_encode_h264_video():
