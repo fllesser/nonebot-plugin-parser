@@ -1,3 +1,5 @@
+import asyncio
+
 from nonebot import logger
 import pytest
 
@@ -26,8 +28,6 @@ async def test_bilibili_favlist():
 
 @pytest.mark.asyncio
 async def test_bilibili_video():
-    import asyncio
-
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av, merge_av_h264
@@ -88,8 +88,6 @@ async def test_bilibili_video():
 async def test_encode_h264_video():
     import asyncio
 
-    from bilibili_api import HEADERS
-
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av
@@ -97,13 +95,13 @@ async def test_encode_h264_video():
 
     try:
         bvid = "BV1VLk9YDEzB"
-        bilibili_parser = BilibiliParser()
-        video_url, audio_url = await bilibili_parser.parse_video_download_url(bvid=bvid)
+        parser = BilibiliParser()
+        video_url, audio_url = await parser.parse_video_download_url(bvid=bvid)
         assert video_url is not None
         assert audio_url is not None
         v_path, a_path = await asyncio.gather(
-            DOWNLOADER.streamd(video_url, file_name=f"{bvid}-video.m4s", ext_headers=HEADERS),
-            DOWNLOADER.streamd(audio_url, file_name=f"{bvid}-audio.m4s", ext_headers=HEADERS),
+            DOWNLOADER.streamd(video_url, file_name=f"{bvid}-video.m4s", ext_headers=parser.headers),
+            DOWNLOADER.streamd(audio_url, file_name=f"{bvid}-audio.m4s", ext_headers=parser.headers),
         )
     except Exception:
         pytest.skip("B站视频 BV1VLk9YDEzB 下载失败")
@@ -113,6 +111,26 @@ async def test_encode_h264_video():
     video_h264_path = await encode_video_to_h264(video_path)
     assert not video_path.exists()
     assert video_h264_path.exists()
+
+
+async def test_max_size_video():
+    from nonebot_plugin_resolver2.download import DOWNLOADER
+    from nonebot_plugin_resolver2.exception import DownloadSizeLimitException
+    from nonebot_plugin_resolver2.parsers import BilibiliParser
+
+    parser = BilibiliParser()
+    bvid = "BV1du4y1E7Nh"
+    try:
+        _, audio_url = await parser.parse_video_download_url(bvid=bvid)
+    except DownloadSizeLimitException:
+        pytest.skip("解析B站视频 BV1du4y1E7Nh 失败(风控)")
+
+    assert audio_url is not None
+
+    try:
+        await DOWNLOADER.download_audio(audio_url, ext_headers=parser.headers)
+    except DownloadSizeLimitException:
+        pass
 
 
 @pytest.mark.asyncio

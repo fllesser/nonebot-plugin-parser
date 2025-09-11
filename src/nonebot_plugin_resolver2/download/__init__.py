@@ -8,7 +8,7 @@ from tqdm.asyncio import tqdm
 
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
-from ..exception import DownloadException
+from ..exception import DownloadFailedException, DownloadSizeLimitException
 from ..utils import safe_unlink
 from .utils import generate_file_name
 
@@ -63,7 +63,7 @@ class StreamDownloader:
 
                 if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
                     logger.warning(f"预下载 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB 限制, 取消下载")
-                    raise DownloadException("媒体大小超过配置限制，取消下载")
+                    raise DownloadSizeLimitException
 
                 with self.get_progress_bar(file_name, content_length) as bar:
                     async with aiofiles.open(file_path, "wb") as file:
@@ -74,7 +74,7 @@ class StreamDownloader:
         except httpx.HTTPError:
             await safe_unlink(file_path)
             logger.exception(f"下载失败 | url: {url}, file_path: {file_path}")
-            raise DownloadException("媒体下载失败")
+            raise DownloadFailedException
         return file_path
 
     @staticmethod
