@@ -26,14 +26,6 @@ class DownloadSizeLimitException(DownloadException):
         super().__init__(self.message)
 
 
-class DownloadFailedException(DownloadException):
-    """下载失败异常"""
-
-    def __init__(self):
-        self.message = "媒体下载失败"
-        super().__init__(self.message)
-
-
 class ParseException(ResolverException):
     """解析异常"""
 

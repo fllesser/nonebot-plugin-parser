@@ -8,7 +8,7 @@ from tqdm.asyncio import tqdm
 
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
-from ..exception import DownloadFailedException, DownloadSizeLimitException
+from ..exception import DownloadException, DownloadSizeLimitException
 from ..utils import safe_unlink
 from .utils import generate_file_name
 
@@ -74,7 +74,7 @@ class StreamDownloader:
         except httpx.HTTPError:
             await safe_unlink(file_path)
             logger.exception(f"下载失败 | url: {url}, file_path: {file_path}")
-            raise DownloadFailedException
+            raise DownloadException("媒体下载失败")
         return file_path
 
     @staticmethod
