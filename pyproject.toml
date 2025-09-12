@@ -26,6 +26,7 @@ dependencies = [
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "bilibili-api-python>=17.3.0,<18.0.0",
+  "msgspec>=0.19.0",
 ]
 
 

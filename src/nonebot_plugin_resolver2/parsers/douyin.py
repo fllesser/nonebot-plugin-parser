@@ -1,8 +1,8 @@
-import json
 import re
 from typing import Any
 
 import httpx
+import msgspec
 from nonebot import logger
 
 from ..constants import COMMON_TIMEOUT
@@ -96,8 +96,7 @@ class DouyinParser:
         if not matched or not matched.group(1):
             raise ParseException("can't find _ROUTER_DATA in html")
 
-        json_data = json.loads(matched.group(1).strip())
-        return RouterData(**json_data).video_data
+        return msgspec.json.decode(matched.group(1).strip(), type=RouterData).video_data
 
     async def parse_slides(self, video_id: str) -> ParseResult:
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
@@ -109,12 +108,7 @@ class DouyinParser:
             response = await client.get(url, params=params)
             response.raise_for_status()
 
-        resp_json = response.json()
-
-        detail = resp_json.get("aweme_details")
-        if not detail:
-            raise ParseException("can't find aweme_details in json")
-        slides_data = SlidesData(**detail[0])
+        slides_data = msgspec.json.decode(response.text, type=SlidesInfo).aweme_details[0]
 
         return ParseResult(
             title=slides_data.share_info.share_desc_info,
@@ -124,36 +118,36 @@ class DouyinParser:
         )
 
 
-from pydantic import BaseModel, Field
+from msgspec import Struct, field
 
 
-class PlayAddr(BaseModel):
+class PlayAddr(Struct):
     url_list: list[str]
 
 
-class Cover(BaseModel):
+class Cover(Struct):
     url_list: list[str]
 
 
-class Video(BaseModel):
+class Video(Struct):
     play_addr: PlayAddr
     cover: Cover
 
 
-class Image(BaseModel):
+class Image(Struct):
     video: Video | None = None
-    url_list: list[str]
+    url_list: list[str] = field(default_factory=list)
 
 
-class ShareInfo(BaseModel):
+class ShareInfo(Struct):
     share_desc_info: str
 
 
-class Author(BaseModel):
+class Author(Struct):
     nickname: str
 
 
-class SlidesData(BaseModel):
+class SlidesData(Struct):
     author: Author
     share_info: ShareInfo
     images: list[Image]
@@ -167,7 +161,11 @@ class SlidesData(BaseModel):
         return [image.video.play_addr.url_list[0] for image in self.images if image.video]
 
 
-class VideoData(BaseModel):
+class SlidesInfo(Struct):
+    aweme_details: list[SlidesData] = field(default_factory=list)
+
+
+class VideoData(Struct):
     author: Author
     desc: str
     images: list[Image] | None = None
@@ -186,8 +184,8 @@ class VideoData(BaseModel):
         return self.video.cover.url_list[0] if self.video else None
 
 
-class VideoInfoRes(BaseModel):
-    item_list: list[VideoData] = Field(default_factory=list)
+class VideoInfoRes(Struct):
+    item_list: list[VideoData] = field(default_factory=list)
 
     @property
     def video_data(self) -> VideoData:
@@ -196,16 +194,16 @@ class VideoInfoRes(BaseModel):
         return self.item_list[0]
 
 
-class VideoOrNotePage(BaseModel):
+class VideoOrNotePage(Struct):
     videoInfoRes: VideoInfoRes
 
 
-class LoaderData(BaseModel):
-    video_page: VideoOrNotePage | None = Field(alias="video_(id)/page", default=None)
-    note_page: VideoOrNotePage | None = Field(alias="note_(id)/page", default=None)
+class LoaderData(Struct):
+    video_page: VideoOrNotePage | None = field(name="video_(id)/page", default=None)
+    note_page: VideoOrNotePage | None = field(name="note_(id)/page", default=None)
 
 
-class RouterData(BaseModel):
+class RouterData(Struct):
     loaderData: LoaderData
     errors: dict[str, Any] | None = None
 
