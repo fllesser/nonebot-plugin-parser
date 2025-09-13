@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_bilibili_favlist():
+async def test_favlist():
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
@@ -27,7 +27,7 @@ async def test_bilibili_favlist():
 
 
 @pytest.mark.asyncio
-async def test_bilibili_video():
+async def test_video():
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av, merge_av_h264

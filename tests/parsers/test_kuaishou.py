@@ -1,3 +1,5 @@
+import asyncio
+
 from nonebot import logger
 import pytest
 
@@ -7,7 +9,6 @@ async def test_parse():
     """测试快手视频解析"""
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.download.utils import fmt_size
-    from nonebot_plugin_resolver2.exception import ParseException
     from nonebot_plugin_resolver2.parsers import KuaishouParser
 
     parser = KuaishouParser()
@@ -18,13 +19,10 @@ async def test_parse():
         "https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc",  # 视频
     ]
 
-    for url in test_urls:
+    async def parse(url: str) -> None:
         logger.info(f"{url} | 开始解析快手视频")
 
-        try:
-            parse_result = await parser.parse_url(url)
-        except ParseException:
-            continue
+        parse_result = await parser.parse_url(url)
 
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.title, "视频标题为空"
@@ -41,3 +39,5 @@ async def test_parse():
             assert len(img_paths) == len(pic_urls), "图片下载数量不一致"
 
         logger.success(f"{url} | 快手视频解析成功")
+
+    await asyncio.gather(*[parse(url) for url in test_urls])

@@ -6,7 +6,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_bilibili_live():
+async def test_live():
     logger.info("开始解析B站直播 https://live.bilibili.com/6")
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
@@ -27,7 +27,7 @@ async def test_bilibili_live():
 
 
 @pytest.mark.asyncio
-async def test_bilibili_read():
+async def test_read():
     logger.info("开始解析B站图文 https://www.bilibili.com/read/cv523868")
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 
@@ -44,7 +44,7 @@ async def test_bilibili_read():
 
 
 @pytest.mark.asyncio
-async def test_bilibili_opus():
+async def test_opus():
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.parsers import BilibiliParser
 

@@ -1,7 +1,7 @@
 import pytest
 
 
-async def test_ytdlp():
+async def test_get_video_info():
     from nonebot_plugin_resolver2.download.ytdlp import get_video_info
 
     url = "https://youtu.be/NiHF-cwto_A?si=Eho8a8AO9c1347Uj"
@@ -15,7 +15,7 @@ async def test_ytdlp():
     assert video_info.get("title") is not None
 
 
-async def test_ytdlp_download_video():
+async def test_download_video():
     from nonebot_plugin_resolver2.download.ytdlp import ytdlp_download_video
 
     url = "https://youtu.be/NiHF-cwto_A?si=Eho8a8AO9c1347Uj"
@@ -29,7 +29,7 @@ async def test_ytdlp_download_video():
     assert video_path.exists()
 
 
-async def test_ytdlp_download_audio():
+async def test_download_audio():
     from nonebot_plugin_resolver2.download.ytdlp import ytdlp_download_audio
 
     url = "https://youtu.be/NiHF-cwto_A?si=Eho8a8AO9c1347Uj"

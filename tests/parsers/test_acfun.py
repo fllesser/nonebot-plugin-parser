@@ -3,7 +3,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_parse_acfun_url():
+async def test_parse():
     from nonebot_plugin_resolver2.download.utils import fmt_size
     from nonebot_plugin_resolver2.parsers import AcfunParser
 

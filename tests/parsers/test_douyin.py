@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_douyin_common_video():
+async def test_common_video():
     """测试普通视频"""
     from nonebot_plugin_resolver2.parsers import DouyinParser
 
@@ -30,7 +30,7 @@ async def test_douyin_common_video():
 
 
 @pytest.mark.asyncio
-async def test_douyin_old_video():
+async def test_old_video():
     """老视频，网页打开会重定向到 m.ixigua.com"""
 
     # from nonebot_plugin_resolver2.parsers.douyin import DouYin
@@ -52,7 +52,7 @@ async def test_douyin_old_video():
 
 
 @pytest.mark.asyncio
-async def test_douyin_note():
+async def test_note():
     """测试普通图文"""
     from nonebot_plugin_resolver2.parsers import DouyinParser
 
@@ -77,7 +77,7 @@ async def test_douyin_note():
 
 
 @pytest.mark.asyncio
-async def test_douyin_slides():
+async def test_slides():
     """
     含视频的图集
     https://v.douyin.com/CeiJfqyWs # 将会解析出视频

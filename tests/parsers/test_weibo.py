@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_weibo_pics():
+async def test_graphics():
     """测试微博图片解析"""
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.parsers import WeiBoParser
@@ -17,7 +17,7 @@ async def test_weibo_pics():
         "https://m.weibo.cn/status/5155768539808352",
     ]
 
-    async def test_parse_share_url(url: str) -> None:
+    async def parse_graphics(url: str) -> None:
         logger.info(f"{url} | 开始解析微博")
         video_info = await weibo_parser.parse_share_url(url)
         logger.debug(f"{url} | 解析结果: \n{video_info}")
@@ -26,11 +26,11 @@ async def test_weibo_pics():
         assert len(files) == len(video_info.pic_urls)
         logger.success(f"{url} | 微博图文解析成功")
 
-    await asyncio.gather(*[test_parse_share_url(url) for url in urls])
+    await asyncio.gather(*[parse_graphics(url) for url in urls])
 
 
 @pytest.mark.asyncio
-async def test_weibo_video():
+async def test_video():
     """测试微博视频解析"""
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.parsers import WeiBoParser
@@ -45,7 +45,7 @@ async def test_weibo_video():
         "https://weibo.com/1694917363/Q0KtXh6z2",
     ]
 
-    async def test_parse_weibo_video(url: str) -> None:
+    async def parse_video(url: str) -> None:
         logger.info(f"{url} | 开始解析微博")
         parse_result = await weibo_parser.parse_share_url(url)
         logger.debug(f"{url} | 解析结果: {parse_result}")
@@ -54,11 +54,11 @@ async def test_weibo_video():
         assert video_path
         logger.success(f"{url} | 微博视频下载成功")
 
-    await asyncio.gather(*[test_parse_weibo_video(url) for url in urls])
+    await asyncio.gather(*[parse_video(url) for url in urls])
 
 
 @pytest.mark.asyncio
-async def test_weibo_article():
+async def test_text():
     """测试微博纯文本"""
     from nonebot_plugin_resolver2.parsers import WeiBoParser
 
@@ -70,11 +70,11 @@ async def test_weibo_article():
         "https://weibo.com/1157864602/Q0PtH9Yux",
     ]
 
-    async def test_parse_weibo_article(url: str) -> None:
+    async def parse_text(url: str) -> None:
         logger.info(f"{url} | 开始解析微博")
         parse_result = await weibo_parser.parse_share_url(url)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.title
         logger.success(f"{url} | 微博纯文本解析成功")
 
-    await asyncio.gather(*[test_parse_weibo_article(url) for url in urls])
+    await asyncio.gather(*[parse_text(url) for url in urls])
