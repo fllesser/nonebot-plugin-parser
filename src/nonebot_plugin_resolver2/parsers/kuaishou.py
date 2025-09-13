@@ -1,6 +1,5 @@
 import json
 import re
-import urllib.parse
 
 import httpx
 
@@ -19,8 +18,6 @@ class KuaishouParser:
             **IOS_HEADER,
             "Referer": "https://v.kuaishou.com/",
         }
-        # 通用第三方解析API
-        self.api_url = "http://47.99.158.118/video-crack/v2/parse?content={}"
 
     async def parse_url(self, url: str) -> ParseResult:
         """解析快手链接获取视频信息
@@ -93,48 +90,6 @@ class KuaishouParser:
             content=video_content or ImageContent(pic_urls=images),
         )
         return video_info
-
-    async def parse_url_by_api(self, url: str) -> ParseResult:
-        """解析快手链接获取视频信息
-
-        Args:
-            url: 快手视频链接
-
-        Returns:
-            ParseResult: 快手视频信息
-        """
-        video_id = await self._extract_video_id(url)
-        if not video_id:
-            raise ParseException("无法从链接中提取视频 ID")
-
-        # 构造标准链接格式，用于API解析
-        standard_url = f"https://www.kuaishou.com/short-video/{video_id}"
-        # URL编码content参数避免查询字符串无效
-        encoded_url = urllib.parse.quote(standard_url)
-        api_url = self.api_url.format(encoded_url)
-
-        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
-            response = await client.get(api_url)
-            if response.status_code != 200:
-                raise ParseException(f"解析 API 返回错误状态码: {response.status_code}")
-
-            result = response.json()
-
-            # 根据API返回示例，成功时code应为0
-            if result.get("code") != 0 or not result.get("data"):
-                raise ParseException(f"解析API返回错误: {result.get('msg', '未知错误')}")
-
-            data = result["data"]
-            video_url = data.get("url")
-            if not video_url:
-                raise ParseException("未获取到视频直链")
-
-            return ParseResult(
-                title=data.get("title", "未知标题"),
-                cover_url=data.get("imageUrl"),
-                author=data.get("name", "无名"),
-                content=VideoContent(video_url=video_url),
-            )
 
     async def _extract_video_id(self, url: str) -> str:
         """提取视频ID
