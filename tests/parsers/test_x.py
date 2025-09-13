@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_x():
+async def test_parse():
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.matchers.twitter import parse_x_url
 
@@ -15,7 +15,7 @@ async def test_x():
         "https://x.com/chitose_yoshino/status/1841416254810378314",  # 多图
     ]
 
-    async def parse_x_url_test(url: str):
+    async def parse(url: str):
         logger.info(f"开始解析推特 {url}")
         video_url, pic_urls = await parse_x_url(url)
         if video_url:
@@ -31,4 +31,4 @@ async def test_x():
                 assert img_path.exists()
             logger.success(f"{url} | 图片解析并下载成功")
 
-    await asyncio.gather(*[parse_x_url_test(url) for url in urls])
+    await asyncio.gather(*[parse(url) for url in urls])
