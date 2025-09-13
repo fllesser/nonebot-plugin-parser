@@ -2,6 +2,7 @@ import math
 import re
 
 import httpx
+import msgspec
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
@@ -81,9 +82,9 @@ class WeiBoParser:
                 raise ParseException(f"获取数据失败 {response.status_code} {response.reason_phrase}")
             if "application/json" not in response.headers.get("content-type", ""):
                 raise ParseException("获取数据失败 content-type is not application/json")
-            resp = response.json()
 
-        weibo_data = WeiboData(**resp["data"])
+        weibo_data = msgspec.json.decode(response.text, type=WeiboResponse).data
+
         if video_url := weibo_data.video_url:
             content = VideoContent(video_url=video_url)
         elif pic_urls := weibo_data.pic_urls:
@@ -130,19 +131,19 @@ class WeiBoParser:
         return "".join(result)  # 将结果数组连接成字符串
 
 
-from pydantic import BaseModel
+from msgspec import Struct
 
 
-class LargeInPic(BaseModel):
+class LargeInPic(Struct):
     url: str
 
 
-class Pic(BaseModel):
+class Pic(Struct):
     url: str
     large: LargeInPic
 
 
-class Urls(BaseModel):
+class Urls(Struct):
     mp4_720p_mp4: str | None = None
     mp4_hd_mp4: str | None = None
     mp4_ld_mp4: str | None = None
@@ -151,11 +152,11 @@ class Urls(BaseModel):
         return self.mp4_720p_mp4 or self.mp4_hd_mp4 or self.mp4_ld_mp4 or None
 
 
-class PageInfo(BaseModel):
+class PageInfo(Struct):
     urls: Urls | None = None
 
 
-class WeiboData(BaseModel):
+class WeiboData(Struct):
     text: str
     source: str
     # region_name: str | None = None
@@ -185,3 +186,8 @@ class WeiboData(BaseModel):
         if self.retweeted_status and self.retweeted_status.pics:
             return [x.large.url for x in self.retweeted_status.pics]
         return []
+
+
+class WeiboResponse(Struct):
+    ok: int
+    data: WeiboData

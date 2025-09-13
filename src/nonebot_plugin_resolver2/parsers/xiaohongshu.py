@@ -3,6 +3,7 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 import httpx
+import msgspec
 
 from ..config import rconfig
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
@@ -67,7 +68,7 @@ class XiaoHongShuParser:
         json_obj = json.loads(json_str)
 
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
-        note_detail = NoteDetail(**note_data)
+        note_detail = msgspec.convert(note_data, type=NoteDetail)
 
         if video_url := note_detail.video_url:
             content = VideoContent(video_url=video_url)
@@ -84,39 +85,39 @@ class XiaoHongShuParser:
         )
 
 
-from pydantic import BaseModel
+from msgspec import Struct, field
 
 
-class Image(BaseModel):
+class Image(Struct):
     urlDefault: str
 
 
-class Stream(BaseModel):
+class Stream(Struct):
     h264: list[dict] | None = None
     h265: list[dict] | None = None
     av1: list[dict] | None = None
     h266: list[dict] | None = None
 
 
-class Media(BaseModel):
+class Media(Struct):
     stream: Stream
 
 
-class Video(BaseModel):
+class Video(Struct):
     media: Media
 
 
-class User(BaseModel):
+class User(Struct):
     nickname: str
 
 
-class NoteDetail(BaseModel):
+class NoteDetail(Struct):
     type: str
     title: str
     desc: str
-    imageList: list[Image]
-    video: Video | None = None
     user: User
+    imageList: list[Image] = field(default_factory=list)
+    video: Video | None = None
 
     @property
     def title_desc(self) -> str:
