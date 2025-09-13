@@ -1,5 +1,6 @@
 import asyncio
 
+import httpx
 from nonebot import logger
 import pytest
 
@@ -21,8 +22,10 @@ async def test_parse():
 
     async def parse(url: str) -> None:
         logger.info(f"{url} | 开始解析快手视频")
-
-        parse_result = await parser.parse_url(url)
+        try:
+            parse_result = await parser.parse_url(url)
+        except httpx.ConnectTimeout:
+            pytest.skip(f"解析超时(action 网络问题) ({url})")
 
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.title, "视频标题为空"
