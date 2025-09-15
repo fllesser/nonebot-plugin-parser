@@ -61,8 +61,9 @@ jobs:
 
       - name: Run Pytest
         run: |
-          uv run poe test_parsers
           uv run poe test_others
+          uv run poe test_parsers
+
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}

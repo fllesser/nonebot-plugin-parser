@@ -1,7 +1,8 @@
-import json
+import random
 import re
 
 import httpx
+import msgspec
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..exception import ParseException
@@ -41,73 +42,81 @@ class KuaishouParser:
             response.raise_for_status()
             response_text = response.text
 
-            pattern = r"window\.INIT_STATE\s*=\s*(.*?)</script>"
-            searched = re.search(pattern, response_text)
+        pattern = r"window\.INIT_STATE\s*=\s*(.*?)</script>"
+        searched = re.search(pattern, response_text)
 
-        if not searched or len(searched.groups()) < 1:
+        if not searched:
             raise ParseException("failed to parse video JSON info from HTML")
 
-        json_text = searched.group(1).strip()
-        try:
-            json_data = json.loads(json_text)
-        except json.JSONDecodeError as e:
-            raise ParseException("failed to parse INIT_STATE payload") from e
+        json_str = searched.group(1).strip()
+        init_state = msgspec.json.decode(json_str, type=KuaishouInitState)
+        photo = next((d.photo for d in init_state.values() if d.photo is not None), None)
+        if photo is None:
+            raise ParseException("window.init_state don't contains videos or pics")
 
-        photo_data = {}
-        for json_item in json_data.values():
-            if "result" in json_item and "photo" in json_item:
-                photo_data = json_item
-                break
+        return photo.convert_parse_result()
 
-        if not photo_data:
-            raise ParseException("failed to parse photo info from INIT_STATE")
 
-        # 判断result状态
-        if (result_code := photo_data["result"]) != 1:
-            raise ParseException(f"获取作品信息失败: {result_code}")
+from typing import TypeAlias
 
-        data = photo_data["photo"]
+from msgspec import Struct, field
 
-        # 获取视频地址
-        video_content = None
-        if "mainMvUrls" in data and len(data["mainMvUrls"]) > 0:
-            video_url = data["mainMvUrls"][0]["url"]
-            video_content = VideoContent(video_url=video_url)
 
-        # 获取图集
-        ext_params_atlas = data.get("ext_params", {}).get("atlas", {})
-        atlas_cdn_list = ext_params_atlas.get("cdn", [])
-        atlas_list = ext_params_atlas.get("list", [])
-        images = []
-        if len(atlas_cdn_list) > 0 and len(atlas_list) > 0:
-            for atlas in atlas_list:
-                images.append(f"https://{atlas_cdn_list[0]}/{atlas}")
+class CdnUrl(Struct):
+    cdn: str
+    url: str | None = None
 
-        video_info = ParseResult(
-            title=data["caption"],
-            cover_url=data["coverUrls"][0]["url"],
-            author=data["userName"],
-            content=video_content or ImageContent(pic_urls=images),
-        )
-        return video_info
 
-    async def _extract_video_id(self, url: str) -> str:
-        """提取视频ID
+class Atlas(Struct):
+    music_cdn_list: list[CdnUrl] = field(name="musicCdnList", default_factory=list)
+    cdn_list: list[CdnUrl] = field(name="cdnList", default_factory=list)
+    size: list[dict] = field(name="size", default_factory=list)
+    img_route_list: list[str] = field(name="list", default_factory=list)
 
-        Args:
-            url: 快手视频链接
+    @property
+    def img_urls(self):
+        if len(self.cdn_list) == 0 or len(self.img_route_list) == 0:
+            return None
+        cdn = random.choice(self.cdn_list).cdn
+        return [f"https://{cdn}/{url}" for url in self.img_route_list]
 
-        Returns:
-            str: 视频ID
-        """
-        # 处理可能的短链接
-        if "v.kuaishou.com" in url:
-            url = await get_redirect_url(url)
 
-        # 提取视频ID - 使用walrus operator和索引替代group()
-        if "/fw/photo/" in url and (matched := re.search(r"/fw/photo/([^/?]+)", url)):
-            return matched.group(1)
-        elif "short-video" in url and (matched := re.search(r"short-video/([^/?]+)", url)):
-            return matched.group(1)
+class ExtParams(Struct):
+    atlas: Atlas = field(default_factory=Atlas)
 
-        raise ParseException("无法从链接中提取视频ID")
+
+class Photo(Struct):
+    # 标题
+    caption: str
+    cover_urls: list[CdnUrl] = field(name="coverUrls", default_factory=list)
+    main_mv_urls: list[CdnUrl] = field(name="mainMvUrls", default_factory=list)
+    ext_params: ExtParams = field(name="ext_params", default_factory=ExtParams)
+
+    @property
+    def cover_url(self):
+        return random.choice(self.cover_urls).url if len(self.cover_urls) != 0 else None
+
+    @property
+    def video_url(self):
+        return random.choice(self.main_mv_urls).url if len(self.main_mv_urls) != 0 else None
+
+    @property
+    def img_urls(self):
+        return self.ext_params.atlas.img_urls
+
+    def convert_parse_result(self) -> ParseResult:
+        if video_url := self.video_url:
+            content = VideoContent(video_url)
+        elif img_urls := self.img_urls:
+            content = ImageContent(img_urls)
+        else:
+            content = None
+        return ParseResult(title=self.caption, cover_url=self.cover_url, content=content)
+
+
+class TusjohData(Struct):
+    result: int
+    photo: Photo | None = None
+
+
+KuaishouInitState: TypeAlias = dict[str, TusjohData]

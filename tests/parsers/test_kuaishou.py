@@ -18,6 +18,7 @@ async def test_parse():
         "https://www.kuaishou.com/short-video/3xhjgcmir24m4nm",
         "https://v.kuaishou.com/2yAnzeZ",  # 视频
         "https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc",  # 视频
+        "https://v.kuaishou.com/nmcrgMMR",  # 图集
     ]
 
     async def parse(url: str) -> None:
