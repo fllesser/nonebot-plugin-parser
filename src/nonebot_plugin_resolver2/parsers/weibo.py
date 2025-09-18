@@ -1,5 +1,6 @@
 import math
 import re
+import time
 
 import httpx
 import msgspec
@@ -67,23 +68,43 @@ class WeiBoParser:
         )
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
-        """解析微博 id"""
+        """解析微博 id（无 Cookie + 伪装 XHR + 不跟随重定向）"""
         headers = {
-            "accept": "application/json",
-            "cookie": "_T_WM=40835919903; WEIBOCN_FROM=1110006030; MLOGIN=0; XSRF-TOKEN=4399c8",
-            "Referer": f"https://m.weibo.cn/detail/{weibo_id}",
+            "accept": "application/json, text/plain, */*",
+            "referer": f"https://m.weibo.cn/detail/{weibo_id}",
+            "origin": "https://m.weibo.cn",
+            "x-requested-with": "XMLHttpRequest",
+            "mweibo-pwa": "1",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
             **COMMON_HEADER,
         }
 
-        # 请求数据
-        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
-            response = await client.get(f"https://m.weibo.cn/statuses/show?id={weibo_id}")
-            if response.status_code != 200:
-                raise ParseException(f"获取数据失败 {response.status_code} {response.reason_phrase}")
-            if "application/json" not in response.headers.get("content-type", ""):
-                raise ParseException("获取数据失败 content-type is not application/json")
+        # 加时间戳参数，减少被缓存/规则命中的概率
+        ts = int(time.time() * 1000)
+        url = f"https://m.weibo.cn/statuses/show?id={weibo_id}&_={ts}"
 
-        weibo_data = msgspec.json.decode(response.text, type=WeiboResponse).data
+        # 关键：不带 cookie、不跟随重定向（避免二跳携 cookie）
+        async with httpx.AsyncClient(
+            headers=headers,
+            timeout=COMMON_TIMEOUT,
+            follow_redirects=False,
+            cookies=httpx.Cookies(),
+            trust_env=False,
+        ) as client:
+            response = await client.get(url)
+            if response.status_code != 200:
+                if response.status_code in (403, 418):
+                    raise ParseException(f"被风控拦截（{response.status_code}），可尝试更换 UA/Referer 或稍后重试")
+                raise ParseException(f"获取数据失败 {response.status_code} {response.reason_phrase}")
+
+            ctype = response.headers.get("content-type", "")
+            if "application/json" not in ctype:
+                raise ParseException(f"获取数据失败 content-type is not application/json (got: {ctype})")
+
+        # 用 bytes 更稳，避免编码歧义
+        weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
 
         if video_url := weibo_data.video_url:
             content = VideoContent(video_url=video_url)
