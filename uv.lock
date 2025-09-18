@@ -990,7 +990,7 @@ wheels = [
 
 [[package]]
 name = "nonebot-plugin-resolver2"
-version = "1.12.6"
+version = "1.13.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
