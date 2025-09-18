@@ -71,11 +71,6 @@ class WeiBoParser:
         """解析微博 id（无 Cookie + 伪装 XHR + 不跟随重定向）"""
         headers = {
             "accept": "application/json, text/plain, */*",
-            "user-agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
-            ),
             "referer": f"https://m.weibo.cn/detail/{weibo_id}",
             "origin": "https://m.weibo.cn",
             "x-requested-with": "XMLHttpRequest",
