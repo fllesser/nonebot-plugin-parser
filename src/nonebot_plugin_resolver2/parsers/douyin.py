@@ -108,7 +108,7 @@ class DouyinParser:
             response = await client.get(url, params=params)
             response.raise_for_status()
 
-        slides_data = msgspec.json.decode(response.text, type=SlidesInfo).aweme_details[0]
+        slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
 
         return ParseResult(
             title=slides_data.share_info.share_desc_info,

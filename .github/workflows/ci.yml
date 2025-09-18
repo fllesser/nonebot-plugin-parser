@@ -50,11 +50,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           version: "latest"
 
-      - name: setup ffmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3
-        with:
-          ffmpeg-version: release
-          github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
+      - name: Setup FFmpeg
+        uses: AnimMouse/setup-ffmpeg@v1
 
       - name: Install Dependencies for test group
         run: uv sync --no-dev --locked
