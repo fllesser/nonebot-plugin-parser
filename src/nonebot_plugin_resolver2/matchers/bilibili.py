@@ -156,6 +156,7 @@ async def handle_others(url: str):
         res = f"{pub_prefix}直播 {title}"
         res += obhelper.img_seg(await DOWNLOADER.download_img(cover)) if cover else ""
         res += obhelper.img_seg(await DOWNLOADER.download_img(keyframe)) if keyframe else ""
+        await bilibili.send(res)
     # 专栏解析
     elif "/read" in url:
         matched = re.search(r"read/cv(\d+)", url)
