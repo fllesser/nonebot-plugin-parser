@@ -194,6 +194,18 @@ wheels = [
 ]
 
 [[package]]
+name = "bs4"
+version = "0.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c9/aa/4acaf814ff901145da37332e05bb510452ebed97bc9602695059dd46ef39/bs4-0.0.2.tar.gz", hash = "sha256:a48685c58f50fe127722417bae83fe6badf500d54b55f7e39ffe43b798653925", size = 698, upload-time = "2024-01-17T18:15:47.371Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/51/bb/bf7aab772a159614954d84aa832c129624ba6c32faa559dfb200a534e50b/bs4-0.0.2-py2.py3-none-any.whl", hash = "sha256:abf8742c0805ef7f662dce4b51cca104cffe52b835238afc169142ab9b3fbccc", size = 1189, upload-time = "2024-01-17T18:15:48.613Z" },
+]
+
+[[package]]
 name = "bump-my-version"
 version = "1.2.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1021,6 +1033,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
     { name = "bilibili-api-python" },
+    { name = "bs4" },
     { name = "curl-cffi" },
     { name = "httpx" },
     { name = "msgspec" },
@@ -1053,6 +1066,7 @@ test = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
     { name = "bilibili-api-python", specifier = ">=17.3.0,<18.0.0" },
+    { name = "bs4", specifier = ">=0.0.2" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.19.0,<1.0.0" },

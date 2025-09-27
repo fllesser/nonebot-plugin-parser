@@ -7,7 +7,8 @@ import pytest
 @pytest.mark.asyncio
 async def test_parse():
     from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.matchers.twitter import parse_x_url
+    from nonebot_plugin_resolver2.parsers.data import ImageContent, VideoContent
+    from nonebot_plugin_resolver2.parsers.twitter import TwitterParser
 
     urls = [
         "https://x.com/Fortnite/status/1904171341735178552",  # 视频
@@ -15,20 +16,22 @@ async def test_parse():
         "https://x.com/chitose_yoshino/status/1841416254810378314",  # 多图
     ]
 
-    async def parse(url: str):
+    async def parse_x(url: str):
         logger.info(f"开始解析推特 {url}")
-        video_url, pic_urls = await parse_x_url(url)
-        if video_url:
-            logger.info(f"{url} | 解析为视频: {video_url}")
-            video_path = await DOWNLOADER.download_video(video_url)
+        content = await TwitterParser.parse_x_url_new(url)
+        if content is None:
+            raise ValueError("解析结果为空")
+        elif isinstance(content, VideoContent):
+            logger.info(f"{url} | 解析为视频: {content.video_url}")
+            video_path = await DOWNLOADER.download_video(content.video_url)
             assert video_path.exists()
             logger.success(f"{url} | 视频解析并下载成功")
-        if pic_urls:
-            logger.info(f"{url} | 解析为图片: {pic_urls}")
-            img_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
-            assert len(img_paths) == len(pic_urls)
+        elif isinstance(content, ImageContent):
+            logger.info(f"{url} | 解析为图片: {content.pic_urls}")
+            img_paths = await DOWNLOADER.download_imgs_without_raise(content.pic_urls)
+            assert len(img_paths) == len(content.pic_urls)
             for img_path in img_paths:
                 assert img_path.exists()
             logger.success(f"{url} | 图片解析并下载成功")
 
-    await asyncio.gather(*[parse(url) for url in urls])
+    await asyncio.gather(*(parse_x(url) for url in urls))
