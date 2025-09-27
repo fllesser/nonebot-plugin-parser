@@ -1,3 +1,5 @@
+import asyncio
+from pathlib import Path
 import re
 
 from ..config import NICKNAME
@@ -18,7 +20,7 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
 
     await twitter.send(f"{NICKNAME}解析 | 小蓝鸟")
 
-    content = await TwitterParser.parse_x_url_new(x_url)
+    content = await TwitterParser.parse_x_url(x_url)
 
     if isinstance(content, VideoContent):
         video_path = await DOWNLOADER.download_video(content.video_url)
@@ -30,4 +32,10 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
             await twitter.finish("图片下载失败")
         if (count := len(img_paths)) < len(content.pic_urls):
             await twitter.send(f"部分图片下载失败，成功下载 {count} 张图片")
-        await obhelper.send_segments([obhelper.img_seg(img_path) for img_path in img_paths])
+        segs = [obhelper.img_seg(img_path) for img_path in img_paths]
+        # 存在 gif
+        if len(content.dynamic_urls) > 0:
+            video_paths = await asyncio.gather(
+                *[DOWNLOADER.download_video(url) for url in content.dynamic_urls], return_exceptions=True
+            )
+            segs.extend(obhelper.video_seg(p) for p in video_paths if isinstance(p, Path))

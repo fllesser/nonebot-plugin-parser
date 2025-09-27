@@ -14,11 +14,12 @@ async def test_parse():
         "https://x.com/Fortnite/status/1904171341735178552",  # 视频
         "https://x.com/Fortnite/status/1870484479980052921",  # 单图
         "https://x.com/chitose_yoshino/status/1841416254810378314",  # 多图
+        "https://x.com/Dithmenos9/status/1966798448499286345",  # gif
     ]
 
     async def parse_x(url: str):
         logger.info(f"开始解析推特 {url}")
-        content = await TwitterParser.parse_x_url_new(url)
+        content = await TwitterParser.parse_x_url(url)
         if content is None:
             raise ValueError("解析结果为空")
         elif isinstance(content, VideoContent):
