@@ -39,3 +39,5 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
                 *[DOWNLOADER.download_video(url) for url in content.dynamic_urls], return_exceptions=True
             )
             segs.extend(obhelper.video_seg(p) for p in video_paths if isinstance(p, Path))
+
+        await obhelper.send_segments(segs)
