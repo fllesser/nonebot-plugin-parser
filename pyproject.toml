@@ -27,6 +27,7 @@ dependencies = [
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "bilibili-api-python>=17.3.0,<18.0.0",
   "bs4>=0.0.2",
+  "nonebot-plugin-alconna>=0.59.4",
 ]
 
 [project.urls]
