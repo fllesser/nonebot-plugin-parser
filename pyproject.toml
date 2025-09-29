@@ -28,6 +28,7 @@ dependencies = [
   "bilibili-api-python>=17.3.0,<18.0.0",
   "bs4>=0.0.2",
   "nonebot-plugin-alconna>=0.59.4",
+  "nonebot-plugin-uninfo>=0.9.0",
 ]
 
 [project.urls]
@@ -37,6 +38,9 @@ Release = "https://github.com/fllesser/nonebot-plugin-resolver2/releases"
 
 [dependency-groups]
 dev = [
+  "bump-my-version>=1.2.3",
+  "nb-cli>=1.4.2",
+  "nonebot-adapter-telegram>=0.1.0b20",
   "nonebot2[fastapi]>=2.4.3,<3.0.0",
   "pre-commit>=4.3.0",
   "ruff>=0.13.2,<1.0.0",
@@ -60,6 +64,7 @@ default-groups = ["test", "dev"]
 [tool.nonebot]
 adapters = [
   { "name" = "Onebot V11", module_name = "nonebot.adapters.onebot.v11" },
+  { name = "Telegram", module_name = "nonebot.adapters.telegram" },
 ]
 plugins = ["nonebot_plugin_resolver2"]
 

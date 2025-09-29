@@ -6,12 +6,13 @@ from nonebot import logger
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent
 from nonebot.params import PausePromptResult
 from nonebot.typing import T_State
+from nonebot_plugin_alconna.uniseg import UniMessage
 
 from ..config import NEED_UPLOAD, NICKNAME, ytb_cookies_file
 from ..download.ytdlp import get_video_info, ytdlp_download_audio, ytdlp_download_video
 from ..exception import handle_exception
 from ..utils import keep_zh_en_num
-from .helper import obhelper
+from .helper import UniHelper
 from .preprocess import KeyPatternMatched, on_keyword_regex
 
 # https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz
@@ -69,9 +70,9 @@ async def _(
         await ytb.finish(f"{media_type}下载失败", reply_message=True)
     # 发送视频或音频
     if video_path:
-        await ytb.send(obhelper.video_seg(video_path))
+        await UniMessage([UniHelper.video_seg(video_path)]).send()
     elif audio_path:
-        await ytb.send(obhelper.record_seg(audio_path))
+        await UniMessage([UniHelper.record_seg(audio_path)]).send()
         if NEED_UPLOAD:
             file_name = f"{keep_zh_en_num(title)}.flac"
-            await ytb.send(obhelper.file_seg(audio_path, file_name))
+            await UniMessage([UniHelper.file_seg(audio_path, display_name=file_name)]).send()
