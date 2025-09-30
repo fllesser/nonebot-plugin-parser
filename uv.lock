@@ -1305,13 +1305,13 @@ dependencies = [
 dev = [
     { name = "bump-my-version" },
     { name = "nb-cli" },
-    { name = "nonebot-adapter-onebot" },
     { name = "nonebot-adapter-telegram" },
     { name = "nonebot2", extra = ["fastapi"] },
     { name = "pre-commit" },
     { name = "ruff" },
 ]
 test = [
+    { name = "nonebot-adapter-onebot" },
     { name = "nonebot2", extra = ["fastapi"] },
     { name = "nonebug" },
     { name = "poethepoet" },
@@ -1341,13 +1341,13 @@ requires-dist = [
 dev = [
     { name = "bump-my-version", specifier = ">=1.2.3" },
     { name = "nb-cli", specifier = ">=1.4.2" },
-    { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "ruff", specifier = ">=0.13.2,<1.0.0" },
 ]
 test = [
+    { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
     { name = "nonebug", specifier = ">=0.4.3,<1.0.0" },
     { name = "poethepoet", specifier = ">=0.37.0" },
