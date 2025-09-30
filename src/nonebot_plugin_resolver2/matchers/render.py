@@ -5,7 +5,6 @@ from typing import Any
 from nonebot import logger
 from nonebot_plugin_alconna import UniMessage
 
-from ..config import NICKNAME
 from ..parsers.data import AudioContent, ImageContent, ParseResult, VideoContent
 from .helper import UniHelper
 
@@ -14,24 +13,7 @@ class Renderer:
     """统一的渲染器，将解析结果转换为消息"""
 
     @staticmethod
-    def render_initial_message(result: ParseResult) -> str:
-        """渲染初始提示消息
-
-        Args:
-            result (ParseResult): 解析结果
-
-        Returns:
-            str: 初始提示消息
-        """
-        initial_msg = f"{NICKNAME}解析 | {result.platform}"
-        if result.title:
-            initial_msg += f" - {result.title}"
-        if result.author:
-            initial_msg += f" - {result.author}"
-        return initial_msg
-
-    @staticmethod
-    def render_content_messages(result: ParseResult) -> list[UniMessage]:
+    def render_messages(result: ParseResult) -> list[UniMessage]:
         """渲染内容消息
 
         Args:

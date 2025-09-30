@@ -14,13 +14,13 @@ class TwitterParser(BaseParser):
     # 平台名称（用于配置禁用和内部标识）
     platform_name: ClassVar[str] = "twitter"
 
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "小蓝鸟"
+
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("x.com", r"https?://x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)"),
     ]
-
-    def __init__(self):
-        self.platform = "小蓝鸟"
 
     @staticmethod
     async def req_xdown_api(url: str) -> dict[str, Any]:
@@ -110,6 +110,6 @@ class TwitterParser(BaseParser):
 
         return ParseResult(
             title="",  # 推特解析不包含标题
-            platform=self.platform,
+            platform=self.platform_display_name,
             content=content,
         )

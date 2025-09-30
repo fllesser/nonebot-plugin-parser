@@ -32,6 +32,9 @@ class BilibiliParser(BaseParser):
     # 平台名称（用于配置禁用和内部标识）
     platform_name: ClassVar[str] = "bilibili"
 
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "哔哩哔哩"
+
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("bilibili", r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"),
@@ -45,7 +48,6 @@ class BilibiliParser(BaseParser):
         self.headers = HEADERS.copy()
         self._credential: Credential | None = None
         self._cookies_file = plugin_config_dir / "bilibili_cookies.json"
-        self.platform = "哔哩哔哩"
         # 选择客户端
         select_client("curl_cffi")
         # 模仿浏览器
@@ -404,7 +406,7 @@ class BilibiliParser(BaseParser):
             img_urls, text = await self.parse_opus(opus_id)
             return ParseResult(
                 title=text,
-                platform=self.platform,
+                platform=self.platform_display_name,
                 content=ImageContent(pic_urls=img_urls) if img_urls else None,
             )
 
@@ -417,7 +419,7 @@ class BilibiliParser(BaseParser):
             title, cover, keyframe = await self.parse_live(room_id)
             return ParseResult(
                 title=title,
-                platform=self.platform,
+                platform=self.platform_display_name,
                 cover_url=cover or keyframe,
             )
 
@@ -431,7 +433,7 @@ class BilibiliParser(BaseParser):
             combined_text = "\n".join(texts)
             return ParseResult(
                 title=combined_text[:100] + "..." if len(combined_text) > 100 else combined_text,
-                platform=self.platform,
+                platform=self.platform_display_name,
                 content=ImageContent(pic_urls=img_urls) if img_urls else None,
             )
 
@@ -445,7 +447,7 @@ class BilibiliParser(BaseParser):
             combined = "\n".join(f"{t}: {d}" for t, d in zip(titles, descs))
             return ParseResult(
                 title=combined[:200] + "..." if len(combined) > 200 else combined,
-                platform=self.platform,
+                platform=self.platform_display_name,
             )
 
         # 5. 视频 (BV/av)
@@ -477,7 +479,7 @@ class BilibiliParser(BaseParser):
 
         return ParseResult(
             title=video_info.title,
-            platform=self.platform,
+            platform=self.platform_display_name,
             cover_url=video_info.cover_url,
             content=VideoContent(video_url=video_info.video_url),
             extra_info=extra_info or None,

@@ -18,6 +18,9 @@ class XiaoHongShuParser(BaseParser):
     # 平台名称（用于配置禁用和内部标识）
     platform_name: ClassVar[str] = "xiaohongshu"
 
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "小红书"
+
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("xiaohongshu.com", r"https?://(?:www\.)?xiaohongshu\.com/[A-Za-z0-9._?%&+=/#@-]*"),
@@ -32,7 +35,6 @@ class XiaoHongShuParser(BaseParser):
         }
         if rconfig.r_xhs_ck:
             self.headers["cookie"] = rconfig.r_xhs_ck
-        self.platform = "小红书"
 
     async def parse_url(self, url: str) -> ParseResult:
         """解析小红书 URL
@@ -91,7 +93,7 @@ class XiaoHongShuParser(BaseParser):
 
         return ParseResult(
             title=note_detail.title_desc,
-            platform=self.platform,
+            platform=self.platform_display_name,
             cover_url=cover_url,
             content=content,
             author=note_detail.user.nickname,

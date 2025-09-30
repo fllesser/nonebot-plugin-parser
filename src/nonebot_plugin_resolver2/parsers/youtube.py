@@ -13,6 +13,9 @@ class YouTubeParser(BaseParser):
     # 平台名称（用于配置禁用和内部标识）
     platform_name: ClassVar[str] = "youtube"
 
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "油管"
+
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("youtube.com", r"https?://(?:www\.)?youtube\.com/[A-Za-z\d\._\?%&\+\-=/#]+"),
@@ -20,7 +23,6 @@ class YouTubeParser(BaseParser):
     ]
 
     def __init__(self):
-        self.platform = "油管"
         self.cookies_file = ytb_cookies_file
 
     async def parse_url(self, url: str) -> ParseResult:
@@ -57,7 +59,7 @@ class YouTubeParser(BaseParser):
             # 实际下载时会根据用户选择下载视频或音频
             return ParseResult(
                 title=title,
-                platform=self.platform,
+                platform=self.platform_display_name,
                 author=author,
                 cover_url=thumbnail,
                 content=VideoContent(video_url=url),  # 保存原始 URL，下载时使用
@@ -99,7 +101,7 @@ class YouTubeParser(BaseParser):
 
             return ParseResult(
                 title=title,
-                platform=self.platform,
+                platform=self.platform_display_name,
                 author=author,
                 cover_url=thumbnail,
                 content=AudioContent(audio_url=url),  # 保存原始 URL，下载时使用

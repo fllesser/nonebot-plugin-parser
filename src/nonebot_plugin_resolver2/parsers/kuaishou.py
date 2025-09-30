@@ -18,6 +18,9 @@ class KuaishouParser(BaseParser):
     # 平台名称（用于配置禁用和内部标识）
     platform_name: ClassVar[str] = "kuaishou"
 
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "快手"
+
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("v.kuaishou.com", r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
@@ -31,7 +34,6 @@ class KuaishouParser(BaseParser):
             **IOS_HEADER,
             "Referer": "https://v.kuaishou.com/",
         }
-        self.platform = "快手"
 
     async def parse_url(self, url: str) -> ParseResult:
         """解析快手链接获取视频信息
@@ -67,7 +69,7 @@ class KuaishouParser(BaseParser):
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        return photo.convert_parse_result(self.platform)
+        return photo.convert_parse_result(self.platform_display_name)
 
 
 from typing import TypeAlias

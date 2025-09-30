@@ -20,6 +20,9 @@ class AcfunParser(BaseParser):
     # 平台名称（用于配置禁用和内部标识）
     platform_name: ClassVar[str] = "acfun"
 
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "猴山"
+
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("acfun.cn", r"(?:ac=|/ac)(\d+)"),
@@ -27,7 +30,6 @@ class AcfunParser(BaseParser):
 
     def __init__(self):
         self.headers = {"referer": "https://www.acfun.cn/", **COMMON_HEADER}
-        self.platform = "猴山"
 
     async def parse_video_info(self, url: str) -> tuple[str, str, str, str, str]:
         """解析acfun链接获取详细信息
@@ -150,7 +152,7 @@ class AcfunParser(BaseParser):
 
         return ParseResult(
             title=title,
-            platform=self.platform,
+            platform=self.platform_display_name,
             author=author,
             content=VideoContent(video_url=m3u8_url),
             extra_info=extra_info,

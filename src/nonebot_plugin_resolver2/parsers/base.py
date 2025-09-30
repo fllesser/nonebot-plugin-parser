@@ -11,15 +11,19 @@ class BaseParser(ABC):
 
     子类必须实现：
     - platform_name: 平台名称（用于配置和内部标识）
+    - platform_display_name: 平台显示名称（用于展示）
     - patterns: URL 正则表达式模式列表
     - parse_url: 解析 URL 的方法
     """
 
-    # 平台名称（子类必须定义）
     platform_name: ClassVar[str]
+    """ 平台名称（用于配置和内部标识） """
 
-    # URL 正则表达式模式列表 [(keyword, pattern), ...]
+    platform_display_name: ClassVar[str]
+    """ 平台显示名称（用于展示） """
+
     patterns: ClassVar[list[tuple[str, str]]]
+    """ URL 正则表达式模式列表 [(keyword, pattern), ...] """
 
     @abstractmethod
     async def parse_url(self, url: str) -> ParseResult:

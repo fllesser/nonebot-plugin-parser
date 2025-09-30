@@ -14,13 +14,13 @@ class TikTokParser(BaseParser):
     # 平台名称（用于配置禁用和内部标识）
     platform_name: ClassVar[str] = "tiktok"
 
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "TikTok"
+
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("tiktok.com", r"(?:https?://)?(www|vt|vm)\.tiktok\.com/[A-Za-z0-9._?%&+\-=/#@]*"),
     ]
-
-    def __init__(self):
-        self.platform = "TikTok"
 
     async def parse_url(self, url: str) -> ParseResult:
         """解析 TikTok URL（标准接口）
@@ -68,7 +68,7 @@ class TikTokParser(BaseParser):
 
             return ParseResult(
                 title=title,
-                platform=self.platform,
+                platform=self.platform_display_name,
                 author=author,
                 cover_url=thumbnail,
                 content=VideoContent(video_url=final_url),  # 保存重定向后的 URL

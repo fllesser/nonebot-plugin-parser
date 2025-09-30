@@ -16,6 +16,9 @@ class WeiBoParser(BaseParser):
     # 平台名称（用于配置禁用和内部标识）
     platform_name: ClassVar[str] = "weibo"
 
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "微博"
+
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("weibo.com", r"https?://(?:www\.|m\.)?weibo\.com/[A-Za-z\d._?%&+\-=/#@]+"),
@@ -27,7 +30,6 @@ class WeiBoParser(BaseParser):
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
             "referer": "https://weibo.com/",
         }
-        self.platform = "微博"
 
     async def parse_url(self, url: str) -> ParseResult:
         """解析微博分享链接（标准接口）"""
@@ -78,7 +80,7 @@ class WeiBoParser(BaseParser):
 
         return ParseResult(
             title=data["title"],
-            platform=self.platform,
+            platform=self.platform_display_name,
             cover_url="https:" + data["cover_image"],
             author=data["author"],
             content=VideoContent(video_url=video_url),
@@ -132,7 +134,7 @@ class WeiBoParser(BaseParser):
 
         return ParseResult(
             title=weibo_data.title,
-            platform=self.platform,
+            platform=self.platform_display_name,
             author=weibo_data.source,
             content=content,
         )

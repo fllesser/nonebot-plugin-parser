@@ -102,20 +102,21 @@ async def _(
         logger.warning(f"未找到平台 {platform} 的解析器")
         return
 
-    # 创建解析器并解析 URL（只获取元数据，不下载）
+    # 创建解析器
     parser = parser_class()
+
+    # 1. 先发送初始消息（快速反馈给用户）
+    await resolver.send(f"解析 | {parser.platform_display_name}")
+
+    # 解析 URL
     result = await parser.parse_url(url)
 
     if result:
-        # 1. 先发送初始消息（快速反馈给用户）
-        initial_msg = Renderer.render_initial_message(result)
-        await resolver.send(initial_msg)
-
         # 2. 下载资源
         ext_headers = getattr(parser, "ext_headers", None)  # 微博等平台需要特殊请求头
         await _download_resources(result, ext_headers)
 
         # 3. 渲染内容消息并发送
-        messages = Renderer.render_content_messages(result)
+        messages = Renderer.render_messages(result)
         for message in messages:
             await message.send()

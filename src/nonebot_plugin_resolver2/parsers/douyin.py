@@ -19,6 +19,9 @@ class DouyinParser(BaseParser):
     # 平台名称（用于配置禁用和内部标识）
     platform_name: ClassVar[str] = "douyin"
 
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "抖音"
+
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("v.douyin", r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
@@ -31,7 +34,6 @@ class DouyinParser(BaseParser):
     def __init__(self):
         self.ios_headers = IOS_HEADER.copy()
         self.android_headers = {"Accept": "application/json, text/plain, */*", **ANDROID_HEADER}
-        self.platform = "抖音"
 
     def _build_iesdouyin_url(self, _type: str, video_id: str) -> str:
         return f"https://www.iesdouyin.com/share/{_type}/{video_id}"
@@ -87,7 +89,7 @@ class DouyinParser(BaseParser):
 
         return ParseResult(
             title=video_data.desc,
-            platform=self.platform,
+            platform=self.platform_display_name,
             cover_url=video_data.cover_url,
             author=video_data.author.nickname,
             content=content,
@@ -130,7 +132,7 @@ class DouyinParser(BaseParser):
 
         return ParseResult(
             title=slides_data.share_info.share_desc_info,
-            platform=self.platform,
+            platform=self.platform_display_name,
             cover_url="",
             author=slides_data.author.nickname,
             content=ImageContent(pic_urls=slides_data.images_urls, dynamic_urls=slides_data.dynamic_urls),
