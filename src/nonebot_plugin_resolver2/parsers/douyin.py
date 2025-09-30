@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 import msgspec
@@ -10,11 +10,24 @@ from nonebot import logger
 from ..constants import COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
+from .base import BaseParser
 from .data import ANDROID_HEADER, IOS_HEADER, ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
-class DouyinParser:
+class DouyinParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "douyin"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("v.douyin", r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
+        (
+            "douyin",
+            r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+",
+        ),
+    ]
+
     def __init__(self):
         self.ios_headers = IOS_HEADER.copy()
         self.android_headers = {"Accept": "application/json, text/plain, */*", **ANDROID_HEADER}
@@ -123,16 +136,16 @@ class DouyinParser:
             content=ImageContent(pic_urls=slides_data.images_urls, dynamic_urls=slides_data.dynamic_urls),
         )
 
-    async def parse_url(self, share_url: str) -> ParseResult:
+    async def parse_url(self, url: str) -> ParseResult:
         """解析抖音分享链接（标准接口）
 
         Args:
-            share_url (str): 分享链接
+            url: 分享链接
 
         Returns:
             ParseResult: 解析结果（仅包含 URL，不下载）
         """
-        return await self.parse_share_url(share_url)
+        return await self.parse_share_url(url)
 
     async def parse_and_download(self, share_url: str) -> ParseResult:
         """解析并下载抖音视频/图片（向后兼容的方法）

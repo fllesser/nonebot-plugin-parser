@@ -1,16 +1,27 @@
 import math
 import re
 import time
+from typing import ClassVar
 
 import httpx
 import msgspec
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
+from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
 
 
-class WeiBoParser:
+class WeiBoParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "weibo"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("weibo.com", r"https?://(?:www\.|m\.)?weibo\.com/[A-Za-z\d._?%&+\-=/#@]+"),
+        ("m.weibo.cn", r"https?://m\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
+    ]
+
     def __init__(self):
         self.ext_headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
@@ -18,9 +29,9 @@ class WeiBoParser:
         }
         self.platform = "微博"
 
-    async def parse_url(self, share_url: str) -> ParseResult:
+    async def parse_url(self, url: str) -> ParseResult:
         """解析微博分享链接（标准接口）"""
-        return await self.parse_share_url(share_url)
+        return await self.parse_share_url(url)
 
     async def parse_share_url(self, share_url: str) -> ParseResult:
         """解析微博分享链接（内部方法）"""

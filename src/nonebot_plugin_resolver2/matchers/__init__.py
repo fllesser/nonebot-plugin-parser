@@ -3,54 +3,27 @@
 import re
 
 from nonebot import logger
-from nonebot.matcher import Matcher
 
 from ..config import rconfig
 from ..download import DOWNLOADER
 from ..exception import handle_exception
-from ..parsers import DouyinParser, KuaishouParser, WeiBoParser, XiaoHongShuParser
+from ..parsers import PLATFORM_PARSERS
+from ..parsers.base import BaseParser
 from ..parsers.data import ImageContent, ParseResult, VideoContent
 from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
 from .render import Renderer
 
-# 定义所有支持的平台和对应的正则表达式
-ALL_PLATFORM_PATTERNS: list[tuple[str, str]] = [
-    # 抖音
-    ("v.douyin", r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
-    (
-        "douyin",
-        r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+",
-    ),
-    # 小红书
-    ("xiaohongshu.com", r"https?://(?:www\.)?xiaohongshu\.com/[A-Za-z0-9._?%&+=/#@-]*"),
-    ("xhslink.com", r"https?://xhslink\.com/[A-Za-z0-9._?%&+=/#@-]*"),
-    # 快手
-    ("v.kuaishou.com", r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
-    ("kuaishou", r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
-    ("chenzhongtech", r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+"),
-    # Twitter/X
-    ("x.com", r"https?://x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)"),
-    # 微博
-    ("weibo.com", r"https?://(?:www\.|m\.)?weibo\.com/[A-Za-z\d._?%&+\-=/#@]+"),
-    ("m.weibo.cn", r"https?://m\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
-]
 
-# 关键词到平台名称的映射
-KEYWORD_TO_PLATFORM = {
-    "v.douyin": "douyin",
-    "douyin": "douyin",
-    "xiaohongshu.com": "xiaohongshu",
-    "xhslink.com": "xiaohongshu",
-    "v.kuaishou.com": "kuaishou",
-    "kuaishou": "kuaishou",
-    "chenzhongtech": "kuaishou",
-    "x.com": "twitter",
-    "weibo.com": "weibo",
-    "m.weibo.cn": "weibo",
-}
+def _build_keyword_to_platform_map(platform_parsers: dict[str, type[BaseParser]]) -> dict[str, str]:
+    """构建关键词到平台名称的映射表"""
+    keyword_map = {}
+    for platform_name, parser_class in platform_parsers.items():
+        for keyword, _ in parser_class.patterns:
+            keyword_map[keyword] = platform_name
+    return keyword_map
 
 
-def _get_enabled_patterns() -> list[tuple[str, str]]:
+def _get_enabled_patterns(platform_parsers: dict[str, type[BaseParser]]) -> list[tuple[str, str]]:
     """根据配置获取启用的平台正则表达式列表"""
     # 获取禁用的平台列表
     disabled_platforms = set(rconfig.r_disable_resolvers)
@@ -60,15 +33,23 @@ def _get_enabled_patterns() -> list[tuple[str, str]]:
         disabled_platforms.add("xiaohongshu")
         logger.warning("未配置小红书 cookie, 小红书解析已关闭")
 
-    # 过滤掉被禁用的平台
-    enabled_patterns = [
-        (keyword, pattern)
-        for keyword, pattern in ALL_PLATFORM_PATTERNS
-        if KEYWORD_TO_PLATFORM.get(keyword) not in disabled_platforms
-    ]
-    logger.info(f"启用的平台: {', '.join({KEYWORD_TO_PLATFORM[k] for k, _ in enabled_patterns})}")
+    # 从各个 Parser 类中收集启用平台的正则表达式
+    enabled_patterns: list[tuple[str, str]] = []
+    enabled_platform_names: set[str] = set()
+
+    for platform_name, parser_class in platform_parsers.items():
+        if platform_name not in disabled_platforms:
+            enabled_patterns.extend(parser_class.patterns)
+            enabled_platform_names.add(platform_name)
+
+    if enabled_platform_names:
+        logger.info(f"启用的平台: {', '.join(sorted(enabled_platform_names))}")
 
     return enabled_patterns
+
+
+# 构建关键词到平台的映射（keyword -> platform_name）
+KEYWORD_TO_PLATFORM = _build_keyword_to_platform_map(PLATFORM_PARSERS)
 
 
 async def _download_resources(result: ParseResult, ext_headers: dict[str, str] | None = None) -> None:
@@ -98,16 +79,8 @@ async def _download_resources(result: ParseResult, ext_headers: dict[str, str] |
                 )
 
 
-# 平台解析器映射
-PLATFORM_PARSERS = {
-    "douyin": DouyinParser,
-    "xiaohongshu": XiaoHongShuParser,
-    "kuaishou": KuaishouParser,
-    "weibo": WeiBoParser,
-}
-
 # 根据配置创建只包含启用平台的 matcher
-resolver = on_keyword_regex(*_get_enabled_patterns())
+resolver = on_keyword_regex(*_get_enabled_patterns(PLATFORM_PARSERS))
 
 
 @resolver.handle()

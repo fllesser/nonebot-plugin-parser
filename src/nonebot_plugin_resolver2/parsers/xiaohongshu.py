@@ -1,5 +1,6 @@
 import json
 import re
+from typing import ClassVar
 from urllib.parse import parse_qs, urlparse
 
 import httpx
@@ -8,11 +9,21 @@ import msgspec
 from ..config import rconfig
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
+from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
-class XiaoHongShuParser:
+class XiaoHongShuParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "xiaohongshu"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("xiaohongshu.com", r"https?://(?:www\.)?xiaohongshu\.com/[A-Za-z0-9._?%&+=/#@-]*"),
+        ("xhslink.com", r"https?://xhslink\.com/[A-Za-z0-9._?%&+=/#@-]*"),
+    ]
+
     def __init__(self):
         self.headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,"

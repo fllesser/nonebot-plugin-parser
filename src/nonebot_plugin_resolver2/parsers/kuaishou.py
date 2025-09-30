@@ -1,17 +1,29 @@
 import random
 import re
+from typing import ClassVar
 
 import httpx
 import msgspec
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..exception import ParseException
+from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
-class KuaishouParser:
+class KuaishouParser(BaseParser):
     """快手解析器"""
+
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "kuaishou"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("v.kuaishou.com", r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
+        ("kuaishou", r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
+        ("chenzhongtech", r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+"),
+    ]
 
     def __init__(self):
         self.headers = COMMON_HEADER
