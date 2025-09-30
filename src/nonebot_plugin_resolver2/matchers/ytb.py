@@ -1,8 +1,6 @@
-from pathlib import Path
 import re
 
 from nonebot import logger
-from nonebot.typing import T_State
 from nonebot_plugin_alconna.uniseg import UniMessage
 from nonebot_plugin_waiter import prompt
 
@@ -23,7 +21,7 @@ ytb = on_keyword_regex(
 
 @ytb.handle()
 @handle_exception()
-async def _(state: T_State, searched: re.Match[str] = KeyPatternMatched()):
+async def _(searched: re.Match[str] = KeyPatternMatched()):
     url = searched.group(0)
     try:
         info_dict = await get_video_info(url, ytb_cookies_file)
@@ -36,27 +34,12 @@ async def _(state: T_State, searched: re.Match[str] = KeyPatternMatched()):
     user_input = await prompt("您需要下载音频(0)，还是视频(1)", timeout=15)
     user_input = user_input.extract_plain_text().strip() if user_input is not None else "1"
 
-    # 判断是否下载视频
-    is_video = user_input == "1"
-
-    # 下载视频或音频
-    video_path: Path | None = None
-    audio_path: Path | None = None
-
-    try:
-        if is_video:
-            video_path = await ytdlp_download_video(url, ytb_cookies_file)
-        else:
-            audio_path = await ytdlp_download_audio(url, ytb_cookies_file)
-    except Exception:
-        media_type = "视频" if is_video else "音频"
-        logger.exception(f"{media_type}下载失败 | {url}")
-        await ytb.finish(f"{media_type}下载失败", reply_message=True)
-
-    # 发送视频或音频
-    if video_path:
+    if user_input == "1":
+        video_path = await ytdlp_download_video(url, ytb_cookies_file)
         await UniMessage([UniHelper.video_seg(video_path)]).send()
-    elif audio_path:
+
+    else:
+        audio_path = await ytdlp_download_audio(url, ytb_cookies_file)
         await UniMessage([UniHelper.record_seg(audio_path)]).send()
         if NEED_UPLOAD:
             file_name = f"{keep_zh_en_num(title)}.flac"
