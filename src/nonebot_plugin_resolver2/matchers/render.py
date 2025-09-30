@@ -3,8 +3,10 @@
 from typing import Any
 
 from nonebot import logger
+from nonebot.internal.matcher import current_bot
 from nonebot_plugin_alconna import UniMessage
 
+from ..config import NEED_FORWARD
 from ..parsers.data import AudioContent, ImageContent, ParseResult, VideoContent
 from .helper import UniHelper
 
@@ -22,10 +24,11 @@ class Renderer:
         Returns:
             list[UniMessage]: 消息列表
         """
-        messages: list[UniMessage] = []
-
         # 构建消息段列表
         segs: list[Any] = []
+
+        # 添加标题
+        segs.append(f"标题: {result.title}")
 
         # 添加额外信息（如果有）
         if result.extra_info:
@@ -38,16 +41,12 @@ class Renderer:
         # 根据内容类型处理
         if result.content is None:
             logger.warning(f"解析结果没有内容: {result}")
-            return messages
+            return []
 
         if isinstance(result.content, VideoContent):
             # 视频内容
             if result.content.video_path:
-                # 如果有其他段（封面、额外信息），先发送
-                if segs:
-                    messages.append(UniMessage(segs))
-                # 发送视频
-                messages.append(UniMessage([UniHelper.video_seg(result.content.video_path)]))
+                segs.append(UniHelper.video_seg(result.content.video_path))
 
         elif isinstance(result.content, ImageContent):
             # 图片内容
@@ -56,16 +55,20 @@ class Renderer:
             for dynamic_path in result.content.dynamic_paths:
                 segs.append(UniHelper.video_seg(dynamic_path))
 
-            if segs:
-                messages.append(UniMessage(segs))
-
         elif isinstance(result.content, AudioContent):
             # 音频内容
             if result.content.audio_path:
-                # 如果有其他段，先发送
-                if segs:
-                    messages.append(UniMessage(segs))
-                # 发送音频
-                messages.append(UniMessage([UniHelper.record_seg(result.content.audio_path)]))
+                segs.append(UniHelper.record_seg(result.content.audio_path))
 
-        return messages
+        # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息
+        if not segs:
+            return []
+
+        if NEED_FORWARD or len(segs) > 4:
+            # 使用转发消息
+            bot = current_bot.get()
+            forward_msg = UniHelper.construct_forward_message(bot.self_id, segs)
+            return [UniMessage([forward_msg])]
+        else:
+            # 直接发送所有消息段
+            return [UniMessage(segs)]
