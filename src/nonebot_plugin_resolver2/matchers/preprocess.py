@@ -4,7 +4,6 @@ from typing import Any, Literal
 
 from nonebot import logger
 from nonebot.adapters import Event
-from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.matcher import Matcher
 from nonebot.message import event_preprocessor
 from nonebot.params import Depends
@@ -66,7 +65,13 @@ def _clean_url(url: str) -> str:
     return url
 
 
-def _extract_json_url(json_seg: MessageSegment) -> str | None:
+try:
+    from nonebot.adapters.onebot.v11 import Message, MessageSegment
+except ImportError:
+    Message = None
+
+
+def _extract_json_url(json_seg: "MessageSegment") -> str | None:
     """处理 JSON 类型的消息段，提取 URL
 
     Args:
@@ -109,7 +114,11 @@ def extract_msg_text(event: Event, state: T_State) -> None:
     text: str | None = None
 
     # 提取json数据
-    if isinstance(message, MessageEvent) and (json_seg := next((seg for seg in message if seg.type == "json"), None)):
+    if (
+        Message is not None
+        and isinstance(message, Message)
+        and (json_seg := next((seg for seg in message if seg.type == "json"), None))
+    ):
         if url := _extract_json_url(json_seg):
             state[R_EXTRACT_KEY] = url
             return

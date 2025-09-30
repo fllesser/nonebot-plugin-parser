@@ -3,15 +3,14 @@ from pathlib import Path
 import re
 
 from nonebot import logger, on_command
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent
-from nonebot.adapters.onebot.v11.exception import ActionFailed
+from nonebot.adapters import Message
 from nonebot.params import CommandArg
 from nonebot_plugin_alconna import Text
 from nonebot_plugin_alconna.uniseg import UniMessage
 
 from ..config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
 from ..download import DOWNLOADER
-from ..download.utils import encode_video_to_h264, merge_av
+from ..download.utils import merge_av
 from ..exception import ParseException, handle_exception
 from ..parsers import BilibiliParser, get_redirect_url
 from ..utils import keep_zh_en_num
@@ -112,17 +111,19 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
             video_path = await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=parser.headers)
 
     # 发送视频
-    try:
-        await UniMessage([UniHelper.video_seg(video_path)]).send()
-    except ActionFailed as e:
-        message: str = e.info.get("message", "")
-        # 无缩略图
-        if not message.endswith(".png'"):
-            raise
-        # 重新编码为 h264
-        logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
-        h264_video_path = await encode_video_to_h264(video_path)
-        await UniMessage([UniHelper.video_seg(h264_video_path)]).send()
+    await UniMessage([UniHelper.video_seg(video_path)]).send()
+
+    # try:
+    #     await UniMessage([UniHelper.video_seg(video_path)]).send()
+    # except ActionFailed as e:
+    #     message: str = e.info.get("message", "")
+    #     # 无缩略图
+    #     if not message.endswith(".png'"):
+    #         raise
+    #     # 重新编码为 h264
+    #     logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
+    #     h264_video_path = await encode_video_to_h264(video_path)
+    #     await UniMessage([UniHelper.video_seg(h264_video_path)]).send()
 
 
 # 处理 非视频
@@ -203,14 +204,12 @@ async def handle_others(url: str):
 
 @bili_music.handle()
 @handle_exception()
-async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
+async def _(args: Message = CommandArg()):
     text = args.extract_plain_text().strip()
     matched = re.match(r"^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?$", text)
     if not matched:
         await bili_music.finish("命令格式: bm BV1LpD3YsETa [集数](中括号表示可选)")
 
-    # 回应用户
-    await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     bvid, p_num = str(matched.group(1)), matched.group(2)
 
     # 处理分 p
@@ -218,6 +217,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     video_info = await parser.parse_video_info(bvid=bvid, page_num=p_num)
     if not video_info.audio_url:
         raise ParseException("没有可供下载的音频流")
+
     # 音频文件名
     video_title = keep_zh_en_num(video_info.title)
     audio_name = f"{video_title}.mp3"

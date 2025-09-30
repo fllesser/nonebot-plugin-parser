@@ -1292,7 +1292,6 @@ dependencies = [
     { name = "curl-cffi" },
     { name = "httpx" },
     { name = "msgspec" },
-    { name = "nonebot-adapter-onebot" },
     { name = "nonebot-plugin-alconna" },
     { name = "nonebot-plugin-apscheduler" },
     { name = "nonebot-plugin-localstore" },
@@ -1306,6 +1305,7 @@ dependencies = [
 dev = [
     { name = "bump-my-version" },
     { name = "nb-cli" },
+    { name = "nonebot-adapter-onebot" },
     { name = "nonebot-adapter-telegram" },
     { name = "nonebot2", extra = ["fastapi"] },
     { name = "pre-commit" },
@@ -1328,7 +1328,6 @@ requires-dist = [
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.19.0,<1.0.0" },
-    { name = "nonebot-adapter-onebot", specifier = ">=2.4.6,<3.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4" },
     { name = "nonebot-plugin-apscheduler", specifier = ">=0.5.0,<1.0.0" },
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
@@ -1342,6 +1341,7 @@ requires-dist = [
 dev = [
     { name = "bump-my-version", specifier = ">=1.2.3" },
     { name = "nb-cli", specifier = ">=1.4.2" },
+    { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
     { name = "pre-commit", specifier = ">=4.3.0" },
