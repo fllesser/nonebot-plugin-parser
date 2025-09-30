@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 import re
+from typing import ClassVar
 
 import aiofiles
 import httpx
@@ -11,21 +12,31 @@ from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
 from ..download import DOWNLOADER
 from ..download.utils import safe_unlink
 from ..exception import DownloadException, ParseException
-from .data import COMMON_HEADER
+from .base import BaseParser
+from .data import COMMON_HEADER, ParseResult, VideoContent
 
 
-class AcfunParser:
+class AcfunParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "acfun"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("acfun.cn", r"(?:ac=|/ac)(\d+)"),
+    ]
+
     def __init__(self):
         self.headers = {"referer": "https://www.acfun.cn/", **COMMON_HEADER}
+        self.platform = "猴山"
 
-    async def parse_url(self, url: str) -> tuple[str, str]:
-        """解析acfun链接
+    async def parse_video_info(self, url: str) -> tuple[str, str, str, str, str]:
+        """解析acfun链接获取详细信息
 
         Args:
             url (str): 链接
 
         Returns:
-            tuple: 视频链接和视频描述
+            tuple: (m3u8_url, title, description, author, upload_time)
         """
         # 拼接查询参数
         url = f"{url}?quickViewId=videoInfo_new&ajaxpipe=1"
@@ -42,12 +53,10 @@ class AcfunParser:
         json_str = json_str.replace('\\\\"', '\\"').replace('\\"', '"')
         video_info = json.loads(json_str)
 
-        video_desc = (
-            f"ac{video_info.get('dougaId', '')}\n"
-            f"标题: {video_info.get('title', '')}\n"
-            f"简介: {video_info.get('description', '')}\n"
-            f"作者: {video_info.get('user', {}).get('name', '')}, 上传于 {video_info.get('createTime', '')}"
-        )
+        title = video_info.get("title", "")
+        description = video_info.get("description", "")
+        author = video_info.get("user", {}).get("name", "")
+        upload_time = video_info.get("createTime", "")
 
         ks_play_json = video_info["currentVideoInfo"]["ksPlayJson"]
         ks_play = json.loads(ks_play_json)
@@ -55,7 +64,7 @@ class AcfunParser:
         # 这里[d['url'] for d in representations]，从 4k ~ 360，此处默认720p
         m3u8_url = [d["url"] for d in representations][3]
 
-        return m3u8_url, video_desc
+        return m3u8_url, title, description, author, upload_time
 
     async def download_video(self, m3u8s_url: str, acid: int) -> Path:
         """下载acfun视频
@@ -122,3 +131,27 @@ class AcfunParser:
         m3u8_full_urls = [f"{m3u8_prefix}/{d}" for d in m3u8_relative_links]
 
         return m3u8_full_urls
+
+    async def parse_url(self, url: str) -> ParseResult:
+        """解析 Acfun URL（标准接口）
+
+        Args:
+            url: Acfun 链接
+
+        Returns:
+            ParseResult: 解析结果（仅包含 URL，不下载）
+
+        Raises:
+            ParseException: 解析失败
+        """
+        m3u8_url, title, description, author, upload_time = await self.parse_video_info(url)
+
+        extra_info = f"简介: {description}\n上传于 {upload_time}" if description or upload_time else None
+
+        return ParseResult(
+            title=title,
+            platform=self.platform,
+            author=author,
+            content=VideoContent(video_url=m3u8_url),
+            extra_info=extra_info,
+        )

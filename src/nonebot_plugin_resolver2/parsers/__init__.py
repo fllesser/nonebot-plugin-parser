@@ -14,9 +14,9 @@ PARSER_CLASSES: list[type[BaseParser]] = [
     BilibiliParser,
     DouyinParser,
     KuaishouParser,
-    XiaoHongShuParser,
-    WeiBoParser,
     TwitterParser,
+    WeiBoParser,
+    XiaoHongShuParser,
 ]
 
 # 自动构建平台映射（platform_name -> Parser 类）

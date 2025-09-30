@@ -1,15 +1,27 @@
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 from nonebot import logger
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
-from .data import ImageContent, VideoContent
+from .base import BaseParser
+from .data import ImageContent, ParseResult, VideoContent
 
 
-class TwitterParser:
+class TwitterParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "twitter"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("x.com", r"https?://x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)"),
+    ]
+
+    def __init__(self):
+        self.platform = "小蓝鸟"
+
     @staticmethod
     async def req_xdown_api(url: str) -> dict[str, Any]:
         headers = {
@@ -78,3 +90,26 @@ class TwitterParser:
         提取所有 GIF 链接
         """
         return re.findall(cls.snapcdn_url_pattern(" gif"), html_content)
+
+    async def parse_url(self, url: str) -> ParseResult:
+        """解析推特/X URL（标准接口）
+
+        Args:
+            url: 推特链接
+
+        Returns:
+            ParseResult: 解析结果（仅包含 URL，不下载）
+
+        Raises:
+            ParseException: 解析失败
+        """
+        content = await self.parse_x_url(url)
+
+        if content is None:
+            raise ParseException("解析失败，未找到内容")
+
+        return ParseResult(
+            title="",  # 推特解析不包含标题
+            platform=self.platform,
+            content=content,
+        )

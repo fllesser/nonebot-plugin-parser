@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import json
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.video import Video
@@ -10,6 +10,9 @@ from nonebot import logger
 from ..config import plugin_config_dir, rconfig
 from ..cookie import ck2dict
 from ..exception import ParseException
+from .base import BaseParser
+from .data import ImageContent, ParseResult, VideoContent
+from .utils import get_redirect_url
 
 
 @dataclass
@@ -25,11 +28,24 @@ class BilibiliVideoInfo:
     ai_summary: str
 
 
-class BilibiliParser:
+class BilibiliParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "bilibili"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("bilibili", r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"),
+        ("bili2233", r"https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()()"),
+        ("b23", r"https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()"),
+        ("BV", r"(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?"),
+        ("av", r"av(\d{6,})(?:\s)?(\d{1,3})?"),
+    ]
+
     def __init__(self):
         self.headers = HEADERS.copy()
         self._credential: Credential | None = None
         self._cookies_file = plugin_config_dir / "bilibili_cookies.json"
+        self.platform = "哔哩哔哩"
         # 选择客户端
         select_client("curl_cffi")
         # 模仿浏览器
@@ -361,3 +377,108 @@ class BilibiliParser:
             result_parts.append(f"{display_name} {formatted_value}")
 
         return " ".join(result_parts)
+
+    async def parse_url(self, url: str) -> ParseResult:
+        """解析 Bilibili URL（标准接口）
+
+        Args:
+            url: Bilibili 链接
+
+        Returns:
+            ParseResult: 解析结果（仅包含 URL，不下载）
+
+        Raises:
+            ParseException: 解析失败
+        """
+        # 处理短链
+        if "b23.tv" in url or "bili2233.cn" in url:
+            url = await get_redirect_url(url, self.headers)
+
+        # 判断链接类型并解析
+        # 1. 动态/图文 (opus)
+        if "t.bilibili.com" in url or "/opus" in url:
+            matched = re.search(r"/(\d+)", url)
+            if not matched:
+                raise ParseException("无效的动态链接")
+            opus_id = int(matched.group(1))
+            img_urls, text = await self.parse_opus(opus_id)
+            return ParseResult(
+                title=text,
+                platform=self.platform,
+                content=ImageContent(pic_urls=img_urls) if img_urls else None,
+            )
+
+        # 2. 直播
+        if "/live" in url:
+            matched = re.search(r"/(\d+)", url)
+            if not matched:
+                raise ParseException("无效的直播链接")
+            room_id = int(matched.group(1))
+            title, cover, keyframe = await self.parse_live(room_id)
+            return ParseResult(
+                title=title,
+                platform=self.platform,
+                cover_url=cover or keyframe,
+            )
+
+        # 3. 专栏
+        if "/read" in url:
+            matched = re.search(r"/cv(\d+)", url)
+            if not matched:
+                raise ParseException("无效的专栏链接")
+            read_id = int(matched.group(1))
+            img_urls, texts = await self.parse_read(read_id)
+            combined_text = "\n".join(texts)
+            return ParseResult(
+                title=combined_text[:100] + "..." if len(combined_text) > 100 else combined_text,
+                platform=self.platform,
+                content=ImageContent(pic_urls=img_urls) if img_urls else None,
+            )
+
+        # 4. 收藏夹
+        if "/favlist" in url:
+            matched = re.search(r"fid=(\d+)", url)
+            if not matched:
+                raise ParseException("无效的收藏夹链接")
+            fav_id = int(matched.group(1))
+            titles, descs = await self.parse_favlist(fav_id)
+            combined = "\n".join(f"{t}: {d}" for t, d in zip(titles, descs))
+            return ParseResult(
+                title=combined[:200] + "..." if len(combined) > 200 else combined,
+                platform=self.platform,
+            )
+
+        # 5. 视频 (BV/av)
+        # 尝试从 URL 中提取 BV 或 av 号
+        bvid = None
+        avid = None
+        page_num = 1
+
+        if matched := re.search(r"/(BV[1-9a-zA-Z]{10})", url):
+            bvid = matched.group(1)
+        elif matched := re.search(r"/av(\d{6,})", url):
+            avid = int(matched.group(1))
+        elif matched := re.search(r"(BV[1-9a-zA-Z]{10})", url):
+            bvid = matched.group(1)
+        elif matched := re.search(r"av(\d{6,})", url):
+            avid = int(matched.group(1))
+
+        if not bvid and not avid:
+            raise ParseException("无法识别的 Bilibili 链接类型")
+
+        # 获取分P信息
+        if matched := re.search(r"(?:&|\?)p=(\d{1,3})", url):
+            page_num = int(matched.group(1))
+
+        # 解析视频信息
+        video_info = await self.parse_video_info(bvid=bvid, avid=avid, page_num=page_num)
+
+        extra_info = f"{video_info.display_info}\n{video_info.ai_summary}".strip()
+
+        return ParseResult(
+            title=video_info.title,
+            platform=self.platform,
+            cover_url=video_info.cover_url,
+            content=VideoContent(video_url=video_info.video_url),
+            extra_info=extra_info or None,
+        )
