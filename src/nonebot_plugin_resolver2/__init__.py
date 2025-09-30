@@ -1,5 +1,8 @@
-from nonebot import get_driver, logger
-from nonebot.plugin import PluginMetadata
+from nonebot import get_driver, logger, require
+from nonebot.plugin import PluginMetadata, inherit_supported_adapters
+
+require("nonebot_plugin_alconna")
+require("nonebot_plugin_uninfo")
 
 from .config import (
     Config,
@@ -18,7 +21,7 @@ __plugin_meta__ = PluginMetadata(
     type="application",
     homepage="https://github.com/fllesser/nonebot-plugin-resolver2",
     config=Config,
-    supported_adapters={"~onebot.v11"},
+    supported_adapters=inherit_supported_adapters("nonebot_plugin_alconna", "nonebot_plugin_uninfo"),
     extra={
         "author": "fllesser",
         "email": "fllessive@gmail.com",

@@ -2,13 +2,13 @@ import asyncio
 from pathlib import Path
 import re
 
-from nonebot.adapters.onebot.v11 import MessageSegment
+from nonebot_plugin_alconna import UniMessage
 
 from ..config import NICKNAME
 from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import DouyinParser
-from .helper import obhelper
+from .helper import UniHelper
 from .preprocess import KeyPatternMatched, on_keyword_regex
 
 parser = DouyinParser()
@@ -26,11 +26,11 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
     parse_result = await parser.parse_share_url(share_url)
     await douyin.send(f"{NICKNAME}解析 | 抖音 - {parse_result.title}")
 
-    segs: list[MessageSegment] = []
+    segs = []
     # 存在普通图片
     if pic_urls := parse_result.pic_urls:
         paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
-        segs.extend(obhelper.img_seg(path) for path in paths)
+        segs.extend(UniHelper.img_seg(path) for path in paths)
 
     # 存在动态图片
     if dynamic_urls := parse_result.dynamic_urls:
@@ -38,13 +38,13 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
         video_paths = await asyncio.gather(
             *[DOWNLOADER.download_video(url) for url in dynamic_urls], return_exceptions=True
         )
-        segs.extend(obhelper.video_seg(p) for p in video_paths if isinstance(p, Path))
+        segs.extend(UniHelper.video_seg(p) for p in video_paths if isinstance(p, Path))
 
     if len(segs) > 0:
-        await obhelper.send_segments(segs)
+        await UniHelper.send_segments(segs)
         await douyin.finish()
 
     # 存在视频
     if video_url := parse_result.video_url:
         video_path = await DOWNLOADER.download_video(video_url)
-        await douyin.finish(obhelper.video_seg(video_path))
+        await UniMessage([UniHelper.video_seg(video_path)]).send()

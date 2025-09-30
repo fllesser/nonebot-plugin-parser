@@ -2,12 +2,13 @@ import re
 
 import httpx
 from nonebot import logger
+from nonebot_plugin_alconna import UniMessage
 
 from ..config import NICKNAME
 from ..constants import COMMON_TIMEOUT
 from ..download.ytdlp import get_video_info, ytdlp_download_video
 from ..exception import handle_exception
-from .helper import obhelper
+from .helper import UniHelper
 from .preprocess import KeyPatternMatched, on_keyword_regex
 
 tiktok = on_keyword_regex(("tiktok.com", r"(?:https?://)?(www|vt|vm)\.tiktok\.com\/[A-Za-z0-9._?%&+-=/#@]*"))
@@ -39,4 +40,4 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
         logger.exception(f"tiktok video download failed | {url}")
         await tiktok.finish(f"{pub_prefix}下载视频失败")
 
-    await tiktok.send(obhelper.video_seg(video_path))
+    await UniMessage([UniHelper.video_seg(video_path)]).send()

@@ -1,8 +1,10 @@
+from nonebot_plugin_alconna import UniMessage
+
 from ..config import NICKNAME
 from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import WeiBoParser
-from .helper import obhelper
+from .helper import UniHelper
 from .preprocess import ExtractText, on_url_keyword
 
 weibo_parser = WeiBoParser()
@@ -19,9 +21,9 @@ async def _(text: str = ExtractText()):
 
     if video_url := parse_result.video_url:
         video_path = await DOWNLOADER.download_video(video_url, ext_headers=weibo_parser.ext_headers)
-        await weibo.finish(obhelper.video_seg(video_path))
+        await UniMessage([UniHelper.video_seg(video_path)]).send()
 
     elif pic_urls := parse_result.pic_urls:
         image_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=weibo_parser.ext_headers)
         if image_paths:
-            await obhelper.send_segments([obhelper.img_seg(path) for path in image_paths])
+            await UniHelper.send_segments([UniHelper.img_seg(path) for path in image_paths])

@@ -3,13 +3,13 @@ import re
 from typing import Any, Literal
 
 from nonebot import logger
-from nonebot.adapters.onebot.v11 import MessageEvent, MessageSegment
 from nonebot.matcher import Matcher
 from nonebot.message import event_preprocessor
 from nonebot.params import Depends
 from nonebot.plugin.on import get_matcher_source
 from nonebot.rule import Rule
 from nonebot.typing import T_State
+from nonebot_plugin_alconna.uniseg import Hyper, UniMsg
 
 from .filter import is_not_in_disabled_groups
 
@@ -65,7 +65,7 @@ def _clean_url(url: str) -> str:
     return url
 
 
-def _extract_json_url(json_seg: MessageSegment) -> str | None:
+def _extract_json_url(hyper: Hyper) -> str | None:
     """处理 JSON 类型的消息段，提取 URL
 
     Args:
@@ -74,20 +74,21 @@ def _extract_json_url(json_seg: MessageSegment) -> str | None:
     Returns:
         Optional[str]: 提取的 URL, 如果提取失败则返回 None
     """
-    data_str: str | None = json_seg.data.get("data")
-    if not data_str:
-        return None
+    data = hyper.data
+    raw_str = data.get("raw")
 
+    if raw_str is None:
+        return None
     # 处理转义字符
-    data_str = data_str.replace("&#44;", ",")
+    raw_str = raw_str.replace("&#44;", ",")
 
     try:
-        data: dict[str, Any] = json.loads(data_str)
+        raw: dict[str, Any] = json.loads(raw_str)
     except json.JSONDecodeError:
         logger.exception("json 卡片解析失败")
         return None
 
-    meta: dict[str, Any] | None = data.get("meta")
+    meta: dict[str, Any] | None = raw.get("meta")
     if not meta:
         return None
 
@@ -99,15 +100,13 @@ def _extract_json_url(json_seg: MessageSegment) -> str | None:
 
 
 @event_preprocessor
-def extract_msg_text(event: MessageEvent, state: T_State) -> None:
-    message = event.get_message()
+def extract_msg_text(message: UniMsg, state: T_State) -> None:
     text: str | None = None
 
-    # 提取json数据
-    if json_seg := next((seg for seg in message if seg.type == "json"), None):
-        if url := _extract_json_url(json_seg):
-            state[R_EXTRACT_KEY] = url
-            return
+    if hyper := message.get(Hyper, 1):
+        state[R_EXTRACT_KEY] = _extract_json_url(hyper.pop())
+        return
+
     # 提取纯文本
     if text := message.extract_plain_text().strip():
         state[R_EXTRACT_KEY] = text

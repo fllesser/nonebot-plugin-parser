@@ -1,10 +1,12 @@
 import re
 
+from nonebot_plugin_alconna import UniMessage
+
 from ..config import NICKNAME
 from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import KuaishouParser
-from .helper import obhelper
+from .helper import UniHelper
 from .preprocess import KeyPatternMatched, on_keyword_regex
 
 parser = KuaishouParser()
@@ -32,16 +34,16 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
     if cover_url := parse_result.cover_url:
         # 下载封面
         cover_path = await DOWNLOADER.download_img(cover_url)
-        msg += obhelper.img_seg(cover_path)
+        msg += UniHelper.img_seg(cover_path)
 
-    await kuaishou.send(msg)
+    await UniMessage(msg).send()
 
     if video_url := parse_result.video_url:
         video_path = await DOWNLOADER.download_video(video_url)
-        await kuaishou.send(obhelper.video_seg(video_path))
+        await UniMessage([UniHelper.video_seg(video_path)]).send()
 
     elif pic_urls := parse_result.pic_urls:
         img_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
-        segs = [obhelper.img_seg(img_path) for img_path in img_paths]
+        segs = [UniHelper.img_seg(img_path) for img_path in img_paths]
         assert len(segs) > 0
-        await obhelper.send_segments(segs)
+        await UniHelper.send_segments(segs)

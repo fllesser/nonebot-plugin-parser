@@ -3,21 +3,21 @@ from pathlib import Path
 import re
 
 from nonebot import logger, on_command
-from nonebot.adapters.onebot.v11 import Bot, Message, MessageEvent, MessageSegment
-from nonebot.adapters.onebot.v11.exception import ActionFailed
+from nonebot.adapters import Message
 from nonebot.params import CommandArg
+from nonebot_plugin_alconna import Text
+from nonebot_plugin_alconna.uniseg import UniMessage
 
 from ..config import DURATION_MAXIMUM, NEED_UPLOAD, NICKNAME, plugin_cache_dir
 from ..download import DOWNLOADER
-from ..download.utils import encode_video_to_h264, merge_av
+from ..download.utils import merge_av
 from ..exception import ParseException, handle_exception
 from ..parsers import BilibiliParser, get_redirect_url
 from ..utils import keep_zh_en_num
-from .filter import is_not_in_disabled_groups
-from .helper import obhelper
+from .helper import UniHelper
 from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
 
-bili_music = on_command(cmd="bm", block=True, rule=is_not_in_disabled_groups)
+bili_music = on_command(cmd="bm", block=True)
 
 
 bilibili = on_keyword_regex(
@@ -78,9 +78,9 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
         id_arg["bvid"] = video_id
     video_info = await parser.parse_video_info(**id_arg, page_num=page_num)
 
-    segs: list[MessageSegment | str] = [
+    segs = [
         video_info.title,
-        obhelper.img_seg(await DOWNLOADER.download_img(video_info.cover_url)),
+        UniHelper.img_seg(await DOWNLOADER.download_img(video_info.cover_url)),
         video_info.display_info,
         video_info.ai_summary,
     ]
@@ -89,7 +89,7 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
             f"⚠️ 当前视频时长 {video_info.video_duration // 60} 分钟, "
             f"超过管理员设置的最长时间 {DURATION_MAXIMUM // 60} 分钟!"
         )
-    await obhelper.send_segments(segs)
+    await UniHelper.send_segments(segs)
 
     if video_info.video_duration > DURATION_MAXIMUM:
         logger.warning(f"video duration > {DURATION_MAXIMUM}, ignore download")
@@ -111,23 +111,25 @@ async def _(keyword: str = Keyword(), searched: re.Match[str] = KeyPatternMatche
             video_path = await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=parser.headers)
 
     # 发送视频
-    try:
-        await bilibili.send(obhelper.video_seg(video_path))
-    except ActionFailed as e:
-        message: str = e.info.get("message", "")
-        # 无缩略图
-        if not message.endswith(".png'"):
-            raise
-        # 重新编码为 h264
-        logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
-        h264_video_path = await encode_video_to_h264(video_path)
-        await bilibili.send(obhelper.video_seg(h264_video_path))
+    await UniMessage([UniHelper.video_seg(video_path)]).send()
+
+    # try:
+    #     await UniMessage([UniHelper.video_seg(video_path)]).send()
+    # except ActionFailed as e:
+    #     message: str = e.info.get("message", "")
+    #     # 无缩略图
+    #     if not message.endswith(".png'"):
+    #         raise
+    #     # 重新编码为 h264
+    #     logger.warning("视频上传出现无缩略图错误，将重新编码为 h264 进行上传")
+    #     h264_video_path = await encode_video_to_h264(video_path)
+    #     await UniMessage([UniHelper.video_seg(h264_video_path)]).send()
 
 
 # 处理 非视频
 async def handle_others(url: str):
     pub_prefix = f"{NICKNAME}解析 | 哔哩哔哩 - "
-    segs: list[MessageSegment | Message | str] = []
+    segs = []
     # 动态
     if "t.bilibili.com" in url or "/opus" in url:
         matched = re.search(r"/(\d+)", url)
@@ -140,8 +142,8 @@ async def handle_others(url: str):
         segs.append(text)
         if img_lst:
             paths = await DOWNLOADER.download_imgs_without_raise(img_lst)
-            segs.extend(obhelper.img_seg(path) for path in paths)
-        await obhelper.send_segments(segs)
+            segs.extend(UniHelper.img_seg(path) for path in paths)
+        await UniHelper.send_segments(segs)
     # 直播间解析
     elif "/live" in url:
         # https://live.bilibili.com/30528999?hotRank=0
@@ -153,10 +155,12 @@ async def handle_others(url: str):
         title, cover, keyframe = await parser.parse_live(room_id)
         if not title:
             await bilibili.finish(f"{pub_prefix}直播 - 未找到直播间信息")
-        res = f"{pub_prefix}直播 {title}"
-        res += obhelper.img_seg(await DOWNLOADER.download_img(cover)) if cover else ""
-        res += obhelper.img_seg(await DOWNLOADER.download_img(keyframe)) if keyframe else ""
-        await bilibili.send(res)
+        msg = UniMessage().text(f"{pub_prefix}直播 {title}")
+        if cover:
+            msg += UniHelper.img_seg(await DOWNLOADER.download_img(cover))
+        if keyframe:
+            msg += UniHelper.img_seg(await DOWNLOADER.download_img(keyframe))
+        await msg.send()
     # 专栏解析
     elif "/read" in url:
         matched = re.search(r"read/cv(\d+)", url)
@@ -174,9 +178,9 @@ async def handle_others(url: str):
             if text:
                 segs.append(text)
             else:
-                segs.append(obhelper.img_seg(paths.pop()))
+                segs.append(UniHelper.img_seg(paths.pop()))
         if segs:
-            await obhelper.send_segments(segs)
+            await UniHelper.send_segments(segs)
     # 收藏夹解析
     elif "/favlist" in url:
         # https://space.bilibili.com/22990202/favlist?fid=2344812202
@@ -191,23 +195,21 @@ async def handle_others(url: str):
         paths: list[Path] = await DOWNLOADER.download_imgs_without_raise(urls)
         # 组合 text 和 image
         for path, text in zip(paths, texts):
-            segs.append(obhelper.img_seg(path) + text)
+            segs.append(UniMessage([UniHelper.img_seg(path), Text(text)]))
         assert len(segs) > 0
-        await obhelper.send_segments(segs)
+        await UniHelper.send_segments(segs)
     else:
         logger.warning(f"不支持的链接: {url}")
 
 
 @bili_music.handle()
 @handle_exception()
-async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
+async def _(args: Message = CommandArg()):
     text = args.extract_plain_text().strip()
     matched = re.match(r"^(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?$", text)
     if not matched:
         await bili_music.finish("命令格式: bm BV1LpD3YsETa [集数](中括号表示可选)")
 
-    # 回应用户
-    await bot.call_api("set_msg_emoji_like", message_id=event.message_id, emoji_id="282")
     bvid, p_num = str(matched.group(1)), matched.group(2)
 
     # 处理分 p
@@ -215,6 +217,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
     video_info = await parser.parse_video_info(bvid=bvid, page_num=p_num)
     if not video_info.audio_url:
         raise ParseException("没有可供下载的音频流")
+
     # 音频文件名
     video_title = keep_zh_en_num(video_info.title)
     audio_name = f"{video_title}.mp3"
@@ -224,7 +227,7 @@ async def _(bot: Bot, event: MessageEvent, args: Message = CommandArg()):
         await DOWNLOADER.streamd(video_info.audio_url, file_name=audio_name, ext_headers=parser.headers)
 
     # 发送音频
-    await bili_music.send(obhelper.record_seg(audio_path))
+    await UniMessage([UniHelper.record_seg(audio_path)]).send()
     # 上传音频
     if NEED_UPLOAD:
-        await bili_music.send(obhelper.file_seg(audio_path))
+        await UniMessage([UniHelper.file_seg(audio_path)]).send()
