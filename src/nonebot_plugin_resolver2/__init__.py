@@ -1,18 +1,14 @@
-from nonebot import get_driver, logger, require
+import asyncio
+
+from nonebot import logger, require
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_uninfo")
 
-from .config import (
-    Config,
-    plugin_cache_dir,
-    rconfig,
-    scheduler,
-    ytb_cookies_file,
-)
-from .cookie import save_cookies_to_netscape
-from .matchers import resolvers
+from .config import Config, plugin_cache_dir, scheduler
+from .download.utils import safe_unlink
+from .matchers import resolver  # noqa: F401
 
 __plugin_meta__ = PluginMetadata(
     name="链接分享自动解析",
@@ -30,34 +26,8 @@ __plugin_meta__ = PluginMetadata(
 )
 
 
-@get_driver().on_startup
-async def _():
-    if rconfig.r_ytb_ck:
-        save_cookies_to_netscape(rconfig.r_ytb_ck, ytb_cookies_file, "youtube.com")
-        logger.debug(f"保存 youtube cookie 到 {ytb_cookies_file}")
-
-    destroy_resolvers: list[str] = []
-    if not rconfig.r_xhs_ck:
-        if xiaohongshu := resolvers.pop("xiaohongshu", None):
-            xiaohongshu.destroy()
-            logger.warning("未配置小红书 cookie, 小红书解析已关闭")
-            destroy_resolvers.append("xiaohongshu")
-
-    # 关闭全局禁用的解析
-    for resolver in rconfig.r_disable_resolvers:
-        if matcher := resolvers.get(resolver, None):
-            matcher.destroy()
-            destroy_resolvers.append(resolver)
-    if destroy_resolvers:
-        logger.warning(f"已关闭解析: {', '.join(destroy_resolvers)}")
-
-
 @scheduler.scheduled_job("cron", hour=1, minute=0, id="resolver2-clean-local-cache")
 async def clean_plugin_cache():
-    import asyncio
-
-    from .download.utils import safe_unlink
-
     try:
         files = [f for f in plugin_cache_dir.iterdir() if f.is_file()]
         if not files:
