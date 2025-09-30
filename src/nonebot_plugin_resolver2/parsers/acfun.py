@@ -141,7 +141,7 @@ class AcfunParser(BaseParser):
             url: Acfun 链接
 
         Returns:
-            ParseResult: 解析结果（仅包含 URL，不下载）
+            ParseResult: 解析结果（已下载资源，包含 Path）
 
         Raises:
             ParseException: 解析失败
@@ -150,10 +150,19 @@ class AcfunParser(BaseParser):
 
         extra_info = f"简介: {description}\n上传于 {upload_time}" if description or upload_time else None
 
+        # 从 URL 中提取 acid
+        matched = re.search(r"ac(\d+)", url)
+        if not matched:
+            raise ParseException("无法从 URL 中提取 acid")
+        acid = int(matched.group(1))
+
+        # 下载视频
+        video_path = await self.download_video(m3u8_url, acid)
+
         return ParseResult(
             title=title,
             platform=self.platform_display_name,
             author=author,
-            content=VideoContent(video_url=m3u8_url),
+            content=VideoContent(video_path=video_path),
             extra_info=extra_info,
         )

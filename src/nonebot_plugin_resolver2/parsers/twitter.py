@@ -50,14 +50,29 @@ class TwitterParser(BaseParser):
 
         logger.debug(f"html_content: {html_content}")
 
+        # 导入下载器
+        from ..download import DOWNLOADER
+
         first_video_url = await cls.get_first_video_url(html_content)
         if first_video_url is not None:
-            return VideoContent(video_url=first_video_url)
+            video_path = await DOWNLOADER.download_video(first_video_url)
+            return VideoContent(video_path=video_path)
 
         pic_urls = await cls.get_all_pic_urls(html_content)
         dynamic_urls = await cls.get_all_gif_urls(html_content)
         if len(pic_urls) != 0:
-            return ImageContent(pic_urls=pic_urls, dynamic_urls=dynamic_urls)
+            # 下载图片和动态图
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
+            dynamic_paths = []
+            if dynamic_urls:
+                from asyncio import gather
+                from pathlib import Path
+
+                results = await gather(
+                    *[DOWNLOADER.download_video(url) for url in dynamic_urls], return_exceptions=True
+                )
+                dynamic_paths = [p for p in results if isinstance(p, Path)]
+            return ImageContent(pic_paths=pic_paths, dynamic_paths=dynamic_paths)
 
     @classmethod
     def snapcdn_url_pattern(cls, flag: str) -> re.Pattern[str]:

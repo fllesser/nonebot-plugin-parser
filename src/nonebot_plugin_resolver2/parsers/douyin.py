@@ -81,16 +81,26 @@ class DouyinParser(BaseParser):
             text = response.text
 
         video_data = self._extract_data(text)
+
+        # 下载封面
+        cover_path = None
+        if video_data.cover_url:
+            cover_path = await DOWNLOADER.download_img(video_data.cover_url)
+
+        # 下载内容
         content = None
         if image_urls := video_data.images_urls:
-            content = ImageContent(pic_urls=image_urls)
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(image_urls)
+            content = ImageContent(pic_paths=pic_paths)
         elif video_url := video_data.video_url:
-            content = VideoContent(video_url=await get_redirect_url(video_url))
+            video_url = await get_redirect_url(video_url)
+            video_path = await DOWNLOADER.download_video(video_url)
+            content = VideoContent(video_path=video_path)
 
         return ParseResult(
             title=video_data.desc,
             platform=self.platform_display_name,
-            cover_url=video_data.cover_url,
+            cover_path=cover_path,
             author=video_data.author.nickname,
             content=content,
         )
@@ -130,12 +140,23 @@ class DouyinParser(BaseParser):
 
         slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
 
+        # 下载图片
+        pic_paths = await DOWNLOADER.download_imgs_without_raise(slides_data.images_urls)
+
+        # 下载动态图片
+        dynamic_paths = []
+        if slides_data.dynamic_urls:
+            video_paths = await asyncio.gather(
+                *[DOWNLOADER.download_video(url) for url in slides_data.dynamic_urls],
+                return_exceptions=True,
+            )
+            dynamic_paths = [p for p in video_paths if isinstance(p, Path)]
+
         return ParseResult(
             title=slides_data.share_info.share_desc_info,
             platform=self.platform_display_name,
-            cover_url="",
             author=slides_data.author.nickname,
-            content=ImageContent(pic_urls=slides_data.images_urls, dynamic_urls=slides_data.dynamic_urls),
+            content=ImageContent(pic_paths=pic_paths, dynamic_paths=dynamic_paths),
         )
 
     async def parse_url(self, url: str) -> ParseResult:
@@ -145,43 +166,9 @@ class DouyinParser(BaseParser):
             url: 分享链接
 
         Returns:
-            ParseResult: 解析结果（仅包含 URL，不下载）
+            ParseResult: 解析结果（已下载资源，包含 Path）
         """
         return await self.parse_share_url(url)
-
-    async def parse_and_download(self, share_url: str) -> ParseResult:
-        """解析并下载抖音视频/图片（向后兼容的方法）
-
-        Args:
-            share_url (str): 分享链接
-
-        Returns:
-            ParseResult: 包含下载后文件路径的解析结果
-        """
-        # 先解析获取 URL
-        result = await self.parse_url(share_url)
-
-        # 下载封面
-        if result.cover_url:
-            result.cover_path = await DOWNLOADER.download_img(result.cover_url)
-
-        # 下载内容
-        if result.content:
-            if isinstance(result.content, VideoContent) and result.content.video_url:
-                result.content.video_path = await DOWNLOADER.download_video(result.content.video_url)
-            elif isinstance(result.content, ImageContent):
-                # 下载普通图片
-                if result.content.pic_urls:
-                    result.content.pic_paths = await DOWNLOADER.download_imgs_without_raise(result.content.pic_urls)
-                # 下载动态图片
-                if result.content.dynamic_urls:
-                    video_paths = await asyncio.gather(
-                        *[DOWNLOADER.download_video(url) for url in result.content.dynamic_urls],
-                        return_exceptions=True,
-                    )
-                    result.content.dynamic_paths = [p for p in video_paths if isinstance(p, Path)]
-
-        return result
 
 
 from msgspec import Struct, field

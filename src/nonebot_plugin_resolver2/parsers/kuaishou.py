@@ -69,7 +69,7 @@ class KuaishouParser(BaseParser):
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        return photo.convert_parse_result(self.platform_display_name)
+        return await photo.convert_parse_result(self.platform_display_name, self.v_headers)
 
 
 from typing import TypeAlias
@@ -119,14 +119,26 @@ class Photo(Struct):
     def img_urls(self):
         return self.ext_params.atlas.img_urls
 
-    def convert_parse_result(self, platform: str = "快手") -> ParseResult:
+    async def convert_parse_result(
+        self, platform: str = "快手", ext_headers: dict[str, str] | None = None
+    ) -> ParseResult:
+        from ..download import DOWNLOADER
+
+        # 下载封面
+        cover_path = None
+        if self.cover_url:
+            cover_path = await DOWNLOADER.download_img(self.cover_url, ext_headers=ext_headers)
+
+        # 下载内容
+        content = None
         if video_url := self.video_url:
-            content = VideoContent(video_url=video_url)
+            video_path = await DOWNLOADER.download_video(video_url, ext_headers=ext_headers)
+            content = VideoContent(video_path=video_path)
         elif img_urls := self.img_urls:
-            content = ImageContent(pic_urls=img_urls)
-        else:
-            content = None
-        return ParseResult(title=self.caption, platform=platform, cover_url=self.cover_url, content=content)
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=ext_headers)
+            content = ImageContent(pic_paths=pic_paths)
+
+        return ParseResult(title=self.caption, platform=platform, cover_path=cover_path, content=content)
 
 
 class TusjohData(Struct):

@@ -84,17 +84,25 @@ class XiaoHongShuParser(BaseParser):
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
         note_detail = msgspec.convert(note_data, type=NoteDetail)
 
+        # 导入下载器
+        from ..download import DOWNLOADER
+
+        cover_path = None
         if video_url := note_detail.video_url:
-            content = VideoContent(video_url=video_url)
-            cover_url = note_detail.img_urls[0]
+            # 下载视频和封面
+            video_path = await DOWNLOADER.download_video(video_url)
+            content = VideoContent(video_path=video_path)
+            if note_detail.img_urls:
+                cover_path = await DOWNLOADER.download_img(note_detail.img_urls[0])
         else:
-            content = ImageContent(pic_urls=note_detail.img_urls)
-            cover_url = None
+            # 下载图片
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(note_detail.img_urls)
+            content = ImageContent(pic_paths=pic_paths)
 
         return ParseResult(
             title=note_detail.title_desc,
             platform=self.platform_display_name,
-            cover_url=cover_url,
+            cover_path=cover_path,
             content=content,
             author=note_detail.user.nickname,
         )

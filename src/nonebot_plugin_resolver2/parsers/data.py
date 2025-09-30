@@ -10,8 +10,6 @@ from ..constants import IOS_HEADER as IOS_HEADER
 class AudioContent:
     """音频内容"""
 
-    # 支持 URL（用于解析阶段）和 Path（用于下载完成后）
-    audio_url: str | None = None
     audio_path: Path | None = None
 
 
@@ -19,8 +17,6 @@ class AudioContent:
 class VideoContent:
     """视频内容"""
 
-    # 支持 URL（用于解析阶段）和 Path（用于下载完成后）
-    video_url: str | None = None
     video_path: Path | None = None
 
 
@@ -28,10 +24,7 @@ class VideoContent:
 class ImageContent:
     """图片内容"""
 
-    # 支持 URL（用于解析阶段）和 Path（用于下载完成后）
-    pic_urls: list[str] = field(default_factory=list)
     pic_paths: list[Path] = field(default_factory=list)
-    dynamic_urls: list[str] = field(default_factory=list)
     dynamic_paths: list[Path] = field(default_factory=list)
 
 
@@ -48,21 +41,9 @@ class ParseResult:
     extra_info: str | None = None  # 额外信息，如视频时长、AI总结等
 
     @property
-    def video_url(self) -> str | None:
-        if isinstance(self.content, VideoContent):
-            return self.content.video_url
-        return None
-
-    @property
     def video_path(self) -> Path | None:
         if isinstance(self.content, VideoContent):
             return self.content.video_path
-        return None
-
-    @property
-    def pic_urls(self) -> list[str] | None:
-        if isinstance(self.content, ImageContent):
-            return self.content.pic_urls
         return None
 
     @property
@@ -72,21 +53,9 @@ class ParseResult:
         return None
 
     @property
-    def dynamic_urls(self) -> list[str] | None:
-        if isinstance(self.content, ImageContent):
-            return self.content.dynamic_urls
-        return None
-
-    @property
     def dynamic_paths(self) -> list[Path] | None:
         if isinstance(self.content, ImageContent):
             return self.content.dynamic_paths
-        return None
-
-    @property
-    def audio_url(self) -> str | None:
-        if isinstance(self.content, AudioContent):
-            return self.content.audio_url
         return None
 
     @property

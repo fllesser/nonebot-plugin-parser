@@ -404,10 +404,19 @@ class BilibiliParser(BaseParser):
                 raise ParseException("无效的动态链接")
             opus_id = int(matched.group(1))
             img_urls, text = await self.parse_opus(opus_id)
+
+            # 下载图片
+            from ..download import DOWNLOADER
+
+            content = None
+            if img_urls:
+                pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls)
+                content = ImageContent(pic_paths=pic_paths)
+
             return ParseResult(
                 title=text,
                 platform=self.platform_display_name,
-                content=ImageContent(pic_urls=img_urls) if img_urls else None,
+                content=content,
             )
 
         # 2. 直播
@@ -417,10 +426,18 @@ class BilibiliParser(BaseParser):
                 raise ParseException("无效的直播链接")
             room_id = int(matched.group(1))
             title, cover, keyframe = await self.parse_live(room_id)
+
+            # 下载封面
+            from ..download import DOWNLOADER
+
+            cover_path = None
+            if cover_url := (cover or keyframe):
+                cover_path = await DOWNLOADER.download_img(cover_url)
+
             return ParseResult(
                 title=title,
                 platform=self.platform_display_name,
-                cover_url=cover or keyframe,
+                cover_path=cover_path,
             )
 
         # 3. 专栏
@@ -431,10 +448,19 @@ class BilibiliParser(BaseParser):
             read_id = int(matched.group(1))
             img_urls, texts = await self.parse_read(read_id)
             combined_text = "\n".join(texts)
+
+            # 下载图片
+            from ..download import DOWNLOADER
+
+            content = None
+            if img_urls:
+                pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls)
+                content = ImageContent(pic_paths=pic_paths)
+
             return ParseResult(
                 title=combined_text[:100] + "..." if len(combined_text) > 100 else combined_text,
                 platform=self.platform_display_name,
-                content=ImageContent(pic_urls=img_urls) if img_urls else None,
+                content=content,
             )
 
         # 4. 收藏夹
@@ -477,10 +503,19 @@ class BilibiliParser(BaseParser):
 
         extra_info = f"{video_info.display_info}\n{video_info.ai_summary}".strip()
 
+        # 下载封面和视频
+        from ..download import DOWNLOADER
+
+        cover_path = None
+        if video_info.cover_url:
+            cover_path = await DOWNLOADER.download_img(video_info.cover_url)
+
+        video_path = await DOWNLOADER.download_video(video_info.video_url)
+
         return ParseResult(
             title=video_info.title,
             platform=self.platform_display_name,
-            cover_url=video_info.cover_url,
-            content=VideoContent(video_url=video_info.video_url),
+            cover_path=cover_path,
+            content=VideoContent(video_path=video_path),
             extra_info=extra_info or None,
         )

@@ -78,12 +78,20 @@ class WeiBoParser(BaseParser):
             _, first_mp4_url = next(iter(data["urls"].items()))
             video_url = f"https:{first_mp4_url}"
 
+        # 导入下载器
+        from ..download import DOWNLOADER
+
+        # 下载封面和视频
+        cover_url = "https:" + data["cover_image"]
+        cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
+        video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+
         return ParseResult(
             title=data["title"],
             platform=self.platform_display_name,
-            cover_url="https:" + data["cover_image"],
+            cover_path=cover_path,
             author=data["author"],
-            content=VideoContent(video_url=video_url),
+            content=VideoContent(video_path=video_path),
         )
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
@@ -125,12 +133,17 @@ class WeiBoParser(BaseParser):
         # 用 bytes 更稳，避免编码歧义
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
 
+        # 导入下载器
+        from ..download import DOWNLOADER
+
+        # 下载内容
+        content = None
         if video_url := weibo_data.video_url:
-            content = VideoContent(video_url=video_url)
+            video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+            content = VideoContent(video_path=video_path)
         elif pic_urls := weibo_data.pic_urls:
-            content = ImageContent(pic_urls=pic_urls)
-        else:
-            content = None
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
+            content = ImageContent(pic_paths=pic_paths)
 
         return ParseResult(
             title=weibo_data.title,

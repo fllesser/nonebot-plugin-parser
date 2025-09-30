@@ -66,12 +66,22 @@ class TikTokParser(BaseParser):
             else:
                 extra_info = None
 
+            # 下载封面和视频
+            from ..download import DOWNLOADER
+            from ..download.ytdlp import ytdlp_download_video
+
+            cover_path = None
+            if thumbnail:
+                cover_path = await DOWNLOADER.download_img(thumbnail)
+
+            video_path = await ytdlp_download_video(final_url)
+
             return ParseResult(
                 title=title,
                 platform=self.platform_display_name,
                 author=author,
-                cover_url=thumbnail,
-                content=VideoContent(video_url=final_url),  # 保存重定向后的 URL
+                cover_path=cover_path,
+                content=VideoContent(video_path=video_path),
                 extra_info=extra_info,
             )
         except ParseException:

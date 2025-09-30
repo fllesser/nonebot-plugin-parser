@@ -5,11 +5,9 @@ import re
 from nonebot import logger
 
 from ..config import rconfig
-from ..download import DOWNLOADER
 from ..exception import handle_exception
 from ..parsers import PLATFORM_PARSERS
 from ..parsers.base import BaseParser
-from ..parsers.data import ImageContent, ParseResult, VideoContent
 from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
 from .render import Renderer
 
@@ -52,33 +50,6 @@ def _get_enabled_patterns(platform_parsers: dict[str, type[BaseParser]]) -> list
 KEYWORD_TO_PLATFORM = _build_keyword_to_platform_map(PLATFORM_PARSERS)
 
 
-async def _download_resources(result: ParseResult, ext_headers: dict[str, str] | None = None) -> None:
-    """统一的资源下载函数
-
-    Args:
-        result: 解析结果
-        ext_headers: 额外的请求头（用于某些需要特殊headers的平台，如微博）
-    """
-    # 下载封面
-    if result.cover_url:
-        result.cover_path = await DOWNLOADER.download_img(result.cover_url)
-
-    # 下载内容
-    if result.content:
-        if isinstance(result.content, VideoContent):
-            # 下载视频
-            if result.content.video_url:
-                result.content.video_path = await DOWNLOADER.download_video(
-                    result.content.video_url, ext_headers=ext_headers
-                )
-        elif isinstance(result.content, ImageContent):
-            # 下载图片
-            if result.content.pic_urls:
-                result.content.pic_paths = await DOWNLOADER.download_imgs_without_raise(
-                    result.content.pic_urls, ext_headers=ext_headers
-                )
-
-
 # 根据配置创建只包含启用平台的 matcher
 resolver = on_keyword_regex(*_get_enabled_patterns(PLATFORM_PARSERS))
 
@@ -108,14 +79,10 @@ async def _(
     # 1. 先发送初始消息（快速反馈给用户）
     await resolver.send(f"解析 | {parser.platform_display_name}")
 
-    # 解析 URL
+    # 2. 解析 URL（包含下载资源）
     result = await parser.parse_url(url)
 
     if result:
-        # 2. 下载资源
-        ext_headers = getattr(parser, "ext_headers", None)  # 微博等平台需要特殊请求头
-        await _download_resources(result, ext_headers)
-
         # 3. 渲染内容消息并发送
         messages = Renderer.render_messages(result)
         for message in messages:

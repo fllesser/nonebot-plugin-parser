@@ -55,14 +55,22 @@ class YouTubeParser(BaseParser):
             else:
                 extra_info = None
 
-            # YouTube 可以下载视频或音频，这里默认返回视频内容
-            # 实际下载时会根据用户选择下载视频或音频
+            # 下载封面和视频
+            from ..download import DOWNLOADER
+            from ..download.ytdlp import ytdlp_download_video
+
+            cover_path = None
+            if thumbnail:
+                cover_path = await DOWNLOADER.download_img(thumbnail)
+
+            video_path = await ytdlp_download_video(url, self.cookies_file)
+
             return ParseResult(
                 title=title,
                 platform=self.platform_display_name,
                 author=author,
-                cover_url=thumbnail,
-                content=VideoContent(video_url=url),  # 保存原始 URL，下载时使用
+                cover_path=cover_path,
+                content=VideoContent(video_path=video_path),
                 extra_info=extra_info,
             )
         except Exception as e:
@@ -99,12 +107,22 @@ class YouTubeParser(BaseParser):
             else:
                 extra_info = None
 
+            # 下载封面和音频
+            from ..download import DOWNLOADER
+            from ..download.ytdlp import ytdlp_download_audio
+
+            cover_path = None
+            if thumbnail:
+                cover_path = await DOWNLOADER.download_img(thumbnail)
+
+            audio_path = await ytdlp_download_audio(url, self.cookies_file)
+
             return ParseResult(
                 title=title,
                 platform=self.platform_display_name,
                 author=author,
-                cover_url=thumbnail,
-                content=AudioContent(audio_url=url),  # 保存原始 URL，下载时使用
+                cover_path=cover_path,
+                content=AudioContent(audio_path=audio_path),
                 extra_info=extra_info,
             )
         except Exception as e:
