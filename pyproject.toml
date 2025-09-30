@@ -61,7 +61,7 @@ default-groups = ["test", "dev"]
 
 [tool.nonebot]
 adapters = [
-  # { "name" = "Onebot V11", module_name = "nonebot.adapters.onebot.v11" },
+  { "name" = "Onebot V11", module_name = "nonebot.adapters.onebot.v11" },
   { name = "Telegram", module_name = "nonebot.adapters.telegram" },
 ]
 plugins = ["nonebot_plugin_resolver2"]
