@@ -21,6 +21,7 @@ class XiaoHongShuParser:
         }
         if rconfig.r_xhs_ck:
             self.headers["cookie"] = rconfig.r_xhs_ck
+        self.platform = "小红书"
 
     async def parse_url(self, url: str) -> ParseResult:
         """解析小红书 URL
@@ -79,6 +80,7 @@ class XiaoHongShuParser:
 
         return ParseResult(
             title=note_detail.title_desc,
+            platform=self.platform,
             cover_url=cover_url,
             content=content,
             author=note_detail.user.nickname,

@@ -16,6 +16,7 @@ class WeiBoParser:
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
             "referer": "https://weibo.com/",
         }
+        self.platform = "微博"
 
     async def parse_share_url(self, share_url: str) -> ParseResult:
         """解析微博分享链接"""
@@ -62,6 +63,7 @@ class WeiBoParser:
 
         return ParseResult(
             title=data["title"],
+            platform=self.platform,
             cover_url="https:" + data["cover_image"],
             author=data["author"],
             content=VideoContent(video_url=video_url),
@@ -115,6 +117,7 @@ class WeiBoParser:
 
         return ParseResult(
             title=weibo_data.title,
+            platform=self.platform,
             author=weibo_data.source,
             content=content,
         )

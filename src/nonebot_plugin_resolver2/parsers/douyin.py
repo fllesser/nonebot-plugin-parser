@@ -1,3 +1,5 @@
+import asyncio
+from pathlib import Path
 import re
 from typing import Any
 
@@ -6,6 +8,7 @@ import msgspec
 from nonebot import logger
 
 from ..constants import COMMON_TIMEOUT
+from ..download import DOWNLOADER
 from ..exception import ParseException
 from .data import ANDROID_HEADER, IOS_HEADER, ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
@@ -15,6 +18,7 @@ class DouyinParser:
     def __init__(self):
         self.ios_headers = IOS_HEADER.copy()
         self.android_headers = {"Accept": "application/json, text/plain, */*", **ANDROID_HEADER}
+        self.platform = "抖音"
 
     def _build_iesdouyin_url(self, _type: str, video_id: str) -> str:
         return f"https://www.iesdouyin.com/share/{_type}/{video_id}"
@@ -70,6 +74,7 @@ class DouyinParser:
 
         return ParseResult(
             title=video_data.desc,
+            platform=self.platform,
             cover_url=video_data.cover_url,
             author=video_data.author.nickname,
             content=content,
@@ -112,10 +117,45 @@ class DouyinParser:
 
         return ParseResult(
             title=slides_data.share_info.share_desc_info,
+            platform=self.platform,
             cover_url="",
             author=slides_data.author.nickname,
             content=ImageContent(pic_urls=slides_data.images_urls, dynamic_urls=slides_data.dynamic_urls),
         )
+
+    async def parse_and_download(self, share_url: str) -> ParseResult:
+        """解析并下载抖音视频/图片
+
+        Args:
+            share_url (str): 分享链接
+
+        Returns:
+            ParseResult: 包含下载后文件路径的解析结果
+        """
+        # 先解析获取 URL
+        result = await self.parse_share_url(share_url)
+
+        # 下载封面
+        if result.cover_url:
+            result.cover_path = await DOWNLOADER.download_img(result.cover_url)
+
+        # 下载内容
+        if result.content:
+            if isinstance(result.content, VideoContent) and result.content.video_url:
+                result.content.video_path = await DOWNLOADER.download_video(result.content.video_url)
+            elif isinstance(result.content, ImageContent):
+                # 下载普通图片
+                if result.content.pic_urls:
+                    result.content.pic_paths = await DOWNLOADER.download_imgs_without_raise(result.content.pic_urls)
+                # 下载动态图片
+                if result.content.dynamic_urls:
+                    video_paths = await asyncio.gather(
+                        *[DOWNLOADER.download_video(url) for url in result.content.dynamic_urls],
+                        return_exceptions=True,
+                    )
+                    result.content.dynamic_paths = [p for p in video_paths if isinstance(p, Path)]
+
+        return result
 
 
 from msgspec import Struct, field

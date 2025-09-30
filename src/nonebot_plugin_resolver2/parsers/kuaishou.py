@@ -19,6 +19,7 @@ class KuaishouParser:
             **IOS_HEADER,
             "Referer": "https://v.kuaishou.com/",
         }
+        self.platform = "快手"
 
     async def parse_url(self, url: str) -> ParseResult:
         """解析快手链接获取视频信息
@@ -54,7 +55,7 @@ class KuaishouParser:
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        return photo.convert_parse_result()
+        return photo.convert_parse_result(self.platform)
 
 
 from typing import TypeAlias
@@ -104,14 +105,14 @@ class Photo(Struct):
     def img_urls(self):
         return self.ext_params.atlas.img_urls
 
-    def convert_parse_result(self) -> ParseResult:
+    def convert_parse_result(self, platform: str = "快手") -> ParseResult:
         if video_url := self.video_url:
-            content = VideoContent(video_url)
+            content = VideoContent(video_url=video_url)
         elif img_urls := self.img_urls:
-            content = ImageContent(img_urls)
+            content = ImageContent(pic_urls=img_urls)
         else:
             content = None
-        return ParseResult(title=self.caption, cover_url=self.cover_url, content=content)
+        return ParseResult(title=self.caption, platform=platform, cover_url=self.cover_url, content=content)
 
 
 class TusjohData(Struct):
