@@ -7,7 +7,6 @@ import pytest
 @pytest.mark.asyncio
 async def test_graphics():
     """测试微博图片解析"""
-    from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.parsers import WeiBoParser
 
     weibo_parser = WeiBoParser()
@@ -19,11 +18,10 @@ async def test_graphics():
 
     async def parse_graphics(url: str) -> None:
         logger.info(f"{url} | 开始解析微博")
-        video_info = await weibo_parser.parse_share_url(url)
-        logger.debug(f"{url} | 解析结果: \n{video_info}")
-        assert video_info.pic_urls
-        files = await DOWNLOADER.download_imgs_without_raise(video_info.pic_urls, ext_headers=weibo_parser.ext_headers)
-        assert len(files) == len(video_info.pic_urls)
+        parse_result = await weibo_parser.parse_share_url(url)
+        logger.debug(f"{url} | 解析结果: \n{parse_result}")
+        assert parse_result.pic_paths
+        assert len(parse_result.pic_paths) > 0
         logger.success(f"{url} | 微博图文解析成功")
 
     await asyncio.gather(*[parse_graphics(url) for url in urls])
@@ -32,7 +30,6 @@ async def test_graphics():
 @pytest.mark.asyncio
 async def test_video():
     """测试微博视频解析"""
-    from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.parsers import WeiBoParser
 
     weibo_parser = WeiBoParser()
@@ -49,9 +46,8 @@ async def test_video():
         logger.info(f"{url} | 开始解析微博")
         parse_result = await weibo_parser.parse_share_url(url)
         logger.debug(f"{url} | 解析结果: {parse_result}")
-        assert parse_result.video_url
-        video_path = await DOWNLOADER.download_video(parse_result.video_url, ext_headers=weibo_parser.ext_headers)
-        assert video_path
+        assert parse_result.video_path
+        assert parse_result.video_path.exists()
         logger.success(f"{url} | 微博视频下载成功")
 
     await asyncio.gather(*[parse_video(url) for url in urls])
