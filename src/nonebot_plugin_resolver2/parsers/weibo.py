@@ -18,8 +18,12 @@ class WeiBoParser:
         }
         self.platform = "微博"
 
+    async def parse_url(self, share_url: str) -> ParseResult:
+        """解析微博分享链接（标准接口）"""
+        return await self.parse_share_url(share_url)
+
     async def parse_share_url(self, share_url: str) -> ParseResult:
-        """解析微博分享链接"""
+        """解析微博分享链接（内部方法）"""
         # https://video.weibo.com/show?fid=1034:5145615399845897
         if matched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
             return await self.parse_fid(matched.group(1))

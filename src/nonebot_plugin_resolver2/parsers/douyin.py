@@ -123,8 +123,19 @@ class DouyinParser:
             content=ImageContent(pic_urls=slides_data.images_urls, dynamic_urls=slides_data.dynamic_urls),
         )
 
+    async def parse_url(self, share_url: str) -> ParseResult:
+        """解析抖音分享链接（标准接口）
+
+        Args:
+            share_url (str): 分享链接
+
+        Returns:
+            ParseResult: 解析结果（仅包含 URL，不下载）
+        """
+        return await self.parse_share_url(share_url)
+
     async def parse_and_download(self, share_url: str) -> ParseResult:
-        """解析并下载抖音视频/图片
+        """解析并下载抖音视频/图片（向后兼容的方法）
 
         Args:
             share_url (str): 分享链接
@@ -133,7 +144,7 @@ class DouyinParser:
             ParseResult: 包含下载后文件路径的解析结果
         """
         # 先解析获取 URL
-        result = await self.parse_share_url(share_url)
+        result = await self.parse_url(share_url)
 
         # 下载封面
         if result.cover_url:

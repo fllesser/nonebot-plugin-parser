@@ -71,6 +71,41 @@ def _get_enabled_patterns() -> list[tuple[str, str]]:
     return enabled_patterns
 
 
+async def _download_resources(result: ParseResult, ext_headers: dict[str, str] | None = None) -> None:
+    """统一的资源下载函数
+
+    Args:
+        result: 解析结果
+        ext_headers: 额外的请求头（用于某些需要特殊headers的平台，如微博）
+    """
+    # 下载封面
+    if result.cover_url:
+        result.cover_path = await DOWNLOADER.download_img(result.cover_url)
+
+    # 下载内容
+    if result.content:
+        if isinstance(result.content, VideoContent):
+            # 下载视频
+            if result.content.video_url:
+                result.content.video_path = await DOWNLOADER.download_video(
+                    result.content.video_url, ext_headers=ext_headers
+                )
+        elif isinstance(result.content, ImageContent):
+            # 下载图片
+            if result.content.pic_urls:
+                result.content.pic_paths = await DOWNLOADER.download_imgs_without_raise(
+                    result.content.pic_urls, ext_headers=ext_headers
+                )
+
+
+# 平台解析器映射
+PLATFORM_PARSERS = {
+    "douyin": DouyinParser,
+    "xiaohongshu": XiaoHongShuParser,
+    "kuaishou": KuaishouParser,
+    "weibo": WeiBoParser,
+}
+
 # 根据配置创建只包含启用平台的 matcher
 resolver = on_keyword_regex(*_get_enabled_patterns())
 
@@ -78,71 +113,36 @@ resolver = on_keyword_regex(*_get_enabled_patterns())
 @resolver.handle()
 @handle_exception()
 async def _(
-    matcher: Matcher,
-    searched: re.Match[str] = KeyPatternMatched(),
     keyword: str = Keyword(),
+    searched: re.Match[str] = KeyPatternMatched(),
 ):
     """统一的解析处理器"""
     url = searched.group(0)
-    result: ParseResult | None = None
-
-    # 根据匹配到的平台判断平台并调用对应的 parser
     platform = KEYWORD_TO_PLATFORM.get(keyword)
-    if platform == "douyin":
-        parser = DouyinParser()
-        result = await parser.parse_and_download(url)
+    if not platform:
+        logger.warning(f"未找到关键词 {keyword} 对应的平台")
+        return
 
-    elif platform == "xiaohongshu":
-        parser = XiaoHongShuParser()
-        parse_result = await parser.parse_url(url)
-        # 手动下载（临时方案）
-        if parse_result.cover_url:
-            parse_result.cover_path = await DOWNLOADER.download_img(parse_result.cover_url)
-        if parse_result.content:
-            if isinstance(parse_result.content, VideoContent) and parse_result.content.video_url:
-                parse_result.content.video_path = await DOWNLOADER.download_video(parse_result.content.video_url)
-            elif isinstance(parse_result.content, ImageContent) and parse_result.content.pic_urls:
-                parse_result.content.pic_paths = await DOWNLOADER.download_imgs_without_raise(
-                    parse_result.content.pic_urls
-                )
-        result = parse_result
+    # 获取对应平台的解析器
+    parser_class = PLATFORM_PARSERS.get(platform)
+    if not parser_class:
+        logger.warning(f"未找到平台 {platform} 的解析器")
+        return
 
-    elif platform == "kuaishou":
-        parser = KuaishouParser()
-        parse_result = await parser.parse_url(url)
-        # 手动下载（临时方案）
-        if parse_result.cover_url:
-            parse_result.cover_path = await DOWNLOADER.download_img(parse_result.cover_url)
-        if parse_result.content:
-            if isinstance(parse_result.content, VideoContent) and parse_result.content.video_url:
-                parse_result.content.video_path = await DOWNLOADER.download_video(parse_result.content.video_url)
-            elif isinstance(parse_result.content, ImageContent) and parse_result.content.pic_urls:
-                parse_result.content.pic_paths = await DOWNLOADER.download_imgs_without_raise(
-                    parse_result.content.pic_urls
-                )
-        result = parse_result
-
-    elif platform == "weibo":
-        parser = WeiBoParser()
-        parse_result = await parser.parse_share_url(url)
-        # 手动下载（临时方案）
-        if parse_result.content:
-            if isinstance(parse_result.content, VideoContent) and parse_result.content.video_url:
-                parse_result.content.video_path = await DOWNLOADER.download_video(
-                    parse_result.content.video_url, ext_headers=parser.ext_headers
-                )
-            elif isinstance(parse_result.content, ImageContent) and parse_result.content.pic_urls:
-                parse_result.content.pic_paths = await DOWNLOADER.download_imgs_without_raise(
-                    parse_result.content.pic_urls, ext_headers=parser.ext_headers
-                )
-        result = parse_result
+    # 创建解析器并解析 URL（只获取元数据，不下载）
+    parser = parser_class()
+    result = await parser.parse_url(url)
 
     if result:
-        # 发送初始消息
+        # 1. 先发送初始消息（快速反馈给用户）
         initial_msg = Renderer.render_initial_message(result)
-        await matcher.send(initial_msg)
+        await resolver.send(initial_msg)
 
-        # 渲染内容消息并发送
+        # 2. 下载资源
+        ext_headers = getattr(parser, "ext_headers", None)  # 微博等平台需要特殊请求头
+        await _download_resources(result, ext_headers)
+
+        # 3. 渲染内容消息并发送
         messages = Renderer.render_content_messages(result)
         for message in messages:
             await message.send()
