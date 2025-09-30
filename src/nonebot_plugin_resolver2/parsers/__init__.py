@@ -3,10 +3,12 @@ from .base import BaseParser as BaseParser
 from .bilibili import BilibiliParser as BilibiliParser
 from .douyin import DouyinParser as DouyinParser
 from .kuaishou import KuaishouParser as KuaishouParser
+from .tiktok import TikTokParser as TikTokParser
 from .twitter import TwitterParser as TwitterParser
 from .utils import get_redirect_url as get_redirect_url
 from .weibo import WeiBoParser as WeiBoParser
 from .xiaohongshu import XiaoHongShuParser as XiaoHongShuParser
+from .youtube import YouTubeParser as YouTubeParser
 
 # 注册所有支持的 Parser 类（添加新平台只需在这里添加一行）
 PARSER_CLASSES: list[type[BaseParser]] = [
@@ -14,9 +16,11 @@ PARSER_CLASSES: list[type[BaseParser]] = [
     BilibiliParser,
     DouyinParser,
     KuaishouParser,
+    TikTokParser,
     TwitterParser,
     WeiBoParser,
     XiaoHongShuParser,
+    YouTubeParser,
 ]
 
 # 自动构建平台映射（platform_name -> Parser 类）
