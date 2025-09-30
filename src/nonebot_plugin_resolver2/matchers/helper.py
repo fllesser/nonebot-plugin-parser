@@ -47,15 +47,8 @@ class UniHelper:
 
         else:
             segments = list(segments)
-            message = UniMessage()
-            for i, seg in enumerate(segments):
-                if isinstance(seg, str):
-                    message += Text(seg + ("\n" if i < len(segments) - 1 else ""))
-                else:
-                    message += seg
-                    if i < len(segments) - 1:
-                        message += Text("\n")
-            await message.send()
+            segments[:-1] = [Text(seg + "\n") if isinstance(seg, str) else seg for seg in segments[:-1]]
+            await UniMessage(segments).send()
 
     @staticmethod
     def img_seg(img_path: Path) -> Image:

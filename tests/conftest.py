@@ -1,9 +1,13 @@
 import os
+from pathlib import Path
 
 import pytest
 from pytest_asyncio import is_async_test
 
-os.environ["ENVIRONMENT"] = "test"
+if Path(".env.dev").exists:
+    os.environ["ENVIRONMENT"] = "dev"
+else:
+    os.environ["ENVIRONMENT"] = "test"
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]):
