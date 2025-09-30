@@ -3,6 +3,9 @@
 import re
 
 from nonebot import logger
+from nonebot.adapters import Event
+from nonebot_plugin_alconna import SupportAdapter
+from nonebot_plugin_alconna.uniseg import get_message_id, get_target, message_reaction
 
 from ..config import rconfig
 from ..exception import handle_exception
@@ -57,6 +60,7 @@ resolver = on_keyword_regex(*_get_enabled_patterns(PLATFORM_PARSERS))
 @resolver.handle()
 @handle_exception()
 async def _(
+    event: Event,
     keyword: str = Keyword(),
     searched: re.Match[str] = KeyPatternMatched(),
 ):
@@ -76,8 +80,14 @@ async def _(
     # 创建解析器
     parser = parser_class()
 
-    # 1. 先发送初始消息（快速反馈给用户）
-    await resolver.send(f"解析 | {parser.platform_display_name}")
+    # 1. 先添加消息响应（快速反馈给用户）
+    message_id = get_message_id(event)
+    target = get_target(event)
+    if target.adapter == SupportAdapter.onebot11:
+        emoji = "424"
+    else:
+        emoji = "👀"
+    await message_reaction(emoji, message_id=message_id)
 
     # 2. 解析 URL（包含下载资源）
     result = await parser.parse_url(url)
