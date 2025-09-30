@@ -1,12 +1,12 @@
+import asyncio
+from pathlib import Path
 import re
-from typing import Any
-
-import httpx
 
 from ..config import NICKNAME
-from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
-from ..exception import ParseException, handle_exception
+from ..exception import handle_exception
+from ..parsers import TwitterParser
+from ..parsers.data import ImageContent, VideoContent
 from .helper import obhelper
 from .preprocess import KeyPatternMatched, on_keyword_regex
 
@@ -20,61 +20,24 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
 
     await twitter.send(f"{NICKNAME}解析 | 小蓝鸟")
 
-    video_url, pic_urls = await parse_x_url(x_url)
+    content = await TwitterParser.parse_x_url(x_url)
 
-    if video_url:
-        video_path = await DOWNLOADER.download_video(video_url)
+    if isinstance(content, VideoContent):
+        video_path = await DOWNLOADER.download_video(content.video_url)
         await twitter.send(obhelper.video_seg(video_path))
 
-    if pic_urls:
-        img_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
-        assert len(img_paths) > 0
-        await obhelper.send_segments([obhelper.img_seg(img_path) for img_path in img_paths])
+    elif isinstance(content, ImageContent):
+        img_paths = await DOWNLOADER.download_imgs_without_raise(content.pic_urls)
+        if len(img_paths) == 0:
+            await twitter.finish("图片下载失败")
+        if (count := len(img_paths)) < len(content.pic_urls):
+            await twitter.send(f"部分图片下载失败，成功下载 {count} 张图片")
+        segs = [obhelper.img_seg(img_path) for img_path in img_paths]
+        # 存在 gif
+        if len(content.dynamic_urls) > 0:
+            video_paths = await asyncio.gather(
+                *[DOWNLOADER.download_video(url) for url in content.dynamic_urls], return_exceptions=True
+            )
+            segs.extend(obhelper.video_seg(p) for p in video_paths if isinstance(p, Path))
 
-
-async def parse_x_url(x_url: str) -> tuple[str, list[str]]:
-    """
-    解析 X (Twitter) 链接获取视频和图片URL
-    @author: biupiaa
-    Returns:
-        tuple[str, list[str]]: (视频 URL, 图片 URL 列表)
-    """
-
-    async def x_req(url: str) -> dict[str, Any]:
-        headers = {
-            "Accept": "application/json, text/plain, */*",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": "https://xdown.app",
-            "Referer": "https://xdown.app/",
-            **COMMON_HEADER,
-        }
-        data = {"q": url, "lang": "zh-cn"}
-        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
-            url = "https://xdown.app/api/ajaxSearch"
-            response = await client.post(url, data=data)
-            return response.json()
-
-    resp = await x_req(x_url)
-    if resp.get("status") != "ok":
-        raise ParseException("解析失败")
-
-    html_content = resp.get("data", "")
-    # 提取视频链接 (获取最高清晰度的视频)
-    pattern = re.compile(
-        r'<a\s+.*?href="(https?://dl\.snapcdn\.app/get\?token=.*?)"\s+rel="nofollow"\s+class="tw-button-dl button dl-success".*?>.*?下载 MP4 \((\d+p)\)</a>',  # noqa: E501
-        re.DOTALL,  # 允许.匹配换行符
-    )
-    video_matches = pattern.findall(html_content)
-    # 转换为带数值的元组以便排序
-    if video_matches:
-        best_video_url = max(
-            ((str(url), int(resolution.replace("p", ""))) for url, resolution in video_matches), key=lambda x: x[1]
-        )[0]
-        # 最高质量视频
-        return best_video_url, []
-
-    # 提取图片链接
-    img_urls = re.findall(r'<img src="(https://pbs\.twimg\.com/media/[^"]+)"', html_content)
-    if img_urls:
-        return "", img_urls
-    raise ParseException("未找到可下载的媒体内容")
+        await obhelper.send_segments(segs)

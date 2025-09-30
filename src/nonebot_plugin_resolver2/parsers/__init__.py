@@ -2,6 +2,7 @@ from .acfun import AcfunParser as AcfunParser
 from .bilibili import BilibiliParser as BilibiliParser
 from .douyin import DouyinParser as DouyinParser
 from .kuaishou import KuaishouParser as KuaishouParser
+from .twitter import TwitterParser as TwitterParser
 from .utils import get_redirect_url as get_redirect_url
 from .weibo import WeiBoParser as WeiBoParser
 from .xiaohongshu import XiaoHongShuParser as XiaoHongShuParser
