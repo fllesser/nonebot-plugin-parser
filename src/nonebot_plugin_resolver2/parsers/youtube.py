@@ -72,7 +72,7 @@ class YouTubeParser(BaseParser):
                 platform=self.platform_display_name,
                 author=author,
                 cover_path=cover_path,
-                content=VideoContent(video_path=video_path),
+                contents=[VideoContent(video_path)],
                 extra_info=extra_info,
             )
         except Exception as e:
@@ -120,7 +120,7 @@ class YouTubeParser(BaseParser):
                 platform=self.platform_display_name,
                 author=author,
                 cover_path=cover_path,
-                content=AudioContent(audio_path=audio_path),
+                contents=[AudioContent(audio_path)],
                 extra_info=extra_info,
             )
         except Exception as e:

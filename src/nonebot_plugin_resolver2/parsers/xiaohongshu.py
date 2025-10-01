@@ -8,6 +8,7 @@ import msgspec
 
 from ..config import rconfig
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
+from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
@@ -85,26 +86,24 @@ class XiaoHongShuParser(BaseParser):
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
         note_detail = msgspec.convert(note_data, type=NoteDetail)
 
-        # 导入下载器
-        from ..download import DOWNLOADER
-
+        contents = []
         cover_path = None
         if video_url := note_detail.video_url:
             # 下载视频和封面
             video_path = await DOWNLOADER.download_video(video_url)
-            content = VideoContent(video_path=video_path)
+            contents.append(VideoContent(video_path))
             if note_detail.img_urls:
                 cover_path = await DOWNLOADER.download_img(note_detail.img_urls[0])
         else:
             # 下载图片
             pic_paths = await DOWNLOADER.download_imgs_without_raise(note_detail.img_urls)
-            content = ImageContent(pic_paths=pic_paths)
+            contents.extend(ImageContent(path) for path in pic_paths)
 
         return ParseResult(
             title=note_detail.title_desc,
             platform=self.platform_display_name,
             cover_path=cover_path,
-            content=content,
+            contents=contents,
             author=note_detail.user.nickname,
         )
 

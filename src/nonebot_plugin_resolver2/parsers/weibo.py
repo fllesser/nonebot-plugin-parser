@@ -106,11 +106,11 @@ class WeiBoParser(BaseParser):
             platform=self.platform_display_name,
             cover_path=cover_path,
             author=data["author"],
-            content=VideoContent(video_path=video_path),
+            contents=[VideoContent(video_path)],
         )
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
-        """解析微博 id（无 Cookie + 伪装 XHR + 不跟随重定向）"""
+        """解析微博 id (无 Cookie + 伪装 XHR + 不跟随重定向)"""
         headers = {
             "accept": "application/json, text/plain, */*",
             "referer": f"https://m.weibo.cn/detail/{weibo_id}",
@@ -149,20 +149,25 @@ class WeiBoParser(BaseParser):
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
 
         # 下载内容
-        content = None
+        contents = []
+
+        # 添加文本内容
+        if text := weibo_data.text_content:
+            contents.append(text)
+
         if video_url := weibo_data.video_url:
             video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
-            content = VideoContent(video_path=video_path)
-        elif pic_urls := weibo_data.pic_urls:
+            contents.append(VideoContent(video_path))
+
+        if pic_urls := weibo_data.pic_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
-            content = ImageContent(pic_paths=pic_paths)
-        elif text := weibo_data.text_content:
-            content = text
+            contents.extend(ImageContent(path) for path in pic_paths)
+
         return ParseResult(
             title=f"{weibo_data.display_name} 的微博",
             platform=self.platform_display_name,
             author=weibo_data.display_name,
-            content=content,
+            contents=contents,
         )
 
     def _base62_encode(self, number: int) -> str:

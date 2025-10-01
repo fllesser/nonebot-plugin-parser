@@ -4,9 +4,10 @@ from typing import Any, ClassVar
 import httpx
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
+from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ImageContent, ParseResult, VideoContent
+from .data import Contents, DynamicContent, ImageContent, ParseResult, VideoContent
 
 
 class TwitterParser(BaseParser):
@@ -37,7 +38,7 @@ class TwitterParser(BaseParser):
             return response.json()
 
     @classmethod
-    async def parse_x_url(cls, x_url: str):
+    async def parse_x_url(cls, x_url: str) -> Contents:
         resp = await cls.req_xdown_api(x_url)
         if resp.get("status") != "ok":
             raise ParseException("解析失败")
@@ -47,16 +48,12 @@ class TwitterParser(BaseParser):
         if html_content is None:
             raise ParseException("解析失败, 数据为空")
 
-        # logger.debug(f"html_content: {html_content}")
-
-        # 导入下载器
-        from ..download import DOWNLOADER
-
         first_video_url = await cls.get_first_video_url(html_content)
         if first_video_url is not None:
             video_path = await DOWNLOADER.download_video(first_video_url)
-            return VideoContent(video_path=video_path)
+            return [VideoContent(video_path)]
 
+        contents = []
         pic_urls = await cls.get_all_pic_urls(html_content)
         dynamic_urls = await cls.get_all_gif_urls(html_content)
         if len(pic_urls) != 0:
@@ -71,7 +68,11 @@ class TwitterParser(BaseParser):
                     *[DOWNLOADER.download_video(url) for url in dynamic_urls], return_exceptions=True
                 )
                 dynamic_paths = [p for p in results if isinstance(p, Path)]
-            return ImageContent(pic_paths=pic_paths, dynamic_paths=dynamic_paths)
+
+            contents.extend(ImageContent(path) for path in pic_paths)
+            contents.extend(DynamicContent(path) for path in dynamic_paths)
+
+        return contents
 
     @classmethod
     def snapcdn_url_pattern(cls, flag: str) -> re.Pattern[str]:
@@ -119,13 +120,13 @@ class TwitterParser(BaseParser):
         """
         # 从匹配对象中获取原始URL
         url = matched.group(0)
-        content = await self.parse_x_url(url)
+        contents = await self.parse_x_url(url)
 
-        if content is None:
+        if contents is None:
             raise ParseException("解析失败，未找到内容")
 
         return ParseResult(
             title="",  # 推特解析不包含标题
             platform=self.platform_display_name,
-            content=content,
+            contents=contents,
         )

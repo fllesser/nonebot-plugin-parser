@@ -11,7 +11,7 @@ from ..constants import COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ANDROID_HEADER, IOS_HEADER, ImageContent, ParseResult, VideoContent
+from .data import ANDROID_HEADER, IOS_HEADER, DynamicContent, ImageContent, ParseResult
 from .utils import get_redirect_url
 
 
@@ -88,21 +88,21 @@ class DouyinParser(BaseParser):
             cover_path = await DOWNLOADER.download_img(video_data.cover_url)
 
         # 下载内容
-        content = None
+        contents = []
         if image_urls := video_data.images_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(image_urls)
-            content = ImageContent(pic_paths=pic_paths)
+            contents.extend(ImageContent(path) for path in pic_paths)
         elif video_url := video_data.video_url:
             video_url = await get_redirect_url(video_url)
             video_path = await DOWNLOADER.download_video(video_url)
-            content = VideoContent(video_path=video_path)
+            contents.append(DynamicContent(video_path))
 
         return ParseResult(
             title=video_data.desc,
             platform=self.platform_display_name,
             cover_path=cover_path,
             author=video_data.author.nickname,
-            content=content,
+            contents=contents,
         )
 
     def _extract_data(self, text: str) -> "VideoData":
@@ -152,11 +152,14 @@ class DouyinParser(BaseParser):
             )
             dynamic_paths = [p for p in video_paths if isinstance(p, Path)]
 
+        contents = []
+        contents.extend(ImageContent(path) for path in pic_paths)
+        contents.extend(DynamicContent(path) for path in dynamic_paths)
         return ParseResult(
             title=slides_data.share_info.share_desc_info,
             platform=self.platform_display_name,
             author=slides_data.author.nickname,
-            content=ImageContent(pic_paths=pic_paths, dynamic_paths=dynamic_paths),
+            contents=contents,
         )
 
     async def parse(self, matched: re.Match[str]) -> ParseResult:

@@ -135,15 +135,15 @@ class Photo(Struct):
             cover_path = await DOWNLOADER.download_img(self.cover_url, ext_headers=ext_headers)
 
         # 下载内容
-        content = None
+        contents = []
         if video_url := self.video_url:
             video_path = await DOWNLOADER.download_video(video_url, ext_headers=ext_headers)
-            content = VideoContent(video_path=video_path)
+            contents.append(VideoContent(video_path))
         elif img_urls := self.img_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=ext_headers)
-            content = ImageContent(pic_paths=pic_paths)
+            contents.extend(ImageContent(path) for path in pic_paths)
 
-        return ParseResult(title=self.caption, platform=platform, cover_path=cover_path, content=content)
+        return ParseResult(title=self.caption, platform=platform, cover_path=cover_path, contents=contents)
 
 
 class TusjohData(Struct):

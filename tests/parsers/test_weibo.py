@@ -21,8 +21,8 @@ async def test_graphics():
         logger.info(f"{url} | 开始解析微博")
         parse_result = await weibo_parser.parse_share_url(url)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
-        assert parse_result.pic_paths
-        assert len(parse_result.pic_paths) > 0
+        assert parse_result.img_paths
+        assert len(parse_result.img_paths) > 0
         logger.success(f"{url} | 微博图文解析成功")
 
     await asyncio.gather(*[parse_graphics(url) for url in urls])
@@ -47,8 +47,9 @@ async def test_video():
         logger.info(f"{url} | 开始解析微博")
         parse_result = await weibo_parser.parse_share_url(url)
         logger.debug(f"{url} | 解析结果: {parse_result}")
-        assert parse_result.video_path
-        assert parse_result.video_path.exists()
+        video_paths = parse_result.video_paths
+        assert video_paths
+        assert video_paths[0].exists()
         logger.success(f"{url} | 微博视频下载成功")
 
     await asyncio.gather(*[parse_video(url) for url in urls])

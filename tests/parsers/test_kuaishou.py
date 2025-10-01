@@ -38,12 +38,13 @@ async def test_parse():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.title, "视频标题为空"
 
-        if video_path := parse_result.video_path:
-            assert video_path.exists()
-            logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
+        if video_paths := parse_result.video_paths:
+            for video_path in video_paths:
+                assert video_path.exists()
+                logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
 
         # 检查图片
-        if pic_paths := parse_result.pic_paths:
+        if pic_paths := parse_result.img_paths:
             logger.debug(f"{url} | 图片下载完成: {pic_paths}")
             assert len(pic_paths) > 0, "图片下载数量为0"
 

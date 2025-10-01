@@ -13,7 +13,7 @@ from ..download import DOWNLOADER
 from ..exception import DownloadSizeLimitException, ParseException
 from ..utils import merge_av
 from .base import BaseParser
-from .data import ImageContent, MultipleContent, ParseResult, VideoContent
+from .data import ImageContent, ParseResult, TextImageContent, VideoContent
 from .utils import get_redirect_url
 
 
@@ -162,8 +162,8 @@ class BilibiliParser(BaseParser):
         if cover_url:
             cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
 
+        contents = []
         # 下载视频
-        content = None
         if not video_path.exists():
             # 下载视频和音频
             try:
@@ -177,15 +177,17 @@ class BilibiliParser(BaseParser):
                     video_path = await DOWNLOADER.streamd(
                         video_url, file_name=f"{file_name}.mp4", ext_headers=self.headers
                     )
-                content = VideoContent(video_path)
-            except DownloadSizeLimitException:
-                pass
+            except DownloadSizeLimitException as e:
+                contents.append(e.message)
+
+        if video_path.exists():
+            contents.append(VideoContent(video_path))
 
         return ParseResult(
             title=title,
             platform=self.platform_display_name,
             cover_path=cover_path,
-            content=content,
+            contents=contents,
             extra_info=extra_info,
         )
 
@@ -194,22 +196,24 @@ class BilibiliParser(BaseParser):
         # 判断链接类型并解析
         # 1. 动态/图文 (opus)
         if "t.bilibili.com" in url or "/opus" in url:
-            match_result = re.search(r"/(\d+)", url)
-            if not match_result:
+            matched = re.search(r"/(\d+)", url)
+            if not matched:
                 raise ParseException("无效的动态链接")
-            opus_id = int(match_result.group(1))
+            opus_id = int(matched.group(1))
             img_urls, text = await self.parse_opus(opus_id)
 
             # 下载图片
-            content = None
+            contents = []
+            contents.append(text)
             if img_urls:
-                pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls)
-                content = ImageContent(pic_paths=pic_paths)
+                pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
+                contents.extend(ImageContent(path) for path in pic_paths)
+                logger.debug(contents)
 
             return ParseResult(
-                title=text,
+                title=f"动态 {opus_id}",
                 platform=self.platform_display_name,
-                content=content,
+                contents=contents,
             )
 
         # 2. 直播
@@ -221,17 +225,22 @@ class BilibiliParser(BaseParser):
             title, cover, keyframe = await self.parse_live(room_id)
 
             # 下载封面
-            cover_path, content = None, None
+            cover_path = None
             if cover:
-                cover_path = await DOWNLOADER.download_img(cover)
+                cover_path = await DOWNLOADER.download_img(cover, ext_headers=self.headers)
+
+            contents = []
+
+            # 下载关键帧
             if keyframe:
-                content = ImageContent(pic_paths=[await DOWNLOADER.download_img(keyframe)])
+                keyframe_path = await DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
+                contents.append(ImageContent(keyframe_path))
 
             return ParseResult(
                 title=title,
                 platform=self.platform_display_name,
                 cover_path=cover_path,
-                content=content,
+                contents=contents,
             )
 
         # 3. 专栏
@@ -244,15 +253,15 @@ class BilibiliParser(BaseParser):
             combined_text = "\n".join(texts)
 
             # 下载图片
-            content = None
+            contents = []
             if img_urls:
-                pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls)
-                content = ImageContent(pic_paths=pic_paths)
+                pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
+                contents.append(ImageContent(path) for path in pic_paths)
 
             return ParseResult(
                 title=combined_text[:100] + "..." if len(combined_text) > 100 else combined_text,
                 platform=self.platform_display_name,
-                content=content,
+                contents=contents,
             )
 
         # 4. 收藏夹
@@ -264,14 +273,12 @@ class BilibiliParser(BaseParser):
             titles, cover_urls = await self.parse_favlist(fav_id)
 
             # 并发下载封面
-            cover_paths = await DOWNLOADER.download_imgs_without_raise(cover_urls)
+            cover_paths = await DOWNLOADER.download_imgs_without_raise(cover_urls, ext_headers=self.headers)
 
             return ParseResult(
                 title=f"收藏夹: {fav_id}",
                 platform=self.platform_display_name,
-                content=MultipleContent(
-                    text_image_pairs=[(title, cover_path) for title, cover_path in zip(titles, cover_paths)]
-                ),
+                contents=[TextImageContent(title, cover_path) for title, cover_path in zip(titles, cover_paths)],
             )
 
         raise ParseException("不支持的 Bilibili 链接")

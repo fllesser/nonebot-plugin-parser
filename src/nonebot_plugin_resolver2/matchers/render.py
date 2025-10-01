@@ -1,12 +1,10 @@
 """渲染器模块 - 负责将解析结果渲染为消息"""
 
-from typing import Any
-
 from nonebot.internal.matcher import current_bot
-from nonebot_plugin_alconna.uniseg import File, Text, UniMessage, Video, Voice
+from nonebot_plugin_alconna.uniseg import Text, UniMessage
 
 from ..config import NEED_FORWARD
-from ..parsers.data import AudioContent, ImageContent, MultipleContent, ParseResult, VideoContent
+from ..parsers.data import ParseResult
 from .helper import UniHelper
 
 
@@ -24,63 +22,7 @@ class Renderer:
             list[UniMessage]: 消息列表
         """
         # 构建消息段列表
-        segs: list[Any] = []
-
-        # 添加标题
-        if result.title:
-            segs.append(f"标题: {result.title}")
-
-        # 添加额外信息（如果有）
-        if result.extra_info:
-            segs.append(result.extra_info)
-
-        # 添加封面（如果有）
-        if result.cover_path:
-            segs.append(UniHelper.img_seg(result.cover_path))
-
-        # 根据内容类型处理
-        if result.content is None:
-            # logger.warning(f"解析结果没有内容: {result}")
-            pass
-
-        elif isinstance(result.content, str):
-            segs.append(result.content)
-
-        elif isinstance(result.content, VideoContent):
-            # 视频内容
-            if result.content.video_path:
-                segs.append(UniHelper.video_seg(result.content.video_path))
-
-        elif isinstance(result.content, ImageContent):
-            # 图片内容
-            for pic_path in result.content.pic_paths:
-                segs.append(UniHelper.img_seg(pic_path))
-            for dynamic_path in result.content.dynamic_paths:
-                segs.append(UniHelper.video_seg(dynamic_path))
-
-        elif isinstance(result.content, AudioContent):
-            # 音频内容
-            if result.content.audio_path:
-                segs.append(UniHelper.record_seg(result.content.audio_path))
-
-        elif isinstance(result.content, MultipleContent):
-            # 多组 图文 内容
-            for text, pic_path in result.content.text_image_pairs:
-                segs.append(text + (UniHelper.img_seg(pic_path) if pic_path else ""))
-
-        if not segs:
-            return []
-
-        # 分离可以合并转发的消息段(文本和图片)和必须单独发送的消息段(视频、语音、文件)
-        separate_segs = []  # 必须单独发送的消息段(视频、语音、文件)
-        forwardable_segs = []  # 可以合并转发的消息段(文本和图片)
-
-        for seg in segs:
-            if isinstance(seg, Video) or isinstance(seg, Voice) or isinstance(seg, File):
-                separate_segs.append(seg)
-            else:
-                forwardable_segs.append(seg)
-
+        separate_segs, forwardable_segs = result.convert_segs()
         messages: list[UniMessage] = []
 
         # 处理可以合并转发的消息段
@@ -96,7 +38,11 @@ class Renderer:
                 forwardable_segs[:-1] = [
                     Text(seg + "\n") if isinstance(seg, str) else seg for seg in forwardable_segs[:-1]
                 ]
-                messages.append(UniMessage(forwardable_segs))
+                # 单条消息
+                single_msg = UniMessage()
+                for seg in forwardable_segs:
+                    single_msg += seg
+                messages.append(single_msg)
 
         # 处理必须单独发送的消息段
         if separate_segs:
