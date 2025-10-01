@@ -35,7 +35,7 @@ async def test_video():
 
     try:
         logger.info("开始解析B站视频 BV1584y167sD p40")
-        parse_result = await parser.parse_video_info(bvid="BV1584y167sD", page_num=40)
+        parse_result = await parser.parse_video(bvid="BV1584y167sD", page_num=40)
         logger.debug(parse_result)
         logger.success("B站视频 BV1584y167sD p40 解析成功")
     except Exception:
