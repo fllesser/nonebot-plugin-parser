@@ -2,7 +2,6 @@
 
 from typing import Any
 
-from nonebot import logger
 from nonebot.internal.matcher import current_bot
 from nonebot_plugin_alconna.uniseg import File, Text, UniMessage, Video, Voice
 
@@ -41,7 +40,8 @@ class Renderer:
 
         # 根据内容类型处理
         if result.content is None:
-            logger.warning(f"解析结果没有内容: {result}")
+            # logger.warning(f"解析结果没有内容: {result}")
+            pass
 
         elif isinstance(result.content, VideoContent):
             # 视频内容
