@@ -8,11 +8,10 @@ from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.video import Video
 from nonebot import logger
 
-from nonebot_plugin_resolver2.utils import merge_av
-
 from ..config import plugin_cache_dir, plugin_config_dir, rconfig
 from ..cookie import ck2dict
 from ..exception import ParseException
+from ..utils import merge_av
 from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url

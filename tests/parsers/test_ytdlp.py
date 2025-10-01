@@ -2,12 +2,12 @@ import pytest
 
 
 async def test_get_video_info():
-    from nonebot_plugin_resolver2.download.ytdlp import get_video_info
+    from nonebot_plugin_resolver2.download import YTDLP_DOWNLOADER
 
     url = "https://youtu.be/NiHF-cwto_A?si=Eho8a8AO9c1347Uj"
 
     try:
-        video_info = await get_video_info(url)
+        video_info = await YTDLP_DOWNLOADER.extract_video_info(url)
     except Exception:
         pytest.skip("获取 youtube 视频信息失败")
 
@@ -16,12 +16,12 @@ async def test_get_video_info():
 
 
 async def test_download_video():
-    from nonebot_plugin_resolver2.download.ytdlp import ytdlp_download_video
+    from nonebot_plugin_resolver2.download import YTDLP_DOWNLOADER
 
     url = "https://youtu.be/NiHF-cwto_A?si=Eho8a8AO9c1347Uj"
 
     try:
-        video_path = await ytdlp_download_video(url)
+        video_path = await YTDLP_DOWNLOADER.download_video(url)
     except Exception:
         pytest.skip("下载 youtube 视频失败")
 
@@ -30,12 +30,12 @@ async def test_download_video():
 
 
 async def test_download_audio():
-    from nonebot_plugin_resolver2.download.ytdlp import ytdlp_download_audio
+    from nonebot_plugin_resolver2.download import YTDLP_DOWNLOADER
 
     url = "https://youtu.be/NiHF-cwto_A?si=Eho8a8AO9c1347Uj"
 
     try:
-        audio_path = await ytdlp_download_audio(url)
+        audio_path = await YTDLP_DOWNLOADER.download_audio(url)
     except Exception:
         pytest.skip("下载 youtube 音频失败")
 

@@ -28,11 +28,10 @@ async def test_favlist():
 
 @pytest.mark.asyncio
 async def test_video():
-    from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av, merge_av_h264
-
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_resolver2.utils import encode_video_to_h264, merge_av, merge_av_h264
 
     parser = BilibiliParser()
 
@@ -89,11 +88,10 @@ async def test_video():
 async def test_encode_h264_video():
     import asyncio
 
-    from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av
-
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
     from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_resolver2.utils import encode_video_to_h264, merge_av
 
     try:
         bvid = "BV1VLk9YDEzB"
