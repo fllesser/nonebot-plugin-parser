@@ -17,6 +17,9 @@ class BaseParser(ABC):
     - parse: 解析 URL 的方法（接收正则表达式对象）
     """
 
+    # 类变量：存储所有已注册的 Parser 类
+    _registry: ClassVar[list[type["BaseParser"]]] = []
+
     platform_name: ClassVar[str]
     """ 平台名称（用于配置和内部标识） """
 
@@ -25,6 +28,17 @@ class BaseParser(ABC):
 
     patterns: ClassVar[list[tuple[str, str]]]
     """ URL 正则表达式模式列表 [(keyword, pattern), ...] """
+
+    def __init_subclass__(cls, **kwargs):
+        """自动注册子类到 _registry"""
+        super().__init_subclass__(**kwargs)
+        if ABC not in cls.__bases__:  # 跳过抽象类
+            BaseParser._registry.append(cls)
+
+    @classmethod
+    def get_all_parsers(cls) -> list[type["BaseParser"]]:
+        """获取所有已注册的 Parser 类"""
+        return cls._registry
 
     @abstractmethod
     async def parse(self, matched: re.Match[str]) -> ParseResult:
