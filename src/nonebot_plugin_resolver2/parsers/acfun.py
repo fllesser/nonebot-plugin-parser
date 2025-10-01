@@ -10,8 +10,8 @@ from nonebot import logger
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
 from ..download import DOWNLOADER
-from ..download.utils import safe_unlink
 from ..exception import DownloadException, ParseException
+from ..utils import safe_unlink
 from .base import BaseParser
 from .data import COMMON_HEADER, ParseResult, VideoContent
 

@@ -7,8 +7,8 @@ require("nonebot_plugin_alconna")
 require("nonebot_plugin_uninfo")
 
 from .config import Config, plugin_cache_dir, scheduler
-from .download.utils import safe_unlink
 from .matchers import resolver  # noqa: F401
+from .utils import safe_unlink
 
 __plugin_meta__ = PluginMetadata(
     name="链接分享自动解析",

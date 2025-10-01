@@ -3,7 +3,7 @@ from typing import ClassVar
 
 from nonebot import logger
 
-from ..download.ytdlp import get_video_info
+from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
 from .data import ParseResult, VideoContent
@@ -49,7 +49,7 @@ class TikTokParser(BaseParser):
                         raise ParseException(f"TikTok 短链重定向失败: {e}")
 
             # 获取视频信息
-            info_dict = await get_video_info(final_url)
+            info_dict = await YTDLP_DOWNLOADER.extract_video_info(final_url)
             title = info_dict.get("title", "未知")
             author = info_dict.get("uploader", None)
             thumbnail = info_dict.get("thumbnail", None)
@@ -67,14 +67,11 @@ class TikTokParser(BaseParser):
                 extra_info = None
 
             # 下载封面和视频
-            from ..download import DOWNLOADER
-            from ..download.ytdlp import ytdlp_download_video
-
             cover_path = None
             if thumbnail:
                 cover_path = await DOWNLOADER.download_img(thumbnail)
 
-            video_path = await ytdlp_download_video(final_url)
+            video_path = await YTDLP_DOWNLOADER.download_video(final_url)
 
             return ParseResult(
                 title=title,
