@@ -1,6 +1,7 @@
 """统一的解析器 matcher"""
 
 import re
+from typing import Literal
 
 from nonebot import logger
 from nonebot.adapters import Event
@@ -57,6 +58,22 @@ KEYWORD_TO_PLATFORM = _build_keyword_to_platform_map(PLATFORM_PARSERS)
 resolver = on_keyword_regex(*_get_enabled_patterns(PLATFORM_PARSERS))
 
 
+async def _message_reaction(event: Event, status: Literal["fail", "resolving", "done"]) -> None:
+    emoji_map = {
+        "fail": ["10060", "❌"],
+        "resolving": ["424", "👀"],
+        "done": ["144", "🎉"],
+    }
+    message_id = get_message_id(event)
+    target = get_target(event)
+    if target.adapter == SupportAdapter.onebot11:
+        emoji = emoji_map[status][0]
+    else:
+        emoji = emoji_map[status][1]
+
+    await message_reaction(emoji, message_id=message_id)
+
+
 @resolver.handle()
 @handle_exception()
 async def _(
@@ -77,19 +94,11 @@ async def _(
         logger.warning(f"未找到平台 {platform} 的解析器")
         return
 
-    # 创建解析器
-    parser = parser_class()
-
     # 1. 先添加消息响应（快速反馈给用户）
-    message_id = get_message_id(event)
-    target = get_target(event)
-    if target.adapter == SupportAdapter.onebot11:
-        emoji = "424"
-    else:
-        emoji = "👀"
-    await message_reaction(emoji, message_id=message_id)
+    await _message_reaction(event, "resolving")
 
     # 2. 解析 URL（包含下载资源）
+    parser = parser_class()
     result = await parser.parse_url(url)
 
     if result:
@@ -97,3 +106,9 @@ async def _(
         messages = Renderer.render_messages(result)
         for message in messages:
             await message.send()
+
+        # 4. 添加成功的消息响应
+        await _message_reaction(event, "done")
+    else:
+        # 4. 添加失败的消息响应
+        await _message_reaction(event, "fail")
