@@ -9,6 +9,7 @@ import pytest
 async def test_parse():
     """测试快手视频解析"""
     from nonebot_plugin_resolver2.download.utils import fmt_size
+
     from nonebot_plugin_resolver2.parsers import KuaishouParser
 
     parser = KuaishouParser()
