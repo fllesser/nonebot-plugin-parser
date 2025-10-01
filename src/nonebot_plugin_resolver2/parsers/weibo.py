@@ -2,7 +2,6 @@ import math
 import re
 import time
 from typing import ClassVar
-from typing_extensions import deprecated
 
 import httpx
 import msgspec
@@ -106,11 +105,11 @@ class WeiBoParser(BaseParser):
             platform=self.platform_display_name,
             cover_path=cover_path,
             author=data["author"],
-            content=VideoContent(video_path=video_path),
+            contents=[VideoContent(video_path)],
         )
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
-        """解析微博 id（无 Cookie + 伪装 XHR + 不跟随重定向）"""
+        """解析微博 id (无 Cookie + 伪装 XHR + 不跟随重定向)"""
         headers = {
             "accept": "application/json, text/plain, */*",
             "referer": f"https://m.weibo.cn/detail/{weibo_id}",
@@ -149,20 +148,25 @@ class WeiBoParser(BaseParser):
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
 
         # 下载内容
-        content = None
+        contents = []
+
+        # 添加文本内容
+        if text := weibo_data.text_content:
+            contents.append(text)
+
         if video_url := weibo_data.video_url:
             video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
-            content = VideoContent(video_path=video_path)
-        elif pic_urls := weibo_data.pic_urls:
+            contents.append(VideoContent(video_path))
+
+        if pic_urls := weibo_data.pic_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
-            content = ImageContent(pic_paths=pic_paths)
-        elif text := weibo_data.text_content:
-            content = text
+            contents.extend(ImageContent(path) for path in pic_paths)
+
         return ParseResult(
             title=f"{weibo_data.display_name} 的微博",
             platform=self.platform_display_name,
             author=weibo_data.display_name,
-            content=content,
+            contents=contents,
         )
 
     def _base62_encode(self, number: int) -> str:
@@ -196,59 +200,6 @@ class WeiBoParser(BaseParser):
 
         result.reverse()  # 反转结果数组
         return "".join(result)  # 将结果数组连接成字符串
-
-    @deprecated("弃用")
-    async def _parse_mapp_url(self, mapp_url: str) -> ParseResult:
-        """解析 mapp.api.weibo.cn 链接
-
-        mapp 链接可能会重定向到 m.weibo.cn，也可能返回 HTML 页面
-        """
-        # 使用微信内置浏览器 UA 来提高成功率
-        ua = (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 NetType/WIFI "
-            "MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x63090a13) "
-            "UnifiedPCWindowsWechat(0xf254032b) XWEB/13655 Flue"
-        )
-        headers = {
-            "User-Agent": ua,
-            "Accept": (
-                "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                "image/avif,image/webp,image/apng,*/*;q=0.8,"
-                "application/signed-exchange;v=b3;q=0.7"
-            ),
-            "Authority": "mapp.api.weibo.cn",
-        }
-
-        # 首先尝试获取重定向 URL
-        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT, follow_redirects=False) as client:
-            try:
-                response = await client.get(mapp_url)
-                # 检查是否有重定向
-                if response.status_code in (301, 302, 303, 307, 308):
-                    redirect_url = response.headers.get("location", "")
-                    if redirect_url:
-                        # 尝试从重定向 URL 中提取微博 ID
-                        if matched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", redirect_url):
-                            weibo_id = matched.group(1)
-                            return await self.parse_weibo_id(weibo_id)
-            except Exception:
-                pass  # 如果获取重定向失败,继续尝试直接请求
-
-        # 如果没有重定向或重定向失败,直接请求 URL
-        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
-            response = await client.get(mapp_url)
-            response.raise_for_status()
-
-            # 尝试从响应 URL 中提取微博 ID(可能已经重定向)
-            final_url = str(response.url)
-            if matched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", final_url):
-                weibo_id = matched.group(1)
-                return await self.parse_weibo_id(weibo_id)
-
-            # 如果还是无法获取 ID,尝试从 HTML 中提取
-            # 不过目前遇到的网址都能正常转跳至 m.weibo.cn，就不实现了
-            raise ParseException("无法从 mapp 链接获取微博 ID")
 
 
 from msgspec import Struct

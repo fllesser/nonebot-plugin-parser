@@ -156,11 +156,10 @@ class AcfunParser(BaseParser):
 
         # 下载视频
         video_path = await self.download_video(m3u8_url, acid)
-
         return ParseResult(
             title=title,
             platform=self.platform_display_name,
             author=author,
-            content=VideoContent(video_path=video_path),
+            contents=[VideoContent(path=video_path)],
             extra_info=extra_info,
         )

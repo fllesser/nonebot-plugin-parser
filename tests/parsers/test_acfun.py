@@ -26,10 +26,10 @@ async def test_parse():
 
         assert parse_result.title, "视频标题为空"
         assert parse_result.author, "作者信息为空"
-        assert parse_result.video_path, "视频路径为空"
 
-        assert parse_result.video_path.exists()
-        logger.info(f"{url} | 视频下载成功, 视频{fmt_size(parse_result.video_path)}")
+        video_path = parse_result.video_paths[0]
+        assert video_path.exists()
+        logger.info(f"{url} | 视频下载成功, 视频{fmt_size(video_path)}")
         logger.success(f"{url} | Acfun 视频解析成功")
 
     await parse_acfun_url(url)

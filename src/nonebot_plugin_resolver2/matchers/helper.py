@@ -11,7 +11,7 @@ from ..config import NEED_FORWARD, NICKNAME, USE_BASE64
 
 class UniHelper:
     @staticmethod
-    def construct_forward_message(user_id: str, segments: Sequence[Segment | str]) -> Reference:
+    def construct_forward_message(user_id: str, segments: Sequence[str | Segment | UniMessage]) -> Reference:
         """构造转发消息
 
         Args:
@@ -25,8 +25,10 @@ class UniHelper:
         for seg in segments:
             if isinstance(seg, str):
                 content = UniMessage([Text(seg)])
-            else:
+            elif isinstance(seg, Segment):
                 content = UniMessage([seg])
+            else:
+                content = seg
             node = CustomNode(uid=user_id, name=NICKNAME, content=content)
             nodes.append(node)
 
