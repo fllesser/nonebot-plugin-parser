@@ -12,21 +12,20 @@ on:
       - "uv.lock"
 
 jobs:
-
   typos:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5 # v5
       - uses: crate-ci/typos@master
 
-  test:
+  test-others:
     name: Test
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     concurrency:
-      group: test-coverage-${{ github.ref }}-${{ matrix.python-version }}-${{ matrix.os }}
+      group: test-others-${{ github.ref }}-${{ matrix.python-version }}-${{ matrix.os }}
       cancel-in-progress: true
 
     strategy:
@@ -50,17 +49,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           version: "latest"
 
-      - name: Setup FFmpeg
-        uses: AnimMouse/setup-ffmpeg@v1
-
       - name: Install Dependencies for test group
         run: uv sync --no-dev --locked
 
-      - name: Run Pytest
-        run: |
-          uv run poe test_others
-          uv run poe test_parsers
-
+      - name: Run Pytest Others
+        run: uv run poe test_others
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
@@ -75,4 +68,49 @@ jobs:
         with:
           env_vars: OS,PYTHON
           files: ./coverage1.xml,./coverage2.xml
+          use_oidc: true
+
+  test-parsers:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    concurrency:
+      group: test-parsers-${{ github.ref }}-3.12-ubuntu-latest
+      cancel-in-progress: true
+
+    env:
+      UV_NO_SYNC: 1
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: 3.12
+          version: "latest"
+
+      - name: Setup FFmpeg
+        uses: AnimMouse/setup-ffmpeg@v1
+
+      - name: Install Dependencies for test group
+        run: uv sync --no-dev --locked
+
+      - name: Run Pytest Parsers
+        run: uv run poe test_parsers
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          files: ./junit2.xml
+          use_oidc: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage2.xml
           use_oidc: true
