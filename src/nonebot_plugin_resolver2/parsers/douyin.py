@@ -11,7 +11,7 @@ from ..constants import COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ANDROID_HEADER, IOS_HEADER, DynamicContent, ImageContent, ParseResult
+from .data import ANDROID_HEADER, IOS_HEADER, DynamicContent, ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
@@ -95,7 +95,7 @@ class DouyinParser(BaseParser):
         elif video_url := video_data.video_url:
             video_url = await get_redirect_url(video_url)
             video_path = await DOWNLOADER.download_video(video_url)
-            contents.append(DynamicContent(video_path))
+            contents.append(VideoContent(video_path))
 
         return ParseResult(
             title=video_data.desc,
