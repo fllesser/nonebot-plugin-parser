@@ -10,8 +10,8 @@ from nonebot_plugin_alconna.uniseg import get_message_id, get_target, message_re
 
 from ..config import rconfig
 from ..exception import handle_exception
-from ..parsers import PLATFORM_PARSERS
-from ..parsers.base import BaseParser
+from ..parsers import PLATFORM_PARSERS, BaseParser, ParseResult
+from ..utils import LimitedSizeDict
 from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
 from .render import Renderer
 
@@ -49,6 +49,9 @@ def _get_enabled_patterns(platform_parsers: dict[str, type[BaseParser]]) -> list
 
     return enabled_patterns
 
+
+# 缓存结果
+RESULT_CACHE = LimitedSizeDict[tuple[str, tuple[int, int]], ParseResult](max_size=100)
 
 # 构建关键词到平台的映射（keyword -> platform_name）
 KEYWORD_TO_PLATFORM = _build_keyword_to_platform_map(PLATFORM_PARSERS)
@@ -98,7 +101,12 @@ async def _(
 
     # 2. 解析 URL（包含下载资源）
     parser = parser_class()
-    result = await parser.parse(matched)
+    if (key := (matched.string, matched.span())) in RESULT_CACHE:
+        logger.debug(f"命中缓存: {key}")
+        result = RESULT_CACHE[key]
+    else:
+        result = await parser.parse(matched)
+        RESULT_CACHE[key] = result
 
     if result:
         # 3. 渲染内容消息并发送

@@ -1,10 +1,30 @@
 import asyncio
+from collections import OrderedDict
 import hashlib
 from pathlib import Path
 import re
+from typing import TypeVar
 from urllib.parse import urlparse
 
 from nonebot import logger
+
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+class LimitedSizeDict(OrderedDict[K, V]):
+    """
+    定长字典
+    """
+
+    def __init__(self, *args, max_size=20, **kwargs):
+        self.max_size = max_size
+        super().__init__(*args, **kwargs)
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        if len(self) > self.max_size:
+            self.popitem(last=False)  # 移除最早添加的项
 
 
 def keep_zh_en_num(text: str) -> str:

@@ -1,5 +1,4 @@
 import asyncio
-from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
@@ -7,29 +6,14 @@ import yt_dlp
 
 from ..config import PROXY, plugin_cache_dir
 from ..exception import ParseException
-from ..utils import generate_file_name
-
-
-class LimitedSizeDict(OrderedDict):
-    """
-    定长字典
-    """
-
-    def __init__(self, *args, max_size=20, **kwargs):
-        self.max_size = max_size
-        super().__init__(*args, **kwargs)
-
-    def __setitem__(self, key, value):
-        super().__setitem__(key, value)
-        if len(self) > self.max_size:
-            self.popitem(last=False)  # 移除最早添加的项
+from ..utils import LimitedSizeDict, generate_file_name
 
 
 class YtdlpDownloader:
     """YtdlpDownloader class"""
 
     def __init__(self):
-        self._url_info_mapping = LimitedSizeDict()
+        self._url_info_mapping = LimitedSizeDict[str, dict[str, str]]()
         self._ydl_extract_base_opts: dict[str, Any] = {
             "quiet": True,
             "skip_download": True,

@@ -1,6 +1,7 @@
 from .acfun import AcfunParser as AcfunParser
 from .base import BaseParser as BaseParser
 from .bilibili import BilibiliParser as BilibiliParser
+from .data import ParseResult as ParseResult
 from .douyin import DouyinParser as DouyinParser
 from .kuaishou import KuaishouParser as KuaishouParser
 from .tiktok import TikTokParser as TikTokParser
