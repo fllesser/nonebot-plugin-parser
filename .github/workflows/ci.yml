@@ -71,7 +71,7 @@ jobs:
           use_oidc: true
 
   test-parsers:
-    name: Test
+    name: Test Parsers
     runs-on: ubuntu-latest
     permissions:
       id-token: write
