@@ -1,0 +1,90 @@
+import re
+from typing import ClassVar
+
+from nonebot import logger
+
+from ..download import DOWNLOADER, YTDLP_DOWNLOADER
+from ..exception import ParseException
+from .base import BaseParser
+from .data import ParseResult, VideoContent
+from .utils import get_redirect_url
+
+
+class TikTokParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "tiktok"
+
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "TikTok"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("tiktok.com", r"(?:https?://)?(www|vt|vm)\.tiktok\.com/[A-Za-z0-9._?%&+\-=/#@]*"),
+    ]
+
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
+
+        Args:
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
+
+        Returns:
+            ParseResult: 解析结果（已下载资源，包含 Path）
+
+        Raises:
+            ParseException: 解析失败时抛出
+        """
+        # 从匹配对象中获取原始URL
+        url = matched.group(0)
+        try:
+            # 处理短链接重定向
+            final_url = url
+            if match := re.match(r"(?:https?://)?(?:www\.)?(vt|vm)\.tiktok\.com", url):
+                prefix = match.group(1)
+                if prefix in ("vt", "vm"):
+                    try:
+                        final_url = await get_redirect_url(url)
+                        if not final_url:
+                            raise ParseException("TikTok 短链重定向失败")
+                    except Exception as e:
+                        logger.exception(f"TikTok 短链重定向失败 | {url}")
+                        raise ParseException(f"TikTok 短链重定向失败: {e}")
+
+            # 获取视频信息
+            info_dict = await YTDLP_DOWNLOADER.extract_video_info(final_url)
+            title = info_dict.get("title", "未知")
+            author = info_dict.get("uploader", None)
+            thumbnail = info_dict.get("thumbnail", None)
+            duration = info_dict.get("duration", None)
+
+            # 构建额外信息
+            extra_info_parts = []
+            if duration and isinstance(duration, (int, float)):
+                minutes = int(duration) // 60
+                seconds = int(duration) % 60
+                extra_info_parts.append(f"时长: {minutes}:{seconds:02d}")
+            if extra_info_parts:
+                extra_info = "\n".join(extra_info_parts)
+            else:
+                extra_info = None
+
+            # 下载封面和视频
+            cover_path = None
+            if thumbnail:
+                cover_path = await DOWNLOADER.download_img(thumbnail)
+
+            video_path = await YTDLP_DOWNLOADER.download_video(final_url)
+
+            return ParseResult(
+                title=title,
+                platform=self.platform_display_name,
+                author=author,
+                cover_path=cover_path,
+                content=VideoContent(video_path=video_path),
+                extra_info=extra_info,
+            )
+        except ParseException:
+            raise
+        except Exception as e:
+            logger.exception(f"TikTok 视频信息获取失败 | {url}")
+            raise ParseException(f"TikTok 视频信息获取失败: {e}")

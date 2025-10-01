@@ -1,17 +1,36 @@
+import asyncio
+from pathlib import Path
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 import msgspec
 from nonebot import logger
 
 from ..constants import COMMON_TIMEOUT
+from ..download import DOWNLOADER
 from ..exception import ParseException
+from .base import BaseParser
 from .data import ANDROID_HEADER, IOS_HEADER, ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
-class DouyinParser:
+class DouyinParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "douyin"
+
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "抖音"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("v.douyin", r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
+        (
+            "douyin",
+            r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+",
+        ),
+    ]
+
     def __init__(self):
         self.ios_headers = IOS_HEADER.copy()
         self.android_headers = {"Accept": "application/json, text/plain, */*", **ANDROID_HEADER}
@@ -62,15 +81,26 @@ class DouyinParser:
             text = response.text
 
         video_data = self._extract_data(text)
+
+        # 下载封面
+        cover_path = None
+        if video_data.cover_url:
+            cover_path = await DOWNLOADER.download_img(video_data.cover_url)
+
+        # 下载内容
         content = None
         if image_urls := video_data.images_urls:
-            content = ImageContent(pic_urls=image_urls)
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(image_urls)
+            content = ImageContent(pic_paths=pic_paths)
         elif video_url := video_data.video_url:
-            content = VideoContent(video_url=await get_redirect_url(video_url))
+            video_url = await get_redirect_url(video_url)
+            video_path = await DOWNLOADER.download_video(video_url)
+            content = VideoContent(video_path=video_path)
 
         return ParseResult(
             title=video_data.desc,
-            cover_url=video_data.cover_url,
+            platform=self.platform_display_name,
+            cover_path=cover_path,
             author=video_data.author.nickname,
             content=content,
         )
@@ -110,12 +140,40 @@ class DouyinParser:
 
         slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
 
+        # 下载图片
+        pic_paths = await DOWNLOADER.download_imgs_without_raise(slides_data.images_urls)
+
+        # 下载动态图片
+        dynamic_paths = []
+        if slides_data.dynamic_urls:
+            video_paths = await asyncio.gather(
+                *[DOWNLOADER.download_video(url) for url in slides_data.dynamic_urls],
+                return_exceptions=True,
+            )
+            dynamic_paths = [p for p in video_paths if isinstance(p, Path)]
+
         return ParseResult(
             title=slides_data.share_info.share_desc_info,
-            cover_url="",
+            platform=self.platform_display_name,
             author=slides_data.author.nickname,
-            content=ImageContent(pic_urls=slides_data.images_urls, dynamic_urls=slides_data.dynamic_urls),
+            content=ImageContent(pic_paths=pic_paths, dynamic_paths=dynamic_paths),
         )
+
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
+
+        Args:
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
+
+        Returns:
+            ParseResult: 解析结果（已下载资源，包含 Path）
+
+        Raises:
+            ParseException: 解析失败时抛出
+        """
+        # 从匹配对象中获取原始URL
+        url = matched.group(0)
+        return await self.parse_share_url(url)
 
 
 from msgspec import Struct, field

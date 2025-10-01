@@ -26,19 +26,17 @@ async def test_favlist():
     logger.success("B站收藏夹解析成功")
 
 
-@pytest.mark.asyncio
 async def test_video():
     from nonebot_plugin_resolver2.config import plugin_cache_dir
-    from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av, merge_av_h264
     from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_resolver2.utils import encode_video_to_h264
 
     parser = BilibiliParser()
 
     try:
         logger.info("开始解析B站视频 BV1584y167sD p40")
-        video_info = await parser.parse_video_info(bvid="BV1584y167sD", page_num=40)
-        logger.debug(video_info)
+        parse_result = await parser.parse_video_info(bvid="BV1584y167sD", page_num=40)
+        logger.debug(parse_result)
         logger.success("B站视频 BV1584y167sD p40 解析成功")
     except Exception:
         pytest.skip("B站视频 BV1584y167sD p40 解析失败(风控)")
@@ -46,25 +44,22 @@ async def test_video():
     file_name = "BV1584y167sD-40"
     video_path = plugin_cache_dir / f"{file_name}.mp4"
 
-    video_url = video_info.video_url
-    audio_url = video_info.audio_url
-    assert audio_url is not None
-
-    v_path, a_path = await asyncio.gather(
-        DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=parser.headers),
-        DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=parser.headers),
-    )
-
-    await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
-    assert video_path.exists()
-
     video_h264_path = await encode_video_to_h264(video_path)
     assert video_h264_path.exists()
 
+
+async def test_merge_av_h264():
+    from nonebot_plugin_resolver2.config import plugin_cache_dir
+    from nonebot_plugin_resolver2.download import DOWNLOADER
+    from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_resolver2.utils import merge_av_h264
+
+    parser = BilibiliParser()
+
     try:
         logger.info("开始解析B站视频 av605821754 p41")
-        video_info = await parser.parse_video_info(avid=605821754, page_num=41)
-        logger.debug(video_info)
+        video_url, audio_url = await parser.parse_video_download_url(avid=605821754, page_index=41)
+        logger.debug(f"video_url: {video_url}, audio_url: {audio_url}")
         logger.success("B站视频 av605821754 p41 解析成功")
     except Exception:
         pytest.skip("B站视频 av605821754 p41 解析失败(风控)")
@@ -72,8 +67,6 @@ async def test_video():
     file_name = "av605821754-41"
     video_path = plugin_cache_dir / f"{file_name}.mp4"
 
-    video_url = video_info.video_url
-    audio_url = video_info.audio_url
     assert audio_url is not None
 
     v_path, a_path = await asyncio.gather(
@@ -90,8 +83,8 @@ async def test_encode_h264_video():
 
     from nonebot_plugin_resolver2.config import plugin_cache_dir
     from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.download.utils import encode_video_to_h264, merge_av
     from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_resolver2.utils import encode_video_to_h264, merge_av
 
     try:
         bvid = "BV1VLk9YDEzB"

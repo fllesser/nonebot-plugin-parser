@@ -1,4 +1,5 @@
 import asyncio
+import re
 
 from nonebot import logger
 import pytest
@@ -20,7 +21,14 @@ async def test_parse():
 
     async def parse(url: str) -> None:
         logger.info(f"{url} | 开始解析小红书")
-        parse_result = await xhs_parser.parse_url(url)
+        # 使用 patterns 匹配 URL
+        matched = None
+        for keyword, pattern in xhs_parser.patterns:
+            matched = re.search(pattern, url)
+            if matched:
+                break
+        assert matched, f"无法匹配 URL: {url}"
+        parse_result = await xhs_parser.parse(matched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
     await asyncio.gather(*[parse(url) for url in urls])

@@ -1,17 +1,32 @@
 import random
 import re
+from typing import ClassVar
 
 import httpx
 import msgspec
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..exception import ParseException
+from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
-class KuaishouParser:
+class KuaishouParser(BaseParser):
     """快手解析器"""
+
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "kuaishou"
+
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "快手"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("v.kuaishou.com", r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
+        ("kuaishou", r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
+        ("chenzhongtech", r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+"),
+    ]
 
     def __init__(self):
         self.headers = COMMON_HEADER
@@ -20,15 +35,20 @@ class KuaishouParser:
             "Referer": "https://v.kuaishou.com/",
         }
 
-    async def parse_url(self, url: str) -> ParseResult:
-        """解析快手链接获取视频信息
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
 
         Args:
-            url: 快手视频链接
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 快手视频信息
+            ParseResult: 解析结果（已下载资源，包含 Path）
+
+        Raises:
+            ParseException: 解析失败时抛出
         """
+        # 从匹配对象中获取原始URL
+        url = matched.group(0)
         location_url = await get_redirect_url(url, headers=self.v_headers)
 
         if len(location_url) <= 0:
@@ -54,7 +74,7 @@ class KuaishouParser:
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        return photo.convert_parse_result()
+        return await photo.convert_parse_result(self.platform_display_name, self.v_headers)
 
 
 from typing import TypeAlias
@@ -104,14 +124,26 @@ class Photo(Struct):
     def img_urls(self):
         return self.ext_params.atlas.img_urls
 
-    def convert_parse_result(self) -> ParseResult:
+    async def convert_parse_result(
+        self, platform: str = "快手", ext_headers: dict[str, str] | None = None
+    ) -> ParseResult:
+        from ..download import DOWNLOADER
+
+        # 下载封面
+        cover_path = None
+        if self.cover_url:
+            cover_path = await DOWNLOADER.download_img(self.cover_url, ext_headers=ext_headers)
+
+        # 下载内容
+        content = None
         if video_url := self.video_url:
-            content = VideoContent(video_url)
+            video_path = await DOWNLOADER.download_video(video_url, ext_headers=ext_headers)
+            content = VideoContent(video_path=video_path)
         elif img_urls := self.img_urls:
-            content = ImageContent(img_urls)
-        else:
-            content = None
-        return ParseResult(title=self.caption, cover_url=self.cover_url, content=content)
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=ext_headers)
+            content = ImageContent(pic_paths=pic_paths)
+
+        return ParseResult(title=self.caption, platform=platform, cover_path=cover_path, content=content)
 
 
 class TusjohData(Struct):

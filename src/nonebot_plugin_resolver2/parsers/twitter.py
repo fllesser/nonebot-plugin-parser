@@ -1,15 +1,26 @@
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
-from nonebot import logger
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
-from .data import ImageContent, VideoContent
+from .base import BaseParser
+from .data import ImageContent, ParseResult, VideoContent
 
 
-class TwitterParser:
+class TwitterParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "twitter"
+
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "小蓝鸟"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("x.com", r"https?://x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)"),
+    ]
+
     @staticmethod
     async def req_xdown_api(url: str) -> dict[str, Any]:
         headers = {
@@ -36,16 +47,31 @@ class TwitterParser:
         if html_content is None:
             raise ParseException("解析失败, 数据为空")
 
-        logger.debug(f"html_content: {html_content}")
+        # logger.debug(f"html_content: {html_content}")
+
+        # 导入下载器
+        from ..download import DOWNLOADER
 
         first_video_url = await cls.get_first_video_url(html_content)
         if first_video_url is not None:
-            return VideoContent(video_url=first_video_url)
+            video_path = await DOWNLOADER.download_video(first_video_url)
+            return VideoContent(video_path=video_path)
 
         pic_urls = await cls.get_all_pic_urls(html_content)
         dynamic_urls = await cls.get_all_gif_urls(html_content)
         if len(pic_urls) != 0:
-            return ImageContent(pic_urls=pic_urls, dynamic_urls=dynamic_urls)
+            # 下载图片和动态图
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
+            dynamic_paths = []
+            if dynamic_urls:
+                from asyncio import gather
+                from pathlib import Path
+
+                results = await gather(
+                    *[DOWNLOADER.download_video(url) for url in dynamic_urls], return_exceptions=True
+                )
+                dynamic_paths = [p for p in results if isinstance(p, Path)]
+            return ImageContent(pic_paths=pic_paths, dynamic_paths=dynamic_paths)
 
     @classmethod
     def snapcdn_url_pattern(cls, flag: str) -> re.Pattern[str]:
@@ -78,3 +104,28 @@ class TwitterParser:
         提取所有 GIF 链接
         """
         return re.findall(cls.snapcdn_url_pattern(" gif"), html_content)
+
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
+
+        Args:
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
+
+        Returns:
+            ParseResult: 解析结果（已下载资源，包含 Path）
+
+        Raises:
+            ParseException: 解析失败时抛出
+        """
+        # 从匹配对象中获取原始URL
+        url = matched.group(0)
+        content = await self.parse_x_url(url)
+
+        if content is None:
+            raise ParseException("解析失败，未找到内容")
+
+        return ParseResult(
+            title="",  # 推特解析不包含标题
+            platform=self.platform_display_name,
+            content=content,
+        )

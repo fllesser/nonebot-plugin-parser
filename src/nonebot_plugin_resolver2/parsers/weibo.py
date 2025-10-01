@@ -1,24 +1,54 @@
 import math
 import re
 import time
+from typing import ClassVar
 
 import httpx
 import msgspec
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
+from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
 
 
-class WeiBoParser:
+class WeiBoParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "weibo"
+
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "微博"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("weibo.com", r"https?://(?:www|m|video)?\.?weibo\.com/[A-Za-z\d._?%&+\-=/#@:]+"),
+        ("m.weibo.cn", r"https?://m\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
+    ]
+
     def __init__(self):
         self.ext_headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
             "referer": "https://weibo.com/",
         }
 
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
+
+        Args:
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
+
+        Returns:
+            ParseResult: 解析结果（已下载资源，包含 Path）
+
+        Raises:
+            ParseException: 解析失败时抛出
+        """
+        # 从匹配对象中获取原始URL
+        url = matched.group(0)
+        return await self.parse_share_url(url)
+
     async def parse_share_url(self, share_url: str) -> ParseResult:
-        """解析微博分享链接"""
+        """解析微博分享链接（内部方法）"""
         # https://video.weibo.com/show?fid=1034:5145615399845897
         if matched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
             return await self.parse_fid(matched.group(1))
@@ -60,11 +90,20 @@ class WeiBoParser:
             _, first_mp4_url = next(iter(data["urls"].items()))
             video_url = f"https:{first_mp4_url}"
 
+        # 导入下载器
+        from ..download import DOWNLOADER
+
+        # 下载封面和视频
+        cover_url = "https:" + data["cover_image"]
+        cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
+        video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+
         return ParseResult(
             title=data["title"],
-            cover_url="https:" + data["cover_image"],
+            platform=self.platform_display_name,
+            cover_path=cover_path,
             author=data["author"],
-            content=VideoContent(video_url=video_url),
+            content=VideoContent(video_path=video_path),
         )
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
@@ -106,15 +145,21 @@ class WeiBoParser:
         # 用 bytes 更稳，避免编码歧义
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
 
+        # 导入下载器
+        from ..download import DOWNLOADER
+
+        # 下载内容
+        content = None
         if video_url := weibo_data.video_url:
-            content = VideoContent(video_url=video_url)
+            video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+            content = VideoContent(video_path=video_path)
         elif pic_urls := weibo_data.pic_urls:
-            content = ImageContent(pic_urls=pic_urls)
-        else:
-            content = None
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
+            content = ImageContent(pic_paths=pic_paths)
 
         return ParseResult(
             title=weibo_data.title,
+            platform=self.platform_display_name,
             author=weibo_data.source,
             content=content,
         )

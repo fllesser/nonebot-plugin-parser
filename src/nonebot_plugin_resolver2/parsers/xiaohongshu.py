@@ -1,5 +1,6 @@
 import json
 import re
+from typing import ClassVar
 from urllib.parse import parse_qs, urlparse
 
 import httpx
@@ -8,11 +9,24 @@ import msgspec
 from ..config import rconfig
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
+from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
-class XiaoHongShuParser:
+class XiaoHongShuParser(BaseParser):
+    # 平台名称（用于配置禁用和内部标识）
+    platform_name: ClassVar[str] = "xiaohongshu"
+
+    # 平台显示名称
+    platform_display_name: ClassVar[str] = "小红书"
+
+    # URL 正则表达式模式（keyword, pattern）
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("xiaohongshu.com", r"https?://(?:www\.)?xiaohongshu\.com/[A-Za-z0-9._?%&+=/#@-]*"),
+        ("xhslink.com", r"https?://xhslink\.com/[A-Za-z0-9._?%&+=/#@-]*"),
+    ]
+
     def __init__(self):
         self.headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,"
@@ -22,28 +36,29 @@ class XiaoHongShuParser:
         if rconfig.r_xhs_ck:
             self.headers["cookie"] = rconfig.r_xhs_ck
 
-    async def parse_url(self, url: str) -> ParseResult:
-        """解析小红书 URL
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
 
         Args:
-            url (str): 小红书 URL
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果
+            ParseResult: 解析结果（已下载资源，包含 Path）
 
         Raises:
-            ParseException: 小红书分享链接不完整
-            ParseException: 小红书 cookie 可能已失效
+            ParseException: 解析失败时抛出
         """
+        # 从匹配对象中获取原始URL
+        url = matched.group(0)
         # 处理 xhslink 短链
         if "xhslink" in url:
             url = await get_redirect_url(url, self.headers)
         # ?: 非捕获组
         pattern = r"(?:/explore/|/discovery/item/|source=note&noteId=)(\w+)"
-        matched = re.search(pattern, url)
-        if not matched:
+        match_result = re.search(pattern, url)
+        if not match_result:
             raise ParseException("小红书分享链接不完整")
-        xhs_id = matched.group(1)
+        xhs_id = match_result.group(1)
         # 解析 URL 参数
         parsed_url = urlparse(url)
         params = parse_qs(parsed_url.query)
@@ -58,11 +73,11 @@ class XiaoHongShuParser:
             html = response.text
 
         pattern = r"window.__INITIAL_STATE__=(.*?)</script>"
-        matched = re.search(pattern, html)
-        if not matched:
+        match_result = re.search(pattern, html)
+        if not match_result:
             raise ParseException("小红书分享链接失效或内容已删除")
 
-        json_str = matched.group(1)
+        json_str = match_result.group(1)
         json_str = json_str.replace("undefined", "null")
 
         json_obj = json.loads(json_str)
@@ -70,16 +85,25 @@ class XiaoHongShuParser:
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
         note_detail = msgspec.convert(note_data, type=NoteDetail)
 
+        # 导入下载器
+        from ..download import DOWNLOADER
+
+        cover_path = None
         if video_url := note_detail.video_url:
-            content = VideoContent(video_url=video_url)
-            cover_url = note_detail.img_urls[0]
+            # 下载视频和封面
+            video_path = await DOWNLOADER.download_video(video_url)
+            content = VideoContent(video_path=video_path)
+            if note_detail.img_urls:
+                cover_path = await DOWNLOADER.download_img(note_detail.img_urls[0])
         else:
-            content = ImageContent(pic_urls=note_detail.img_urls)
-            cover_url = None
+            # 下载图片
+            pic_paths = await DOWNLOADER.download_imgs_without_raise(note_detail.img_urls)
+            content = ImageContent(pic_paths=pic_paths)
 
         return ParseResult(
             title=note_detail.title_desc,
-            cover_url=cover_url,
+            platform=self.platform_display_name,
+            cover_path=cover_path,
             content=content,
             author=note_detail.user.nickname,
         )

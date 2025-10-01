@@ -9,8 +9,8 @@ from tqdm.asyncio import tqdm
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException, DownloadSizeLimitException
-from ..utils import safe_unlink
-from .utils import generate_file_name
+from ..utils import generate_file_name, safe_unlink
+from .ytdlp import YtdlpDownloader
 
 
 class StreamDownloader:
@@ -192,3 +192,4 @@ class StreamDownloader:
 
 
 DOWNLOADER: StreamDownloader = StreamDownloader()
+YTDLP_DOWNLOADER: YtdlpDownloader = YtdlpDownloader()
