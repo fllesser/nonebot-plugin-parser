@@ -21,7 +21,7 @@ class LimitedSizeDict(OrderedDict[K, V]):
         self.max_size = max_size
         super().__init__(*args, **kwargs)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: K, value: V):
         super().__setitem__(key, value)
         if len(self) > self.max_size:
             self.popitem(last=False)  # 移除最早添加的项
