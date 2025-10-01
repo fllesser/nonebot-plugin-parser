@@ -7,6 +7,7 @@ import httpx
 import msgspec
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
+from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
@@ -94,9 +95,6 @@ class WeiBoParser(BaseParser):
             _, first_mp4_url = next(iter(data["urls"].items()))
             video_url = f"https:{first_mp4_url}"
 
-        # 导入下载器
-        from ..download import DOWNLOADER
-
         # 下载封面和视频
         cover_url = "https:" + data["cover_image"]
         cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
@@ -148,9 +146,6 @@ class WeiBoParser(BaseParser):
 
         # 用 bytes 更稳，避免编码歧义
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
-
-        # 导入下载器
-        from ..download import DOWNLOADER
 
         # 下载内容
         content = None
@@ -220,7 +215,6 @@ class WeiBoParser(BaseParser):
                 "application/signed-exchange;v=b3;q=0.7"
             ),
             "Authority": "mapp.api.weibo.cn",
-            **COMMON_HEADER,
         }
 
         # 首先尝试获取重定向 URL
