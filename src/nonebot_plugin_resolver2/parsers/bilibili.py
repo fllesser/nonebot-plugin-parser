@@ -62,8 +62,8 @@ class BilibiliParser(BaseParser):
         link = None
         # 处理短链
         if "b23.tv" in url or "bili2233.cn" in url:
-            url = await get_redirect_url(url, self.headers)
             link = url
+            url = await get_redirect_url(url, self.headers)
 
         avid, bvid = None, None
         # 链接中是否包含BV，av号
@@ -208,7 +208,6 @@ class BilibiliParser(BaseParser):
             if img_urls:
                 pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
                 contents.extend(ImageContent(path) for path in pic_paths)
-                logger.debug(contents)
 
             return ParseResult(
                 title=f"动态 {opus_id}",
@@ -256,7 +255,7 @@ class BilibiliParser(BaseParser):
             contents = []
             if img_urls:
                 pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
-                contents.append(ImageContent(path) for path in pic_paths)
+                contents.extend(ImageContent(path) for path in pic_paths)
 
             return ParseResult(
                 title=combined_text[:100] + "..." if len(combined_text) > 100 else combined_text,
