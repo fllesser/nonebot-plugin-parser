@@ -35,15 +35,20 @@ class KuaishouParser(BaseParser):
             "Referer": "https://v.kuaishou.com/",
         }
 
-    async def parse_url(self, url: str) -> ParseResult:
-        """解析快手链接获取视频信息
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
 
         Args:
-            url: 快手视频链接
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 快手视频信息
+            ParseResult: 解析结果（已下载资源，包含 Path）
+
+        Raises:
+            ParseException: 解析失败时抛出
         """
+        # 从匹配对象中获取原始URL
+        url = matched.group(0)
         location_url = await get_redirect_url(url, headers=self.v_headers)
 
         if len(location_url) <= 0:

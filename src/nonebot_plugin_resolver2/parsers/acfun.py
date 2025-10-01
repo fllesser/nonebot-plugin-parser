@@ -134,27 +134,25 @@ class AcfunParser(BaseParser):
 
         return m3u8_full_urls
 
-    async def parse_url(self, url: str) -> ParseResult:
-        """解析 Acfun URL（标准接口）
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
 
         Args:
-            url: Acfun 链接
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
             ParseResult: 解析结果（已下载资源，包含 Path）
 
         Raises:
-            ParseException: 解析失败
+            ParseException: 解析失败时抛出
         """
+        # 从匹配结果中提取 acid
+        acid = int(matched.group(1))
+        url = f"https://www.acfun.cn/v/ac{acid}"
+
         m3u8_url, title, description, author, upload_time = await self.parse_video_info(url)
 
         extra_info = f"简介: {description}\n上传于 {upload_time}" if description or upload_time else None
-
-        # 从 URL 中提取 acid
-        matched = re.search(r"ac(\d+)", url)
-        if not matched:
-            raise ParseException("无法从 URL 中提取 acid")
-        acid = int(matched.group(1))
 
         # 下载视频
         video_path = await self.download_video(m3u8_url, acid)

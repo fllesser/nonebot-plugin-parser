@@ -1,4 +1,5 @@
 import asyncio
+import re
 
 import httpx
 from nonebot import logger
@@ -23,7 +24,14 @@ async def test_parse():
     async def parse(url: str) -> None:
         logger.info(f"{url} | 开始解析快手视频")
         try:
-            parse_result = await parser.parse_url(url)
+            # 使用 patterns 匹配 URL
+            matched = None
+            for keyword, pattern in parser.patterns:
+                matched = re.search(pattern, url)
+                if matched:
+                    break
+            assert matched, f"无法匹配 URL: {url}"
+            parse_result = await parser.parse(matched)
         except httpx.ConnectTimeout:
             pytest.skip(f"解析超时(action 网络问题) ({url})")
 

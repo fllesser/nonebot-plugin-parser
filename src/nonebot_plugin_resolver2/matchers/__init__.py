@@ -79,10 +79,9 @@ async def _message_reaction(event: Event, status: Literal["fail", "resolving", "
 async def _(
     event: Event,
     keyword: str = Keyword(),
-    searched: re.Match[str] = KeyPatternMatched(),
+    matched: re.Match[str] = KeyPatternMatched(),
 ):
     """统一的解析处理器"""
-    url = searched.group(0)
     platform = KEYWORD_TO_PLATFORM.get(keyword)
     if not platform:
         logger.warning(f"未找到关键词 {keyword} 对应的平台")
@@ -99,7 +98,7 @@ async def _(
 
     # 2. 解析 URL（包含下载资源）
     parser = parser_class()
-    result = await parser.parse_url(url)
+    result = await parser.parse(matched)
 
     if result:
         # 3. 渲染内容消息并发送

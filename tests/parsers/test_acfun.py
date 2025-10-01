@@ -1,3 +1,5 @@
+import re
+
 from nonebot import logger
 import pytest
 
@@ -12,7 +14,14 @@ async def test_parse():
 
     async def parse_acfun_url(url: str) -> None:
         logger.info(f"{url} | 开始解析 Acfun 视频")
-        parse_result = await acfun_parser.parse_url(url)
+        # 使用 patterns 匹配 URL
+        matched = None
+        for keyword, pattern in acfun_parser.patterns:
+            matched = re.search(pattern, url)
+            if matched:
+                break
+        assert matched, f"无法匹配 URL: {url}"
+        parse_result = await acfun_parser.parse(matched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
         assert parse_result.title, "视频标题为空"

@@ -159,15 +159,20 @@ class DouyinParser(BaseParser):
             content=ImageContent(pic_paths=pic_paths, dynamic_paths=dynamic_paths),
         )
 
-    async def parse_url(self, url: str) -> ParseResult:
-        """解析抖音分享链接（标准接口）
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
 
         Args:
-            url: 分享链接
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
             ParseResult: 解析结果（已下载资源，包含 Path）
+
+        Raises:
+            ParseException: 解析失败时抛出
         """
+        # 从匹配对象中获取原始URL
+        url = matched.group(0)
         return await self.parse_share_url(url)
 
 

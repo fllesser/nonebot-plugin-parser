@@ -382,18 +382,20 @@ class BilibiliParser(BaseParser):
 
         return " ".join(result_parts)
 
-    async def parse_url(self, url: str) -> ParseResult:
-        """解析 Bilibili URL（标准接口）
+    async def parse(self, matched: re.Match[str]) -> ParseResult:
+        """解析 URL 获取内容信息并下载资源
 
         Args:
-            url: Bilibili 链接
+            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果（仅包含 URL，不下载）
+            ParseResult: 解析结果（已下载资源，包含 Path）
 
         Raises:
-            ParseException: 解析失败
+            ParseException: 解析失败时抛出
         """
+        # 从匹配对象中获取原始URL
+        url = matched.group(0)
         # 处理短链
         if "b23.tv" in url or "bili2233.cn" in url:
             url = await get_redirect_url(url, self.headers)
@@ -401,10 +403,10 @@ class BilibiliParser(BaseParser):
         # 判断链接类型并解析
         # 1. 动态/图文 (opus)
         if "t.bilibili.com" in url or "/opus" in url:
-            matched = re.search(r"/(\d+)", url)
-            if not matched:
+            match_result = re.search(r"/(\d+)", url)
+            if not match_result:
                 raise ParseException("无效的动态链接")
-            opus_id = int(matched.group(1))
+            opus_id = int(match_result.group(1))
             img_urls, text = await self.parse_opus(opus_id)
 
             # 下载图片
@@ -423,10 +425,10 @@ class BilibiliParser(BaseParser):
 
         # 2. 直播
         if "/live" in url:
-            matched = re.search(r"/(\d+)", url)
-            if not matched:
+            match_result = re.search(r"/(\d+)", url)
+            if not match_result:
                 raise ParseException("无效的直播链接")
-            room_id = int(matched.group(1))
+            room_id = int(match_result.group(1))
             title, cover, keyframe = await self.parse_live(room_id)
 
             # 下载封面
@@ -444,10 +446,10 @@ class BilibiliParser(BaseParser):
 
         # 3. 专栏
         if "/read" in url:
-            matched = re.search(r"/cv(\d+)", url)
-            if not matched:
+            match_result = re.search(r"/cv(\d+)", url)
+            if not match_result:
                 raise ParseException("无效的专栏链接")
-            read_id = int(matched.group(1))
+            read_id = int(match_result.group(1))
             img_urls, texts = await self.parse_read(read_id)
             combined_text = "\n".join(texts)
 
@@ -467,10 +469,10 @@ class BilibiliParser(BaseParser):
 
         # 4. 收藏夹
         if "/favlist" in url:
-            matched = re.search(r"fid=(\d+)", url)
-            if not matched:
+            match_result = re.search(r"fid=(\d+)", url)
+            if not match_result:
                 raise ParseException("无效的收藏夹链接")
-            fav_id = int(matched.group(1))
+            fav_id = int(match_result.group(1))
             titles, descs = await self.parse_favlist(fav_id)
             combined = "\n".join(f"{t}: {d}" for t, d in zip(titles, descs))
             return ParseResult(
@@ -484,21 +486,21 @@ class BilibiliParser(BaseParser):
         avid = None
         page_num = 1
 
-        if matched := re.search(r"/(BV[1-9a-zA-Z]{10})", url):
-            bvid = matched.group(1)
-        elif matched := re.search(r"/av(\d{6,})", url):
-            avid = int(matched.group(1))
-        elif matched := re.search(r"(BV[1-9a-zA-Z]{10})", url):
-            bvid = matched.group(1)
-        elif matched := re.search(r"av(\d{6,})", url):
-            avid = int(matched.group(1))
+        if match_result := re.search(r"/(BV[1-9a-zA-Z]{10})", url):
+            bvid = match_result.group(1)
+        elif match_result := re.search(r"/av(\d{6,})", url):
+            avid = int(match_result.group(1))
+        elif match_result := re.search(r"(BV[1-9a-zA-Z]{10})", url):
+            bvid = match_result.group(1)
+        elif match_result := re.search(r"av(\d{6,})", url):
+            avid = int(match_result.group(1))
 
         if not bvid and not avid:
             raise ParseException("无法识别的 Bilibili 链接类型")
 
         # 获取分P信息
-        if matched := re.search(r"(?:&|\?)p=(\d{1,3})", url):
-            page_num = int(matched.group(1))
+        if match_result := re.search(r"(?:&|\?)p=(\d{1,3})", url):
+            page_num = int(match_result.group(1))
 
         # 解析视频信息
         video_info = await self.parse_video_info(bvid=bvid, avid=avid, page_num=page_num)
