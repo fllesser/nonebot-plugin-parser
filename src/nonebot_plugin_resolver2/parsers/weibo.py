@@ -23,6 +23,7 @@ class WeiBoParser(BaseParser):
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("weibo.com", r"https?://(?:www|m|video)?\.?weibo\.com/[A-Za-z\d._?%&+\-=/#@:]+"),
         ("m.weibo.cn", r"https?://m\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
+        ("mapp.api.weibo.cn", r"https?://mapp\.api\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
     ]
 
     def __init__(self):
@@ -61,6 +62,9 @@ class WeiBoParser(BaseParser):
         # https://weibo.com/1707895270/5006106478773472
         elif matched := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", share_url):
             weibo_id = matched.group(1)
+        # ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
+        elif matched := re.search(r"https?://mapp\.api\.weibo\.cn/fx/([A-Za-z\d]+)\.html", share_url):
+            return await self._parse_mapp_url(matched.group(0))
         # 无法获取到id则返回失败信息
         else:
             raise ParseException("无法获取到微博的 id")
@@ -195,6 +199,59 @@ class WeiBoParser(BaseParser):
 
         result.reverse()  # 反转结果数组
         return "".join(result)  # 将结果数组连接成字符串
+
+    async def _parse_mapp_url(self, mapp_url: str) -> ParseResult:
+        """解析 mapp.api.weibo.cn 链接
+
+        mapp 链接可能会重定向到 m.weibo.cn，也可能返回 HTML 页面
+        """
+        # 使用微信内置浏览器 UA 来提高成功率
+        ua = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 NetType/WIFI "
+            "MicroMessenger/7.0.20.1781(0x6700143B) WindowsWechat(0x63090a13) "
+            "UnifiedPCWindowsWechat(0xf254032b) XWEB/13655 Flue"
+        )
+        headers = {
+            "User-Agent": ua,
+            "Accept": (
+                "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                "image/avif,image/webp,image/apng,*/*;q=0.8,"
+                "application/signed-exchange;v=b3;q=0.7"
+            ),
+            "Authority": "mapp.api.weibo.cn",
+            **COMMON_HEADER,
+        }
+
+        # 首先尝试获取重定向 URL
+        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT, follow_redirects=False) as client:
+            try:
+                response = await client.get(mapp_url)
+                # 检查是否有重定向
+                if response.status_code in (301, 302, 303, 307, 308):
+                    redirect_url = response.headers.get("location", "")
+                    if redirect_url:
+                        # 尝试从重定向 URL 中提取微博 ID
+                        if matched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", redirect_url):
+                            weibo_id = matched.group(1)
+                            return await self.parse_weibo_id(weibo_id)
+            except Exception:
+                pass  # 如果获取重定向失败,继续尝试直接请求
+
+        # 如果没有重定向或重定向失败,直接请求 URL
+        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
+            response = await client.get(mapp_url)
+            response.raise_for_status()
+
+            # 尝试从响应 URL 中提取微博 ID(可能已经重定向)
+            final_url = str(response.url)
+            if matched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", final_url):
+                weibo_id = matched.group(1)
+                return await self.parse_weibo_id(weibo_id)
+
+            # 如果还是无法获取 ID,尝试从 HTML 中提取
+            # 不过目前遇到的网址都能正常转跳至 m.weibo.cn，就不实现了
+            raise ParseException("无法从 mapp 链接获取微博 ID")
 
 
 from msgspec import Struct
