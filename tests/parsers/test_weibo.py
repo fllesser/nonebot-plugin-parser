@@ -14,6 +14,7 @@ async def test_graphics():
     urls = [
         "https://weibo.com/7207262816/P5kWdcfDe",
         "https://m.weibo.cn/status/5155768539808352",
+        "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
     ]
 
     async def parse_graphics(url: str) -> None:
@@ -61,6 +62,7 @@ async def test_text():
     weibo_parser = WeiBoParser()
 
     urls = [
+        "https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html",
         "https://weibo.com/3144744040/PvoG6c1AR",
         "https://weibo.com/3144744040/PiTAYaTKQ",
         "https://weibo.com/1157864602/Q0PtH9Yux",

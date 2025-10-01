@@ -9,6 +9,7 @@ import msgspec
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
+from ..parsers.utils import get_redirect_url
 from .base import BaseParser
 from .data import ImageContent, ParseResult, VideoContent
 
@@ -24,7 +25,7 @@ class WeiBoParser(BaseParser):
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("weibo.com", r"https?://(?:www|m|video)?\.?weibo\.com/[A-Za-z\d._?%&+\-=/#@:]+"),
         ("m.weibo.cn", r"https?://m\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
-        ("mapp.api.weibo.cn", r"https?://mapp\.api\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
+        ("mapp.api.weibo", r"https?://mapp\.api\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
     ]
 
     def __init__(self):
@@ -51,6 +52,9 @@ class WeiBoParser(BaseParser):
 
     async def parse_share_url(self, share_url: str) -> ParseResult:
         """解析微博分享链接（内部方法）"""
+        if "mapp.api.weibo" in share_url:
+            # ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
+            share_url = await get_redirect_url(share_url)
         # https://video.weibo.com/show?fid=1034:5145615399845897
         if matched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
             return await self.parse_fid(matched.group(1))
@@ -63,10 +67,6 @@ class WeiBoParser(BaseParser):
         # https://weibo.com/1707895270/5006106478773472
         elif matched := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", share_url):
             weibo_id = matched.group(1)
-        # ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
-        elif matched := re.search(r"https?://mapp\.api\.weibo\.cn/fx/([A-Za-z\d]+)\.html", share_url):
-            return await self._parse_mapp_url(matched.group(0))
-        # 无法获取到id则返回失败信息
         else:
             raise ParseException("无法获取到微博的 id")
 
