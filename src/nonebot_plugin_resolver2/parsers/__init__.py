@@ -14,7 +14,6 @@ from .youtube import YouTubeParser as YouTubeParser
 # 注册所有支持的 Parser 类（添加新平台只需在这里添加一行）
 PARSER_CLASSES: list[type[BaseParser]] = [
     AcfunParser,
-    BilibiliParser,
     DouyinParser,
     KuaishouParser,
     TikTokParser,
@@ -22,6 +21,7 @@ PARSER_CLASSES: list[type[BaseParser]] = [
     WeiBoParser,
     XiaoHongShuParser,
     YouTubeParser,
+    BilibiliParser,  # BV，av号匹配放在最后
 ]
 
 # 自动构建平台映射（platform_name -> Parser 类）
@@ -32,5 +32,6 @@ PLATFORM_PARSERS: dict[str, type[BaseParser]] = {
 __all__ = [
     "PARSER_CLASSES",
     "PLATFORM_PARSERS",
+    "ParseResult",
     "get_redirect_url",
 ]

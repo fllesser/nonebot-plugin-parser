@@ -2,7 +2,6 @@ import re
 from typing import Any, ClassVar
 
 import httpx
-from nonebot import logger
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
@@ -48,7 +47,7 @@ class TwitterParser(BaseParser):
         if html_content is None:
             raise ParseException("解析失败, 数据为空")
 
-        logger.debug(f"html_content: {html_content}")
+        # logger.debug(f"html_content: {html_content}")
 
         # 导入下载器
         from ..download import DOWNLOADER

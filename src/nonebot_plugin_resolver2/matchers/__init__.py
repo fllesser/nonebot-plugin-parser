@@ -8,8 +8,9 @@ from nonebot.adapters import Event
 from nonebot_plugin_alconna import SupportAdapter
 from nonebot_plugin_alconna.uniseg import get_message_id, get_target, message_reaction
 
+from nonebot_plugin_resolver2.exception import ResolverException
+
 from ..config import rconfig
-from ..exception import handle_exception
 from ..parsers import PLATFORM_PARSERS, BaseParser, ParseResult
 from ..utils import LimitedSizeDict
 from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
@@ -77,7 +78,6 @@ async def _message_reaction(event: Event, status: Literal["fail", "resolving", "
 
 
 @resolver.handle()
-@handle_exception()
 async def _(
     event: Event,
     keyword: str = Keyword(),
@@ -102,17 +102,22 @@ async def _(
             logger.warning(f"未找到平台 {platform} 的解析器")
             return
         parser = parser_class()
-        result = await parser.parse(matched)
+
+        # 解析
+        try:
+            result = await parser.parse(matched)
+        except ResolverException:
+            # await UniMessage(str(e)).send()
+            await _message_reaction(event, "fail")
+            raise
+
+        # 缓存解析结果
         RESULT_CACHE[key] = result
 
-    if result:
-        # 3. 渲染内容消息并发送
-        messages = Renderer.render_messages(result)
-        for message in messages:
-            await message.send()
+    # 3. 渲染内容消息并发送
+    messages = Renderer.render_messages(result)
+    for message in messages:
+        await message.send()
 
-        # 4. 添加成功的消息响应
-        await _message_reaction(event, "done")
-    else:
-        # 4. 添加失败的消息响应
-        await _message_reaction(event, "fail")
+    # 4. 添加成功的消息响应
+    await _message_reaction(event, "done")

@@ -28,7 +28,8 @@ class Renderer:
         segs: list[Any] = []
 
         # 添加标题
-        segs.append(f"标题: {result.title}")
+        if result.title:
+            segs.append(f"标题: {result.title}")
 
         # 添加额外信息（如果有）
         if result.extra_info:
@@ -96,6 +97,6 @@ class Renderer:
 
         # 处理必须单独发送的消息段
         if separate_segs:
-            messages.append(UniMessage(separate_segs))
+            messages.extend(UniMessage(seg) for seg in separate_segs)
 
         return messages
