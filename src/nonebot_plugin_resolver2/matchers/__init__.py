@@ -84,26 +84,24 @@ async def _(
     matched: re.Match[str] = KeyPatternMatched(),
 ):
     """统一的解析处理器"""
-    platform = KEYWORD_TO_PLATFORM.get(keyword)
-    if not platform:
-        logger.warning(f"未找到关键词 {keyword} 对应的平台")
-        return
-
-    # 获取对应平台的解析器
-    parser_class = PLATFORM_PARSERS.get(platform)
-    if not parser_class:
-        logger.warning(f"未找到平台 {platform} 的解析器")
-        return
-
-    # 1. 先添加消息响应（快速反馈给用户）
+    # 响应用户处理中
     await _message_reaction(event, "resolving")
 
-    # 2. 解析 URL（包含下载资源）
-    parser = parser_class()
     key = matched.group(0)
     if result := RESULT_CACHE.get(key):
         logger.debug(f"命中缓存: {key}")
     else:
+        # 获取对应平台
+        platform = KEYWORD_TO_PLATFORM.get(keyword)
+        if not platform:
+            logger.warning(f"未找到关键词 {keyword} 对应的平台")
+            return
+        # 获取对应平台的解析器
+        parser_class = PLATFORM_PARSERS.get(platform)
+        if not parser_class:
+            logger.warning(f"未找到平台 {platform} 的解析器")
+            return
+        parser = parser_class()
         result = await parser.parse(matched)
         RESULT_CACHE[key] = result
 
