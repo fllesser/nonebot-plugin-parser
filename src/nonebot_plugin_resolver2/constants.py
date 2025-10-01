@@ -18,7 +18,7 @@ ANDROID_HEADER: Final[dict[str, str]] = {
 }
 
 # 解析列表文件名
-DISABLED_GROUPS: Final[str] = "disable_group_list.json"
+DISABLED_GROUPS: Final[str] = "disabled_groups.json"
 
 COMMON_TIMEOUT: Final[httpx.Timeout] = httpx.Timeout(connect=15.0, read=20.0, write=10.0, pool=10.0)
 
