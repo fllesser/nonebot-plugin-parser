@@ -3,7 +3,7 @@ from typing import ClassVar
 from nonebot import logger
 
 from ..config import ytb_cookies_file
-from ..download.ytdlp import get_video_info
+from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
 from .data import AudioContent, ParseResult, VideoContent
@@ -38,7 +38,7 @@ class YouTubeParser(BaseParser):
             ParseException: 解析失败
         """
         try:
-            info_dict = await get_video_info(url, self.cookies_file)
+            info_dict = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
             title = info_dict.get("title", "未知")
             author = info_dict.get("uploader", None)
             thumbnail = info_dict.get("thumbnail", None)
@@ -55,15 +55,11 @@ class YouTubeParser(BaseParser):
             else:
                 extra_info = None
 
-            # 下载封面和视频
-            from ..download import DOWNLOADER
-            from ..download.ytdlp import ytdlp_download_video
-
             cover_path = None
             if thumbnail:
                 cover_path = await DOWNLOADER.download_img(thumbnail)
 
-            video_path = await ytdlp_download_video(url, self.cookies_file)
+            video_path = await YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
 
             return ParseResult(
                 title=title,
@@ -90,7 +86,7 @@ class YouTubeParser(BaseParser):
             ParseException: 解析失败
         """
         try:
-            info_dict = await get_video_info(url, self.cookies_file)
+            info_dict = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
             title = info_dict.get("title", "未知")
             author = info_dict.get("uploader", None)
             thumbnail = info_dict.get("thumbnail", None)
@@ -107,15 +103,11 @@ class YouTubeParser(BaseParser):
             else:
                 extra_info = None
 
-            # 下载封面和音频
-            from ..download import DOWNLOADER
-            from ..download.ytdlp import ytdlp_download_audio
-
             cover_path = None
             if thumbnail:
                 cover_path = await DOWNLOADER.download_img(thumbnail)
 
-            audio_path = await ytdlp_download_audio(url, self.cookies_file)
+            audio_path = await YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
 
             return ParseResult(
                 title=title,

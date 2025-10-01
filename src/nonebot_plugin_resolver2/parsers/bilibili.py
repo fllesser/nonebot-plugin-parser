@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 import json
 import re
@@ -7,7 +8,9 @@ from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.video import Video
 from nonebot import logger
 
-from ..config import plugin_config_dir, rconfig
+from nonebot_plugin_resolver2.utils import merge_av
+
+from ..config import plugin_cache_dir, plugin_config_dir, rconfig
 from ..cookie import ck2dict
 from ..exception import ParseException
 from .base import BaseParser
@@ -510,7 +513,19 @@ class BilibiliParser(BaseParser):
         if video_info.cover_url:
             cover_path = await DOWNLOADER.download_img(video_info.cover_url)
 
-        video_path = await DOWNLOADER.download_video(video_info.video_url)
+        file_name = f"{bvid}-{page_num}"
+        video_path = plugin_cache_dir / f"{file_name}.mp4"
+        if not video_path.exists():
+            # 下载视频和音频
+            video_url = video_info.video_url
+            if audio_url := video_info.audio_url:
+                v_path, a_path = await asyncio.gather(
+                    DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=self.headers),
+                    DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=self.headers),
+                )
+                await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
+            else:
+                video_path = await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=self.headers)
 
         return ParseResult(
             title=video_info.title,
