@@ -29,6 +29,13 @@ class ImageContent:
 
 
 @dataclass
+class MultipleContent:
+    """多组 图文 内容"""
+
+    text_image_pairs: list[tuple[str, Path | None]] = field(default_factory=list)
+
+
+@dataclass
 class ParseResult:
     """完整的解析结果"""
 
@@ -37,7 +44,7 @@ class ParseResult:
     author: str | None = None
     cover_url: str | None = None
     cover_path: Path | None = None
-    content: AudioContent | VideoContent | ImageContent | None = None
+    content: AudioContent | VideoContent | ImageContent | MultipleContent | None = None
     extra_info: str | None = None  # 额外信息，如视频时长、AI总结等
 
     @property

@@ -4,11 +4,10 @@ from typing import Any
 
 from nonebot import logger
 from nonebot.internal.matcher import current_bot
-from nonebot_plugin_alconna import Image, UniMessage
-from nonebot_plugin_alconna.uniseg import Text
+from nonebot_plugin_alconna.uniseg import File, Text, UniMessage, Video, Voice
 
 from ..config import NEED_FORWARD
-from ..parsers.data import AudioContent, ImageContent, ParseResult, VideoContent
+from ..parsers.data import AudioContent, ImageContent, MultipleContent, ParseResult, VideoContent
 from .helper import UniHelper
 
 
@@ -42,9 +41,8 @@ class Renderer:
         # 根据内容类型处理
         if result.content is None:
             logger.warning(f"解析结果没有内容: {result}")
-            return []
 
-        if isinstance(result.content, VideoContent):
+        elif isinstance(result.content, VideoContent):
             # 视频内容
             if result.content.video_path:
                 segs.append(UniHelper.video_seg(result.content.video_path))
@@ -61,6 +59,11 @@ class Renderer:
             if result.content.audio_path:
                 segs.append(UniHelper.record_seg(result.content.audio_path))
 
+        elif isinstance(result.content, MultipleContent):
+            # 多组 图文 内容
+            for text, pic_path in result.content.text_image_pairs:
+                segs.append(text + (UniHelper.img_seg(pic_path) if pic_path else ""))
+
         if not segs:
             return []
 
@@ -69,11 +72,10 @@ class Renderer:
         forwardable_segs = []  # 可以合并转发的消息段(文本和图片)
 
         for seg in segs:
-            # 文本和图片可以合并转发,其他类型(视频、语音、文件)需要单独发送
-            if isinstance(seg, str) or isinstance(seg, Image):
-                forwardable_segs.append(seg)
-            else:
+            if isinstance(seg, Video) or isinstance(seg, Voice) or isinstance(seg, File):
                 separate_segs.append(seg)
+            else:
+                forwardable_segs.append(seg)
 
         messages: list[UniMessage] = []
 
@@ -93,6 +95,7 @@ class Renderer:
                 messages.append(UniMessage(forwardable_segs))
 
         # 处理必须单独发送的消息段
-        messages.append(UniMessage(separate_segs))
+        if separate_segs:
+            messages.append(UniMessage(separate_segs))
 
         return messages

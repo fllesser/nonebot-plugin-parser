@@ -13,7 +13,7 @@ from ..download import DOWNLOADER
 from ..exception import ParseException
 from ..utils import merge_av
 from .base import BaseParser
-from .data import ImageContent, ParseResult, VideoContent
+from .data import ImageContent, MultipleContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
@@ -212,15 +212,17 @@ class BilibiliParser(BaseParser):
             title, cover, keyframe = await self.parse_live(room_id)
 
             # 下载封面
-
-            cover_path = None
-            if cover_url := (cover or keyframe):
-                cover_path = await DOWNLOADER.download_img(cover_url)
+            cover_path, content = None, None
+            if cover:
+                cover_path = await DOWNLOADER.download_img(cover)
+            if keyframe:
+                content = ImageContent(pic_paths=[await DOWNLOADER.download_img(keyframe)])
 
             return ParseResult(
                 title=title,
                 platform=self.platform_display_name,
                 cover_path=cover_path,
+                content=content,
             )
 
         # 3. 专栏
@@ -229,7 +231,7 @@ class BilibiliParser(BaseParser):
             if not match_result:
                 raise ParseException("无效的专栏链接")
             read_id = int(match_result.group(1))
-            img_urls, texts = await self.parse_read(read_id)
+            texts, img_urls = await self.parse_read(read_id)
             combined_text = "\n".join(texts)
 
             # 下载图片
@@ -250,11 +252,17 @@ class BilibiliParser(BaseParser):
             if not match_result:
                 raise ParseException("无效的收藏夹链接")
             fav_id = int(match_result.group(1))
-            titles, descs = await self.parse_favlist(fav_id)
-            combined = "\n".join(f"{t}: {d}" for t, d in zip(titles, descs))
+            titles, cover_urls = await self.parse_favlist(fav_id)
+
+            # 并发下载封面
+            cover_paths = await DOWNLOADER.download_imgs_without_raise(cover_urls)
+
             return ParseResult(
-                title=combined[:200] + "..." if len(combined) > 200 else combined,
+                title=f"收藏夹: {fav_id}",
                 platform=self.platform_display_name,
+                content=MultipleContent(
+                    text_image_pairs=[(title, cover_path) for title, cover_path in zip(titles, cover_paths)]
+                ),
             )
 
         raise ParseException("不支持的 Bilibili 链接")
@@ -361,7 +369,7 @@ class BilibiliParser(BaseParser):
             read_id (int): 专栏 id
 
         Returns:
-            list[str]: img url or text
+            texts: list[str], urls: list[str]
         """
         from bilibili_api.article import Article
 
