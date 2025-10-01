@@ -51,7 +51,7 @@ def _get_enabled_patterns(platform_parsers: dict[str, type[BaseParser]]) -> list
 
 
 # 缓存结果
-RESULT_CACHE = LimitedSizeDict[tuple[str, tuple[int, int]], ParseResult](max_size=100)
+RESULT_CACHE = LimitedSizeDict[str, ParseResult](max_size=100)
 
 # 构建关键词到平台的映射（keyword -> platform_name）
 KEYWORD_TO_PLATFORM = _build_keyword_to_platform_map(PLATFORM_PARSERS)
@@ -101,7 +101,7 @@ async def _(
 
     # 2. 解析 URL（包含下载资源）
     parser = parser_class()
-    if (key := (matched.string, matched.span())) in RESULT_CACHE:
+    if (key := (matched.group(0))) in RESULT_CACHE:
         logger.debug(f"命中缓存: {key}")
         result = RESULT_CACHE[key]
     else:
