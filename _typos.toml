@@ -2,3 +2,4 @@
 streamd = "streamd"
 detecter = "detecter"
 Detecter = "Detecter"
+mapp = "mapp"
