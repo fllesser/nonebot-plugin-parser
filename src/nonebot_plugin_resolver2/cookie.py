@@ -2,7 +2,7 @@ from http import cookiejar
 from pathlib import Path
 
 
-def save_cookies_to_netscape(cookies_str: str, file_path: Path, domain: str):
+def save_cookies_with_netscape(cookies_str: str, file_path: Path, domain: str):
     """以 netscape 格式保存 cookies
 
     Args:

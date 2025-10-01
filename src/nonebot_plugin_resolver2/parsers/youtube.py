@@ -3,7 +3,8 @@ from typing import ClassVar
 
 from nonebot import logger
 
-from ..config import ytb_cookies_file
+from ..config import rconfig, ytb_cookies_file
+from ..cookie import save_cookies_with_netscape
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
@@ -25,6 +26,8 @@ class YouTubeParser(BaseParser):
 
     def __init__(self):
         self.cookies_file = ytb_cookies_file
+        if rconfig.r_ytb_ck:
+            save_cookies_with_netscape(rconfig.r_ytb_ck, self.cookies_file, "youtube.com")
 
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源

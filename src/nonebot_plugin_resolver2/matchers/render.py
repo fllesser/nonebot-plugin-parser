@@ -5,6 +5,7 @@ from typing import Any
 from nonebot import logger
 from nonebot.internal.matcher import current_bot
 from nonebot_plugin_alconna import Image, UniMessage
+from nonebot_plugin_alconna.uniseg import Text
 
 from ..config import NEED_FORWARD
 from ..parsers.data import AudioContent, ImageContent, ParseResult, VideoContent
@@ -74,7 +75,7 @@ class Renderer:
             else:
                 separate_segs.append(seg)
 
-        messages = []
+        messages: list[UniMessage] = []
 
         # 处理可以合并转发的消息段
         if forwardable_segs:
@@ -86,6 +87,9 @@ class Renderer:
                 messages.append(UniMessage([forward_msg]))
             else:
                 # 直接发送
+                forwardable_segs[:-1] = [
+                    Text(seg + "\n") if isinstance(seg, str) else seg for seg in forwardable_segs[:-1]
+                ]
                 messages.append(UniMessage(forwardable_segs))
 
         # 处理必须单独发送的消息段
