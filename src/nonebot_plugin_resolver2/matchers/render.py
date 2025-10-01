@@ -4,7 +4,7 @@ from typing import Any
 
 from nonebot import logger
 from nonebot.internal.matcher import current_bot
-from nonebot_plugin_alconna import UniMessage
+from nonebot_plugin_alconna import Image, UniMessage
 
 from ..config import NEED_FORWARD
 from ..parsers.data import AudioContent, ImageContent, ParseResult, VideoContent
@@ -60,15 +60,35 @@ class Renderer:
             if result.content.audio_path:
                 segs.append(UniHelper.record_seg(result.content.audio_path))
 
-        # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息
         if not segs:
             return []
 
-        if NEED_FORWARD or len(segs) > 4:
-            # 使用转发消息
-            bot = current_bot.get()
-            forward_msg = UniHelper.construct_forward_message(bot.self_id, segs)
-            return [UniMessage([forward_msg])]
-        else:
-            # 直接发送所有消息段
-            return [UniMessage(segs)]
+        # 分离可以合并转发的消息段(文本和图片)和必须单独发送的消息段(视频、语音、文件)
+        separate_segs = []  # 必须单独发送的消息段(视频、语音、文件)
+        forwardable_segs = []  # 可以合并转发的消息段(文本和图片)
+
+        for seg in segs:
+            # 文本和图片可以合并转发,其他类型(视频、语音、文件)需要单独发送
+            if isinstance(seg, str) or isinstance(seg, Image):
+                forwardable_segs.append(seg)
+            else:
+                separate_segs.append(seg)
+
+        messages = []
+
+        # 处理可以合并转发的消息段
+        if forwardable_segs:
+            # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息
+            if NEED_FORWARD or len(forwardable_segs) > 4:
+                # 使用转发消息
+                bot = current_bot.get()
+                forward_msg = UniHelper.construct_forward_message(bot.self_id, forwardable_segs)
+                messages.append(UniMessage([forward_msg]))
+            else:
+                # 直接发送
+                messages.append(UniMessage(forwardable_segs))
+
+        # 处理必须单独发送的消息段
+        messages.append(UniMessage(separate_segs))
+
+        return messages
