@@ -21,7 +21,7 @@ class WeiBoParser(BaseParser):
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
-        ("weibo.com", r"https?://(?:www\.|m\.)?weibo\.com/[A-Za-z\d._?%&+\-=/#@]+"),
+        ("weibo.com", r"https?://(?:www|m|video)?\.?weibo\.com/[A-Za-z\d._?%&+\-=/#@:]+"),
         ("m.weibo.cn", r"https?://m\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
     ]
 
