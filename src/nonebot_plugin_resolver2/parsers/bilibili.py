@@ -10,7 +10,7 @@ from nonebot import logger
 from ..config import plugin_cache_dir, plugin_config_dir, rconfig
 from ..cookie import ck2dict
 from ..download import DOWNLOADER
-from ..exception import ParseException
+from ..exception import DownloadSizeLimitException, ParseException
 from ..utils import merge_av
 from .base import BaseParser
 from .data import ImageContent, MultipleContent, ParseResult, VideoContent
@@ -70,10 +70,12 @@ class BilibiliParser(BaseParser):
         if video_id:
             if video_id.isdigit():
                 avid = int(video_id)
-                link = f"https://bilibili.com/av{avid}?p={page_num}"
+                link = f"https://bilibili.com/av{avid}"
             else:
                 bvid = video_id
-                link = f"https://bilibili.com/video/{bvid}?p={page_num}"
+                link = f"https://bilibili.com/video/{bvid}"
+            if page_num is not None:
+                link += f"?p={page_num}"
         else:
             if _matched := re.search(r"(BV[\dA-Za-z]{10})[^?]*?(?:\?[^#]*?p=(\d{1,3}))?", url):
                 bvid = _matched.group(1)
@@ -161,22 +163,29 @@ class BilibiliParser(BaseParser):
             cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
 
         # 下载视频
+        content = None
         if not video_path.exists():
             # 下载视频和音频
-            if audio_url is not None:
-                v_path, a_path = await asyncio.gather(
-                    DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=self.headers),
-                    DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=self.headers),
-                )
-                await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
-            else:
-                video_path = await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=self.headers)
+            try:
+                if audio_url is not None:
+                    v_path, a_path = await asyncio.gather(
+                        DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=self.headers),
+                        DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=self.headers),
+                    )
+                    await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
+                else:
+                    video_path = await DOWNLOADER.streamd(
+                        video_url, file_name=f"{file_name}.mp4", ext_headers=self.headers
+                    )
+                content = VideoContent(video_path)
+            except DownloadSizeLimitException:
+                pass
 
         return ParseResult(
             title=title,
             platform=self.platform_display_name,
             cover_path=cover_path,
-            content=VideoContent(video_path),
+            content=content,
             extra_info=extra_info,
         )
 
