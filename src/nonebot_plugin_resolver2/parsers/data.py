@@ -44,7 +44,7 @@ class ParseResult:
     author: str | None = None
     cover_url: str | None = None
     cover_path: Path | None = None
-    content: AudioContent | VideoContent | ImageContent | MultipleContent | None = None
+    content: str | AudioContent | VideoContent | ImageContent | MultipleContent | None = None
     extra_info: str | None = None  # 额外信息，如视频时长、AI总结等
 
     @property

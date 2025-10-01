@@ -66,3 +66,5 @@ weibo:
 - https://weibo.com/7207262816/P5kWdcfDe
 - https://weibo.com/7207262816/O70aCbjnd
 - http://m.weibo.cn/status/5112672433738061
+- ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html 纯文
+- https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html 图文

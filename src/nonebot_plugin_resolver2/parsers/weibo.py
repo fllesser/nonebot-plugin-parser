@@ -2,6 +2,7 @@ import math
 import re
 import time
 from typing import ClassVar
+from typing_extensions import deprecated
 
 import httpx
 import msgspec
@@ -155,11 +156,12 @@ class WeiBoParser(BaseParser):
         elif pic_urls := weibo_data.pic_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
             content = ImageContent(pic_paths=pic_paths)
-
+        elif text := weibo_data.text_content:
+            content = text
         return ParseResult(
-            title=weibo_data.title,
+            title=f"{weibo_data.display_name} 的微博",
             platform=self.platform_display_name,
-            author=weibo_data.source,
+            author=weibo_data.display_name,
             content=content,
         )
 
@@ -195,6 +197,7 @@ class WeiBoParser(BaseParser):
         result.reverse()  # 反转结果数组
         return "".join(result)  # 将结果数组连接成字符串
 
+    @deprecated("弃用")
     async def _parse_mapp_url(self, mapp_url: str) -> ParseResult:
         """解析 mapp.api.weibo.cn 链接
 
@@ -273,18 +276,28 @@ class PageInfo(Struct):
     urls: Urls | None = None
 
 
+class User(Struct):
+    id: int
+    screen_name: str  # user_name
+
+
 class WeiboData(Struct):
+    user: User
     text: str
-    source: str
+    # source: str  # 如 微博网页版
     # region_name: str | None = None
 
     status_title: str | None = None
     pics: list[Pic] | None = None
     page_info: PageInfo | None = None
-    retweeted_status: "WeiboData | None" = None
+    retweeted_status: "WeiboData | None" = None  # 转发微博
 
     @property
-    def title(self) -> str:
+    def display_name(self) -> str:
+        return self.user.screen_name
+
+    @property
+    def text_content(self) -> str:
         # 去除 html 标签
         return re.sub(r"<[^>]*>", "", self.text)
 

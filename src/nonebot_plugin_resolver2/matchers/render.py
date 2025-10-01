@@ -43,6 +43,9 @@ class Renderer:
             # logger.warning(f"解析结果没有内容: {result}")
             pass
 
+        elif isinstance(result.content, str):
+            segs.append(result.content)
+
         elif isinstance(result.content, VideoContent):
             # 视频内容
             if result.content.video_path:
