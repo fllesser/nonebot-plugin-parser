@@ -238,7 +238,7 @@ class BilibiliParser(BaseParser):
             if cover_path:
                 extra["cover_path"] = cover_path
 
-            return self.result(title=title, contents=contents, extra=extra)
+            return self.result(title="直播标题: " + title, contents=contents, extra=extra)
 
         # 3. 专栏
         if "/read" in url:

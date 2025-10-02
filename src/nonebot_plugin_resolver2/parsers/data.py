@@ -96,6 +96,14 @@ class ParseResult:
     """转发的内容"""
 
     @property
+    def header(self) -> str:
+        header = self.platform.display_name
+        if self.author:
+            header += f"| {self.author.name}"
+
+        return header
+
+    @property
     def video_paths(self) -> Sequence[Path]:
         return [cont.path for cont in self.contents if isinstance(cont, VideoContent)]
 
