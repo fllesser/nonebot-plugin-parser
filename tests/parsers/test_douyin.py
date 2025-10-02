@@ -20,7 +20,7 @@ async def test_common_video():
         logger.info(f"{url} | 开始解析抖音视频")
         parse_result = await parser.parse_share_url(url)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
-        assert parse_result.title
+        assert parse_result.text
         assert parse_result.author
         assert parse_result.extra.get("cover_path")
         assert parse_result.video_paths
@@ -67,7 +67,7 @@ async def test_note():
         logger.info(f"{url} | 开始解析抖音图文")
         parse_result = await parser.parse_share_url(url)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
-        assert parse_result.title
+        assert parse_result.text
         assert parse_result.author
         assert parse_result.img_paths
         logger.success(f"{url} | 抖音图文解析成功")

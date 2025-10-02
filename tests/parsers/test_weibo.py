@@ -32,7 +32,10 @@ async def test_repost():
 
     weibo_parser = WeiBoParser()
 
-    urls = ["https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html"]
+    urls = [
+        "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
+        "https://weibo.com/1694917363/Q0KtXh6z2",
+    ]
 
     async def parse_repost(url) -> None:
         logger.info(f"{url} | 开始解析微博转发")
@@ -40,7 +43,7 @@ async def test_repost():
         repost = parse_result.repost
         assert repost
         logger.debug(f"{url} | 转发内容: \n{repost}")
-        assert repost.img_paths
+        assert repost.img_paths or repost.video_paths
 
     await asyncio.gather(*[parse_repost(url) for url in urls])
 
@@ -57,7 +60,6 @@ async def test_video():
         "https://video.weibo.com/show?fid=1034:5145615399845897",
         "https://weibo.com/7207262816/O70aCbjnd",
         "http://m.weibo.cn/status/5112672433738061",
-        "https://weibo.com/1694917363/Q0KtXh6z2",
     ]
 
     async def parse_video(url: str) -> None:
