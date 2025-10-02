@@ -13,7 +13,7 @@ from ..download import DOWNLOADER
 from ..exception import DownloadException, ParseException
 from ..utils import safe_unlink
 from .base import BaseParser
-from .data import COMMON_HEADER, ParseResult, Platform, VideoContent
+from .data import COMMON_HEADER, Author, ParseResult, Platform, VideoContent
 
 
 class AcfunParser(BaseParser):
@@ -153,10 +153,16 @@ class AcfunParser(BaseParser):
 
         # 下载视频
         video_path = await self.download_video(m3u8_url, acid)
+
+        extra = {}
+        if extra_info:
+            extra["info"] = extra_info
+
         return ParseResult(
             title=title,
             platform=self.platform,
-            author=author,
+            content="",
+            author=Author(name=author) if author else None,
             contents=[VideoContent(path=video_path)],
-            extra_info=extra_info,
+            extra=extra,
         )

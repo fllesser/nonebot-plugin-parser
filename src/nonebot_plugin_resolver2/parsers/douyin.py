@@ -11,7 +11,17 @@ from ..constants import COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ANDROID_HEADER, IOS_HEADER, Content, DynamicContent, ImageContent, ParseResult, Platform, VideoContent
+from .data import (
+    ANDROID_HEADER,
+    IOS_HEADER,
+    Author,
+    Content,
+    DynamicContent,
+    ImageContent,
+    ParseResult,
+    Platform,
+    VideoContent,
+)
 from .utils import get_redirect_url
 
 
@@ -94,12 +104,17 @@ class DouyinParser(BaseParser):
             video_path = await DOWNLOADER.download_video(video_url)
             contents.append(VideoContent(video_path))
 
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
+
         return ParseResult(
             title=video_data.desc,
             platform=self.platform,
-            cover_path=cover_path,
-            author=video_data.author.nickname,
+            content="",
+            author=Author(name=video_data.author.nickname) if video_data.author.nickname else None,
             contents=contents,
+            extra=extra,
         )
 
     def _extract_data(self, text: str) -> "VideoData":
@@ -155,7 +170,8 @@ class DouyinParser(BaseParser):
         return ParseResult(
             title=slides_data.share_info.share_desc_info,
             platform=self.platform,
-            author=slides_data.author.nickname,
+            content="",
+            author=Author(name=slides_data.author.nickname) if slides_data.author.nickname else None,
             contents=contents,
         )
 
@@ -201,12 +217,12 @@ class ShareInfo(Struct):
     share_desc_info: str
 
 
-class Author(Struct):
+class DouyinAuthor(Struct):
     nickname: str
 
 
 class SlidesData(Struct):
-    author: Author
+    author: DouyinAuthor
     share_info: ShareInfo
     images: list[Image]
 
@@ -224,7 +240,7 @@ class SlidesInfo(Struct):
 
 
 class VideoData(Struct):
-    author: Author
+    author: DouyinAuthor
     desc: str
     images: list[Image] | None = None
     video: Video | None = None

@@ -125,5 +125,6 @@ class TwitterParser(BaseParser):
         return ParseResult(
             title="",  # 推特解析不包含标题
             platform=self.platform,
+            content="",
             contents=contents,
         )

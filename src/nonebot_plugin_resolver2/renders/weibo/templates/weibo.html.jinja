@@ -226,6 +226,83 @@
             font-weight: 500;
         }
 
+        /* 转发微博样式 */
+        .repost-card {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f7f7f7;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .repost-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .repost-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: var(--border-color);
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .repost-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .repost-avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #a8b5ff 0%, #c9a0dc 100%);
+        }
+
+        .repost-username {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-text);
+            margin: 0;
+        }
+
+        .repost-text {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--primary-text);
+            margin-bottom: 8px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .repost-text a {
+            color: var(--link-color);
+        }
+
+        .repost-media {
+            margin-top: 8px;
+        }
+
+        .repost-media .media-grid {
+            gap: 3px;
+        }
+
+        .repost-media .media-item {
+            min-height: 100px;
+        }
+
+        .repost-media .media-item img {
+            max-height: 300px;
+        }
+
+        .repost-media .video-placeholder {
+            min-height: 200px;
+        }
+
         /* 响应式 */
         @media (max-width: 640px) {
             .weibo-card {
@@ -242,21 +319,22 @@
         <header class="weibo-header">
             <div class="avatar-wrapper">
                 <div class="avatar">
+                    {% if result.author and result.author.avatar %}
+                    <img src="{{ result.author.avatar }}" alt="用户头像" loading="lazy">
+                    {% else %}
                     <div class="avatar-placeholder"></div>
+                    {% endif %}
                 </div>
             </div>
             <div class="user-info">
-                <h3 class="username">{{ result.author or "微博用户" }}</h3>
-                <p class="platform">来自 {{ result.platform.display_name }}</p>
+                <h3 class="username">{{ result.author.name or "微博用户" }}</h3>
             </div>
         </header>
 
         <!-- 正文内容 -->
         <article class="weibo-content">
             <!-- 文本内容 -->
-            {% if str_content %}
-            <div class="weibo-text">{{ str_content | safe }}</div>
-            {% endif %}
+            <div class="weibo-text">{{ result.content | safe }}</div>
 
             <!-- 图片内容 -->
             {% if result.img_paths and result.img_paths | length > 0 %}
@@ -280,8 +358,57 @@
                     <div class="video-icon">▶️</div>
                     <div class="video-text">点击查看视频 {{ loop.index }}</div>
                 </a>
-                {% endfor %}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <!-- 转发的微博 -->
+            {% if result.repost %}
+            <div class="repost-card">
+                <!-- 原微博作者信息 -->
+                <div class="repost-header">
+                    <div class="repost-avatar">
+                        {% if result.repost.author and result.repost.author.avatar %}
+                        <img src="{{ result.repost.author.avatar }}" alt="原作者头像" loading="lazy">
+                        {% else %}
+                        <div class="repost-avatar-placeholder"></div>
+                        {% endif %}
+                    </div>
+                    <h4 class="repost-username">{{ result.repost.author.name if result.repost.author else "微博用户" }}</h4>
+                </div>
+
+                <!-- 原微博文本 -->
+                {% if result.repost.content %}
+                <div class="repost-text">{{ result.repost.content | safe }}</div>
                 {% endif %}
+
+                <!-- 原微博图片 -->
+                {% if result.repost.img_paths and result.repost.img_paths | length > 0 %}
+                <div class="repost-media">
+                    <div
+                        class="media-grid media-grid-{{ result.repost.img_paths | length if result.repost.img_paths | length <= 9 else 9 }}">
+                        {% for img_path in result.repost.img_paths[:9] %}
+                        <div class="media-item">
+                            <img src="file://{{ img_path }}" alt="图片{{ loop.index }}" loading="lazy">
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- 原微博视频 -->
+                {% if result.repost.video_paths and result.repost.video_paths | length > 0 %}
+                <div class="repost-media">
+                    {% for video_path in result.repost.video_paths %}
+                    <a href="file://{{ video_path }}" target="_blank" class="video-placeholder">
+                        <div class="video-icon">▶️</div>
+                        <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
         </article>
     </div>
 </body>

@@ -11,7 +11,7 @@ from ..download import DOWNLOADER
 from ..exception import ParseException
 from ..parsers.utils import get_redirect_url
 from .base import BaseParser
-from .data import Content, ImageContent, ParseResult, Platform, VideoContent
+from .data import Author, Content, ImageContent, ParseResult, Platform, VideoContent
 
 
 class WeiBoParser(BaseParser):
@@ -97,12 +97,17 @@ class WeiBoParser(BaseParser):
         cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
         video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
 
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
+
         return ParseResult(
             title=data["title"],
             platform=self.platform,
-            cover_path=cover_path,
-            author=data["author"],
+            content="",
+            author=Author(name=data["author"]) if data.get("author") else None,
             contents=[VideoContent(video_path)],
+            extra=extra,
         )
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
@@ -144,26 +149,31 @@ class WeiBoParser(BaseParser):
         # 用 bytes 更稳，避免编码歧义
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
 
+        return await self._parse_weibodata(weibo_data)
+
+    async def _parse_weibodata(self, data: "WeiboData") -> ParseResult:
+        """解析 WeiboData 对象，返回 ParseResult"""
+        repost = None
+        if data.retweeted_status:
+            repost = await self._parse_weibodata(data.retweeted_status)
+
         # 下载内容
         contents: list[Content] = []
-
-        # 添加文本内容
-        if text := weibo_data.text_content:
-            contents.append(text)
-
-        if video_url := weibo_data.video_url:
+        if video_url := data.video_url:
             video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
             contents.append(VideoContent(video_path))
 
-        if pic_urls := weibo_data.pic_urls:
+        if pic_urls := data.pic_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
             contents.extend(ImageContent(path) for path in pic_paths)
 
         return ParseResult(
-            title=f"{weibo_data.display_name} 的微博",
             platform=self.platform,
-            author=weibo_data.display_name,
+            content=data.text_content,
+            author=Author(name=data.display_name, avatar=data.user.profile_image_url),
             contents=contents,
+            url=f"https://weibo.com/{data.user.id}/{data.bid}",
+            repost=repost,
         )
 
     def _base62_encode(self, number: int) -> str:
@@ -226,7 +236,10 @@ class PageInfo(Struct):
 
 class User(Struct):
     id: int
-    screen_name: str  # user_name
+    screen_name: str
+    """用户昵称"""
+    profile_image_url: str
+    """头像"""
 
 
 class WeiboData(Struct):
@@ -234,6 +247,8 @@ class WeiboData(Struct):
     text: str
     # source: str  # 如 微博网页版
     # region_name: str | None = None
+
+    bid: str
 
     status_title: str | None = None
     pics: list[Pic] | None = None

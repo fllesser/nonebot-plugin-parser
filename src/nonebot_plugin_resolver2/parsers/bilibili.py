@@ -87,7 +87,7 @@ class BilibiliParser(BaseParser):
 
         # 解析视频信息
         parser_result = await self.parse_video(bvid=bvid, avid=avid, page_num=page_num)
-        if link is not None:
+        if link is not None and parser_result.title:
             parser_result.title += f"\n{link}"
         return parser_result
 
@@ -180,12 +180,18 @@ class BilibiliParser(BaseParser):
         if video_path.exists():
             contents.append(VideoContent(video_path))
 
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
+        if extra_info:
+            extra["info"] = extra_info
+
         return ParseResult(
             title=title,
             platform=self.platform,
-            cover_path=cover_path,
+            content="",
             contents=contents,
-            extra_info=extra_info,
+            extra=extra,
         )
 
     async def parse_others(self, url: str) -> ParseResult:
@@ -209,6 +215,7 @@ class BilibiliParser(BaseParser):
             return ParseResult(
                 title=f"动态 {opus_id}",
                 platform=self.platform,
+                content="",
                 contents=contents,
             )
 
@@ -232,11 +239,16 @@ class BilibiliParser(BaseParser):
                 keyframe_path = await DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
                 contents.append(ImageContent(keyframe_path))
 
+            extra = {}
+            if cover_path:
+                extra["cover_path"] = cover_path
+
             return ParseResult(
                 title=title,
                 platform=self.platform,
-                cover_path=cover_path,
+                content="",
                 contents=contents,
+                extra=extra,
             )
 
         # 3. 专栏
@@ -257,6 +269,7 @@ class BilibiliParser(BaseParser):
             return ParseResult(
                 title=combined_text[:100] + "..." if len(combined_text) > 100 else combined_text,
                 platform=self.platform,
+                content="",
                 contents=contents,
             )
 
@@ -274,6 +287,7 @@ class BilibiliParser(BaseParser):
             return ParseResult(
                 title=f"收藏夹: {fav_id}",
                 platform=self.platform,
+                content="",
                 contents=[TextImageContent(title, cover_path) for title, cover_path in zip(titles, cover_paths)],
             )
 

@@ -23,9 +23,18 @@ class Renderer(BaseRenderer):
             list[UniMessage]: 消息列表
         """
         # 构建消息段列表
-        separate_segs, forwardable_segs = result.convert_segs()
         messages: list[UniMessage] = []
 
+        first_message = UniMessage()
+        if cover_path := result.extra.get("cover_path"):
+            # 先发送封面
+            first_message += UniHelper.img_seg(cover_path)
+        if result.title:
+            first_message += Text(result.title)
+        if info := result.extra.get("info"):
+            first_message += Text(info)
+
+        separate_segs, forwardable_segs = result.convert_segs()
         # 处理可以合并转发的消息段
         if forwardable_segs:
             # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息

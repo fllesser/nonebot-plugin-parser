@@ -138,7 +138,11 @@ class Photo(Struct):
             pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=ext_headers)
             contents.extend(ImageContent(path) for path in pic_paths)
 
-        return ParseResult(title=self.caption, platform=platform, cover_path=cover_path, contents=contents)
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
+
+        return ParseResult(title=self.caption, platform=platform, content="", contents=contents, extra=extra)
 
 
 class TusjohData(Struct):

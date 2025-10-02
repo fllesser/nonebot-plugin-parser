@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from ..constants import ANDROID_HEADER as ANDROID_HEADER
 from ..constants import COMMON_HEADER as COMMON_HEADER
@@ -59,15 +60,39 @@ class Platform:
 
 
 @dataclass
+class Author:
+    """作者信息"""
+
+    name: str
+    """作者名称"""
+    avatar: str | Path | None = None
+    """作者头像 URL 或本地路径"""
+    description: str | None = None
+    """作者个性签名等"""
+
+
+@dataclass
 class ParseResult:
     """完整的解析结果"""
 
-    title: str
     platform: Platform
-    author: str | None = None
-    cover_path: Path | None = None
+    """平台信息"""
+    content: str
+    """文本内容"""
+    title: str | None = None
+    """标题"""
     contents: list[Content] = field(default_factory=list)
-    extra_info: str | None = None  # 额外信息，如视频时长、AI总结等
+    """内容列表，主体以外的内容"""
+    timestamp: float | None = None
+    """发布/获取时间戳, 秒"""
+    url: str | None = None
+    """来源链接"""
+    author: Author | None = None
+    """作者信息"""
+    extra: dict[str, Any] = field(default_factory=dict)
+    """额外信息"""
+    repost: "ParseResult | None" = None
+    """转发的内容"""
 
     @property
     def video_paths(self) -> Sequence[Path]:
@@ -101,15 +126,6 @@ class ParseResult:
         separate_segs: list[Segment] = []
         forwardable_segs: list[str | Segment | UniMessage] = []
 
-        if self.title:
-            forwardable_segs.append(f"标题: {self.title}")
-
-        if self.extra_info:
-            forwardable_segs.append(self.extra_info)
-
-        if self.cover_path:
-            forwardable_segs.append(UniHelper.img_seg(self.cover_path))
-
         for cont in self.contents:
             match cont:
                 case str():
@@ -117,11 +133,10 @@ class ParseResult:
                 case ImageContent(path):
                     forwardable_segs.append(UniHelper.img_seg(path))
                 case DynamicContent(path):
-                    # git_path
+                    # gif_path
                     forwardable_segs.append(UniHelper.video_seg(path))
                 case TextImageContent(text, image_path):
                     forwardable_segs.append(text + UniHelper.img_seg(image_path))
-
                 case AudioContent(path):
                     separate_segs.append(UniHelper.record_seg(path))
                 case VideoContent(path):
@@ -130,7 +145,4 @@ class ParseResult:
         return separate_segs, forwardable_segs
 
     def __str__(self) -> str:
-        return (
-            f"title: {self.title}\nplatform: {self.platform}\nauthor: {self.author}\n"
-            f"cover_path: {self.cover_path}\ncontents: {self.contents}"
-        )
+        return f"title: {self.title}\nplatform: {self.platform}\nauthor: {self.author}\ncontents: {self.contents}"
