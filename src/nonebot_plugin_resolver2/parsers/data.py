@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from itertools import chain
 from pathlib import Path
 from typing import Any
 
@@ -126,7 +127,7 @@ class ParseResult:
         separate_segs: list[Segment] = []
         forwardable_segs: list[str | Segment | UniMessage] = []
 
-        for cont in self.contents:
+        for cont in chain(self.contents, self.repost.contents if self.repost else ()):
             match cont:
                 case str():
                     forwardable_segs.append(cont)

@@ -271,16 +271,16 @@ class WeiboData(Struct):
     def video_url(self) -> str | None:
         if self.page_info and self.page_info.urls:
             return self.page_info.urls.get_video_url()
-        if self.retweeted_status and self.retweeted_status.page_info and self.retweeted_status.page_info.urls:
-            return self.retweeted_status.page_info.urls.get_video_url()
+        # if self.retweeted_status and self.retweeted_status.page_info and self.retweeted_status.page_info.urls:
+        #     return self.retweeted_status.page_info.urls.get_video_url()
         return None
 
     @property
     def pic_urls(self) -> list[str]:
         if self.pics:
             return [x.large.url for x in self.pics]
-        if self.retweeted_status and self.retweeted_status.pics:
-            return [x.large.url for x in self.retweeted_status.pics]
+        # if self.retweeted_status and self.retweeted_status.pics:
+        #     return [x.large.url for x in self.retweeted_status.pics]
         return []
 
 
