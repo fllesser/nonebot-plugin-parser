@@ -98,6 +98,8 @@ class ParseResult:
     """标题"""
     text: str = ""
     """文本内容"""
+    cover_path: Path | None = None
+    """封面"""
     contents: list[Content] = field(default_factory=list)
     """内容列表，主体以外的内容"""
     timestamp: float | None = None
@@ -180,6 +182,7 @@ from typing import Any, TypedDict
 class ParseResultKwargs(TypedDict, total=False):
     title: str
     text: str
+    cover_path: Path | None
     contents: list[Content]
     timestamp: float | None
     url: str | None

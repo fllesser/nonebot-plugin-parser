@@ -179,19 +179,13 @@ class BilibiliParser(BaseParser):
             except DownloadSizeLimitException as e:
                 contents.append(e.message)
 
-        if video_path.exists():
-            contents.append(VideoContent(video_path))
-
-        extra = {}
-        if cover_path:
-            extra["cover_path"] = cover_path
-        if extra_info:
-            extra["info"] = extra_info
+        contents.append(VideoContent(video_path, cover_path=cover_path))
 
         return self.result(
             title=title,
+            cover_path=cover_path,
             contents=contents,
-            extra=extra,
+            extra={"info": extra_info},
         )
 
     async def parse_others(self, url: str):
@@ -234,11 +228,7 @@ class BilibiliParser(BaseParser):
                 keyframe_path = await DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
                 contents.append(ImageContent(keyframe_path))
 
-            extra = {}
-            if cover_path:
-                extra["cover_path"] = cover_path
-
-            return self.result(title="直播标题: " + title, contents=contents, extra=extra)
+            return self.result(title="直播标题: " + title, cover_path=cover_path, contents=contents)
 
         # 3. 专栏
         if "/read" in url:

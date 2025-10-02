@@ -103,17 +103,13 @@ class DouyinParser(BaseParser):
         elif video_url := video_data.video_url:
             video_url = await get_redirect_url(video_url)
             video_path = await DOWNLOADER.download_video(video_url)
-            contents.append(VideoContent(video_path))
-
-        extra = {}
-        if cover_path:
-            extra["cover_path"] = cover_path
+            contents.append(VideoContent(video_path, cover_path=cover_path))
 
         return self.result(
             text=video_data.desc,
             author=Author(name=video_data.author.nickname) if video_data.author.nickname else None,
+            cover_path=cover_path,
             contents=contents,
-            extra=extra,
         )
 
     def _extract_data(self, text: str) -> "VideoData":

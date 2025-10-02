@@ -89,11 +89,7 @@ class KuaiShouParser(BaseParser):
             pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
             contents.extend(ImageContent(path) for path in pic_paths)
 
-        extra = {}
-        if cover_path:
-            extra["cover_path"] = cover_path
-
-        return self.result(title=photo.caption, contents=contents, extra=extra)
+        return self.result(title=photo.caption, cover_path=cover_path, contents=contents)
 
 
 from typing import TypeAlias

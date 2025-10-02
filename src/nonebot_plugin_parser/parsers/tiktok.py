@@ -48,13 +48,9 @@ class TikTokParser(BaseParser):
 
         video_path = await YTDLP_DOWNLOADER.download_video(url)
 
-        extra = {}
-        if cover_path:
-            extra["cover_path"] = cover_path
-
         return self.result(
             title=title,
             author=Author(name=author) if author else None,
+            cover_path=cover_path,
             contents=[VideoContent(video_path, cover_path=cover_path, duration=duration)],
-            extra=extra,
         )

@@ -98,15 +98,11 @@ class XiaoHongShuParser(BaseParser):
             pic_paths = await DOWNLOADER.download_imgs_without_raise(note_detail.img_urls)
             contents.extend(ImageContent(path) for path in pic_paths)
 
-        extra = {}
-        if cover_path:
-            extra["cover_path"] = cover_path
-
         return self.result(
             title=note_detail.title_desc,
-            contents=contents,
             author=Author(name=note_detail.user.nickname) if note_detail.user.nickname else None,
-            extra=extra,
+            cover_path=cover_path,
+            contents=contents,
         )
 
 

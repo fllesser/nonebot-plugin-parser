@@ -29,8 +29,8 @@ class Renderer(BaseRenderer):
         texts = (text for text in texts if text)
         first_message = UniMessage("\n".join(texts))
 
-        if cover_path := result.extra.get("cover_path"):
-            first_message += UniHelper.img_seg(cover_path)
+        if result.cover_path:
+            first_message += UniHelper.img_seg(result.cover_path)
 
         if first_message:
             messages.append(first_message)
