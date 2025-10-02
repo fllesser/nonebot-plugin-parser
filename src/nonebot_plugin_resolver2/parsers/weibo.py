@@ -174,6 +174,7 @@ class WeiBoParser(BaseParser):
             contents=contents,
             url=f"https://weibo.com/{data.user.id}/{data.bid}",
             repost=repost,
+            timestamp=time.mktime(time.strptime(data.created_at, "%a %b %d %H:%M:%S %z %Y")),
         )
 
     def _base62_encode(self, number: int) -> str:
@@ -249,6 +250,11 @@ class WeiboData(Struct):
     # region_name: str | None = None
 
     bid: str
+    created_at: str
+    """发布时间
+
+    格式: `Thu Oct 02 14:39:33 +0800 2025`
+    """
 
     status_title: str | None = None
     pics: list[Pic] | None = None

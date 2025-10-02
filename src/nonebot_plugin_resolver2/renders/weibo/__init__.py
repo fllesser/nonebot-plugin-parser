@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 from nonebot_plugin_alconna import Image, Text, UniMessage
@@ -9,18 +10,22 @@ from nonebot_plugin_resolver2.parsers import ParseResult
 from nonebot_plugin_resolver2.renders.base import BaseRenderer
 
 
+def format_datetime(timestamp: float, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+    """格式化时间戳为字符串"""
+    return datetime.fromtimestamp(timestamp).strftime(fmt)
+
+
 class Renderer(BaseRenderer):
     @staticmethod
     async def render_messages(result: ParseResult) -> list[UniMessage]:
-        str_content = "\n".join(item for item in result.contents if isinstance(item, str))
-
         messages = []
 
         # 生成图片消息
         image = await template_to_pic(
             str(Path(__file__).parent / "templates"),
             "weibo.html.jinja",
-            templates={"result": result, "str_content": str_content},
+            templates={"result": result},
+            filters={"format_datetime": format_datetime},
         )
         image_message_segs = [
             Text(f"{result.author.name} 的微博\n" if result.author else "微博\n"),
