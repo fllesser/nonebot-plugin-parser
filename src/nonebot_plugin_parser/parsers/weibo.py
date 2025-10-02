@@ -97,15 +97,11 @@ class WeiBoParser(BaseParser):
         cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
         video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
 
-        extra = {}
-        if cover_path:
-            extra["cover_path"] = cover_path
-
         return self.result(
             title=data["title"],
             author=Author(name=data["author"]) if data.get("author") else None,
+            cover_path=cover_path,
             contents=[VideoContent(video_path)],
-            extra=extra,
         )
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:

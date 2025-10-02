@@ -89,8 +89,8 @@ class BilibiliParser(BaseParser):
 
         # 解析视频信息
         parser_result = await self.parse_video(bvid=bvid, avid=avid, page_num=page_num)
-        if link is not None and parser_result.title:
-            parser_result.title += f"\n{link}"
+        if link is not None:
+            parser_result.url = link
         return parser_result
 
     async def parse_video(
@@ -179,19 +179,13 @@ class BilibiliParser(BaseParser):
             except DownloadSizeLimitException as e:
                 contents.append(e.message)
 
-        if video_path.exists():
-            contents.append(VideoContent(video_path))
-
-        extra = {}
-        if cover_path:
-            extra["cover_path"] = cover_path
-        if extra_info:
-            extra["info"] = extra_info
+        contents.append(VideoContent(video_path, cover_path=cover_path))
 
         return self.result(
             title=title,
+            cover_path=cover_path,
             contents=contents,
-            extra=extra,
+            extra={"info": extra_info},
         )
 
     async def parse_others(self, url: str):
@@ -212,7 +206,7 @@ class BilibiliParser(BaseParser):
                 pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
                 contents.extend(ImageContent(path) for path in pic_paths)
 
-            return self.result(title=f"动态 {opus_id}", contents=contents)
+            return self.result(title=f"动态 - {opus_id}", contents=contents)
 
         # 2. 直播
         if "/live" in url:
@@ -234,11 +228,7 @@ class BilibiliParser(BaseParser):
                 keyframe_path = await DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
                 contents.append(ImageContent(keyframe_path))
 
-            extra = {}
-            if cover_path:
-                extra["cover_path"] = cover_path
-
-            return self.result(title="直播标题: " + title, contents=contents, extra=extra)
+            return self.result(title="直播 - " + title, cover_path=cover_path, contents=contents)
 
         # 3. 专栏
         if "/read" in url:
@@ -256,7 +246,7 @@ class BilibiliParser(BaseParser):
                 pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
                 contents.extend(ImageContent(path) for path in pic_paths)
 
-            return self.result(contents=contents)
+            return self.result(title=f"专栏 - {read_id}", contents=contents)
 
         # 4. 收藏夹
         if "/favlist" in url:
@@ -270,7 +260,7 @@ class BilibiliParser(BaseParser):
             cover_paths = await DOWNLOADER.download_imgs_without_raise(cover_urls, ext_headers=self.headers)
 
             return self.result(
-                title=f"收藏夹: {fav_id}",
+                title=f"收藏夹 - {fav_id}",
                 contents=[TextImageContent(title, cover_path) for title, cover_path in zip(titles, cover_paths)],
             )
 

@@ -52,15 +52,11 @@ class YouTubeParser(BaseParser):
 
         video_path = await YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
 
-        extra = {}
-        if cover_path:
-            extra["cover_path"] = cover_path
-
         return self.result(
             title=title,
             author=Author(name=author) if author else None,
+            cover_path=cover_path,
             contents=[VideoContent(video_path, duration=duration, cover_path=cover_path)],
-            extra=extra,
         )
 
     async def parse_url_as_audio(self, url: str) -> ParseResult:
@@ -85,13 +81,9 @@ class YouTubeParser(BaseParser):
 
         audio_path = await YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
 
-        extra = {}
-        if cover_path:
-            extra["cover_path"] = cover_path
-
         return self.result(
             title=title,
             author=Author(name=author) if author else None,
+            cover_path=cover_path,
             contents=[AudioContent(audio_path, duration)],
-            extra=extra,
         )

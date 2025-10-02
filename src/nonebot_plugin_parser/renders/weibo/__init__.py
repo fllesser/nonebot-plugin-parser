@@ -42,16 +42,13 @@ class Renderer(BaseRenderer):
         # 处理可以合并转发的消息段
         if forwardable_segs:
             # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息
-            if NEED_FORWARD or len(forwardable_segs) > 4:
+            if NEED_FORWARD or len(forwardable_segs) > 2:
                 # 使用转发消息
                 bot = current_bot.get()
                 forward_msg = UniHelper.construct_forward_message(bot.self_id, forwardable_segs)
                 messages.append(UniMessage([forward_msg]))
             else:
-                # 直接发送
-                forwardable_segs[:-1] = [
-                    Text(seg + "\n") if isinstance(seg, str) else seg for seg in forwardable_segs[:-1]
-                ]
+                forwardable_segs[:-1] = [seg + "\n" for seg in forwardable_segs[:-1]]
                 # 单条消息
                 single_msg = UniMessage()
                 for seg in forwardable_segs:

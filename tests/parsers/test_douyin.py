@@ -22,7 +22,7 @@ async def test_common_video():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.text
         assert parse_result.author
-        assert parse_result.extra.get("cover_path")
+        assert parse_result.cover_path
         assert parse_result.video_paths
         logger.success(f"{url} | 抖音视频解析成功")
 
