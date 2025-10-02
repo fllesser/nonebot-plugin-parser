@@ -8,7 +8,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_live():
     logger.info("开始解析B站直播 https://live.bilibili.com/6")
-    from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_parser.parsers import BilibiliParser
 
     # https://live.bilibili.com/1
     room_id = 1
@@ -29,7 +29,7 @@ async def test_live():
 @pytest.mark.asyncio
 async def test_read():
     logger.info("开始解析B站图文 https://www.bilibili.com/read/cv523868")
-    from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_parser.parsers import BilibiliParser
 
     # https://www.bilibili.com/read/cv523868
     read_id = 523868
@@ -45,8 +45,8 @@ async def test_read():
 
 @pytest.mark.asyncio
 async def test_opus():
-    from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_parser.download import DOWNLOADER
+    from nonebot_plugin_parser.parsers import BilibiliParser
 
     opus_urls = [
         "https://www.bilibili.com/opus/998440765151510535",

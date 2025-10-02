@@ -4,22 +4,22 @@
 </a>
 
 ## ✨ [Nonebot2](https://github.com/nonebot/nonebot2) 链接分享自动解析插件 ✨
-[![LICENSE](https://img.shields.io/github/license/fllesser/nonebot-plugin-resolver2.svg)](./LICENSE)
-[![pypi](https://img.shields.io/pypi/v/nonebot-plugin-resolver2.svg)](https://pypi.python.org/pypi/nonebot-plugin-resolver2)
+[![LICENSE](https://img.shields.io/github/license/fllesser/nonebot-plugin-parser.svg)](./LICENSE)
+[![pypi](https://img.shields.io/pypi/v/nonebot-plugin-parser.svg)](https://pypi.python.org/pypi/nonebot-plugin-parser)
 [![python](https://img.shields.io/badge/python-3.10|3.11|3.12|3.13-blue.svg)](https://python.org)
 [![uv](https://img.shields.io/badge/package%20manager-uv-black?style=flat-square&logo=uv)](https://github.com/astral-sh/uv)
 [![ruff](https://img.shields.io/badge/code%20style-ruff-black?style=flat-square&logo=ruff)](https://github.com/astral-sh/ruff)
 <br/>
-[![pre-commit](https://results.pre-commit.ci/badge/github/fllesser/nonebot-plugin-resolver2/master.svg)](https://results.pre-commit.ci/latest/github/fllesser/nonebot-plugin-resolver2/master)
-[![codecov](https://codecov.io/gh/fllesser/nonebot-plugin-resolver2/graph/badge.svg?token=VCS8IHSO7U)](https://codecov.io/gh/fllesser/nonebot-plugin-resolver2)
-[![pepy](https://static.pepy.tech/badge/nonebot-plugin-resolver2)](https://pepy.tech/projects/nonebot-plugin-resolver2)
+[![pre-commit](https://results.pre-commit.ci/badge/github/fllesser/nonebot-plugin-parser/master.svg)](https://results.pre-commit.ci/latest/github/fllesser/nonebot-plugin-parser/master)
+[![codecov](https://codecov.io/gh/fllesser/nonebot-plugin-parser/graph/badge.svg?token=VCS8IHSO7U)](https://codecov.io/gh/fllesser/nonebot-plugin-parser)
+[![pepy](https://static.pepy.tech/badge/nonebot-plugin-parser)](https://pepy.tech/projects/nonebot-plugin-parser)
 
 </div>
 
 > [!IMPORTANT]
 > **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～⭐️
 
-<img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=fllesser&repo=nonebot-plugin-resolver2" alt="starify" />
+<img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=fllesser&repo=nonebot-plugin-parser" alt="starify" />
 
 ## 📖 介绍
 
@@ -37,7 +37,7 @@
 | tiktok  | 链接                                  | ✅​   | ❌️    | ❌️    |
 | twitter | 链接                                  | ✅​   | ✅​   | ❌️    |
 
-支持的链接，可参考 [测试链接](https://github.com/fllesser/nonebot-plugin-resolver2/blob/master/test_url.md)
+支持的链接，可参考 [测试链接](https://github.com/fllesser/nonebot-plugin-parser/blob/master/test_url.md)
 
 ## 💿 安装
 > [!Warning]
@@ -47,13 +47,13 @@
 <summary>使用 nb-cli 安装/更新</summary>
 在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
 
-    nb plugin install nonebot-plugin-resolver2 --upgrade
+    nb plugin install nonebot-plugin-parser --upgrade
 使用 pypi 源更新
 
-    nb plugin install nonebot-plugin-resolver2 --upgrade -i https://pypi.org/simple
+    nb plugin install nonebot-plugin-parser --upgrade -i https://pypi.org/simple
 安装仓库 dev 分支
 
-    uv pip install git+https://github.com/fllesser/nonebot-plugin-resolver2.git@dev
+    uv pip install git+https://github.com/fllesser/nonebot-plugin-parser.git@dev
 </details>
 
 <details>
@@ -63,32 +63,32 @@
 <summary>uv</summary>
 使用 uv 安装
 
-    uv add nonebot-plugin-resolver2
+    uv add nonebot-plugin-parser
 安装仓库 dev 分支
 
-    uv add git+https://github.com/fllesser/nonebot-plugin-resolver2.git@master
+    uv add git+https://github.com/fllesser/nonebot-plugin-parser.git@master
 </details>
 
 
 <details>
 <summary>pip</summary>
 
-    pip install --upgrade nonebot-plugin-resolver2
+    pip install --upgrade nonebot-plugin-parser
 </details>
 <details>
 <summary>pdm</summary>
 
-    pdm add nonebot-plugin-resolver2
+    pdm add nonebot-plugin-parser
 </details>
 <details>
 <summary>poetry</summary>
 
-    poetry add nonebot-plugin-resolver2
+    poetry add nonebot-plugin-parser
 </details>
 
 打开 nonebot2 项目根目录下的 `pyproject.toml` 文件, 在 `[tool.nonebot]` 部分追加写入
 
-    plugins = ["nonebot_plugin_resolver2"]
+    plugins = ["nonebot_plugin_parser"]
 
 </details>
 
@@ -109,21 +109,21 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 
 在 nonebot2 项目的`.env`文件中添加下表中的必填配置
 
-|          配置项          | 必填  |          默认值          |                                                                                                                                        说明                                                                                                                                        |
-| :----------------------: | :---: | :----------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-|         NICKNAME         |  否   |           [""]           |                                                                                                                    nonebot2 内置配置，可作为解析结果消息的前缀                                                                                                                     |
-|       API_TIMEOUT        |  否   |           30.0           |                                                                                                            nonebot2 内置配置，若服务器上传带宽太低，建议调高，防止超时                                                                                                             |
-|         r_xhs_ck         |  否   |            ""            |                                                                                                                                   小红书 cookie                                                                                                                                    |
-|        r_bili_ck         |  否   |            ""            | B 站 cookie, 必须含有 SESSDATA 项，可附加 B 站 AI 总结功能, 如果需要长期使用此凭据则不应该在**浏览器登录账户**导致 cookie 被刷新，建议注册个小号获取, 也可以配置 ac_time_value 项，用于凭据的自动刷新，[获取方式](https://github.com/fllesser/nonebot-plugin-resolver2/issues/177) |
-|    r_bili_video_codes    |  否   | '["avc", "av01", "hev"]' |                                                    允许的 B 站视频编码，越靠前的编码优先级越高，可选 "avc"(H.264，体积较大), "hev"(HEVC), "av01"(AV1), 后两项在不同设备可能有兼容性问题，如需完全避免，可只填一项，如 '["avc"]'                                                    |
-|         r_ytb_ck         |  否   |            ""            |                                                                                                                Youtube cookie, Youtube 视频因人机检测下载失败，需填                                                                                                                |
-|         r_proxy          |  否   |           None           |                                                                                   仅作用于 youtube, tiktok 解析，推特解析会自动读取环境变量中的 http_proxy / https_proxy(代理软件通常会自动设置)                                                                                   |
-|      r_need_upload       |  否   |          False           |                                                                                                                            音频解析，是否需要上传群文件                                                                                                                            |
-|      r_need_forward      |  否   |           True           |                                                                                          **不超过** 4 条的解析消息是否需要合并转发，配置为 False ，超过4条的解析消息仍然会用合并转发包裹                                                                                           |
-|       r_use_base64       |  否   |          False           |                           视频，图片，音频是否使用 base64 发送，注意：编解码和传输 base64 会占用更多的内存,性能和带宽, 甚至可能会使 websocket 连接崩溃，因此该配置项仅推荐 nonebot 和 协议端不在同一机器，或者使用 docker 懒得映射插件缓存目录的用户配置                           |
-| r_video_duration_maximum |  否   |           480            |                                                                                                                          B站视频最大解析时长，单位：_秒_                                                                                                                           |
-|        r_max_size        |  否   |           100            |                                                                                                               音视频下载最大文件大小，单位 MB，超过该配置将阻断下载                                                                                                                |
-|   r_disabled_platforms   |  否   |            []            |                                   全局禁止的解析，示例 r_disabled_platforms=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kuaishou", "twitter", "youtube", "acfun", "tiktok", "weibo", "xiaohongshu"]                                   |
+|          配置项          | 必填  |          默认值          |                                                                                                                                      说明                                                                                                                                       |
+| :----------------------: | :---: | :----------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|         NICKNAME         |  否   |           [""]           |                                                                                                                   nonebot2 内置配置，可作为解析结果消息的前缀                                                                                                                   |
+|       API_TIMEOUT        |  否   |           30.0           |                                                                                                           nonebot2 内置配置，若服务器上传带宽太低，建议调高，防止超时                                                                                                           |
+|         r_xhs_ck         |  否   |            ""            |                                                                                                                                  小红书 cookie                                                                                                                                  |
+|        r_bili_ck         |  否   |            ""            | B 站 cookie, 必须含有 SESSDATA 项，可附加 B 站 AI 总结功能, 如果需要长期使用此凭据则不应该在**浏览器登录账户**导致 cookie 被刷新，建议注册个小号获取, 也可以配置 ac_time_value 项，用于凭据的自动刷新，[获取方式](https://github.com/fllesser/nonebot-plugin-parser/issues/177) |
+|    r_bili_video_codes    |  否   | '["avc", "av01", "hev"]' |                                                  允许的 B 站视频编码，越靠前的编码优先级越高，可选 "avc"(H.264，体积较大), "hev"(HEVC), "av01"(AV1), 后两项在不同设备可能有兼容性问题，如需完全避免，可只填一项，如 '["avc"]'                                                   |
+|         r_ytb_ck         |  否   |            ""            |                                                                                                              Youtube cookie, Youtube 视频因人机检测下载失败，需填                                                                                                               |
+|         r_proxy          |  否   |           None           |                                                                                 仅作用于 youtube, tiktok 解析，推特解析会自动读取环境变量中的 http_proxy / https_proxy(代理软件通常会自动设置)                                                                                  |
+|      r_need_upload       |  否   |          False           |                                                                                                                          音频解析，是否需要上传群文件                                                                                                                           |
+|      r_need_forward      |  否   |           True           |                                                                                         **不超过** 4 条的解析消息是否需要合并转发，配置为 False ，超过4条的解析消息仍然会用合并转发包裹                                                                                         |
+|       r_use_base64       |  否   |          False           |                         视频，图片，音频是否使用 base64 发送，注意：编解码和传输 base64 会占用更多的内存,性能和带宽, 甚至可能会使 websocket 连接崩溃，因此该配置项仅推荐 nonebot 和 协议端不在同一机器，或者使用 docker 懒得映射插件缓存目录的用户配置                          |
+| r_video_duration_maximum |  否   |           480            |                                                                                                                         B站视频最大解析时长，单位：_秒_                                                                                                                         |
+|        r_max_size        |  否   |           100            |                                                                                                              音视频下载最大文件大小，单位 MB，超过该配置将阻断下载                                                                                                              |
+|   r_disabled_platforms   |  否   |            []            |                                 全局禁止的解析，示例 r_disabled_platforms=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kuaishou", "twitter", "youtube", "acfun", "tiktok", "weibo", "xiaohongshu"]                                  |
 
 
 ## 🎉 使用

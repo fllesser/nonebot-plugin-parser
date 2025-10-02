@@ -8,7 +8,7 @@ from nonebot.adapters import Event
 from nonebot_plugin_alconna import SupportAdapter
 from nonebot_plugin_alconna.uniseg import get_message_id, get_target, message_reaction
 
-from nonebot_plugin_resolver2.exception import ResolverException
+from nonebot_plugin_parser.exception import ResolverException
 
 from ..config import rconfig
 from ..parsers import PLATFORM_PARSERS, BaseParser, ParseResult
