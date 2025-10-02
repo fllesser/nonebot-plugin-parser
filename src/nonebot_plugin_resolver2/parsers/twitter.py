@@ -7,7 +7,7 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Contents, DynamicContent, ImageContent, ParseResult, VideoContent
+from .data import Content, DynamicContent, ImageContent, ParseResult, VideoContent
 
 
 class TwitterParser(BaseParser):
@@ -23,7 +23,7 @@ class TwitterParser(BaseParser):
     ]
 
     @staticmethod
-    async def req_xdown_api(url: str) -> dict[str, Any]:
+    async def _req_xdown_api(url: str) -> dict[str, Any]:
         headers = {
             "Accept": "application/json, text/plain, */*",
             "Content-Type": "application/x-www-form-urlencoded",
@@ -38,8 +38,8 @@ class TwitterParser(BaseParser):
             return response.json()
 
     @classmethod
-    async def parse_x_url(cls, x_url: str) -> Contents:
-        resp = await cls.req_xdown_api(x_url)
+    async def parse_x_url(cls, x_url: str) -> list[Content]:
+        resp = await cls._req_xdown_api(x_url)
         if resp.get("status") != "ok":
             raise ParseException("解析失败")
 
@@ -48,14 +48,14 @@ class TwitterParser(BaseParser):
         if html_content is None:
             raise ParseException("解析失败, 数据为空")
 
-        first_video_url = await cls.get_first_video_url(html_content)
+        first_video_url = await cls._get_first_video_url(html_content)
         if first_video_url is not None:
             video_path = await DOWNLOADER.download_video(first_video_url)
             return [VideoContent(video_path)]
 
-        contents = []
-        pic_urls = await cls.get_all_pic_urls(html_content)
-        dynamic_urls = await cls.get_all_gif_urls(html_content)
+        contents: list[Content] = []
+        pic_urls = await cls._get_all_pic_urls(html_content)
+        dynamic_urls = await cls._get_all_gif_urls(html_content)
         if len(pic_urls) != 0:
             # 下载图片和动态图
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
@@ -75,7 +75,7 @@ class TwitterParser(BaseParser):
         return contents
 
     @classmethod
-    def snapcdn_url_pattern(cls, flag: str) -> re.Pattern[str]:
+    def _snapcdn_url_pattern(cls, flag: str) -> re.Pattern[str]:
         """
         根据标志生成正则表达式模板
         """
@@ -84,27 +84,27 @@ class TwitterParser(BaseParser):
         return re.compile(pattern, re.DOTALL)  # 允许.匹配换行符
 
     @classmethod
-    async def get_first_video_url(cls, html_content: str) -> str | None:
+    async def _get_first_video_url(cls, html_content: str) -> str | None:
         """
         使用正则表达式简单提取第一个视频下载链接
         """
         # 匹配第一个视频下载链接
-        matched = re.search(cls.snapcdn_url_pattern(" MP4"), html_content)
+        matched = re.search(cls._snapcdn_url_pattern(" MP4"), html_content)
         return matched.group(1) if matched else None
 
     @classmethod
-    async def get_all_pic_urls(cls, html_content: str) -> list[str]:
+    async def _get_all_pic_urls(cls, html_content: str) -> list[str]:
         """
         提取所有图片链接
         """
-        return re.findall(cls.snapcdn_url_pattern("图片"), html_content)
+        return re.findall(cls._snapcdn_url_pattern("图片"), html_content)
 
     @classmethod
-    async def get_all_gif_urls(cls, html_content: str) -> list[str]:
+    async def _get_all_gif_urls(cls, html_content: str) -> list[str]:
         """
         提取所有 GIF 链接
         """
-        return re.findall(cls.snapcdn_url_pattern(" gif"), html_content)
+        return re.findall(cls._snapcdn_url_pattern(" gif"), html_content)
 
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源

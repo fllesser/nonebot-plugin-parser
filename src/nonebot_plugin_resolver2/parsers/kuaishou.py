@@ -8,7 +8,7 @@ import msgspec
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ImageContent, ParseResult, VideoContent
+from .data import Content, ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
@@ -135,7 +135,7 @@ class Photo(Struct):
             cover_path = await DOWNLOADER.download_img(self.cover_url, ext_headers=ext_headers)
 
         # 下载内容
-        contents = []
+        contents: list[Content] = []
         if video_url := self.video_url:
             video_path = await DOWNLOADER.download_video(video_url, ext_headers=ext_headers)
             contents.append(VideoContent(video_path))

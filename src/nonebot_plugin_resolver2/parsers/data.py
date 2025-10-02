@@ -45,7 +45,7 @@ class TextImageContent:
     image_path: Path
 
 
-Contents = list[str | AudioContent | VideoContent | ImageContent | TextImageContent]
+Content = str | AudioContent | VideoContent | ImageContent | DynamicContent | TextImageContent
 
 
 @dataclass
@@ -56,7 +56,7 @@ class ParseResult:
     platform: str  # 平台名称，如 "抖音"、"哔哩哔哩"等
     author: str | None = None
     cover_path: Path | None = None
-    contents: Contents = field(default_factory=list)
+    contents: list[Content] = field(default_factory=list)
     extra_info: str | None = None  # 额外信息，如视频时长、AI总结等
 
     @property
@@ -81,8 +81,15 @@ class ParseResult:
         return [path for path in paths if path is not None]
 
     def convert_segs(self):
-        separate_segs: list[Segment] = []  # 必须单独发送的消息段(视频、语音、文件)
-        forwardable_segs: list[str | Segment | UniMessage] = []  # 可以合并转发的消息段(文本和图片)
+        """转换为消息段
+
+        Returns:
+            tuple[list[Segment], list[str | Segment | UniMessage]]: 消息段
+            separate_segs: 必须单独发送的消息段(视频、语音、文件)
+            forwardable_segs: 可以合并转发的消息段(文本和图片)
+        """
+        separate_segs: list[Segment] = []
+        forwardable_segs: list[str | Segment | UniMessage] = []
 
         if self.title:
             forwardable_segs.append(f"标题: {self.title}")
@@ -94,19 +101,21 @@ class ParseResult:
             forwardable_segs.append(UniHelper.img_seg(self.cover_path))
 
         for cont in self.contents:
-            if isinstance(cont, str):
-                forwardable_segs.append(cont)
-            elif isinstance(cont, ImageContent):
-                forwardable_segs.append(UniHelper.img_seg(cont.path))
-            elif isinstance(cont, DynamicContent):
-                forwardable_segs.append(UniHelper.video_seg(cont.path))
-            elif isinstance(cont, TextImageContent):
-                forwardable_segs.append(cont.text + UniHelper.img_seg(cont.image_path))
+            match cont:
+                case str():
+                    forwardable_segs.append(cont)
+                case ImageContent(path):
+                    forwardable_segs.append(UniHelper.img_seg(path))
+                case DynamicContent(path):
+                    # git_path
+                    forwardable_segs.append(UniHelper.video_seg(path))
+                case TextImageContent(text, image_path):
+                    forwardable_segs.append(text + UniHelper.img_seg(image_path))
 
-            elif isinstance(cont, AudioContent):
-                separate_segs.append(UniHelper.record_seg(cont.path))
-            elif isinstance(cont, VideoContent):
-                separate_segs.append(UniHelper.video_seg(cont.path))
+                case AudioContent(path):
+                    separate_segs.append(UniHelper.record_seg(path))
+                case VideoContent(path):
+                    separate_segs.append(UniHelper.video_seg(path))
 
         return separate_segs, forwardable_segs
 

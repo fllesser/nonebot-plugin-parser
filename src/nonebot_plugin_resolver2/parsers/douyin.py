@@ -11,7 +11,7 @@ from ..constants import COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ANDROID_HEADER, IOS_HEADER, DynamicContent, ImageContent, ParseResult, VideoContent
+from .data import ANDROID_HEADER, IOS_HEADER, Content, DynamicContent, ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
@@ -88,7 +88,7 @@ class DouyinParser(BaseParser):
             cover_path = await DOWNLOADER.download_img(video_data.cover_url)
 
         # 下载内容
-        contents = []
+        contents: list[Content] = []
         if image_urls := video_data.images_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(image_urls)
             contents.extend(ImageContent(path) for path in pic_paths)
@@ -152,7 +152,7 @@ class DouyinParser(BaseParser):
             )
             dynamic_paths = [p for p in video_paths if isinstance(p, Path)]
 
-        contents = []
+        contents: list[Content] = []
         contents.extend(ImageContent(path) for path in pic_paths)
         contents.extend(DynamicContent(path) for path in dynamic_paths)
         return ParseResult(
