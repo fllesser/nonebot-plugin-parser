@@ -49,11 +49,21 @@ Content = str | AudioContent | VideoContent | ImageContent | DynamicContent | Te
 
 
 @dataclass
+class Platform:
+    """平台信息"""
+
+    name: str
+    """ 平台名称 """
+    display_name: str
+    """ 平台显示名称 """
+
+
+@dataclass
 class ParseResult:
     """完整的解析结果"""
 
     title: str
-    platform: str  # 平台名称，如 "抖音"、"哔哩哔哩"等
+    platform: Platform
     author: str | None = None
     cover_path: Path | None = None
     contents: list[Content] = field(default_factory=list)

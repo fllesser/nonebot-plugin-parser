@@ -11,16 +11,13 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Content, ImageContent, ParseResult, VideoContent
+from .data import Content, ImageContent, ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
 
 
-class XiaoHongShuParser(BaseParser):
-    # 平台名称（用于配置禁用和内部标识）
-    platform_name: ClassVar[str] = "xiaohongshu"
-
-    # 平台显示名称
-    platform_display_name: ClassVar[str] = "小红书"
+class XiaohongshuParser(BaseParser):
+    # 平台信息
+    platform: ClassVar[Platform] = Platform(name="xiaohongshu", display_name="小红书")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -101,7 +98,7 @@ class XiaoHongShuParser(BaseParser):
 
         return ParseResult(
             title=note_detail.title_desc,
-            platform=self.platform_display_name,
+            platform=self.platform,
             cover_path=cover_path,
             contents=contents,
             author=note_detail.user.nickname,

@@ -4,15 +4,16 @@ from nonebot.internal.matcher import current_bot
 from nonebot_plugin_alconna.uniseg import Text, UniMessage
 
 from ..config import NEED_FORWARD
+from ..matchers.helper import UniHelper
 from ..parsers.data import ParseResult
-from .helper import UniHelper
+from .base import BaseRenderer
 
 
-class Renderer:
+class Renderer(BaseRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
     @staticmethod
-    def render_messages(result: ParseResult) -> list[UniMessage]:
+    async def render_messages(result: ParseResult) -> list[UniMessage]:
         """渲染内容消息
 
         Args:

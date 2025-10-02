@@ -7,15 +7,12 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Content, DynamicContent, ImageContent, ParseResult, VideoContent
+from .data import Content, DynamicContent, ImageContent, ParseResult, Platform, VideoContent
 
 
 class TwitterParser(BaseParser):
-    # 平台名称（用于配置禁用和内部标识）
-    platform_name: ClassVar[str] = "twitter"
-
-    # 平台显示名称
-    platform_display_name: ClassVar[str] = "小蓝鸟"
+    # 平台信息
+    platform: ClassVar[Platform] = Platform(name="twitter", display_name="小蓝鸟")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -127,6 +124,6 @@ class TwitterParser(BaseParser):
 
         return ParseResult(
             title="",  # 推特解析不包含标题
-            platform=self.platform_display_name,
+            platform=self.platform,
             contents=contents,
         )

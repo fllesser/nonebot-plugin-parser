@@ -11,15 +11,12 @@ from ..download import DOWNLOADER
 from ..exception import ParseException
 from ..parsers.utils import get_redirect_url
 from .base import BaseParser
-from .data import Content, ImageContent, ParseResult, VideoContent
+from .data import Content, ImageContent, ParseResult, Platform, VideoContent
 
 
-class WeiBoParser(BaseParser):
-    # 平台名称（用于配置禁用和内部标识）
-    platform_name: ClassVar[str] = "weibo"
-
-    # 平台显示名称
-    platform_display_name: ClassVar[str] = "微博"
+class WeiboParser(BaseParser):
+    # 平台信息
+    platform: ClassVar[Platform] = Platform(name="weibo", display_name="微博")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -102,7 +99,7 @@ class WeiBoParser(BaseParser):
 
         return ParseResult(
             title=data["title"],
-            platform=self.platform_display_name,
+            platform=self.platform,
             cover_path=cover_path,
             author=data["author"],
             contents=[VideoContent(video_path)],
@@ -164,7 +161,7 @@ class WeiBoParser(BaseParser):
 
         return ParseResult(
             title=f"{weibo_data.display_name} 的微博",
-            platform=self.platform_display_name,
+            platform=self.platform,
             author=weibo_data.display_name,
             contents=contents,
         )

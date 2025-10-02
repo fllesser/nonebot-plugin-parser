@@ -12,9 +12,9 @@ from nonebot_plugin_resolver2.exception import ResolverException
 
 from ..config import rconfig
 from ..parsers import PLATFORM_PARSERS, BaseParser, ParseResult
+from ..renders import get_renderer
 from ..utils import LimitedSizeDict
 from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
-from .render import Renderer
 
 
 def _build_keyword_to_platform_map(platform_parsers: dict[str, type[BaseParser]]) -> dict[str, str]:
@@ -115,7 +115,8 @@ async def _(
         RESULT_CACHE[key] = result
 
     # 3. 渲染内容消息并发送
-    messages = Renderer.render_messages(result)
+    renderer = get_renderer(result.platform.name)
+    messages = await renderer.render_messages(result)
     for message in messages:
         await message.send()
 

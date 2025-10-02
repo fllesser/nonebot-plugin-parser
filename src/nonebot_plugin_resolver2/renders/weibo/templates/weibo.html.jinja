@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ result.title }}</title>
+    <style>
+        html {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            -webkit-text-size-adjust: 100%;
+            font-size: 16px;
+        }
+
+        body {
+            line-height: 1.6;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #f7f7f7;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        img {
+            max-width: 100%;
+            vertical-align: top;
+        }
+
+        /* CSS 变量 */
+        :root {
+            --primary-text: #333;
+            --secondary-text: #999;
+            --link-color: #507daf;
+            --bg-white: #fff;
+            --border-color: #e6e6e6;
+        }
+
+        /* 卡片容器 */
+        .weibo-card {
+            max-width: 600px;
+            margin: 16px auto;
+            background: var(--bg-white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 头部用户信息 */
+        .weibo-header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .avatar-wrapper {
+            flex-shrink: 0;
+            margin-right: 12px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: var(--border-color);
+            position: relative;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .username {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-text);
+            margin: 0 0 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .platform {
+            font-size: 13px;
+            color: var(--secondary-text);
+            margin: 0;
+        }
+
+        /* 正文内容 */
+        .weibo-content {
+            padding: 16px;
+        }
+
+        .weibo-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--primary-text);
+            margin-bottom: 12px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .weibo-text a {
+            color: var(--link-color);
+        }
+
+        /* 媒体内容 */
+        .weibo-media {
+            margin-top: 12px;
+        }
+
+        /* 图片网格 */
+        .media-grid {
+            display: grid;
+            gap: 4px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* 1张图片 */
+        .media-grid-1 {
+            grid-template-columns: 1fr;
+            max-width: 100%;
+        }
+
+        .media-grid-1 .media-item {
+            aspect-ratio: auto;
+            height: auto;
+        }
+
+        .media-grid-1 .media-item img {
+            max-height: 600px;
+            object-fit: contain;
+            width: 100%;
+            height: auto;
+        }
+
+        /* 2张图片 */
+        .media-grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        /* 3张图片 */
+        .media-grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        /* 4张图片 */
+        .media-grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        /* 5-6张图片 */
+        .media-grid-5,
+        .media-grid-6 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        /* 7-9张图片 */
+        .media-grid-7,
+        .media-grid-8,
+        .media-grid-9 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .media-item {
+            position: relative;
+            background: var(--border-color);
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            max-height: 400px;
+        }
+
+        /* 视频占位符 */
+        .video-placeholder {
+            position: relative;
+            width: 100%;
+            min-height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-icon {
+            font-size: 48px;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .video-text {
+            font-size: 16px;
+            color: white;
+            font-weight: 500;
+        }
+
+        /* 响应式 */
+        @media (max-width: 640px) {
+            .weibo-card {
+                margin: 8px;
+                border-radius: 4px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="weibo-card">
+        <!-- 头部用户信息 -->
+        <header class="weibo-header">
+            <div class="avatar-wrapper">
+                <div class="avatar">
+                    <div class="avatar-placeholder"></div>
+                </div>
+            </div>
+            <div class="user-info">
+                <h3 class="username">{{ result.author or "微博用户" }}</h3>
+                <p class="platform">来自 {{ result.platform.display_name }}</p>
+            </div>
+        </header>
+
+        <!-- 正文内容 -->
+        <article class="weibo-content">
+            <!-- 文本内容 -->
+            {% if str_content %}
+            <div class="weibo-text">{{ str_content | safe }}</div>
+            {% endif %}
+
+            <!-- 图片内容 -->
+            {% if result.img_paths and result.img_paths | length > 0 %}
+            <div class="weibo-media">
+                <div
+                    class="media-grid media-grid-{{ result.img_paths | length if result.img_paths | length <= 9 else 9 }}">
+                    {% for img_path in result.img_paths[:9] %}
+                    <div class="media-item">
+                        <img src="file://{{ img_path }}" alt="图片{{ loop.index }}" loading="lazy">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 视频内容 -->
+            {% if result.video_paths and result.video_paths | length > 0 %}
+            <div class="weibo-media" style="margin-top: 12px;">
+                {% for video_path in result.video_paths %}
+                <a href="file://{{ video_path }}" target="_blank" class="video-placeholder">
+                    <div class="video-icon">▶️</div>
+                    <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                </a>
+                {% endfor %}
+                {% endif %}
+        </article>
+    </div>
+</body>
+
+</html>

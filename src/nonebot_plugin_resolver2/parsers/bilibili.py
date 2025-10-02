@@ -13,16 +13,13 @@ from ..download import DOWNLOADER
 from ..exception import DownloadSizeLimitException, ParseException
 from ..utils import merge_av
 from .base import BaseParser
-from .data import Content, ImageContent, ParseResult, TextImageContent, VideoContent
+from .data import Content, ImageContent, ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
 
 
 class BilibiliParser(BaseParser):
-    # 平台名称（用于配置禁用和内部标识）
-    platform_name: ClassVar[str] = "bilibili"
-
-    # 平台显示名称
-    platform_display_name: ClassVar[str] = "哔哩哔哩"
+    # 平台信息
+    platform: ClassVar[Platform] = Platform(name="bilibili", display_name="哔哩哔哩")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -185,7 +182,7 @@ class BilibiliParser(BaseParser):
 
         return ParseResult(
             title=title,
-            platform=self.platform_display_name,
+            platform=self.platform,
             cover_path=cover_path,
             contents=contents,
             extra_info=extra_info,
@@ -211,7 +208,7 @@ class BilibiliParser(BaseParser):
 
             return ParseResult(
                 title=f"动态 {opus_id}",
-                platform=self.platform_display_name,
+                platform=self.platform,
                 contents=contents,
             )
 
@@ -237,7 +234,7 @@ class BilibiliParser(BaseParser):
 
             return ParseResult(
                 title=title,
-                platform=self.platform_display_name,
+                platform=self.platform,
                 cover_path=cover_path,
                 contents=contents,
             )
@@ -259,7 +256,7 @@ class BilibiliParser(BaseParser):
 
             return ParseResult(
                 title=combined_text[:100] + "..." if len(combined_text) > 100 else combined_text,
-                platform=self.platform_display_name,
+                platform=self.platform,
                 contents=contents,
             )
 
@@ -276,7 +273,7 @@ class BilibiliParser(BaseParser):
 
             return ParseResult(
                 title=f"收藏夹: {fav_id}",
-                platform=self.platform_display_name,
+                platform=self.platform,
                 contents=[TextImageContent(title, cover_path) for title, cover_path in zip(titles, cover_paths)],
             )
 

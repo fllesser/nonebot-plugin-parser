@@ -4,15 +4,14 @@ from abc import ABC, abstractmethod
 import re
 from typing import ClassVar
 
-from .data import ParseResult
+from .data import ParseResult, Platform
 
 
 class BaseParser(ABC):
     """所有平台 Parser 的抽象基类
 
     子类必须实现：
-    - platform_name: 平台名称（用于配置和内部标识）
-    - platform_display_name: 平台显示名称（用于展示）
+    - platform: 平台信息（包含名称和显示名称）
     - patterns: URL 正则表达式模式列表
     - parse: 解析 URL 的方法（接收正则表达式对象）
     """
@@ -20,11 +19,8 @@ class BaseParser(ABC):
     # 类变量：存储所有已注册的 Parser 类
     _registry: ClassVar[list[type["BaseParser"]]] = []
 
-    platform_name: ClassVar[str]
-    """ 平台名称（用于配置和内部标识） """
-
-    platform_display_name: ClassVar[str]
-    """ 平台显示名称（用于展示） """
+    platform: ClassVar[Platform]
+    """ 平台信息（包含名称和显示名称） """
 
     patterns: ClassVar[list[tuple[str, str]]]
     """ URL 正则表达式模式列表 [(keyword, pattern), ...] """
