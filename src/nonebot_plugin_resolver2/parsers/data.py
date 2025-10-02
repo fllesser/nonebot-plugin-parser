@@ -77,10 +77,10 @@ class ParseResult:
 
     platform: Platform
     """平台信息"""
-    content: str
-    """文本内容"""
-    title: str | None = None
+    title: str = ""
     """标题"""
+    text: str = ""
+    """文本内容"""
     contents: list[Content] = field(default_factory=list)
     """内容列表，主体以外的内容"""
     timestamp: float | None = None
@@ -146,3 +146,18 @@ class ParseResult:
 
     def __str__(self) -> str:
         return f"title: {self.title}\nplatform: {self.platform}\nauthor: {self.author}\ncontents: {self.contents}"
+
+
+from dataclasses import dataclass, field
+from typing import Any, TypedDict
+
+
+class ParseResultKwargs(TypedDict, total=False):
+    title: str
+    text: str
+    contents: list[Content]
+    timestamp: float | None
+    url: str | None
+    author: Author | None
+    extra: dict[str, Any]
+    repost: ParseResult | None

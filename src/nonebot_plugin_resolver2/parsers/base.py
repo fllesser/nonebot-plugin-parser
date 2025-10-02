@@ -3,8 +3,9 @@
 from abc import ABC, abstractmethod
 import re
 from typing import ClassVar
+from typing_extensions import Unpack
 
-from .data import ParseResult, Platform
+from .data import ParseResult, ParseResultKwargs, Platform
 
 
 class BaseParser(ABC):
@@ -50,3 +51,8 @@ class BaseParser(ABC):
             ParseException: 解析失败时抛出
         """
         raise NotImplementedError
+
+    @classmethod
+    def result(cls, **kwargs: Unpack[ParseResultKwargs]) -> ParseResult:
+        """构建解析结果"""
+        return ParseResult(platform=cls.platform, **kwargs)

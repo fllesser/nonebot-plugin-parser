@@ -2,6 +2,7 @@ import asyncio
 from pathlib import Path
 import re
 from typing import Any, ClassVar
+from typing_extensions import override
 
 import httpx
 import msgspec
@@ -108,10 +109,8 @@ class DouyinParser(BaseParser):
         if cover_path:
             extra["cover_path"] = cover_path
 
-        return ParseResult(
+        return self.result(
             title=video_data.desc,
-            platform=self.platform,
-            content="",
             author=Author(name=video_data.author.nickname) if video_data.author.nickname else None,
             contents=contents,
             extra=extra,
@@ -167,14 +166,14 @@ class DouyinParser(BaseParser):
         contents: list[Content] = []
         contents.extend(ImageContent(path) for path in pic_paths)
         contents.extend(DynamicContent(path) for path in dynamic_paths)
-        return ParseResult(
-            title=slides_data.share_info.share_desc_info,
-            platform=self.platform,
-            content="",
+
+        return self.result(
+            text=slides_data.share_info.share_desc_info,
             author=Author(name=slides_data.author.nickname) if slides_data.author.nickname else None,
             contents=contents,
         )
 
+    @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
@@ -182,7 +181,7 @@ class DouyinParser(BaseParser):
             matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path）
+            ParseResult: 解析结果（已下载资源，包含 Path)
 
         Raises:
             ParseException: 解析失败时抛出

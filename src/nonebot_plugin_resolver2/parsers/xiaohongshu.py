@@ -1,6 +1,7 @@
 import json
 import re
 from typing import ClassVar
+from typing_extensions import override
 from urllib.parse import parse_qs, urlparse
 
 import httpx
@@ -34,6 +35,7 @@ class XiaoHongShuParser(BaseParser):
         if rconfig.r_xhs_ck:
             self.headers["cookie"] = rconfig.r_xhs_ck
 
+    @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
@@ -100,10 +102,8 @@ class XiaoHongShuParser(BaseParser):
         if cover_path:
             extra["cover_path"] = cover_path
 
-        return ParseResult(
+        return self.result(
             title=note_detail.title_desc,
-            platform=self.platform,
-            content="",
             contents=contents,
             author=Author(name=note_detail.user.nickname) if note_detail.user.nickname else None,
             extra=extra,

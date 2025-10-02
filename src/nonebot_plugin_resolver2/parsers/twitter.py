@@ -122,9 +122,4 @@ class TwitterParser(BaseParser):
         if contents is None:
             raise ParseException("解析失败，未找到内容")
 
-        return ParseResult(
-            title="",  # 推特解析不包含标题
-            platform=self.platform,
-            content="",
-            contents=contents,
-        )
+        return self.result(contents=contents)

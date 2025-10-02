@@ -349,7 +349,7 @@
         <!-- 正文内容 -->
         <article class="weibo-content">
             <!-- 文本内容 -->
-            <div class="weibo-text">{{ result.content | safe }}</div>
+            <div class="weibo-text">{{ result.text | safe }}</div>
 
             <!-- 图片内容 -->
             {% if result.img_paths and result.img_paths | length > 0 %}

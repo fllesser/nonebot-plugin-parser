@@ -101,10 +101,8 @@ class WeiBoParser(BaseParser):
         if cover_path:
             extra["cover_path"] = cover_path
 
-        return ParseResult(
+        return self.result(
             title=data["title"],
-            platform=self.platform,
-            content="",
             author=Author(name=data["author"]) if data.get("author") else None,
             contents=[VideoContent(video_path)],
             extra=extra,
@@ -167,9 +165,8 @@ class WeiBoParser(BaseParser):
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
             contents.extend(ImageContent(path) for path in pic_paths)
 
-        return ParseResult(
-            platform=self.platform,
-            content=data.text_content,
+        return self.result(
+            text=data.text_content,
             author=Author(name=data.display_name, avatar=data.user.profile_image_url),
             contents=contents,
             url=f"https://weibo.com/{data.user.id}/{data.bid}",

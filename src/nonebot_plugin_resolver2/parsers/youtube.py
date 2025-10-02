@@ -70,10 +70,8 @@ class YouTubeParser(BaseParser):
             if extra_info:
                 extra["info"] = extra_info
 
-            return ParseResult(
+            return self.result(
                 title=title,
-                platform=self.platform,
-                content="",
                 author=Author(name=author) if author else None,
                 contents=[VideoContent(video_path)],
                 extra=extra,
@@ -124,10 +122,8 @@ class YouTubeParser(BaseParser):
             if extra_info:
                 extra["info"] = extra_info
 
-            return ParseResult(
+            return self.result(
                 title=title,
-                platform=self.platform,
-                content="",
                 author=Author(name=author) if author else None,
                 contents=[AudioContent(audio_path)],
                 extra=extra,

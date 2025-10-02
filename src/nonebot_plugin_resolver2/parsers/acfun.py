@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import re
 from typing import ClassVar
+from typing_extensions import override
 
 import aiofiles
 import httpx
@@ -131,6 +132,7 @@ class AcfunParser(BaseParser):
 
         return m3u8_full_urls
 
+    @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
@@ -158,10 +160,8 @@ class AcfunParser(BaseParser):
         if extra_info:
             extra["info"] = extra_info
 
-        return ParseResult(
+        return self.result(
             title=title,
-            platform=self.platform,
-            content="",
             author=Author(name=author) if author else None,
             contents=[VideoContent(path=video_path)],
             extra=extra,
