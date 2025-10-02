@@ -29,12 +29,12 @@ def _build_keyword_to_platform_map(platform_parsers: dict[str, type[BaseParser]]
 def _get_enabled_patterns(platform_parsers: dict[str, type[BaseParser]]) -> list[tuple[str, str]]:
     """根据配置获取启用的平台正则表达式列表"""
     # 获取禁用的平台列表
-    disabled_platforms = set(rconfig.r_disable_resolvers)
+    disabled_platforms = set(rconfig.r_disabled_platforms)
 
-    # 如果未配置小红书 cookie，也禁用小红书
-    if not rconfig.r_xhs_ck:
-        disabled_platforms.add("xiaohongshu")
-        logger.warning("未配置小红书 cookie, 小红书解析已关闭")
+    # 如果未配置小红书 cookie，也禁用小红书 (好像不需要 ck 了)
+    # if not rconfig.r_xhs_ck:
+    #     disabled_platforms.add("xiaohongshu")
+    #     logger.warning("未配置小红书 cookie, 小红书解析已关闭")
 
     # 从各个 Parser 类中收集启用平台的正则表达式
     enabled_patterns: list[tuple[str, str]] = []
@@ -43,7 +43,7 @@ def _get_enabled_patterns(platform_parsers: dict[str, type[BaseParser]]) -> list
     for platform_name, parser_class in platform_parsers.items():
         if platform_name not in disabled_platforms:
             enabled_patterns.extend(parser_class.patterns)
-            enabled_platform_names.add(platform_name)
+            enabled_platform_names.add(parser_class.platform.display_name)
 
     if enabled_platform_names:
         logger.info(f"启用的平台: {', '.join(sorted(enabled_platform_names))}")

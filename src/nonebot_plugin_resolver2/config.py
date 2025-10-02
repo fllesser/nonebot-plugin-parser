@@ -10,7 +10,7 @@ require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler  # noqa: F401
 import nonebot_plugin_localstore as store
 
-MatcherNames = Literal[
+PlatformNames = Literal[
     "bilibili",
     "acfun",
     "douyin",
@@ -43,7 +43,7 @@ class Config(BaseModel):
     # 视频最大时长
     r_video_duration_maximum: int = 480
     # 禁止的解析器
-    r_disable_resolvers: list[MatcherNames] = []
+    r_disabled_platforms: list[PlatformNames] = []
     # B站视频编码
     r_bili_video_codes: list[VideoCodecs] = [VideoCodecs.AVC, VideoCodecs.AV1, VideoCodecs.HEV]
 
