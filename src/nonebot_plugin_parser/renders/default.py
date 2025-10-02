@@ -24,7 +24,7 @@ class Renderer(BaseRenderer):
         # 构建消息段列表
         messages: list[UniMessage] = []
 
-        texts = (result.header, result.title, result.text, result.extra.get("info"), result.url)
+        texts = (result.header, result.text, result.extra.get("info"), result.url)
         texts = (text for text in texts if text)
         first_message = UniMessage("\n".join(texts))
 
@@ -47,7 +47,7 @@ class Renderer(BaseRenderer):
                 for seg in forwardable_segs:
                     first_message += seg
 
-        messages.append(first_message)
+        messages.insert(0, first_message)
         # 处理必须单独发送的消息段
         if separate_segs:
             messages.extend(UniMessage(seg) for seg in separate_segs)

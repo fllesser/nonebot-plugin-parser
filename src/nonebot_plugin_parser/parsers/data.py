@@ -116,9 +116,10 @@ class ParseResult:
     @property
     def header(self) -> str:
         header = self.platform.display_name
+        if self.title:
+            header += f" | {self.title}"
         if self.author:
-            header += f" | {self.author.name}"
-
+            header += f" - {self.author.name}"
         return header
 
     @property
