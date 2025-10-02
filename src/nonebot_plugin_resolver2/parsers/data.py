@@ -99,7 +99,7 @@ class ParseResult:
     def header(self) -> str:
         header = self.platform.display_name
         if self.author:
-            header += f"| {self.author.name}"
+            header += f" | {self.author.name}"
 
         return header
 
