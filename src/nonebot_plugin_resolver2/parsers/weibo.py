@@ -14,7 +14,7 @@ from .base import BaseParser
 from .data import Content, ImageContent, ParseResult, Platform, VideoContent
 
 
-class WeiboParser(BaseParser):
+class WeiBoParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name="weibo", display_name="微博")
 

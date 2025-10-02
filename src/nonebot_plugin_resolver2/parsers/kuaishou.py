@@ -12,7 +12,7 @@ from .data import Content, ImageContent, ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
 
 
-class KuaishouParser(BaseParser):
+class KuaiShouParser(BaseParser):
     """快手解析器"""
 
     # 平台信息

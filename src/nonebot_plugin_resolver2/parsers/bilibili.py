@@ -13,7 +13,7 @@ from ..download import DOWNLOADER
 from ..exception import DownloadSizeLimitException, ParseException
 from ..utils import merge_av
 from .base import BaseParser
-from .data import Content, ImageContent, ParseResult, Platform, VideoContent
+from .data import Content, ImageContent, ParseResult, Platform, TextImageContent, VideoContent
 from .utils import get_redirect_url
 
 

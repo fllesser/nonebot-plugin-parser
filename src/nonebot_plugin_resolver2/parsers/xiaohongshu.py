@@ -15,7 +15,7 @@ from .data import Content, ImageContent, ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
 
 
-class XiaohongshuParser(BaseParser):
+class XiaoHongShuParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name="xiaohongshu", display_name="小红书")
 
