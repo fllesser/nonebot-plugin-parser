@@ -14,7 +14,7 @@ PlatformNames = Literal[
     "bilibili",
     "acfun",
     "douyin",
-    "ytb",
+    "youtube",
     "kuaishou",
     "twitter",
     "tiktok",
