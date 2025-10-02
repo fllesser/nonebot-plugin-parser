@@ -89,8 +89,8 @@ class BilibiliParser(BaseParser):
 
         # 解析视频信息
         parser_result = await self.parse_video(bvid=bvid, avid=avid, page_num=page_num)
-        if link is not None and parser_result.title:
-            parser_result.title += f"\n{link}"
+        if link is not None:
+            parser_result.url = link
         return parser_result
 
     async def parse_video(
