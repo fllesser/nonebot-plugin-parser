@@ -104,17 +104,18 @@ class ParseResult:
             match cont:
                 case str():
                     forwardable_segs.append(cont)
-                case ImageContent():
-                    forwardable_segs.append(UniHelper.img_seg(cont.path))
-                case DynamicContent():
-                    forwardable_segs.append(UniHelper.video_seg(cont.path))
-                case TextImageContent():
-                    forwardable_segs.append(cont.text + UniHelper.img_seg(cont.image_path))
+                case ImageContent(path):
+                    forwardable_segs.append(UniHelper.img_seg(path))
+                case DynamicContent(path):
+                    # git_path
+                    forwardable_segs.append(UniHelper.video_seg(path))
+                case TextImageContent(text, image_path):
+                    forwardable_segs.append(text + UniHelper.img_seg(image_path))
 
-                case AudioContent():
-                    separate_segs.append(UniHelper.record_seg(cont.path))
-                case VideoContent():
-                    separate_segs.append(UniHelper.video_seg(cont.path))
+                case AudioContent(path):
+                    separate_segs.append(UniHelper.record_seg(path))
+                case VideoContent(path):
+                    separate_segs.append(UniHelper.video_seg(path))
 
         return separate_segs, forwardable_segs
 
