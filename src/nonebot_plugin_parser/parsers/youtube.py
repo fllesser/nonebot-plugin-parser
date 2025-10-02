@@ -44,18 +44,7 @@ class YouTubeParser(BaseParser):
         title = info_dict.get("title", "未知")
         author = info_dict.get("uploader", None)
         thumbnail = info_dict.get("thumbnail", None)
-        duration = info_dict.get("duration", None)
-
-        # 构建额外信息
-        extra_info_parts = []
-        if duration and isinstance(duration, (int, float)):
-            minutes = int(duration) // 60
-            seconds = int(duration) % 60
-            extra_info_parts.append(f"时长: {minutes}:{seconds:02d}")
-        if extra_info_parts:
-            extra_info = "\n".join(extra_info_parts)
-        else:
-            extra_info = None
+        duration = int(info_dict.get("duration", 0))
 
         cover_path = None
         if thumbnail:
@@ -66,13 +55,11 @@ class YouTubeParser(BaseParser):
         extra = {}
         if cover_path:
             extra["cover_path"] = cover_path
-        if extra_info:
-            extra["info"] = extra_info
 
         return self.result(
             title=title,
             author=Author(name=author) if author else None,
-            contents=[VideoContent(video_path)],
+            contents=[VideoContent(video_path, duration=duration, cover_path=cover_path)],
             extra=extra,
         )
 
@@ -90,18 +77,7 @@ class YouTubeParser(BaseParser):
         title = info_dict.get("title", "未知")
         author = info_dict.get("uploader", None)
         thumbnail = info_dict.get("thumbnail", None)
-        duration = info_dict.get("duration", None)
-
-        # 构建额外信息
-        extra_info_parts = []
-        if duration and isinstance(duration, (int, float)):
-            minutes = int(duration) // 60
-            seconds = int(duration) % 60
-            extra_info_parts.append(f"时长: {minutes}:{seconds:02d}")
-        if extra_info_parts:
-            extra_info = "\n".join(extra_info_parts)
-        else:
-            extra_info = None
+        duration = int(info_dict.get("duration", 0))
 
         cover_path = None
         if thumbnail:
@@ -112,12 +88,10 @@ class YouTubeParser(BaseParser):
         extra = {}
         if cover_path:
             extra["cover_path"] = cover_path
-        if extra_info:
-            extra["info"] = extra_info
 
         return self.result(
             title=title,
             author=Author(name=author) if author else None,
-            contents=[AudioContent(audio_path)],
+            contents=[AudioContent(audio_path, duration)],
             extra=extra,
         )
