@@ -4,10 +4,10 @@ from pathlib import Path
 from nonebot_plugin_alconna import Image, Text, UniMessage
 from nonebot_plugin_htmlkit import template_to_pic
 
-from nonebot_plugin_resolver2.config import NEED_FORWARD
-from nonebot_plugin_resolver2.matchers.helper import UniHelper, current_bot
-from nonebot_plugin_resolver2.parsers import ParseResult
-from nonebot_plugin_resolver2.renders.base import BaseRenderer
+from nonebot_plugin_parser.config import NEED_FORWARD
+from nonebot_plugin_parser.matchers.helper import UniHelper, current_bot
+from nonebot_plugin_parser.parsers import ParseResult
+from nonebot_plugin_parser.renders.base import BaseRenderer
 
 
 def format_datetime(timestamp: float, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:

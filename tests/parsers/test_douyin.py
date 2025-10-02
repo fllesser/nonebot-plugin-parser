@@ -7,7 +7,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_common_video():
     """测试普通视频"""
-    from nonebot_plugin_resolver2.parsers import DouyinParser
+    from nonebot_plugin_parser.parsers import DouyinParser
 
     parser = DouyinParser()
 
@@ -33,7 +33,7 @@ async def test_common_video():
 async def test_old_video():
     """老视频，网页打开会重定向到 m.ixigua.com"""
 
-    # from nonebot_plugin_resolver2.parsers.douyin import DouYin
+    # from nonebot_plugin_parser.parsers.douyin import DouYin
 
     # parser = DouYin()
     # # 该作品已删除，暂时忽略
@@ -54,7 +54,7 @@ async def test_old_video():
 @pytest.mark.asyncio
 async def test_note():
     """测试普通图文"""
-    from nonebot_plugin_resolver2.parsers import DouyinParser
+    from nonebot_plugin_parser.parsers import DouyinParser
 
     parser = DouyinParser()
 
@@ -82,7 +82,7 @@ async def test_slides():
     https://v.douyin.com/CeiJfqyWs # 将会解析出视频
     https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
     """
-    from nonebot_plugin_resolver2.parsers import DouyinParser
+    from nonebot_plugin_parser.parsers import DouyinParser
 
     douyin_parser = DouyinParser()
 

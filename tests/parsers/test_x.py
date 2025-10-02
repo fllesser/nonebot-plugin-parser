@@ -4,8 +4,8 @@ from nonebot import logger
 
 
 async def test_parse():
-    from nonebot_plugin_resolver2.parsers.data import ImageContent, VideoContent
-    from nonebot_plugin_resolver2.parsers.twitter import TwitterParser
+    from nonebot_plugin_parser.parsers.data import ImageContent, VideoContent
+    from nonebot_plugin_parser.parsers.twitter import TwitterParser
 
     urls = [
         "https://x.com/Fortnite/status/1904171341735178552",  # 视频

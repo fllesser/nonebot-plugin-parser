@@ -16,18 +16,18 @@ __plugin_meta__ = PluginMetadata(
     description="BV号/链接/小程序/卡片 | B站/抖音/快手/微博/小红书/youtube/tiktok/twitter/acfun",
     usage="发送支持平台的(BV号/链接/小程序/卡片)即可",
     type="application",
-    homepage="https://github.com/fllesser/nonebot-plugin-resolver2",
+    homepage="https://github.com/fllesser/nonebot-plugin-parser",
     config=Config,
     supported_adapters=inherit_supported_adapters("nonebot_plugin_alconna", "nonebot_plugin_uninfo"),
     extra={
         "author": "fllesser",
         "email": "fllessive@gmail.com",
-        "homepage": "https://github.com/fllesser/nonebot-plugin-resolver2",
+        "homepage": "https://github.com/fllesser/nonebot-plugin-parser",
     },
 )
 
 
-@scheduler.scheduled_job("cron", hour=1, minute=0, id="resolver2-clean-local-cache")
+@scheduler.scheduled_job("cron", hour=1, minute=0, id="parser-clean-local-cache")
 async def clean_plugin_cache():
     try:
         files = [f for f in plugin_cache_dir.iterdir() if f.is_file()]

@@ -2,7 +2,7 @@ import pytest
 
 
 async def test_get_video_info():
-    from nonebot_plugin_resolver2.download import YTDLP_DOWNLOADER
+    from nonebot_plugin_parser.download import YTDLP_DOWNLOADER
 
     url = "https://youtu.be/NiHF-cwto_A?si=Eho8a8AO9c1347Uj"
 
@@ -16,7 +16,7 @@ async def test_get_video_info():
 
 
 async def test_download_video():
-    from nonebot_plugin_resolver2.download import YTDLP_DOWNLOADER
+    from nonebot_plugin_parser.download import YTDLP_DOWNLOADER
 
     url = "https://youtu.be/NiHF-cwto_A?si=Eho8a8AO9c1347Uj"
 
@@ -30,7 +30,7 @@ async def test_download_video():
 
 
 async def test_download_audio():
-    from nonebot_plugin_resolver2.download import YTDLP_DOWNLOADER
+    from nonebot_plugin_parser.download import YTDLP_DOWNLOADER
 
     url = "https://youtu.be/NiHF-cwto_A?si=Eho8a8AO9c1347Uj"
 

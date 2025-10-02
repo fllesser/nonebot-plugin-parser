@@ -6,8 +6,8 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_favlist():
-    from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_parser.download import DOWNLOADER
+    from nonebot_plugin_parser.parsers import BilibiliParser
 
     logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
     # https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
@@ -27,9 +27,9 @@ async def test_favlist():
 
 
 async def test_video():
-    from nonebot_plugin_resolver2.config import plugin_cache_dir
-    from nonebot_plugin_resolver2.parsers import BilibiliParser
-    from nonebot_plugin_resolver2.utils import encode_video_to_h264
+    from nonebot_plugin_parser.config import plugin_cache_dir
+    from nonebot_plugin_parser.parsers import BilibiliParser
+    from nonebot_plugin_parser.utils import encode_video_to_h264
 
     parser = BilibiliParser()
 
@@ -49,10 +49,10 @@ async def test_video():
 
 
 async def test_merge_av_h264():
-    from nonebot_plugin_resolver2.config import plugin_cache_dir
-    from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.parsers import BilibiliParser
-    from nonebot_plugin_resolver2.utils import merge_av_h264
+    from nonebot_plugin_parser.config import plugin_cache_dir
+    from nonebot_plugin_parser.download import DOWNLOADER
+    from nonebot_plugin_parser.parsers import BilibiliParser
+    from nonebot_plugin_parser.utils import merge_av_h264
 
     parser = BilibiliParser()
 
@@ -81,10 +81,10 @@ async def test_merge_av_h264():
 async def test_encode_h264_video():
     import asyncio
 
-    from nonebot_plugin_resolver2.config import plugin_cache_dir
-    from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.parsers import BilibiliParser
-    from nonebot_plugin_resolver2.utils import encode_video_to_h264, merge_av
+    from nonebot_plugin_parser.config import plugin_cache_dir
+    from nonebot_plugin_parser.download import DOWNLOADER
+    from nonebot_plugin_parser.parsers import BilibiliParser
+    from nonebot_plugin_parser.utils import encode_video_to_h264, merge_av
 
     try:
         bvid = "BV1VLk9YDEzB"
@@ -107,9 +107,9 @@ async def test_encode_h264_video():
 
 
 async def test_max_size_video():
-    from nonebot_plugin_resolver2.download import DOWNLOADER
-    from nonebot_plugin_resolver2.exception import DownloadSizeLimitException
-    from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_parser.download import DOWNLOADER
+    from nonebot_plugin_parser.exception import DownloadSizeLimitException
+    from nonebot_plugin_parser.parsers import BilibiliParser
 
     parser = BilibiliParser()
     bvid = "BV1du4y1E7Nh"
@@ -128,7 +128,7 @@ async def test_max_size_video():
 
 @pytest.mark.asyncio
 async def test_no_audio_video():
-    from nonebot_plugin_resolver2.parsers import BilibiliParser
+    from nonebot_plugin_parser.parsers import BilibiliParser
 
     bilibili_parser = BilibiliParser()
 

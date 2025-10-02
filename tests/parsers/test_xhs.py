@@ -9,7 +9,7 @@ import pytest
 async def test_parse():
     """小红书解析测试"""
     # 需要 ck 才能解析， 暂时不测试
-    from nonebot_plugin_resolver2.parsers import XiaoHongShuParser
+    from nonebot_plugin_parser.parsers import XiaoHongShuParser
 
     xhs_parser = XiaoHongShuParser()
     urls = [

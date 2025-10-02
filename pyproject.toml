@@ -1,5 +1,5 @@
 [project]
-name = "nonebot-plugin-resolver2"
+name = "nonebot-plugin-parser"
 version = "1.13.0"
 description = "NoneBot2 链接分享解析器自动解析, BV号/链接/小程序/卡片 | B站/抖音/快手/微博/小红书/youtube/tiktok/twitter/acfun"
 authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
@@ -32,9 +32,9 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/fllesser/nonebot-plugin-resolver2"
-IssueTracker = "https://github.com/fllesser/nonebot-plugin-resolver2/issues"
-Release = "https://github.com/fllesser/nonebot-plugin-resolver2/releases"
+Repository = "https://github.com/fllesser/nonebot-plugin-parser"
+IssueTracker = "https://github.com/fllesser/nonebot-plugin-parser/issues"
+Release = "https://github.com/fllesser/nonebot-plugin-parser/releases"
 
 [dependency-groups]
 dev = [
@@ -66,7 +66,7 @@ adapters = [
   { "name" = "Onebot V11", module_name = "nonebot.adapters.onebot.v11" },
   { name = "Telegram", module_name = "nonebot.adapters.telegram" },
 ]
-plugins = ["nonebot_plugin_resolver2"]
+plugins = ["nonebot_plugin_parser"]
 
 
 [tool.pytest.ini_options]
@@ -92,8 +92,8 @@ show-bump = "bump-my-version show-bump"
 [tool.coverage.report]
 show_missing = true # 相当于 --cov-report=term-missing:cite[1]
 omit = [ # 排除不需要统计的文件
-  "src/nonebot_plugin_resolver2/matchers/*",
-  "src/nonebot_plugin_resolver2/download/ytdlp.py",
+  "src/nonebot_plugin_parser/matchers/*",
+  "src/nonebot_plugin_parser/download/ytdlp.py",
 ]
 exclude_lines = [
   "raise NotImplementedError",
@@ -179,5 +179,5 @@ tag = true
 
 [[tool.bumpversion.files]]
 filename = "uv.lock"
-search = "name = \"nonebot-plugin-resolver2\"\nversion = \"{current_version}\""
-replace = "name = \"nonebot-plugin-resolver2\"\nversion = \"{new_version}\""
+search = "name = \"nonebot-plugin-parser\"\nversion = \"{current_version}\""
+replace = "name = \"nonebot-plugin-parser\"\nversion = \"{new_version}\""

@@ -7,7 +7,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_graphics():
     """测试微博图片解析"""
-    from nonebot_plugin_resolver2.parsers import WeiBoParser
+    from nonebot_plugin_parser.parsers import WeiBoParser
 
     weibo_parser = WeiBoParser()
 
@@ -28,7 +28,7 @@ async def test_graphics():
 
 
 async def test_repost():
-    from nonebot_plugin_resolver2.parsers import WeiBoParser
+    from nonebot_plugin_parser.parsers import WeiBoParser
 
     weibo_parser = WeiBoParser()
 
@@ -51,7 +51,7 @@ async def test_repost():
 @pytest.mark.asyncio
 async def test_video():
     """测试微博视频解析"""
-    from nonebot_plugin_resolver2.parsers import WeiBoParser
+    from nonebot_plugin_parser.parsers import WeiBoParser
 
     weibo_parser = WeiBoParser()
 
@@ -77,7 +77,7 @@ async def test_video():
 @pytest.mark.asyncio
 async def test_text():
     """测试微博纯文本"""
-    from nonebot_plugin_resolver2.parsers import WeiBoParser
+    from nonebot_plugin_parser.parsers import WeiBoParser
 
     weibo_parser = WeiBoParser()
 
