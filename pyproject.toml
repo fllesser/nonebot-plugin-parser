@@ -21,13 +21,13 @@ dependencies = [
   "tqdm>=4.67.1,<5.0.0",
   "aiofiles>=24.1.0",
   "yt-dlp>=2025.9.26",
+  "jinja2>=3.1.6",
   "nonebot2>=2.4.3,<3.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "bilibili-api-python>=17.3.0,<18.0.0",
   "nonebot-plugin-alconna>=0.59.4",
   "nonebot-plugin-uninfo>=0.9.0",
-  "jinja2>=3.1.6",
   "nonebot-plugin-htmlkit>=0.1.0rc1",
 ]
 
@@ -91,10 +91,9 @@ show-bump = "bump-my-version show-bump"
 
 [tool.coverage.report]
 show_missing = true # 相当于 --cov-report=term-missing:cite[1]
-omit = [ # 排除不需要统计的文件
-  "src/nonebot_plugin_parser/matchers/*",
-  "src/nonebot_plugin_parser/download/ytdlp.py",
-]
+# omit = [ # 排除不需要统计的文件
+
+# ]
 exclude_lines = [
   "raise NotImplementedError",
   "if TYPE_CHECKING:",

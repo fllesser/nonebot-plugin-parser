@@ -8,8 +8,6 @@ from nonebot.adapters import Event
 from nonebot_plugin_alconna import SupportAdapter
 from nonebot_plugin_alconna.uniseg import get_message_id, get_target, message_reaction
 
-from nonebot_plugin_parser.exception import ResolverException
-
 from ..config import rconfig
 from ..parsers import PLATFORM_PARSERS, BaseParser, ParseResult
 from ..renders import get_renderer
@@ -106,7 +104,7 @@ async def _(
         # 解析
         try:
             result = await parser.parse(matched)
-        except ResolverException:
+        except Exception:
             # await UniMessage(str(e)).send()
             await _message_reaction(event, "fail")
             raise

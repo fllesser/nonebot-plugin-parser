@@ -1,10 +1,7 @@
 import re
 from typing import ClassVar
 
-from nonebot import logger
-
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
-from ..exception import ParseException
 from .base import BaseParser
 from .data import Author, ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
@@ -32,60 +29,45 @@ class TikTokParser(BaseParser):
             ParseException: 解析失败时抛出
         """
         # 从匹配对象中获取原始URL
-        url = matched.group(0)
-        try:
-            # 处理短链接重定向
-            final_url = url
-            if match := re.match(r"(?:https?://)?(?:www\.)?(vt|vm)\.tiktok\.com", url):
-                prefix = match.group(1)
-                if prefix in ("vt", "vm"):
-                    try:
-                        final_url = await get_redirect_url(url)
-                        if not final_url:
-                            raise ParseException("TikTok 短链重定向失败")
-                    except Exception as e:
-                        logger.exception(f"TikTok 短链重定向失败 | {url}")
-                        raise ParseException(f"TikTok 短链重定向失败: {e}")
+        url, prefix = matched.group(0), matched.group(1)
 
-            # 获取视频信息
-            info_dict = await YTDLP_DOWNLOADER.extract_video_info(final_url)
-            title = info_dict.get("title", "未知")
-            author = info_dict.get("uploader", None)
-            thumbnail = info_dict.get("thumbnail", None)
-            duration = info_dict.get("duration", None)
+        if prefix in ("vt", "vm"):
+            url = await get_redirect_url(url)
 
-            # 构建额外信息
-            extra_info_parts = []
-            if duration and isinstance(duration, (int, float)):
-                minutes = int(duration) // 60
-                seconds = int(duration) % 60
-                extra_info_parts.append(f"时长: {minutes}:{seconds:02d}")
-            if extra_info_parts:
-                extra_info = "\n".join(extra_info_parts)
-            else:
-                extra_info = None
+        # 获取视频信息
+        info_dict = await YTDLP_DOWNLOADER.extract_video_info(url)
+        title = info_dict.get("title", "未知")
+        author = info_dict.get("uploader", None)
+        thumbnail = info_dict.get("thumbnail", None)
+        duration = info_dict.get("duration", None)
 
-            # 下载封面和视频
-            cover_path = None
-            if thumbnail:
-                cover_path = await DOWNLOADER.download_img(thumbnail)
+        # 构建额外信息
+        extra_info_parts = []
+        if duration and isinstance(duration, (int, float)):
+            minutes = int(duration) // 60
+            seconds = int(duration) % 60
+            extra_info_parts.append(f"时长: {minutes}:{seconds:02d}")
+        if extra_info_parts:
+            extra_info = "\n".join(extra_info_parts)
+        else:
+            extra_info = None
 
-            video_path = await YTDLP_DOWNLOADER.download_video(final_url)
+        # 下载封面和视频
+        cover_path = None
+        if thumbnail:
+            cover_path = await DOWNLOADER.download_img(thumbnail)
 
-            extra = {}
-            if cover_path:
-                extra["cover_path"] = cover_path
-            if extra_info:
-                extra["info"] = extra_info
+        video_path = await YTDLP_DOWNLOADER.download_video(url)
 
-            return self.result(
-                title=title,
-                author=Author(name=author) if author else None,
-                contents=[VideoContent(video_path)],
-                extra=extra,
-            )
-        except ParseException:
-            raise
-        except Exception as e:
-            logger.exception(f"TikTok 视频信息获取失败 | {url}")
-            raise ParseException(f"TikTok 视频信息获取失败: {e}")
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
+        if extra_info:
+            extra["info"] = extra_info
+
+        return self.result(
+            title=title,
+            author=Author(name=author) if author else None,
+            contents=[VideoContent(video_path)],
+            extra=extra,
+        )
