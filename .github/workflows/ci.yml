@@ -60,14 +60,14 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           env_vars: OS,PYTHON
-          files: ./junit1.xml,./junit2.xml
+          files: ./junit1.xml
           use_oidc: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           env_vars: OS,PYTHON
-          files: ./coverage1.xml,./coverage2.xml
+          files: ./coverage1.xml
           use_oidc: true
 
   test-parsers:
