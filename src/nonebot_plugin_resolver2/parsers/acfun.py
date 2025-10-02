@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import re
 from typing import ClassVar
+from typing_extensions import override
 
 import aiofiles
 import httpx
@@ -13,7 +14,7 @@ from ..download import DOWNLOADER
 from ..exception import DownloadException, ParseException
 from ..utils import safe_unlink
 from .base import BaseParser
-from .data import COMMON_HEADER, ParseResult, Platform, VideoContent
+from .data import COMMON_HEADER, Author, ParseResult, Platform, VideoContent
 
 
 class AcfunParser(BaseParser):
@@ -131,6 +132,7 @@ class AcfunParser(BaseParser):
 
         return m3u8_full_urls
 
+    @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
@@ -153,10 +155,14 @@ class AcfunParser(BaseParser):
 
         # 下载视频
         video_path = await self.download_video(m3u8_url, acid)
-        return ParseResult(
+
+        extra = {}
+        if extra_info:
+            extra["info"] = extra_info
+
+        return self.result(
             title=title,
-            platform=self.platform,
-            author=author,
+            author=Author(name=author) if author else None,
             contents=[VideoContent(path=video_path)],
-            extra_info=extra_info,
+            extra=extra,
         )

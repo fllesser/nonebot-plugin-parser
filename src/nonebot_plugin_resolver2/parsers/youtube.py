@@ -8,7 +8,7 @@ from ..cookie import save_cookies_with_netscape
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import AudioContent, ParseResult, Platform, VideoContent
+from .data import AudioContent, Author, ParseResult, Platform, VideoContent
 
 
 class YouTubeParser(BaseParser):
@@ -64,13 +64,17 @@ class YouTubeParser(BaseParser):
 
             video_path = await YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
 
-            return ParseResult(
+            extra = {}
+            if cover_path:
+                extra["cover_path"] = cover_path
+            if extra_info:
+                extra["info"] = extra_info
+
+            return self.result(
                 title=title,
-                platform=self.platform,
-                author=author,
-                cover_path=cover_path,
+                author=Author(name=author) if author else None,
                 contents=[VideoContent(video_path)],
-                extra_info=extra_info,
+                extra=extra,
             )
         except Exception as e:
             logger.exception(f"YouTube 视频信息获取失败 | {url}")
@@ -112,13 +116,17 @@ class YouTubeParser(BaseParser):
 
             audio_path = await YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
 
-            return ParseResult(
+            extra = {}
+            if cover_path:
+                extra["cover_path"] = cover_path
+            if extra_info:
+                extra["info"] = extra_info
+
+            return self.result(
                 title=title,
-                platform=self.platform,
-                author=author,
-                cover_path=cover_path,
+                author=Author(name=author) if author else None,
                 contents=[AudioContent(audio_path)],
-                extra_info=extra_info,
+                extra=extra,
             )
         except Exception as e:
             logger.exception(f"YouTube 音频信息获取失败 | {url}")

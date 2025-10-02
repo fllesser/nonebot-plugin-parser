@@ -1,6 +1,7 @@
 import json
 import re
 from typing import ClassVar
+from typing_extensions import override
 from urllib.parse import parse_qs, urlparse
 
 import httpx
@@ -11,7 +12,7 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Content, ImageContent, ParseResult, Platform, VideoContent
+from .data import Author, Content, ImageContent, ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
 
 
@@ -34,6 +35,7 @@ class XiaoHongShuParser(BaseParser):
         if rconfig.r_xhs_ck:
             self.headers["cookie"] = rconfig.r_xhs_ck
 
+    @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
@@ -96,12 +98,15 @@ class XiaoHongShuParser(BaseParser):
             pic_paths = await DOWNLOADER.download_imgs_without_raise(note_detail.img_urls)
             contents.extend(ImageContent(path) for path in pic_paths)
 
-        return ParseResult(
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
+
+        return self.result(
             title=note_detail.title_desc,
-            platform=self.platform,
-            cover_path=cover_path,
             contents=contents,
-            author=note_detail.user.nickname,
+            author=Author(name=note_detail.user.nickname) if note_detail.user.nickname else None,
+            extra=extra,
         )
 
 

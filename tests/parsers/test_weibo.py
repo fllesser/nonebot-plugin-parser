@@ -14,7 +14,6 @@ async def test_graphics():
     urls = [
         "https://weibo.com/7207262816/P5kWdcfDe",
         "https://m.weibo.cn/status/5155768539808352",
-        "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
     ]
 
     async def parse_graphics(url: str) -> None:
@@ -26,6 +25,27 @@ async def test_graphics():
         logger.success(f"{url} | 微博图文解析成功")
 
     await asyncio.gather(*[parse_graphics(url) for url in urls])
+
+
+async def test_repost():
+    from nonebot_plugin_resolver2.parsers import WeiBoParser
+
+    weibo_parser = WeiBoParser()
+
+    urls = [
+        "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
+        "https://weibo.com/1694917363/Q0KtXh6z2",
+    ]
+
+    async def parse_repost(url) -> None:
+        logger.info(f"{url} | 开始解析微博转发")
+        parse_result = await weibo_parser.parse_share_url(url)
+        repost = parse_result.repost
+        assert repost
+        logger.debug(f"{url} | 转发内容: \n{repost}")
+        assert repost.img_paths or repost.video_paths
+
+    await asyncio.gather(*[parse_repost(url) for url in urls])
 
 
 @pytest.mark.asyncio
@@ -40,7 +60,6 @@ async def test_video():
         "https://video.weibo.com/show?fid=1034:5145615399845897",
         "https://weibo.com/7207262816/O70aCbjnd",
         "http://m.weibo.cn/status/5112672433738061",
-        "https://weibo.com/1694917363/Q0KtXh6z2",
     ]
 
     async def parse_video(url: str) -> None:
@@ -73,7 +92,7 @@ async def test_text():
         logger.info(f"{url} | 开始解析微博")
         parse_result = await weibo_parser.parse_share_url(url)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
-        assert parse_result.title
+        assert parse_result.text
         logger.success(f"{url} | 微博纯文本解析成功")
 
     await asyncio.gather(*[parse_text(url) for url in urls])

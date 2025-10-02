@@ -2,6 +2,7 @@ import asyncio
 from pathlib import Path
 import re
 from typing import Any, ClassVar
+from typing_extensions import override
 
 import httpx
 import msgspec
@@ -11,7 +12,17 @@ from ..constants import COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ANDROID_HEADER, IOS_HEADER, Content, DynamicContent, ImageContent, ParseResult, Platform, VideoContent
+from .data import (
+    ANDROID_HEADER,
+    IOS_HEADER,
+    Author,
+    Content,
+    DynamicContent,
+    ImageContent,
+    ParseResult,
+    Platform,
+    VideoContent,
+)
 from .utils import get_redirect_url
 
 
@@ -94,12 +105,15 @@ class DouyinParser(BaseParser):
             video_path = await DOWNLOADER.download_video(video_url)
             contents.append(VideoContent(video_path))
 
-        return ParseResult(
-            title=video_data.desc,
-            platform=self.platform,
-            cover_path=cover_path,
-            author=video_data.author.nickname,
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
+
+        return self.result(
+            text=video_data.desc,
+            author=Author(name=video_data.author.nickname) if video_data.author.nickname else None,
             contents=contents,
+            extra=extra,
         )
 
     def _extract_data(self, text: str) -> "VideoData":
@@ -152,13 +166,14 @@ class DouyinParser(BaseParser):
         contents: list[Content] = []
         contents.extend(ImageContent(path) for path in pic_paths)
         contents.extend(DynamicContent(path) for path in dynamic_paths)
-        return ParseResult(
-            title=slides_data.share_info.share_desc_info,
-            platform=self.platform,
-            author=slides_data.author.nickname,
+
+        return self.result(
+            text=slides_data.share_info.share_desc_info,
+            author=Author(name=slides_data.author.nickname) if slides_data.author.nickname else None,
             contents=contents,
         )
 
+    @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
@@ -166,7 +181,7 @@ class DouyinParser(BaseParser):
             matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path）
+            ParseResult: 解析结果（已下载资源，包含 Path)
 
         Raises:
             ParseException: 解析失败时抛出
@@ -201,12 +216,12 @@ class ShareInfo(Struct):
     share_desc_info: str
 
 
-class Author(Struct):
+class DouyinAuthor(Struct):
     nickname: str
 
 
 class SlidesData(Struct):
-    author: Author
+    author: DouyinAuthor
     share_info: ShareInfo
     images: list[Image]
 
@@ -224,7 +239,7 @@ class SlidesInfo(Struct):
 
 
 class VideoData(Struct):
-    author: Author
+    author: DouyinAuthor
     desc: str
     images: list[Image] | None = None
     video: Video | None = None

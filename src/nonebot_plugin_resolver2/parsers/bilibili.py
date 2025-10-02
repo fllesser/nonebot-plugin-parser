@@ -2,6 +2,7 @@ import asyncio
 import json
 import re
 from typing import Any, ClassVar
+from typing_extensions import override
 
 from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.video import Video
@@ -13,7 +14,7 @@ from ..download import DOWNLOADER
 from ..exception import DownloadSizeLimitException, ParseException
 from ..utils import merge_av
 from .base import BaseParser
-from .data import Content, ImageContent, ParseResult, Platform, TextImageContent, VideoContent
+from .data import Content, ImageContent, Platform, TextImageContent, VideoContent
 from .utils import get_redirect_url
 
 
@@ -41,7 +42,8 @@ class BilibiliParser(BaseParser):
         # 第二参数数值参考 curl_cffi 文档
         # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
 
-    async def parse(self, matched: re.Match[str]) -> ParseResult:
+    @override
+    async def parse(self, matched: re.Match[str]):
         """解析 URL 获取内容信息并下载资源
 
         Args:
@@ -87,7 +89,7 @@ class BilibiliParser(BaseParser):
 
         # 解析视频信息
         parser_result = await self.parse_video(bvid=bvid, avid=avid, page_num=page_num)
-        if link is not None:
+        if link is not None and parser_result.title:
             parser_result.title += f"\n{link}"
         return parser_result
 
@@ -97,7 +99,7 @@ class BilibiliParser(BaseParser):
         bvid: str | None = None,
         avid: int | None = None,
         page_num: int = 1,
-    ) -> ParseResult:
+    ):
         """解析视频信息
 
         Args:
@@ -180,15 +182,19 @@ class BilibiliParser(BaseParser):
         if video_path.exists():
             contents.append(VideoContent(video_path))
 
-        return ParseResult(
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
+        if extra_info:
+            extra["info"] = extra_info
+
+        return self.result(
             title=title,
-            platform=self.platform,
-            cover_path=cover_path,
             contents=contents,
-            extra_info=extra_info,
+            extra=extra,
         )
 
-    async def parse_others(self, url: str) -> ParseResult:
+    async def parse_others(self, url: str):
         """解析其他类型链接"""
         # 判断链接类型并解析
         # 1. 动态/图文 (opus)
@@ -206,11 +212,7 @@ class BilibiliParser(BaseParser):
                 pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
                 contents.extend(ImageContent(path) for path in pic_paths)
 
-            return ParseResult(
-                title=f"动态 {opus_id}",
-                platform=self.platform,
-                contents=contents,
-            )
+            return self.result(title=f"动态 {opus_id}", contents=contents)
 
         # 2. 直播
         if "/live" in url:
@@ -232,12 +234,11 @@ class BilibiliParser(BaseParser):
                 keyframe_path = await DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
                 contents.append(ImageContent(keyframe_path))
 
-            return ParseResult(
-                title=title,
-                platform=self.platform,
-                cover_path=cover_path,
-                contents=contents,
-            )
+            extra = {}
+            if cover_path:
+                extra["cover_path"] = cover_path
+
+            return self.result(title=title, contents=contents, extra=extra)
 
         # 3. 专栏
         if "/read" in url:
@@ -250,15 +251,12 @@ class BilibiliParser(BaseParser):
 
             # 下载图片
             contents = []
+            contents.append(combined_text)
             if img_urls:
                 pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
                 contents.extend(ImageContent(path) for path in pic_paths)
 
-            return ParseResult(
-                title=combined_text[:100] + "..." if len(combined_text) > 100 else combined_text,
-                platform=self.platform,
-                contents=contents,
-            )
+            return self.result(contents=contents)
 
         # 4. 收藏夹
         if "/favlist" in url:
@@ -271,9 +269,8 @@ class BilibiliParser(BaseParser):
             # 并发下载封面
             cover_paths = await DOWNLOADER.download_imgs_without_raise(cover_urls, ext_headers=self.headers)
 
-            return ParseResult(
+            return self.result(
                 title=f"收藏夹: {fav_id}",
-                platform=self.platform,
                 contents=[TextImageContent(title, cover_path) for title, cover_path in zip(titles, cover_paths)],
             )
 

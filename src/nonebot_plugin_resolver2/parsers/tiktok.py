@@ -6,7 +6,7 @@ from nonebot import logger
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ParseResult, Platform, VideoContent
+from .data import Author, ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
 
 
@@ -72,13 +72,17 @@ class TikTokParser(BaseParser):
 
             video_path = await YTDLP_DOWNLOADER.download_video(final_url)
 
-            return ParseResult(
+            extra = {}
+            if cover_path:
+                extra["cover_path"] = cover_path
+            if extra_info:
+                extra["info"] = extra_info
+
+            return self.result(
                 title=title,
-                platform=self.platform,
-                author=author,
-                cover_path=cover_path,
+                author=Author(name=author) if author else None,
                 contents=[VideoContent(video_path)],
-                extra_info=extra_info,
+                extra=extra,
             )
         except ParseException:
             raise
