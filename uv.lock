@@ -868,6 +868,15 @@ wheels = [
 ]
 
 [[package]]
+name = "markdown"
+version = "3.9"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8d/37/02347f6d6d8279247a5837082ebc26fc0d5aaeaf75aa013fcbb433c777ab/markdown-3.9.tar.gz", hash = "sha256:d2900fe1782bd33bdbbd56859defef70c2e78fc46668f8eb9df3128138f2cb6a", size = 364585, upload-time = "2025-09-04T20:25:22.885Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/70/ae/44c4a6a4cbb496d93c6257954260fe3a6e91b7bed2240e5dad2a717f5111/markdown-3.9-py3-none-any.whl", hash = "sha256:9f4d91ed810864ea88a6f32c07ba8bee1346c0cc1f6b1f9f6c822f2a9667d280", size = 107441, upload-time = "2025-09-04T20:25:21.784Z" },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1268,6 +1277,26 @@ wheels = [
 ]
 
 [[package]]
+name = "nonebot-plugin-htmlkit"
+version = "0.1.0rc1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiofiles" },
+    { name = "jinja2" },
+    { name = "markdown" },
+    { name = "nonebot2" },
+    { name = "pygments" },
+    { name = "pymdown-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bf/a0/6c34e909ed78b085c51a5ae2a5072e6bbb66a67187a0ba55f1a3e95d2438/nonebot_plugin_htmlkit-0.1.0rc1.tar.gz", hash = "sha256:8cd6c1f84b69532c6a914fd2d2cdd3e245d448bb9b19a5f56f66faa5f67f672f", size = 45527, upload-time = "2025-10-01T13:12:41.582Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/54/7d/1a1c93853417f9acc5b2384d9c287a9db422453c27bce86c949d95f7997b/nonebot_plugin_htmlkit-0.1.0rc1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:6084bf859ba6f24c493d27d15d7dad52cbe34dc2fa867d65105c2adea23c065e", size = 4216753, upload-time = "2025-10-01T13:12:35.072Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/b5/e595cd76419392d51ebd6046f714becf1641fdfe39878a4ca07635309578/nonebot_plugin_htmlkit-0.1.0rc1-cp310-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:40df2ed39b3d0899806f0fb39175fddd792df79d5eb7baf0b3cca03a2a4d51a4", size = 5340253, upload-time = "2025-10-01T13:12:36.839Z" },
+    { url = "https://files.pythonhosted.org/packages/51/f2/b3b938aa88a74b53759a9e8d574c59d30bfaef18928680e2d850cc095d5f/nonebot_plugin_htmlkit-0.1.0rc1-cp310-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:d1f69f7be0b81b4e97778080e14275d10713b0cff022493d7cd01af841a543d0", size = 5566616, upload-time = "2025-10-01T13:12:38.681Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/48/9f43d5dc800afcbbcedd7ceb4dd2d52881c57e8d22a5d873295266b14ab1/nonebot_plugin_htmlkit-0.1.0rc1-cp310-abi3-win_amd64.whl", hash = "sha256:979af2d5e8cbe2fad3b9e952bb990b6106a7d326e26eada1640c0d82d0efaf22", size = 2972307, upload-time = "2025-10-01T13:12:40.357Z" },
+]
+
+[[package]]
 name = "nonebot-plugin-localstore"
 version = "0.7.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1291,9 +1320,11 @@ dependencies = [
     { name = "bilibili-api-python" },
     { name = "curl-cffi" },
     { name = "httpx" },
+    { name = "jinja2" },
     { name = "msgspec" },
     { name = "nonebot-plugin-alconna" },
     { name = "nonebot-plugin-apscheduler" },
+    { name = "nonebot-plugin-htmlkit" },
     { name = "nonebot-plugin-localstore" },
     { name = "nonebot-plugin-uninfo" },
     { name = "nonebot2" },
@@ -1327,9 +1358,11 @@ requires-dist = [
     { name = "bilibili-api-python", specifier = ">=17.3.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
+    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "msgspec", specifier = ">=0.19.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4" },
     { name = "nonebot-plugin-apscheduler", specifier = ">=0.5.0,<1.0.0" },
+    { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc1" },
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
     { name = "nonebot-plugin-uninfo", specifier = ">=0.9.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
@@ -1883,6 +1916,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e7/46/bd74733ff231675599650d3e47f361794b22ef3e3770998dda30d3b63726/pyjwt-2.10.1.tar.gz", hash = "sha256:3cc5772eb20009233caf06e9d8a0577824723b44e6648ee0a2aedb6cf9381953", size = 87785, upload-time = "2024-11-28T03:43:29.933Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/61/ad/689f02752eeec26aed679477e80e632ef1b682313be70793d798c1d5fc8f/PyJWT-2.10.1-py3-none-any.whl", hash = "sha256:dcdd193e30abefd5debf142f9adfcdd2b58004e644f25406ffaebd50bd98dacb", size = 22997, upload-time = "2024-11-28T03:43:27.893Z" },
+]
+
+[[package]]
+name = "pymdown-extensions"
+version = "10.16.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/55/b3/6d2b3f149bc5413b0a29761c2c5832d8ce904a1d7f621e86616d96f505cc/pymdown_extensions-10.16.1.tar.gz", hash = "sha256:aace82bcccba3efc03e25d584e6a22d27a8e17caa3f4dd9f207e49b787aa9a91", size = 853277, upload-time = "2025-07-28T16:19:34.167Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e4/06/43084e6cbd4b3bc0e80f6be743b2e79fbc6eed8de9ad8c629939fa55d972/pymdown_extensions-10.16.1-py3-none-any.whl", hash = "sha256:d6ba157a6c03146a7fb122b2b9a121300056384eafeec9c9f9e584adfdb2a32d", size = 266178, upload-time = "2025-07-28T16:19:31.401Z" },
 ]
 
 [[package]]

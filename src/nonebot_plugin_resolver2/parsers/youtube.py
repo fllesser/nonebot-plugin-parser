@@ -8,15 +8,12 @@ from ..cookie import save_cookies_with_netscape
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import AudioContent, ParseResult, VideoContent
+from .data import AudioContent, ParseResult, Platform, VideoContent
 
 
 class YouTubeParser(BaseParser):
-    # 平台名称（用于配置禁用和内部标识）
-    platform_name: ClassVar[str] = "youtube"
-
-    # 平台显示名称
-    platform_display_name: ClassVar[str] = "油管"
+    # 平台信息
+    platform: ClassVar[Platform] = Platform(name="youtube", display_name="油管")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -69,7 +66,7 @@ class YouTubeParser(BaseParser):
 
             return ParseResult(
                 title=title,
-                platform=self.platform_display_name,
+                platform=self.platform,
                 author=author,
                 cover_path=cover_path,
                 contents=[VideoContent(video_path)],
@@ -117,7 +114,7 @@ class YouTubeParser(BaseParser):
 
             return ParseResult(
                 title=title,
-                platform=self.platform_display_name,
+                platform=self.platform,
                 author=author,
                 cover_path=cover_path,
                 contents=[AudioContent(audio_path)],

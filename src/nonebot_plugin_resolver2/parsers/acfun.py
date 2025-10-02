@@ -13,15 +13,12 @@ from ..download import DOWNLOADER
 from ..exception import DownloadException, ParseException
 from ..utils import safe_unlink
 from .base import BaseParser
-from .data import COMMON_HEADER, ParseResult, VideoContent
+from .data import COMMON_HEADER, ParseResult, Platform, VideoContent
 
 
 class AcfunParser(BaseParser):
-    # 平台名称（用于配置禁用和内部标识）
-    platform_name: ClassVar[str] = "acfun"
-
-    # 平台显示名称
-    platform_display_name: ClassVar[str] = "猴山"
+    # 平台信息
+    platform: ClassVar[Platform] = Platform(name="acfun", display_name="猴山")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -158,7 +155,7 @@ class AcfunParser(BaseParser):
         video_path = await self.download_video(m3u8_url, acid)
         return ParseResult(
             title=title,
-            platform=self.platform_display_name,
+            platform=self.platform,
             author=author,
             contents=[VideoContent(path=video_path)],
             extra_info=extra_info,

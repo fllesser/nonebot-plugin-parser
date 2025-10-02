@@ -9,10 +9,10 @@ import pytest
 @pytest.mark.asyncio
 async def test_parse():
     """测试快手视频解析"""
-    from nonebot_plugin_resolver2.parsers import KuaishouParser
+    from nonebot_plugin_resolver2.parsers import KuaiShouParser
     from nonebot_plugin_resolver2.utils import fmt_size
 
-    parser = KuaishouParser()
+    parser = KuaiShouParser()
 
     test_urls = [
         "https://www.kuaishou.com/short-video/3xhjgcmir24m4nm",

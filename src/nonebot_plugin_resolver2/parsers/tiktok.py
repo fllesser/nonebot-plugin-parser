@@ -6,16 +6,13 @@ from nonebot import logger
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ParseResult, VideoContent
+from .data import ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
 
 
 class TikTokParser(BaseParser):
-    # 平台名称（用于配置禁用和内部标识）
-    platform_name: ClassVar[str] = "tiktok"
-
-    # 平台显示名称
-    platform_display_name: ClassVar[str] = "TikTok"
+    # 平台信息
+    platform: ClassVar[Platform] = Platform(name="tiktok", display_name="TikTok")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -77,7 +74,7 @@ class TikTokParser(BaseParser):
 
             return ParseResult(
                 title=title,
-                platform=self.platform_display_name,
+                platform=self.platform,
                 author=author,
                 cover_path=cover_path,
                 contents=[VideoContent(video_path)],

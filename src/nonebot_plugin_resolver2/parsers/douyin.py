@@ -11,16 +11,13 @@ from ..constants import COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ANDROID_HEADER, IOS_HEADER, Content, DynamicContent, ImageContent, ParseResult, VideoContent
+from .data import ANDROID_HEADER, IOS_HEADER, Content, DynamicContent, ImageContent, ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
 
 
 class DouyinParser(BaseParser):
-    # 平台名称（用于配置禁用和内部标识）
-    platform_name: ClassVar[str] = "douyin"
-
-    # 平台显示名称
-    platform_display_name: ClassVar[str] = "抖音"
+    # 平台信息
+    platform: ClassVar[Platform] = Platform(name="douyin", display_name="抖音")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -99,7 +96,7 @@ class DouyinParser(BaseParser):
 
         return ParseResult(
             title=video_data.desc,
-            platform=self.platform_display_name,
+            platform=self.platform,
             cover_path=cover_path,
             author=video_data.author.nickname,
             contents=contents,
@@ -157,7 +154,7 @@ class DouyinParser(BaseParser):
         contents.extend(DynamicContent(path) for path in dynamic_paths)
         return ParseResult(
             title=slides_data.share_info.share_desc_info,
-            platform=self.platform_display_name,
+            platform=self.platform,
             author=slides_data.author.nickname,
             contents=contents,
         )

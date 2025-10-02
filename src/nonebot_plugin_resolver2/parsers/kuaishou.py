@@ -8,18 +8,15 @@ import msgspec
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Content, ImageContent, ParseResult, VideoContent
+from .data import Content, ImageContent, ParseResult, Platform, VideoContent
 from .utils import get_redirect_url
 
 
-class KuaishouParser(BaseParser):
+class KuaiShouParser(BaseParser):
     """快手解析器"""
 
-    # 平台名称（用于配置禁用和内部标识）
-    platform_name: ClassVar[str] = "kuaishou"
-
-    # 平台显示名称
-    platform_display_name: ClassVar[str] = "快手"
+    # 平台信息
+    platform: ClassVar[Platform] = Platform(name="kuaishou", display_name="快手")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -74,7 +71,7 @@ class KuaishouParser(BaseParser):
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        return await photo.convert_parse_result(self.platform_display_name, self.v_headers)
+        return await photo.convert_parse_result(self.platform, self.v_headers)
 
 
 from typing import TypeAlias
@@ -124,9 +121,7 @@ class Photo(Struct):
     def img_urls(self):
         return self.ext_params.atlas.img_urls
 
-    async def convert_parse_result(
-        self, platform: str = "快手", ext_headers: dict[str, str] | None = None
-    ) -> ParseResult:
+    async def convert_parse_result(self, platform: Platform, ext_headers: dict[str, str] | None = None) -> ParseResult:
         from ..download import DOWNLOADER
 
         # 下载封面
