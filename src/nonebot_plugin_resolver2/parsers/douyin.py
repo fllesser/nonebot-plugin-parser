@@ -110,7 +110,7 @@ class DouyinParser(BaseParser):
             extra["cover_path"] = cover_path
 
         return self.result(
-            title=video_data.desc,
+            text=video_data.desc,
             author=Author(name=video_data.author.nickname) if video_data.author.nickname else None,
             contents=contents,
             extra=extra,

@@ -26,15 +26,17 @@ class Renderer(BaseRenderer):
         messages: list[UniMessage] = []
 
         first_message = UniMessage(
-            f"{result.author.name} 的{result.platform.display_name}\n"
+            f"{result.author.name} 的{result.platform.display_name}"
             if result.author
-            else f"{result.platform.display_name}\n"
+            else f"{result.platform.display_name}"
         )
         if cover_path := result.extra.get("cover_path"):
             # 先发送封面
             first_message += UniHelper.img_seg(cover_path)
         if result.title:
             first_message += Text(f"\n{result.title}")
+        if result.text:
+            first_message += Text(f"\n{result.text}")
         if info := result.extra.get("info"):
             first_message += Text(f"\n{info}")
 
