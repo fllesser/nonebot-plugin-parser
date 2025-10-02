@@ -11,7 +11,7 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ImageContent, ParseResult, VideoContent
+from .data import Content, ImageContent, ParseResult, VideoContent
 from .utils import get_redirect_url
 
 
@@ -86,7 +86,7 @@ class XiaoHongShuParser(BaseParser):
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
         note_detail = msgspec.convert(note_data, type=NoteDetail)
 
-        contents = []
+        contents: list[Content] = []
         cover_path = None
         if video_url := note_detail.video_url:
             # 下载视频和封面

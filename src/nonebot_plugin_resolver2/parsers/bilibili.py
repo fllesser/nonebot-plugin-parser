@@ -13,7 +13,7 @@ from ..download import DOWNLOADER
 from ..exception import DownloadSizeLimitException, ParseException
 from ..utils import merge_av
 from .base import BaseParser
-from .data import ImageContent, ParseResult, TextImageContent, VideoContent
+from .data import Content, ImageContent, ParseResult, TextImageContent, VideoContent
 from .utils import get_redirect_url
 
 
@@ -162,7 +162,7 @@ class BilibiliParser(BaseParser):
         if cover_url:
             cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
 
-        contents = []
+        contents: list[Content] = []
         # 下载视频
         if not video_path.exists():
             # 下载视频和音频
@@ -203,7 +203,7 @@ class BilibiliParser(BaseParser):
             img_urls, text = await self.parse_opus(opus_id)
 
             # 下载图片
-            contents = []
+            contents: list[Content] = []
             contents.append(text)
             if img_urls:
                 pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)

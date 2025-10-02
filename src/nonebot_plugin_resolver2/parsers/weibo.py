@@ -11,7 +11,7 @@ from ..download import DOWNLOADER
 from ..exception import ParseException
 from ..parsers.utils import get_redirect_url
 from .base import BaseParser
-from .data import ImageContent, ParseResult, VideoContent
+from .data import Content, ImageContent, ParseResult, VideoContent
 
 
 class WeiBoParser(BaseParser):
@@ -148,7 +148,7 @@ class WeiBoParser(BaseParser):
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
 
         # 下载内容
-        contents = []
+        contents: list[Content] = []
 
         # 添加文本内容
         if text := weibo_data.text_content:
