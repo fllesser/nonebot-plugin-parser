@@ -1,12 +1,10 @@
 import re
 from typing import ClassVar
-
-from nonebot import logger
+from typing_extensions import override
 
 from ..config import rconfig, ytb_cookies_file
 from ..cookie import save_cookies_with_netscape
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
-from ..exception import ParseException
 from .base import BaseParser
 from .data import AudioContent, Author, ParseResult, Platform, VideoContent
 
@@ -26,6 +24,7 @@ class YouTubeParser(BaseParser):
         if rconfig.r_ytb_ck:
             save_cookies_with_netscape(rconfig.r_ytb_ck, self.cookies_file, "youtube.com")
 
+    @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
@@ -40,45 +39,29 @@ class YouTubeParser(BaseParser):
         """
         # 从匹配对象中获取原始URL
         url = matched.group(0)
-        try:
-            info_dict = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
-            title = info_dict.get("title", "未知")
-            author = info_dict.get("uploader", None)
-            thumbnail = info_dict.get("thumbnail", None)
-            duration = info_dict.get("duration", None)
 
-            # 构建额外信息
-            extra_info_parts = []
-            if duration and isinstance(duration, (int, float)):
-                minutes = int(duration) // 60
-                seconds = int(duration) % 60
-                extra_info_parts.append(f"时长: {minutes}:{seconds:02d}")
-            if extra_info_parts:
-                extra_info = "\n".join(extra_info_parts)
-            else:
-                extra_info = None
+        info_dict = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
+        title = info_dict.get("title", "未知")
+        author = info_dict.get("uploader", None)
+        thumbnail = info_dict.get("thumbnail", None)
+        duration = int(info_dict.get("duration", 0))
 
-            cover_path = None
-            if thumbnail:
-                cover_path = await DOWNLOADER.download_img(thumbnail)
+        cover_path = None
+        if thumbnail:
+            cover_path = await DOWNLOADER.download_img(thumbnail)
 
-            video_path = await YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
+        video_path = await YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
 
-            extra = {}
-            if cover_path:
-                extra["cover_path"] = cover_path
-            if extra_info:
-                extra["info"] = extra_info
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
 
-            return self.result(
-                title=title,
-                author=Author(name=author) if author else None,
-                contents=[VideoContent(video_path)],
-                extra=extra,
-            )
-        except Exception as e:
-            logger.exception(f"YouTube 视频信息获取失败 | {url}")
-            raise ParseException(f"YouTube 视频信息获取失败: {e}")
+        return self.result(
+            title=title,
+            author=Author(name=author) if author else None,
+            contents=[VideoContent(video_path, duration=duration, cover_path=cover_path)],
+            extra=extra,
+        )
 
     async def parse_url_as_audio(self, url: str) -> ParseResult:
         """解析 YouTube URL 并标记为音频下载
@@ -89,45 +72,26 @@ class YouTubeParser(BaseParser):
         Returns:
             ParseResult: 解析结果（音频内容）
 
-        Raises:
-            ParseException: 解析失败
         """
-        try:
-            info_dict = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
-            title = info_dict.get("title", "未知")
-            author = info_dict.get("uploader", None)
-            thumbnail = info_dict.get("thumbnail", None)
-            duration = info_dict.get("duration", None)
+        info_dict = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
+        title = info_dict.get("title", "未知")
+        author = info_dict.get("uploader", None)
+        thumbnail = info_dict.get("thumbnail", None)
+        duration = int(info_dict.get("duration", 0))
 
-            # 构建额外信息
-            extra_info_parts = []
-            if duration and isinstance(duration, (int, float)):
-                minutes = int(duration) // 60
-                seconds = int(duration) % 60
-                extra_info_parts.append(f"时长: {minutes}:{seconds:02d}")
-            if extra_info_parts:
-                extra_info = "\n".join(extra_info_parts)
-            else:
-                extra_info = None
+        cover_path = None
+        if thumbnail:
+            cover_path = await DOWNLOADER.download_img(thumbnail)
 
-            cover_path = None
-            if thumbnail:
-                cover_path = await DOWNLOADER.download_img(thumbnail)
+        audio_path = await YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
 
-            audio_path = await YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
+        extra = {}
+        if cover_path:
+            extra["cover_path"] = cover_path
 
-            extra = {}
-            if cover_path:
-                extra["cover_path"] = cover_path
-            if extra_info:
-                extra["info"] = extra_info
-
-            return self.result(
-                title=title,
-                author=Author(name=author) if author else None,
-                contents=[AudioContent(audio_path)],
-                extra=extra,
-            )
-        except Exception as e:
-            logger.exception(f"YouTube 音频信息获取失败 | {url}")
-            raise ParseException(f"YouTube 音频信息获取失败: {e}")
+        return self.result(
+            title=title,
+            author=Author(name=author) if author else None,
+            contents=[AudioContent(audio_path, duration)],
+            extra=extra,
+        )

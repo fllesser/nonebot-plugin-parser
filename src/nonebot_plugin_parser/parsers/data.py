@@ -11,31 +11,47 @@ from ..matchers.helper import Segment, UniHelper, UniMessage
 
 
 @dataclass
-class AudioContent:
+class MediaContent:
+    path: Path
+    duration: float = 0.0
+
+    @property
+    def display_duration(self) -> str:
+        minutes = int(self.duration) // 60
+        seconds = int(self.duration) % 60
+        return f"时长: {minutes}:{seconds:02d}"
+
+    @property
+    def size_in_mb(self) -> float:
+        return self.path.stat().st_size / 1024 / 1024
+
+
+@dataclass
+class AudioContent(MediaContent):
     """音频内容"""
 
-    path: Path
+    pass
 
 
 @dataclass
-class VideoContent:
+class VideoContent(MediaContent):
     """视频内容"""
 
-    path: Path
+    cover_path: Path | None = None
+    """视频封面"""
 
 
 @dataclass
-class ImageContent:
+class ImageContent(MediaContent):
     """图片内容"""
 
-    path: Path
+    pass
 
 
 @dataclass
-class DynamicContent:
+class DynamicContent(MediaContent):
     """动态内容 视频格式 后续转 gif"""
 
-    path: Path
     gif_path: Path | None = None
 
 
@@ -47,7 +63,7 @@ class TextImageContent:
     image_path: Path
 
 
-Content = str | AudioContent | VideoContent | ImageContent | DynamicContent | TextImageContent
+Content = str | MediaContent | TextImageContent
 
 
 @dataclass

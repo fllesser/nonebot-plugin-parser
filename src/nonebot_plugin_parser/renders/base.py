@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from nonebot_plugin_alconna import UniMessage
 
-from nonebot_plugin_parser.parsers import ParseResult
+from ..parsers import ParseResult
 
 
 class BaseRenderer(ABC):
