@@ -5,6 +5,7 @@ from .bilibili import BilibiliParser as BilibiliParser
 from .data import ParseResult as ParseResult
 from .douyin import DouyinParser as DouyinParser
 from .kuaishou import KuaiShouParser as KuaiShouParser
+from .nga import NGAParser as NGAParser
 from .tiktok import TikTokParser as TikTokParser
 from .twitter import TwitterParser as TwitterParser
 from .weibo import WeiBoParser as WeiBoParser
