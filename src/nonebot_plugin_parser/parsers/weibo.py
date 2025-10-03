@@ -1,4 +1,3 @@
-import math
 import re
 import time
 from typing import ClassVar
@@ -79,28 +78,60 @@ class WeiBoParser(BaseParser):
             **COMMON_HEADER,
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + fid + '"}}'
+
         async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.post(req_url, content=post_content)
             response.raise_for_status()
             json_data = response.json()
-        data = json_data["data"]["Component_Play_Playinfo"]
 
-        video_url = data["stream_url"]
-        if len(data["urls"]) > 0:
+        data = json_data.get("data", {}).get("Component_Play_Playinfo", {})
+        if not data:
+            raise ParseException("Component_Play_Playinfo 数据为空")
+        # 提取作者
+        user = data.get("reward", {}).get("user", {})
+        author_name, avatar, description = (
+            user.get("name", "未知"),
+            user.get("profile_image_url"),
+            user.get("description"),
+        )
+        author = Author(name=author_name, avatar=avatar, description=description)
+
+        # 提取标题和文本
+        title, text = data.get("title", ""), data.get("text", "")
+        if text:
+            text = re.sub(r"<[^>]*>", "", text)
+            text = text.replace("\n\n", "").strip()
+
+        # 下载封面
+        cover_path = None
+        if cover_url := data.get("cover_image"):
+            cover_url = "https:" + cover_url
+            cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
+
+        # 下载视频
+        contents: list[Content] = []
+        video_url_dict = data.get("urls")
+        if video_url_dict and isinstance(video_url_dict, dict) and len(video_url_dict) > 0:
             # stream_url码率最低，urls中第一条码率最高
-            _, first_mp4_url = next(iter(data["urls"].items()))
-            video_url = f"https:{first_mp4_url}"
+            first_mp4_url: str = next(iter(video_url_dict.values()))
+            video_url = "https:" + first_mp4_url
+        else:
+            video_url = data.get("stream_url")
 
-        # 下载封面和视频
-        cover_url = "https:" + data["cover_image"]
-        cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
-        video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+        if video_url:
+            video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+            contents.append(VideoContent(video_path))
+
+        # 时间戳
+        timestamp = data.get("real_date")
 
         return self.result(
-            title=data["title"],
-            author=Author(name=data["author"]) if data.get("author") else None,
+            title=title,
+            text=text,
+            author=author,
             cover_path=cover_path,
-            contents=[VideoContent(video_path)],
+            contents=contents,
+            timestamp=timestamp,
         )
 
     async def parse_weibo_id(self, weibo_id: str) -> ParseResult:
@@ -184,8 +215,10 @@ class WeiBoParser(BaseParser):
 
     def _mid2id(self, mid: str) -> str:
         """将微博 mid 转换为 id"""
+        from math import ceil
+
         mid = str(mid)[::-1]  # 反转输入字符串
-        size = math.ceil(len(mid) / 7)  # 计算每个块的大小
+        size = ceil(len(mid) / 7)  # 计算每个块的大小
         result = []
 
         for i in range(size):
@@ -243,10 +276,7 @@ class WeiboData(Struct):
 
     bid: str
     created_at: str
-    """发布时间
-
-    格式: `Thu Oct 02 14:39:33 +0800 2025`
-    """
+    """发布时间 格式: `Thu Oct 02 14:39:33 +0800 2025`"""
 
     status_title: str | None = None
     pics: list[Pic] | None = None
