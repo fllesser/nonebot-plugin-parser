@@ -11,16 +11,6 @@ from .weibo import WeiBoParser as WeiBoParser
 from .xiaohongshu import XiaoHongShuParser as XiaoHongShuParser
 from .youtube import YouTubeParser as YouTubeParser
 
-# 自动获取所有已注册的 Parser 类
-PARSER_CLASSES: list[type[BaseParser]] = BaseParser.get_all_parsers()
-
-# 自动构建平台映射（platform.name -> Parser 类）
-PLATFORM_PARSERS: dict[str, type[BaseParser]] = {
-    parser_class.platform.name: parser_class for parser_class in PARSER_CLASSES
-}
-
 __all__ = [
-    "PARSER_CLASSES",
-    "PLATFORM_PARSERS",
     "ParseResult",
 ]

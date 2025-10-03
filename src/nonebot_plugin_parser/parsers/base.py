@@ -33,7 +33,7 @@ class BaseParser(ABC):
             BaseParser._registry.append(cls)
 
     @classmethod
-    def get_all_parsers(cls) -> list[type["BaseParser"]]:
+    def get_all_subclass(cls) -> list[type["BaseParser"]]:
         """获取所有已注册的 Parser 类"""
         return cls._registry
 
