@@ -15,7 +15,6 @@ from ..exception import DownloadSizeLimitException, ParseException
 from ..utils import merge_av
 from .base import BaseParser
 from .data import Content, ImageContent, Platform, TextImageContent, VideoContent
-from .utils import get_redirect_url
 
 
 class BilibiliParser(BaseParser):
@@ -62,7 +61,7 @@ class BilibiliParser(BaseParser):
         # 处理短链
         if "b23.tv" in url or "bili2233.cn" in url:
             link = url
-            url = await get_redirect_url(url, self.headers)
+            url = await self.get_redirect_url(url, self.headers)
 
         avid, bvid = None, None
         # 链接中是否包含BV，av号

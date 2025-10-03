@@ -23,7 +23,6 @@ from .data import (
     Platform,
     VideoContent,
 )
-from .utils import get_redirect_url
 
 
 class DouyinParser(BaseParser):
@@ -56,7 +55,7 @@ class DouyinParser(BaseParser):
             iesdouyin_url = self._build_iesdouyin_url(_type, video_id)
         else:
             # https://v.douyin.com/xxxxxx
-            iesdouyin_url = await get_redirect_url(share_url)
+            iesdouyin_url = await self.get_redirect_url(share_url)
             # https://www.iesdouyin.com/share/video/7468908569061100857/?region=CN&mid=0&u_
             matched = re.search(r"(slides|video|note)/(\d+)", iesdouyin_url)
             if not matched:
@@ -101,7 +100,7 @@ class DouyinParser(BaseParser):
             pic_paths = await DOWNLOADER.download_imgs_without_raise(image_urls)
             contents.extend(ImageContent(path) for path in pic_paths)
         elif video_url := video_data.video_url:
-            video_url = await get_redirect_url(video_url)
+            video_url = await self.get_redirect_url(video_url)
             video_path = await DOWNLOADER.download_video(video_url)
             contents.append(VideoContent(video_path, cover_path=cover_path))
 

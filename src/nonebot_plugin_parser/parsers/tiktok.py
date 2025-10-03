@@ -4,7 +4,6 @@ from typing import ClassVar
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from .base import BaseParser
 from .data import Author, ParseResult, Platform, VideoContent
-from .utils import get_redirect_url
 
 
 class TikTokParser(BaseParser):
@@ -32,7 +31,7 @@ class TikTokParser(BaseParser):
         url, prefix = matched.group(0), matched.group(1)
 
         if prefix in ("vt", "vm"):
-            url = await get_redirect_url(url)
+            url = await self.get_redirect_url(url)
 
         # 获取视频信息
         info_dict = await YTDLP_DOWNLOADER.extract_video_info(url)

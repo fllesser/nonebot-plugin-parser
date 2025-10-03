@@ -110,7 +110,7 @@ class TwitterParser(BaseParser):
             matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path）
+            ParseResult: 解析结果（已下载资源，包含 Path)
 
         Raises:
             ParseException: 解析失败时抛出

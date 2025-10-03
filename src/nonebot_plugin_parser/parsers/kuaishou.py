@@ -10,7 +10,6 @@ from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
 from .data import Content, ImageContent, ParseResult, Platform, VideoContent
-from .utils import get_redirect_url
 
 
 class KuaiShouParser(BaseParser):
@@ -47,7 +46,7 @@ class KuaiShouParser(BaseParser):
         """
         # 从匹配对象中获取原始URL
         url = matched.group(0)
-        location_url = await get_redirect_url(url, headers=self.v_headers)
+        location_url = await self.get_redirect_url(url, headers=self.v_headers)
 
         if len(location_url) <= 0:
             raise ParseException("failed to get location url from url")
