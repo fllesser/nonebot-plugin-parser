@@ -1,13 +1,12 @@
 from datetime import datetime
 from pathlib import Path
+from typing_extensions import override
 
 from nonebot_plugin_alconna import Image, Text, UniMessage
 from nonebot_plugin_htmlkit import template_to_pic
 
-from ..config import NEED_FORWARD
-from ..helper import UniHelper, current_bot
 from ..parsers import ParseResult
-from .base import BaseRenderer
+from .base import BaseRenderer, UniHelper
 
 
 def format_datetime(timestamp: float, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
@@ -16,8 +15,8 @@ def format_datetime(timestamp: float, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
 
 
 class Renderer(BaseRenderer):
-    @staticmethod
-    async def render_messages(result: ParseResult) -> list[UniMessage]:
+    @override
+    async def render_messages(self, result: ParseResult) -> list[UniMessage]:
         messages = []
 
         # 生成图片消息
@@ -42,10 +41,9 @@ class Renderer(BaseRenderer):
         # 处理可以合并转发的消息段
         if forwardable_segs:
             # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息
-            if NEED_FORWARD or len(forwardable_segs) > 2:
+            if self.need_forward or len(forwardable_segs) > 2:
                 # 使用转发消息
-                bot = current_bot.get()
-                forward_msg = UniHelper.construct_forward_message(bot.self_id, forwardable_segs)
+                forward_msg = UniHelper.construct_forward_message(forwardable_segs)
                 messages.append(UniMessage([forward_msg]))
             else:
                 forwardable_segs[:-1] = [seg + "\n" for seg in forwardable_segs[:-1]]

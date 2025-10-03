@@ -11,7 +11,9 @@ from .config import NEED_FORWARD, NICKNAME, USE_BASE64
 
 class UniHelper:
     @staticmethod
-    def construct_forward_message(user_id: str, segments: Sequence[str | Segment | UniMessage]) -> Reference:
+    def construct_forward_message(
+        segments: Sequence[str | Segment | UniMessage], user_id: str | None = None
+    ) -> Reference:
         """构造转发消息
 
         Args:
@@ -21,6 +23,8 @@ class UniHelper:
         Returns:
             Reference: 转发消息
         """
+        if user_id is None:
+            user_id = current_bot.get().self_id
         nodes = []
         for seg in segments:
             if isinstance(seg, str):
@@ -41,10 +45,9 @@ class UniHelper:
         Args:
             segments (Sequence[Segment | str]): 消息段
         """
-        bot = current_bot.get()
 
         if NEED_FORWARD or len(segments) > 4:
-            forward_msg = cls.construct_forward_message(bot.self_id, segments)
+            forward_msg = cls.construct_forward_message(segments)
             await UniMessage([forward_msg]).send()
 
         else:
