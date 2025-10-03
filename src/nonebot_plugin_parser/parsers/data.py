@@ -5,18 +5,43 @@ from itertools import chain
 from pathlib import Path
 from typing import Any
 
-from nonebot_plugin_parser.exception import DownloadSizeLimitException
-
 from ..constants import ANDROID_HEADER as ANDROID_HEADER
 from ..constants import COMMON_HEADER as COMMON_HEADER
 from ..constants import IOS_HEADER as IOS_HEADER
+from ..exception import DownloadSizeLimitException
 from ..helper import Segment, UniHelper, UniMessage
 
 
 @dataclass
 class MediaContent:
+    pass
+
+
+@dataclass
+class AudioContent(MediaContent):
+    """音频内容"""
+
     path: Path
     duration: float = 0.0
+
+
+@dataclass
+class VideoContent(MediaContent):
+    """视频内容"""
+
+    path: Path | Task[Path]
+    """视频路径"""
+    cover_path: Path | None = None
+    """视频封面"""
+    duration: float = 0.0
+    """时长 单位: 秒"""
+
+    async def video_path(self) -> Path:
+        if isinstance(self.path, Path):
+            return self.path
+        if isinstance(self.path, Task):
+            self.path = await self.path
+        raise ValueError("视频路径或下载任务为空")
 
     @property
     def display_duration(self) -> str:
@@ -24,46 +49,19 @@ class MediaContent:
         seconds = int(self.duration) % 60
         return f"时长: {minutes}:{seconds:02d}"
 
-    @property
-    def size_in_mb(self) -> float:
-        return self.path.stat().st_size / 1024 / 1024
-
-
-@dataclass
-class AudioContent(MediaContent):
-    """音频内容"""
-
-    pass
-
-
-@dataclass
-class VideoContent(MediaContent):
-    """视频内容"""
-
-    path: Path | Task[Path]  # pyright: ignore[reportIncompatibleVariableOverride]
-    """视频路径"""
-    cover_path: Path | None = None
-    """视频封面"""
-
-    async def video_path(self) -> Path:
-        if isinstance(self.path, Path):
-            return self.path
-        if isinstance(self.path, Task):
-            return await self.path
-        raise ValueError("视频路径或下载任务为空")
-
 
 @dataclass
 class ImageContent(MediaContent):
     """图片内容"""
 
-    pass
+    path: Path
 
 
 @dataclass
 class DynamicContent(MediaContent):
     """动态内容 视频格式 后续转 gif"""
 
+    path: Path
     gif_path: Path | None = None
 
 

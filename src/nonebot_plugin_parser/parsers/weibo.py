@@ -185,7 +185,7 @@ class WeiBoParser(BaseParser):
         # 下载内容
         contents: list[Content] = []
         if video_url := data.video_url:
-            video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+            video_path = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
             contents.append(VideoContent(video_path))
 
         if pic_urls := data.pic_urls:
