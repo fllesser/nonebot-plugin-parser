@@ -21,10 +21,28 @@ class NGAParser(BaseParser):
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
-        ("ngabbs.com", r"https?://ngabbs\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
-        ("nga.178.com", r"https?://nga\.178\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
-        ("bbs.nga.cn", r"https?://bbs\.nga\.cn/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
+        # ("ngabbs.com", r"https?://ngabbs\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
+        # ("nga.178.com", r"https?://nga\.178\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
+        # ("bbs.nga.cn", r"https?://bbs\.nga\.cn/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
+        ("ngabbs.com", r"tid=(?P<tid>\d+)"),
+        ("nga.178.com", r"tid=(?P<tid>\d+)"),
+        ("bbs.nga.cn", r"tid=(?P<tid>\d+)"),
     ]
+
+    def __init__(self):
+        self.headers = {
+            **COMMON_HEADER,
+            "Referer": "https://nga.178.com/",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+        }
+
+    @staticmethod
+    def nga_url(tid: str | int) -> str:
+        return f"https://nga.178.com/read.php?tid={tid}"
 
     @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
@@ -41,20 +59,9 @@ class NGAParser(BaseParser):
         """
         # 从匹配对象中获取原始URL
         tid = matched.group("tid")
-        url = f"https://nga.178.com/read.php?tid={tid}"
+        url = self.nga_url(tid)
 
-        # NGA 需要更完整的请求头来避免403
-        headers = {
-            **COMMON_HEADER,
-            "Referer": "https://nga.178.com/",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Accept-Encoding": "gzip, deflate",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-        }
-
-        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT, follow_redirects=True) as client:
             try:
                 # 第一次请求可能返回403，但包含设置cookie的JavaScript
                 resp = await client.get(url)
