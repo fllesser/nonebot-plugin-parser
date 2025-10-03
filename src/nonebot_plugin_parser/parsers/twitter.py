@@ -49,8 +49,8 @@ class TwitterParser(BaseParser):
 
         first_video_url = await cls._get_first_video_url(html_content)
         if first_video_url is not None:
-            video_path = asyncio.create_task(DOWNLOADER.download_video(first_video_url))
-            return [VideoContent(video_path)]
+            video_task = asyncio.create_task(DOWNLOADER.download_video(first_video_url))
+            return [VideoContent(video_task)]
 
         contents: list[Content] = []
         pic_urls = await cls._get_all_pic_urls(html_content)

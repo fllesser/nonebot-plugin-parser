@@ -326,10 +326,10 @@
             {% endif %}
 
             <!-- 视频内容 -->
-            {% if result.video_paths and result.video_paths | length > 0 %}
+            {% if result.video_contents and result.video_contents | length > 0 %}
             <div class="weibo-media" style="margin-top: 12px;">
-                {% for video_path in result.video_paths %}
-                <a href="file://{{ video_path }}" target="_blank" class="video-placeholder">
+                {% for video_content in result.video_contents %}
+                <a href="file://{{ video_content.cover_path }}" target="_blank" class="video-placeholder">
                     <div class="video-icon">▶️</div>
                     <div class="video-text">点击查看视频 {{ loop.index }}</div>
                 </a>

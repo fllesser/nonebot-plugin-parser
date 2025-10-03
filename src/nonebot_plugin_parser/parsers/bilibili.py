@@ -165,16 +165,16 @@ class BilibiliParser(BaseParser):
             else:
                 return await DOWNLOADER.streamd(v_url, file_name=output_path.name, ext_headers=self.headers)
 
-        video_path = plugin_cache_dir / f"{bvid or avid}-{page_num}.mp4"
+        path_or_task = plugin_cache_dir / f"{bvid or avid}-{page_num}.mp4"
         # 下载视频
-        if not video_path.exists():
+        if not path_or_task.exists():
             # 下载视频和音频
-            video_path = asyncio.create_task(download_video(video_path))
+            path_or_task = asyncio.create_task(download_video(path_or_task))
 
         return self.result(
             title=title,
             cover_path=cover_path,
-            contents=[VideoContent(video_path, cover_path=cover_path)],
+            contents=[VideoContent(path_or_task, cover_path=cover_path)],
             extra=extra,
         )
 

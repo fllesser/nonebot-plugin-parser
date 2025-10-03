@@ -83,8 +83,8 @@ class KuaiShouParser(BaseParser):
         # 下载内容
         contents: list[Content] = []
         if video_url := photo.video_url:
-            video_path = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.headers))
-            contents.append(VideoContent(video_path))
+            video_task = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.headers))
+            contents.append(VideoContent(video_task))
         elif img_urls := photo.img_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
             contents.extend(ImageContent(path) for path in pic_paths)

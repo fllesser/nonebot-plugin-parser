@@ -120,8 +120,8 @@ class WeiBoParser(BaseParser):
             video_url = data.get("stream_url")
 
         if video_url:
-            video_path = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
-            contents.append(VideoContent(video_path))
+            video_task = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
+            contents.append(VideoContent(video_task))
 
         # 时间戳
         timestamp = data.get("real_date")
@@ -185,8 +185,8 @@ class WeiBoParser(BaseParser):
         # 下载内容
         contents: list[Content] = []
         if video_url := data.video_url:
-            video_path = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
-            contents.append(VideoContent(video_path))
+            video_task = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
+            contents.append(VideoContent(video_task))
 
         if pic_urls := data.pic_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)

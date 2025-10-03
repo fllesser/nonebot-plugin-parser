@@ -29,7 +29,7 @@ class AudioContent(MediaContent):
 class VideoContent(MediaContent):
     """视频内容"""
 
-    path: Path | Task[Path]
+    path_or_task: Path | Task[Path]
     """视频路径"""
     cover_path: Path | None = None
     """视频封面"""
@@ -37,10 +37,11 @@ class VideoContent(MediaContent):
     """时长 单位: 秒"""
 
     async def video_path(self) -> Path:
-        if isinstance(self.path, Path):
-            return self.path
-        if isinstance(self.path, Task):
-            self.path = await self.path
+        if isinstance(self.path_or_task, Path):
+            return self.path_or_task
+        if isinstance(self.path_or_task, Task):
+            self.path_or_task = await self.path_or_task
+            return self.path_or_task
         raise ValueError("视频路径或下载任务为空")
 
     @property
