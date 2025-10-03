@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from ..config import NEED_FORWARD
 from ..helper import UniHelper as UniHelper
@@ -15,7 +16,17 @@ class BaseRenderer(ABC):
     """模板目录"""
 
     @abstractmethod
-    async def render_messages(self, result: ParseResult) -> list[UniMessage]:
+    async def render_messages(self, result: ParseResult) -> AsyncGenerator[UniMessage[Any], None]:
+        """消息生成器
+
+        Args:
+            result (ParseResult): 解析结果
+
+        Returns:
+            AsyncGenerator[UniMessage[Any], None]: 消息生成器
+        """
+        if False:
+            yield
         raise NotImplementedError
 
     @property

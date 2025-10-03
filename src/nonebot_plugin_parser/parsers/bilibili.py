@@ -11,8 +11,7 @@ from nonebot import logger
 from ..config import plugin_cache_dir, plugin_config_dir, rconfig
 from ..cookie import ck2dict
 from ..download import DOWNLOADER
-from ..exception import DownloadSizeLimitException, ParseException
-from ..utils import merge_av
+from ..exception import ParseException
 from .base import BaseParser
 from .data import Content, ImageContent, Platform, TextImageContent, VideoContent
 
@@ -161,24 +160,21 @@ class BilibiliParser(BaseParser):
             cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
 
         contents: list[Content] = []
+
+        async def download_video():
+            if audio_url is not None:
+                return await DOWNLOADER.download_av_and_merge(
+                    video_url, audio_url, output_path=video_path, ext_headers=self.headers
+                )
+            else:
+                return await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=self.headers)
+
         # 下载视频
         if not video_path.exists():
             # 下载视频和音频
-            try:
-                if audio_url is not None:
-                    v_path, a_path = await asyncio.gather(
-                        DOWNLOADER.streamd(video_url, file_name=f"{file_name}-video.m4s", ext_headers=self.headers),
-                        DOWNLOADER.streamd(audio_url, file_name=f"{file_name}-audio.m4s", ext_headers=self.headers),
-                    )
-                    await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
-                else:
-                    video_path = await DOWNLOADER.streamd(
-                        video_url, file_name=f"{file_name}.mp4", ext_headers=self.headers
-                    )
-            except DownloadSizeLimitException as e:
-                contents.append(e.message)
-
-        if video_path.exists():
+            video_task = asyncio.create_task(download_video())
+            contents.append(VideoContent(task=video_task, cover_path=cover_path))
+        else:
             contents.append(VideoContent(video_path, cover_path=cover_path))
 
         return self.result(

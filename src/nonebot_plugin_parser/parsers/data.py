@@ -1,8 +1,11 @@
+from asyncio import Task
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from itertools import chain
 from pathlib import Path
 from typing import Any
+
+from nonebot_plugin_parser.exception import DownloadSizeLimitException
 
 from ..constants import ANDROID_HEADER as ANDROID_HEADER
 from ..constants import COMMON_HEADER as COMMON_HEADER
@@ -37,8 +40,20 @@ class AudioContent(MediaContent):
 class VideoContent(MediaContent):
     """视频内容"""
 
+    path: Path | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
+    """视频路径"""
+    task: Task[Path] | None = None
+    """视频下载任务"""
+
     cover_path: Path | None = None
     """视频封面"""
+
+    async def video_path(self) -> Path:
+        if self.path is not None:
+            return self.path
+        if self.task is not None:
+            return await self.task
+        raise ValueError("视频路径或下载任务为空")
 
 
 @dataclass
@@ -124,7 +139,7 @@ class ParseResult:
 
     @property
     def video_paths(self) -> Sequence[Path]:
-        return [cont.path for cont in self.contents if isinstance(cont, VideoContent)]
+        return [cont.path for cont in self.contents if isinstance(cont, VideoContent) and cont.path is not None]
 
     @property
     def audio_paths(self) -> Sequence[Path]:
@@ -143,7 +158,7 @@ class ParseResult:
         paths = [cont.gif_path for cont in self.contents if isinstance(cont, DynamicContent)]
         return [path for path in paths if path is not None]
 
-    def convert_segs(self):
+    async def convert_segs(self):
         """转换为消息段
 
         Returns:
@@ -167,8 +182,12 @@ class ParseResult:
                     forwardable_segs.append(text + UniHelper.img_seg(image_path))
                 case AudioContent(path):
                     separate_segs.append(UniHelper.record_seg(path))
-                case VideoContent(path):
-                    separate_segs.append(UniHelper.video_seg(path))
+                case VideoContent() as video:
+                    try:
+                        video_path = await video.video_path()
+                        separate_segs.append(UniHelper.video_seg(video_path))
+                    except DownloadSizeLimitException as e:
+                        forwardable_segs.append(e.message)
 
         return separate_segs, forwardable_segs
 
