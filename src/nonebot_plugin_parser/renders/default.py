@@ -4,7 +4,7 @@ from nonebot.internal.matcher import current_bot
 
 from ..config import NEED_FORWARD
 from ..helper import UniHelper, UniMessage
-from ..parsers.data import ParseResult
+from ..parsers import ParseResult
 from .base import BaseRenderer
 
 
