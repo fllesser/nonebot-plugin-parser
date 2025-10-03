@@ -121,7 +121,7 @@ class WeiBoParser(BaseParser):
 
         if video_url:
             video_task = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
-            contents.append(VideoContent(video_task))
+            contents.append(VideoContent(video_task, cover_path))
 
         # 时间戳
         timestamp = data.get("real_date")
@@ -186,7 +186,10 @@ class WeiBoParser(BaseParser):
         contents: list[Content] = []
         if video_url := data.video_url:
             video_task = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
-            contents.append(VideoContent(video_task))
+            cover_path = None
+            if data.cover_url:
+                cover_path = await DOWNLOADER.download_img(data.cover_url, ext_headers=self.ext_headers)
+            contents.append(VideoContent(video_task, cover_path))
 
         if pic_urls := data.pic_urls:
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
@@ -258,9 +261,14 @@ class Urls(Struct):
         return self.mp4_720p_mp4 or self.mp4_hd_mp4 or self.mp4_ld_mp4 or None
 
 
+class PagePic(Struct):
+    url: str
+
+
 class PageInfo(Struct):
     title: str = ""
     urls: Urls | None = None
+    page_pic: PagePic | None = None
 
 
 class User(Struct):
@@ -300,19 +308,23 @@ class WeiboData(Struct):
         return re.sub(r"<[^>]*>", "", self.text)
 
     @property
+    def cover_url(self) -> str | None:
+        if self.page_info is None:
+            return None
+        if self.page_info.page_pic:
+            return self.page_info.page_pic.url
+        return None
+
+    @property
     def video_url(self) -> str | None:
         if self.page_info and self.page_info.urls:
             return self.page_info.urls.get_video_url()
-        # if self.retweeted_status and self.retweeted_status.page_info and self.retweeted_status.page_info.urls:
-        #     return self.retweeted_status.page_info.urls.get_video_url()
         return None
 
     @property
     def pic_urls(self) -> list[str]:
         if self.pics:
             return [x.large.url for x in self.pics]
-        # if self.retweeted_status and self.retweeted_status.pics:
-        #     return [x.large.url for x in self.retweeted_status.pics]
         return []
 
 

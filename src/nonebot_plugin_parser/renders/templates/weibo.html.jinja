@@ -174,26 +174,45 @@
         .video-placeholder {
             position: relative;
             width: 100%;
-            min-height: 300px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: inline-block;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-placeholder img {
+            width: 100%;
+            height: auto;
+            display: block;
+            z-index: 1;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            overflow: hidden;
+            z-index: 2;
+            background: rgba(0, 0, 0, 0.3);
         }
 
         .video-icon {
             font-size: 48px;
             color: white;
             margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .video-text {
             font-size: 16px;
             color: white;
             font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         /* 转发微博样式 */
@@ -329,12 +348,17 @@
             {% if result.video_contents and result.video_contents | length > 0 %}
             <div class="weibo-media" style="margin-top: 12px;">
                 {% for video_content in result.video_contents %}
-                <a href="file://{{ video_content.cover_path }}" target="_blank" class="video-placeholder">
-                    <div class="video-icon">▶️</div>
-                    <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                <a href="file://{{ video_content.path_or_task }}" target="_blank" class="video-placeholder">
+                    {% if video_content.cover_path %}
+                    <img src="file://{{ video_content.cover_path }}" alt="视频封面" loading="lazy">
+                    {% endif %}
+                    <div class="video-overlay">
+                        <div class="video-icon">▶️</div>
+                        <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                    </div>
                 </a>
+                {% endfor %}
             </div>
-            {% endfor %}
             {% endif %}
 
             <!-- 转发的微博 -->
@@ -378,12 +402,17 @@
                 {% endif %}
 
                 <!-- 原微博视频 -->
-                {% if result.repost.video_paths and result.repost.video_paths | length > 0 %}
+                {% if result.repost.video_contents and result.repost.video_contents | length > 0 %}
                 <div class="repost-media">
-                    {% for video_path in result.repost.video_paths %}
-                    <a href="file://{{ video_path }}" target="_blank" class="video-placeholder">
-                        <div class="video-icon">▶️</div>
-                        <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                    {% for video_content in result.repost.video_contents %}
+                    <a href="file://{{ video_content.path_or_task }}" target="_blank" class="video-placeholder">
+                        {% if video_content.cover_path %}
+                        <img src="file://{{ video_content.cover_path }}" alt="视频封面" loading="lazy">
+                        {% endif %}
+                        <div class="video-overlay">
+                            <div class="video-icon">▶️</div>
+                            <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                        </div>
                     </a>
                     {% endfor %}
                 </div>
