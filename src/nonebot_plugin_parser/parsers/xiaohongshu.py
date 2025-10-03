@@ -13,7 +13,6 @@ from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
 from .data import Author, Content, ImageContent, ParseResult, Platform, VideoContent
-from .utils import get_redirect_url
 
 
 class XiaoHongShuParser(BaseParser):
@@ -52,7 +51,7 @@ class XiaoHongShuParser(BaseParser):
         url = matched.group(0)
         # 处理 xhslink 短链
         if "xhslink" in url:
-            url = await get_redirect_url(url, self.headers)
+            url = await self.get_redirect_url(url, self.headers)
         # ?: 非捕获组
         pattern = r"(?:/explore/|/discovery/item/|source=note&noteId=)(\w+)"
         match_result = re.search(pattern, url)

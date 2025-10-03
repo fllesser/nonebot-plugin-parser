@@ -9,7 +9,6 @@ import msgspec
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
-from ..parsers.utils import get_redirect_url
 from .base import BaseParser
 from .data import Author, Content, ImageContent, ParseResult, Platform, VideoContent
 
@@ -51,7 +50,7 @@ class WeiBoParser(BaseParser):
         """解析微博分享链接（内部方法）"""
         if "mapp.api.weibo" in share_url:
             # ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
-            share_url = await get_redirect_url(share_url)
+            share_url = await self.get_redirect_url(share_url)
         # https://video.weibo.com/show?fid=1034:5145615399845897
         if matched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
             return await self.parse_fid(matched.group(1))
