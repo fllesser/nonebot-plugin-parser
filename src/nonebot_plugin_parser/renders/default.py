@@ -1,18 +1,15 @@
 """渲染器模块 - 负责将解析结果渲染为消息"""
 
-from nonebot.internal.matcher import current_bot
+from typing_extensions import override
 
-from ..config import NEED_FORWARD
-from ..matchers.helper import UniHelper, UniMessage
-from ..parsers.data import ParseResult
-from .base import BaseRenderer
+from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
 class Renderer(BaseRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
-    @staticmethod
-    async def render_messages(result: ParseResult) -> list[UniMessage]:
+    @override
+    async def render_messages(self, result: ParseResult):
         """渲染内容消息
 
         Args:
@@ -36,10 +33,8 @@ class Renderer(BaseRenderer):
         # 处理可以合并转发的消息段
         if forwardable_segs:
             # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息
-            if NEED_FORWARD or len(forwardable_segs) > 2:
-                # 使用转发消息
-                bot = current_bot.get()
-                forward_msg = UniHelper.construct_forward_message(bot.self_id, forwardable_segs)
+            if self.need_forward or len(forwardable_segs) > 2:
+                forward_msg = UniHelper.construct_forward_message(forwardable_segs)
                 messages.append(UniMessage([forward_msg]))
             else:
                 forwardable_segs[:-1] = [seg + "\n" for seg in forwardable_segs[:-1]]

@@ -62,8 +62,8 @@ xiaohongshu:
 - http://xhslink.com/m/1nhWDzSpHXB  视频短链
 
 weibo:
-- https://video.weibo.com/show?fid=1034:5145615399845897
-- https://weibo.com/7207262816/P5kWdcfDe
+- https://video.weibo.com/show?fid=1034:5145615399845897 视频（fid)
+- https://weibo.com/7207262816/P5kWdcfDe 多图 > 9 张
 - https://weibo.com/7207262816/O70aCbjnd
 - http://m.weibo.cn/status/5112672433738061
 - ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html 纯文

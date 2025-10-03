@@ -1,9 +1,3 @@
-from collections.abc import Callable
-from functools import wraps
-
-from nonebot.internal.matcher import current_matcher
-
-
 class ResolverException(Exception):
     """插件异常 base class"""
 
@@ -30,25 +24,3 @@ class ParseException(ResolverException):
     """解析异常"""
 
     pass
-
-
-def handle_exception(error_message: str | None = None):
-    """处理 matcher 中的 DownloadException 和 ParseException 异常的装饰器
-
-    Args:
-        matcher: 需要处理的 matcher 类型
-        error_message: 自定义错误消息
-    """
-
-    def decorator(func: Callable):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            try:
-                return await func(*args, **kwargs)
-            except ResolverException as e:
-                matcher = current_matcher.get()
-                await matcher.finish(error_message or e.message)
-
-        return wrapper
-
-    return decorator

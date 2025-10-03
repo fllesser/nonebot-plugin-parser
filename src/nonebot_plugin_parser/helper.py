@@ -6,12 +6,14 @@ from nonebot_plugin_alconna import File, Image, Text, Video
 from nonebot_plugin_alconna.uniseg import Segment, UniMessage, Voice
 from nonebot_plugin_alconna.uniseg.segment import CustomNode, Reference
 
-from ..config import NEED_FORWARD, NICKNAME, USE_BASE64
+from .config import NEED_FORWARD, NICKNAME, USE_BASE64
 
 
 class UniHelper:
     @staticmethod
-    def construct_forward_message(user_id: str, segments: Sequence[str | Segment | UniMessage]) -> Reference:
+    def construct_forward_message(
+        segments: Sequence[str | Segment | UniMessage], user_id: str | None = None
+    ) -> Reference:
         """构造转发消息
 
         Args:
@@ -21,6 +23,8 @@ class UniHelper:
         Returns:
             Reference: 转发消息
         """
+        if user_id is None:
+            user_id = current_bot.get().self_id
         nodes = []
         for seg in segments:
             if isinstance(seg, str):
@@ -41,10 +45,9 @@ class UniHelper:
         Args:
             segments (Sequence[Segment | str]): 消息段
         """
-        bot = current_bot.get()
 
         if NEED_FORWARD or len(segments) > 4:
-            forward_msg = cls.construct_forward_message(bot.self_id, segments)
+            forward_msg = cls.construct_forward_message(segments)
             await UniMessage([forward_msg]).send()
 
         else:
@@ -53,7 +56,7 @@ class UniHelper:
             await UniMessage(segments).send()
 
     @staticmethod
-    def img_seg(img_path: Path) -> Image:
+    def img_seg(img_path: Path | None = None, raw: bytes | None = None) -> Image:
         """获取图片 Seg
 
         Args:
@@ -62,6 +65,13 @@ class UniHelper:
         Returns:
             Image: 图片 Seg
         """
+
+        if raw is not None:
+            return Image(raw=raw)
+
+        if img_path is None:
+            raise ValueError("img_path 和 raw 不能都为 None")
+
         if USE_BASE64:
             return Image(raw=img_path.read_bytes())
         else:
