@@ -8,7 +8,7 @@ require("nonebot_plugin_uninfo")
 require("nonebot_plugin_htmlkit")
 
 from .config import Config, plugin_cache_dir, scheduler
-from .matchers import resolver  # noqa: F401
+from .matchers import parser_matcher  # noqa: F401
 from .utils import safe_unlink
 
 __plugin_meta__ = PluginMetadata(
