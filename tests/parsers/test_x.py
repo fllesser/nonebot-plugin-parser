@@ -19,7 +19,8 @@ async def test_parse():
         contents = await TwitterParser.parse_x_url(url)
         for content in contents:
             if isinstance(content, VideoContent):
-                assert content.path.exists()
+                video_path = await content.video_path()
+                assert video_path.exists()
             elif isinstance(content, ImageContent):
                 assert content.path.exists()
             else:
