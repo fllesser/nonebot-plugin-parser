@@ -7,7 +7,7 @@ from typing import Any
 from ..constants import ANDROID_HEADER as ANDROID_HEADER
 from ..constants import COMMON_HEADER as COMMON_HEADER
 from ..constants import IOS_HEADER as IOS_HEADER
-from ..matchers.helper import Segment, UniHelper, UniMessage
+from ..helper import Segment, UniHelper, UniMessage
 
 
 @dataclass

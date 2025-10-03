@@ -11,15 +11,7 @@ from nonebot_plugin_apscheduler import scheduler  # noqa: F401
 import nonebot_plugin_localstore as store
 
 PlatformNames = Literal[
-    "bilibili",
-    "acfun",
-    "douyin",
-    "youtube",
-    "kuaishou",
-    "twitter",
-    "tiktok",
-    "weibo",
-    "xiaohongshu",
+    "bilibili", "acfun", "douyin", "youtube", "kuaishou", "twitter", "tiktok", "weibo", "xiaohongshu", "nga"
 ]
 
 

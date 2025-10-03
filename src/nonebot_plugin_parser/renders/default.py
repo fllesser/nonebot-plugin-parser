@@ -3,7 +3,7 @@
 from nonebot.internal.matcher import current_bot
 
 from ..config import NEED_FORWARD
-from ..matchers.helper import UniHelper, UniMessage
+from ..helper import UniHelper, UniMessage
 from ..parsers.data import ParseResult
 from .base import BaseRenderer
 
@@ -12,7 +12,7 @@ class Renderer(BaseRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
     @staticmethod
-    async def render_messages(result: ParseResult) -> list[UniMessage]:
+    async def render_messages(result: ParseResult):
         """渲染内容消息
 
         Args:

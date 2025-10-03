@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from nonebot_plugin_alconna import UniMessage
-
+from ..config import NEED_FORWARD
+from ..helper import UniMessage
 from ..parsers import ParseResult
 
 
@@ -12,3 +12,7 @@ class BaseRenderer(ABC):
     @abstractmethod
     async def render_messages(result: ParseResult) -> list[UniMessage]:
         raise NotImplementedError
+
+    @staticmethod
+    def need_forward() -> bool:
+        return NEED_FORWARD

@@ -6,7 +6,7 @@ from nonebot_plugin_alconna import File, Image, Text, Video
 from nonebot_plugin_alconna.uniseg import Segment, UniMessage, Voice
 from nonebot_plugin_alconna.uniseg.segment import CustomNode, Reference
 
-from ..config import NEED_FORWARD, NICKNAME, USE_BASE64
+from .config import NEED_FORWARD, NICKNAME, USE_BASE64
 
 
 class UniHelper:
