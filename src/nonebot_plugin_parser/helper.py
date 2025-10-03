@@ -56,7 +56,7 @@ class UniHelper:
             await UniMessage(segments).send()
 
     @staticmethod
-    def img_seg(img_path: Path) -> Image:
+    def img_seg(img_path: Path | None = None, raw: bytes | None = None) -> Image:
         """获取图片 Seg
 
         Args:
@@ -65,6 +65,13 @@ class UniHelper:
         Returns:
             Image: 图片 Seg
         """
+
+        if raw is not None:
+            return Image(raw=raw)
+
+        if img_path is None:
+            raise ValueError("img_path 和 raw 不能都为 None")
+
         if USE_BASE64:
             return Image(raw=img_path.read_bytes())
         else:

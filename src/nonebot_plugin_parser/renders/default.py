@@ -2,9 +2,7 @@
 
 from typing_extensions import override
 
-from ..helper import UniHelper, UniMessage
-from ..parsers import ParseResult
-from .base import BaseRenderer
+from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
 class Renderer(BaseRenderer):

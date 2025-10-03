@@ -1,12 +1,9 @@
 from datetime import datetime
-from pathlib import Path
 from typing_extensions import override
 
-from nonebot_plugin_alconna import Image, Text, UniMessage
 from nonebot_plugin_htmlkit import template_to_pic
 
-from ..parsers import ParseResult
-from .base import BaseRenderer, UniHelper
+from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
 def format_datetime(timestamp: float, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
@@ -20,21 +17,21 @@ class Renderer(BaseRenderer):
         messages = []
 
         # 生成图片消息
-        image = await template_to_pic(
-            str(Path(__file__).parent / "templates"),
+        image_raw = await template_to_pic(
+            self.templates_dir.as_posix(),
             "weibo.html.jinja",
             templates={"result": result},
             filters={"format_datetime": format_datetime},
         )
-        image_message_segs = [
-            Text(f"{result.author.name} 的微博\n" if result.author else "微博\n"),
-            Image(raw=image),
-        ]
+        # 组合文本消息
+        texts = [result.header]
         if result.repost and result.repost.url:
-            image_message_segs.append(Text(f"\n源微博详情: {result.repost.url}"))
+            texts.append(f"源微博详情: {result.repost.url}")
         if result.url:
-            image_message_segs.append(Text(f"\n微博详情: {result.url}" if result.url else ""))
-        messages.append(UniMessage(image_message_segs))
+            texts.append(f"微博详情: {result.url}" if result.url else "")
+
+        first_message = UniMessage("\n".join(texts) + UniHelper.img_seg(raw=image_raw))
+        messages.append(first_message)
 
         # 将其他内容通过转发消息发送
         separate_segs, forwardable_segs = result.convert_segs()
