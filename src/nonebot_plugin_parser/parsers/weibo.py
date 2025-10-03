@@ -192,6 +192,7 @@ class WeiBoParser(BaseParser):
             contents.extend(ImageContent(path) for path in pic_paths)
 
         return self.result(
+            title=data.title,
             text=data.text_content,
             author=Author(name=data.display_name, avatar=data.user.profile_image_url),
             contents=contents,
@@ -257,6 +258,7 @@ class Urls(Struct):
 
 
 class PageInfo(Struct):
+    title: str = ""
     urls: Urls | None = None
 
 
@@ -282,6 +284,10 @@ class WeiboData(Struct):
     pics: list[Pic] | None = None
     page_info: PageInfo | None = None
     retweeted_status: "WeiboData | None" = None  # 转发微博
+
+    @property
+    def title(self) -> str:
+        return self.status_title or self.page_info.title if self.page_info else ""
 
     @property
     def display_name(self) -> str:
