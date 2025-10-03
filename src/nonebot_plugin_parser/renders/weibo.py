@@ -31,11 +31,12 @@ class Renderer(BaseRenderer):
             if self.need_forward or len(forwardable_segs) > 2:
                 # 使用转发消息
                 forward_msg = UniHelper.construct_forward_message(forwardable_segs)
-                yield UniMessage([forward_msg])
+                yield UniMessage(forward_msg)
             else:
                 forwardable_segs[:-1] = [seg + "\n" for seg in forwardable_segs[:-1]]
                 # 单条消息
-                yield UniMessage(*forwardable_segs)
+                single_msg = UniMessage() + forwardable_segs
+                yield single_msg
         # 处理必须单独发送的消息段
         if separate_segs:
             for seg in separate_segs:

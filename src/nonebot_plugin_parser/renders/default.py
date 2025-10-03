@@ -34,7 +34,7 @@ class Renderer(BaseRenderer):
         if forwardable_segs:
             # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息
             forward_msg = UniHelper.construct_forward_message(forwardable_segs)
-            yield UniMessage([forward_msg])
+            yield UniMessage(forward_msg)
 
         # 处理必须单独发送的消息段
         if separate_segs:
