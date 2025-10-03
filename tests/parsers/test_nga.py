@@ -1,5 +1,6 @@
 """测试NGA解析器"""
 
+from nonebot import logger
 import pytest
 
 
@@ -31,9 +32,9 @@ async def test_nga_parse():
     assert result.url == url, "URL应该保持一致"
     assert result.author is not None, "应该能提取作者信息"
     assert result.timestamp is not None, "应该能提取发布时间"
-    print(f"标题: {result.title}")
-    print(f"作者: {result.author.name if result.author else 'N/A'}")
-    print(f"时间: {result.timestamp}")
+    logger.debug(f"标题: {result.title}")
+    logger.debug(f"作者: {result.author.name if result.author else 'N/A'}")
+    logger.debug(f"时间: {result.timestamp}")
 
 
 if __name__ == "__main__":

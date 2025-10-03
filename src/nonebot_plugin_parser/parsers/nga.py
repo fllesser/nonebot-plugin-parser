@@ -15,56 +15,6 @@ from .base import BaseParser
 from .data import Author, ParseResult, Platform
 
 
-def clean_nga_text(text: str, max_length: int = 500) -> str:
-    """清理 NGA 文本中的 BBCode 标签并限制长度
-
-    Args:
-        text: 原始文本
-        max_length: 最大文本长度，默认500字符
-
-    Returns:
-        清理后的文本
-    """
-    if not text:
-        return text
-
-    # 移除常见的 BBCode 标签
-    # [img]...[/img] 或 [img]...
-    text = re.sub(r"\[img\][^\[\]]*\[/img\]", "", text)
-    text = re.sub(r"\[img\][^\[\]]*", "", text)
-
-    # [url]...[/url] 或 [url=...]...[/url]
-    text = re.sub(r"\[url=[^\]]*\]([^\[]*?)\[/url\]", r"\1", text)
-    text = re.sub(r"\[url\]([^\[]*?)\[/url\]", r"\1", text)
-
-    # [quote]...[/quote]
-    text = re.sub(r"\[quote\](.*?)\[/quote\]", "", text, flags=re.DOTALL)
-
-    # [b]...[/b], [i]...[/i], [u]...[/u] 等格式标签（保留文本内容）
-    text = re.sub(r"\[b\](.*?)\[/b\]", r"\1", text, flags=re.DOTALL)
-    text = re.sub(r"\[i\](.*?)\[/i\]", r"\1", text, flags=re.DOTALL)
-    text = re.sub(r"\[u\](.*?)\[/u\]", r"\1", text, flags=re.DOTALL)
-
-    # [color=...]...[/color]
-    text = re.sub(r"\[color=[^\]]*\](.*?)\[/color\]", r"\1", text, flags=re.DOTALL)
-
-    # [size=...]...[/size]
-    text = re.sub(r"\[size=[^\]]*\](.*?)\[/size\]", r"\1", text, flags=re.DOTALL)
-
-    # 其他未配对的方括号标签
-    text = re.sub(r"\[[^\]]+\]", "", text)
-
-    # 清理多余的空白字符
-    text = re.sub(r"\n{3,}", "\n\n", text)  # 多个换行符压缩为两个
-    text = text.strip()
-
-    # 限制文本长度
-    if len(text) > max_length:
-        text = text[:max_length] + "..."
-
-    return text
-
-
 class NGAParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name="nga", display_name="NGA")
@@ -84,7 +34,7 @@ class NGAParser(BaseParser):
             matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果（已下载资源,包含 Path）
+            ParseResult: 解析结果（已下载资源,包含 Path)
 
         Raises:
             ParseException: 解析失败时抛出
@@ -187,7 +137,7 @@ class NGAParser(BaseParser):
         if content_tag and isinstance(content_tag, Tag):
             text = content_tag.get_text("\n", strip=True)
             # 清理 BBCode 标签并限制长度
-            text = clean_nga_text(text)
+            text = self.clean_nga_text(text)
 
         return self.result(
             title=title,
@@ -196,3 +146,38 @@ class NGAParser(BaseParser):
             author=Author(name=author) if author else None,
             timestamp=timestamp,
         )
+
+    @staticmethod
+    def clean_nga_text(text: str, max_length: int = 500) -> str:
+        rules: list[tuple[str, str, int]] = [
+            # 移除图片标签（完整和不完整的）
+            (r"\[img\][^\[\]]*\[/img\]", "", 0),
+            (r"\[img\][^\[\]]*", "", 0),
+            # 处理URL标签，保留链接文本
+            (r"\[url=[^\]]*\]([^\[]*?)\[/url\]", r"\1", 0),
+            (r"\[url\]([^\[]*?)\[/url\]", r"\1", 0),
+            # 移除引用标签
+            (r"\[quote\].*?\[/quote\]", "", re.DOTALL),
+            # 处理格式标签，保留文本内容（b, i, u）
+            (r"\[(b|i|u)\](.*?)\[/\1\]", r"\2", re.DOTALL),
+            # 处理带属性的格式标签（color, size）
+            (r"\[(color|size)=[^\]]*\](.*?)\[/\1\]", r"\2", re.DOTALL),
+            # 移除其他未配对的标签
+            (r"\[[^]]+\]", "", 0),
+            # 清理空白字符
+            (r"\n{3,}", "\n\n", 0),  # 多个换行符压缩为两个
+            (r"[ \t]+", " ", 0),  # 多个空格/制表符压缩为一个空格
+            (r"\n\s+\n", "\n\n", 0),  # 清理空行中的空白字符
+        ]
+
+        for rule in rules:
+            pattern, replacement, flags = rule[0], rule[1], rule[2]
+            text = re.sub(pattern, replacement, text, flags=flags)
+
+        text = text.strip()
+
+        # 限制文本长度
+        if len(text) > max_length:
+            text = text[:max_length] + "..."
+
+        return text
