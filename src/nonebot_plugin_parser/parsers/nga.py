@@ -15,6 +15,56 @@ from .base import BaseParser
 from .data import Author, ParseResult, Platform
 
 
+def clean_nga_text(text: str, max_length: int = 500) -> str:
+    """清理 NGA 文本中的 BBCode 标签并限制长度
+
+    Args:
+        text: 原始文本
+        max_length: 最大文本长度，默认500字符
+
+    Returns:
+        清理后的文本
+    """
+    if not text:
+        return text
+
+    # 移除常见的 BBCode 标签
+    # [img]...[/img] 或 [img]...
+    text = re.sub(r"\[img\][^\[\]]*\[/img\]", "", text)
+    text = re.sub(r"\[img\][^\[\]]*", "", text)
+
+    # [url]...[/url] 或 [url=...]...[/url]
+    text = re.sub(r"\[url=[^\]]*\]([^\[]*?)\[/url\]", r"\1", text)
+    text = re.sub(r"\[url\]([^\[]*?)\[/url\]", r"\1", text)
+
+    # [quote]...[/quote]
+    text = re.sub(r"\[quote\](.*?)\[/quote\]", "", text, flags=re.DOTALL)
+
+    # [b]...[/b], [i]...[/i], [u]...[/u] 等格式标签（保留文本内容）
+    text = re.sub(r"\[b\](.*?)\[/b\]", r"\1", text, flags=re.DOTALL)
+    text = re.sub(r"\[i\](.*?)\[/i\]", r"\1", text, flags=re.DOTALL)
+    text = re.sub(r"\[u\](.*?)\[/u\]", r"\1", text, flags=re.DOTALL)
+
+    # [color=...]...[/color]
+    text = re.sub(r"\[color=[^\]]*\](.*?)\[/color\]", r"\1", text, flags=re.DOTALL)
+
+    # [size=...]...[/size]
+    text = re.sub(r"\[size=[^\]]*\](.*?)\[/size\]", r"\1", text, flags=re.DOTALL)
+
+    # 其他未配对的方括号标签
+    text = re.sub(r"\[[^\]]+\]", "", text)
+
+    # 清理多余的空白字符
+    text = re.sub(r"\n{3,}", "\n\n", text)  # 多个换行符压缩为两个
+    text = text.strip()
+
+    # 限制文本长度
+    if len(text) > max_length:
+        text = text[:max_length] + "..."
+
+    return text
+
+
 class NGAParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name="nga", display_name="NGA")
@@ -131,8 +181,17 @@ class NGAParser(BaseParser):
             timestr = time_tag.get_text(strip=True)
             timestamp = time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M"))
 
+        # 提取文本 - postcontent0
+        text = ""
+        content_tag = soup.find(id="postcontent0")
+        if content_tag and isinstance(content_tag, Tag):
+            text = content_tag.get_text("\n", strip=True)
+            # 清理 BBCode 标签并限制长度
+            text = clean_nga_text(text)
+
         return self.result(
             title=title,
+            text=text,
             url=url,
             author=Author(name=author) if author else None,
             timestamp=timestamp,
