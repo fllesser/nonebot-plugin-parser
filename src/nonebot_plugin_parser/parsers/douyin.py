@@ -101,7 +101,7 @@ class DouyinParser(BaseParser):
             contents.extend(ImageContent(path) for path in pic_paths)
         elif video_url := video_data.video_url:
             video_url = await self.get_redirect_url(video_url)
-            video_path = await DOWNLOADER.download_video(video_url)
+            video_path = asyncio.create_task(DOWNLOADER.download_video(video_url))
             contents.append(VideoContent(video_path, cover_path=cover_path))
 
         return self.result(

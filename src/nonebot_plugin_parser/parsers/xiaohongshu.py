@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 from typing import ClassVar
@@ -88,10 +89,10 @@ class XiaoHongShuParser(BaseParser):
         cover_path = None
         if video_url := note_detail.video_url:
             # 下载视频和封面
-            video_path = await DOWNLOADER.download_video(video_url)
-            contents.append(VideoContent(video_path))
+            video_path = asyncio.create_task(DOWNLOADER.download_video(video_url))
             if note_detail.img_urls:
                 cover_path = await DOWNLOADER.download_img(note_detail.img_urls[0])
+            contents.append(VideoContent(video_path, cover_path=cover_path))
         else:
             # 下载图片
             pic_paths = await DOWNLOADER.download_imgs_without_raise(note_detail.img_urls)

@@ -1,3 +1,4 @@
+import asyncio
 import re
 from typing import ClassVar
 
@@ -45,7 +46,7 @@ class TikTokParser(BaseParser):
         if thumbnail:
             cover_path = await DOWNLOADER.download_img(thumbnail)
 
-        video_path = await YTDLP_DOWNLOADER.download_video(url)
+        video_path = asyncio.create_task(YTDLP_DOWNLOADER.download_video(url))
 
         return self.result(
             title=title,

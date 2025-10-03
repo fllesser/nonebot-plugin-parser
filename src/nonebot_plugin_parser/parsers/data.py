@@ -40,19 +40,16 @@ class AudioContent(MediaContent):
 class VideoContent(MediaContent):
     """视频内容"""
 
-    path: Path | None = None  # pyright: ignore[reportIncompatibleVariableOverride]
+    path: Path | Task[Path]  # pyright: ignore[reportIncompatibleVariableOverride]
     """视频路径"""
-    task: Task[Path] | None = None
-    """视频下载任务"""
-
     cover_path: Path | None = None
     """视频封面"""
 
     async def video_path(self) -> Path:
-        if self.path is not None:
+        if isinstance(self.path, Path):
             return self.path
-        if self.task is not None:
-            return await self.task
+        if isinstance(self.path, Task):
+            return await self.path
         raise ValueError("视频路径或下载任务为空")
 
 
@@ -138,8 +135,8 @@ class ParseResult:
         return header
 
     @property
-    def video_paths(self) -> Sequence[Path]:
-        return [cont.path for cont in self.contents if isinstance(cont, VideoContent) and cont.path is not None]
+    def video_contents(self) -> Sequence[VideoContent]:
+        return [cont for cont in self.contents if isinstance(cont, VideoContent)]
 
     @property
     def audio_paths(self) -> Sequence[Path]:

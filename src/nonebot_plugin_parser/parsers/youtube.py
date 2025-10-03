@@ -1,3 +1,4 @@
+import asyncio
 import re
 from typing import ClassVar
 from typing_extensions import override
@@ -50,7 +51,7 @@ class YouTubeParser(BaseParser):
         if thumbnail:
             cover_path = await DOWNLOADER.download_img(thumbnail)
 
-        video_path = await YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
+        video_path = asyncio.create_task(YTDLP_DOWNLOADER.download_video(url, self.cookies_file))
 
         return self.result(
             title=title,

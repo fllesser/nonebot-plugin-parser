@@ -1,3 +1,4 @@
+import asyncio
 import re
 import time
 from typing import ClassVar
@@ -119,7 +120,7 @@ class WeiBoParser(BaseParser):
             video_url = data.get("stream_url")
 
         if video_url:
-            video_path = await DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+            video_path = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
             contents.append(VideoContent(video_path))
 
         # 时间戳

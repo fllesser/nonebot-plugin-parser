@@ -1,5 +1,6 @@
 import asyncio
 import json
+from pathlib import Path
 import re
 from typing import Any, ClassVar
 from typing_extensions import override
@@ -146,42 +147,35 @@ class BilibiliParser(BaseParser):
             ai_conclusion = await video.get_ai_conclusion(cid)
             ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "").strip()
             ai_summary = f"AI总结: {ai_summary}" if ai_summary else "该视频暂不支持AI总结"
+        # 额外信息
+        extra = {"info": f"{display_info}\n{ai_summary}".strip()}
 
-        # 获取音视频下载链接
+        # 获取下载链接
         cover_url = cover_url if cover_url else video_info.get("pic")
-        video_url, audio_url = await self.parse_video_download_url(video=video, page_index=page_idx)
+        v_url, a_url = await self.parse_video_download_url(video=video, page_index=page_idx)
 
-        cover_path = None
-        file_name = f"{bvid or avid}-{page_num}"
-        video_path = plugin_cache_dir / f"{file_name}.mp4"
-        extra_info = f"{display_info}\n{ai_summary}".strip()
         # 下载封面
-        if cover_url:
-            cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
+        cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers) if cover_url else None
 
-        contents: list[Content] = []
-
-        async def download_video():
-            if audio_url is not None:
+        async def download_video(output_path: Path):
+            if a_url is not None:
                 return await DOWNLOADER.download_av_and_merge(
-                    video_url, audio_url, output_path=video_path, ext_headers=self.headers
+                    v_url, a_url, output_path=output_path, ext_headers=self.headers
                 )
             else:
-                return await DOWNLOADER.streamd(video_url, file_name=f"{file_name}.mp4", ext_headers=self.headers)
+                return await DOWNLOADER.streamd(v_url, file_name=output_path.name, ext_headers=self.headers)
 
+        video_path = plugin_cache_dir / f"{bvid or avid}-{page_num}.mp4"
         # 下载视频
         if not video_path.exists():
             # 下载视频和音频
-            video_task = asyncio.create_task(download_video())
-            contents.append(VideoContent(task=video_task, cover_path=cover_path))
-        else:
-            contents.append(VideoContent(video_path, cover_path=cover_path))
+            video_path = asyncio.create_task(download_video(video_path))
 
         return self.result(
             title=title,
             cover_path=cover_path,
-            contents=contents,
-            extra={"info": extra_info},
+            contents=[VideoContent(video_path, cover_path=cover_path)],
+            extra=extra,
         )
 
     async def parse_others(self, url: str):
