@@ -178,7 +178,8 @@ class BilibiliParser(BaseParser):
             except DownloadSizeLimitException as e:
                 contents.append(e.message)
 
-        contents.append(VideoContent(video_path, cover_path=cover_path))
+        if video_path.exists():
+            contents.append(VideoContent(video_path, cover_path=cover_path))
 
         return self.result(
             title=title,
