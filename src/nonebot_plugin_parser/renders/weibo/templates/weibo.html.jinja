@@ -138,72 +138,36 @@
 
         /* 图片网格 */
         .media-grid {
-            display: grid;
-            gap: 4px;
+            display: flex;
+            flex-wrap: wrap;
             border-radius: 8px;
             overflow: hidden;
         }
 
-        /* 1张图片 */
-        .media-grid-1 {
-            grid-template-columns: 1fr;
-            max-width: 100%;
-        }
-
-        .media-grid-1 .media-item {
-            aspect-ratio: auto;
-            height: auto;
-        }
-
-        .media-grid-1 .media-item img {
-            max-height: 600px;
-            object-fit: contain;
-            width: 100%;
-            height: auto;
-        }
-
-        /* 2张图片 */
-        .media-grid-2 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        /* 3张图片 */
-        .media-grid-3 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        /* 4张图片 */
-        .media-grid-4 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        /* 5-6张图片 */
-        .media-grid-5,
-        .media-grid-6 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        /* 7-9张图片 */
-        .media-grid-7,
-        .media-grid-8,
-        .media-grid-9 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
+        /* 所有图片统一按1/3比例布局 */
         .media-item {
+            width: 33.333%;
+            padding: 2px;
             position: relative;
-            background: var(--border-color);
-            min-height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* 使用 padding-bottom 创建正方形容器 */
+        .media-item::before {
+            content: "";
+            display: block;
+            padding-bottom: 100%;
         }
 
         .media-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            max-height: 400px;
+            object-fit: cover;
+            background: var(--border-color);
         }
 
         /* 视频占位符 */
@@ -299,12 +263,9 @@
             margin-top: 8px;
         }
 
-        .repost-media .media-grid {
-            gap: 3px;
-        }
-
         .repost-media .media-item {
             min-height: 100px;
+            padding: 1.5px;
         }
 
         .repost-media .media-item img {
@@ -354,8 +315,7 @@
             <!-- 图片内容 -->
             {% if result.img_paths and result.img_paths | length > 0 %}
             <div class="weibo-media">
-                <div
-                    class="media-grid media-grid-{{ result.img_paths | length if result.img_paths | length <= 9 else 9 }}">
+                <div class="media-grid">
                     {% for img_path in result.img_paths[:9] %}
                     <div class="media-item">
                         <img src="file://{{ img_path }}" alt="图片{{ loop.index }}" loading="lazy">
@@ -400,15 +360,14 @@
                 </div>
 
                 <!-- 原微博文本 -->
-                {% if result.repost.content %}
-                <div class="repost-text">{{ result.repost.content | safe }}</div>
+                {% if result.repost.text %}
+                <div class="repost-text">{{ result.repost.text | safe }}</div>
                 {% endif %}
 
                 <!-- 原微博图片 -->
                 {% if result.repost.img_paths and result.repost.img_paths | length > 0 %}
                 <div class="repost-media">
-                    <div
-                        class="media-grid media-grid-{{ result.repost.img_paths | length if result.repost.img_paths | length <= 9 else 9 }}">
+                    <div class="media-grid">
                         {% for img_path in result.repost.img_paths[:9] %}
                         <div class="media-item">
                             <img src="file://{{ img_path }}" alt="图片{{ loop.index }}" loading="lazy">
