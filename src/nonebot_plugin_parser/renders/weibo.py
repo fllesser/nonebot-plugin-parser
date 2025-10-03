@@ -1,14 +1,8 @@
-from datetime import datetime
 from typing_extensions import override
 
 from nonebot_plugin_htmlkit import template_to_pic
 
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
-
-
-def format_datetime(timestamp: float, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
-    """格式化时间戳为字符串"""
-    return datetime.fromtimestamp(timestamp).strftime(fmt)
 
 
 class Renderer(BaseRenderer):
@@ -19,7 +13,6 @@ class Renderer(BaseRenderer):
             self.templates_dir.as_posix(),
             "weibo.html.jinja",
             templates={"result": result},
-            filters={"format_datetime": format_datetime},
         )
         # 组合文本消息
         texts = [result.header]

@@ -321,7 +321,7 @@
             <div class="user-info">
                 <h3 class="username">{{ result.author.name if result.author else "微博用户" }}</h3>
                 {% if result.timestamp %}
-                <p class="timestamp">{{ result.timestamp | format_datetime('%Y年%m月%d日 %H:%M') }}</p>
+                <p class="timestamp">{{ result.formart_datetime('%Y年%m月%d日 %H:%M') }}</p>
                 {% endif %}
             </div>
         </header>
@@ -377,8 +377,7 @@
                         <h4 class="repost-username">{{ result.repost.author.name if result.repost.author else "微博用户" }}
                         </h4>
                         {% if result.repost.timestamp %}
-                        <p class="repost-timestamp">{{ result.repost.timestamp | int | format_datetime('%Y年%m月%d日
-                            %H:%M') }}</p>
+                        <p class="repost-timestamp">{{ result.repost.formart_datetime('%Y年%m月%d日 %H:%M') }}</p>
                         {% endif %}
                     </div>
                 </div>

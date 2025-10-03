@@ -1,6 +1,7 @@
 from asyncio import Task
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from datetime import datetime
 from itertools import chain
 from pathlib import Path
 from typing import Any
@@ -8,7 +9,7 @@ from typing import Any
 from ..constants import ANDROID_HEADER as ANDROID_HEADER
 from ..constants import COMMON_HEADER as COMMON_HEADER
 from ..constants import IOS_HEADER as IOS_HEADER
-from ..exception import DownloadSizeLimitException
+from ..exception import DownloadException
 from ..helper import Segment, UniHelper, UniMessage
 
 
@@ -154,6 +155,9 @@ class ParseResult:
         paths = [cont.gif_path for cont in self.contents if isinstance(cont, DynamicContent)]
         return [path for path in paths if path is not None]
 
+    def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+        return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
+
     async def convert_segs(self):
         """转换为消息段
 
@@ -182,7 +186,7 @@ class ParseResult:
                     try:
                         video_path = await video.video_path()
                         separate_segs.append(UniHelper.video_seg(video_path))
-                    except DownloadSizeLimitException as e:
+                    except DownloadException as e:
                         forwardable_segs.append(e.message)
 
         return separate_segs, forwardable_segs
