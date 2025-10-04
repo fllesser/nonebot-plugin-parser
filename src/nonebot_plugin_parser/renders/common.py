@@ -14,10 +14,21 @@ class CommonRenderer(BaseRenderer):
     # 卡片配置常量
     PADDING = 20
     AVATAR_SIZE = 80
+    AVATAR_TEXT_GAP = 15  # 头像和文字之间的间距
     MAX_COVER_WIDTH = 1000
     MAX_COVER_HEIGHT = 800
     DEFAULT_CARD_WIDTH = 800
     SECTION_SPACING = 15
+    NAME_TIME_GAP = 5  # 名称和时间之间的间距
+
+    # 头像占位符配置
+    AVATAR_PLACEHOLDER_BG_COLOR = (230, 230, 230, 255)
+    AVATAR_PLACEHOLDER_FG_COLOR = (200, 200, 200, 255)
+    AVATAR_HEAD_RATIO = 0.35  # 头部位置比例
+    AVATAR_HEAD_RADIUS_RATIO = 1 / 6  # 头部半径比例
+    AVATAR_SHOULDER_Y_RATIO = 0.55  # 肩部 Y 位置比例
+    AVATAR_SHOULDER_WIDTH_RATIO = 0.55  # 肩部宽度比例
+    AVATAR_SHOULDER_HEIGHT_RATIO = 0.6  # 肩部高度比例
 
     # 颜色配置
     BG_COLOR = (255, 255, 255)
@@ -86,32 +97,35 @@ class CommonRenderer(BaseRenderer):
         if not cover_path or not cover_path.exists():
             return None
 
-        cover_img = Image.open(cover_path)
+        try:
+            cover_img = Image.open(cover_path)
 
-        # 如果封面太大，需要缩放
-        if cover_img.width > self.MAX_COVER_WIDTH or cover_img.height > self.MAX_COVER_HEIGHT:
-            width_ratio = self.MAX_COVER_WIDTH / cover_img.width
-            height_ratio = self.MAX_COVER_HEIGHT / cover_img.height
-            scale_ratio = min(width_ratio, height_ratio)
+            # 转换为 RGB 模式以确保兼容性
+            if cover_img.mode not in ("RGB", "RGBA"):
+                cover_img = cover_img.convert("RGB")
 
-            new_width = int(cover_img.width * scale_ratio)
-            new_height = int(cover_img.height * scale_ratio)
-            cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            # 如果封面太大，需要缩放
+            if cover_img.width > self.MAX_COVER_WIDTH or cover_img.height > self.MAX_COVER_HEIGHT:
+                width_ratio = self.MAX_COVER_WIDTH / cover_img.width
+                height_ratio = self.MAX_COVER_HEIGHT / cover_img.height
+                scale_ratio = min(width_ratio, height_ratio)
 
-        return cover_img
+                new_width = int(cover_img.width * scale_ratio)
+                new_height = int(cover_img.height * scale_ratio)
+                cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+            return cover_img
+        except Exception:
+            # 加载失败时返回 None
+            return None
 
     def _load_and_process_avatar(self, avatar: Path | None) -> Image.Image | None:
         """加载并处理头像（圆形裁剪，带抗锯齿）"""
-        if not avatar:
+        if not avatar or not avatar.exists():
             return None
 
-        avatar_img = None
         try:
-            if avatar and avatar.exists():
-                avatar_img = Image.open(avatar)
-
-            if not avatar_img:
-                return None
+            avatar_img = Image.open(avatar)
 
             # 转换为 RGBA 模式（用于更好的抗锯齿效果）
             if avatar_img.mode != "RGBA":
@@ -125,7 +139,6 @@ class CommonRenderer(BaseRenderer):
             # 创建高分辨率圆形遮罩（带抗锯齿）
             mask = Image.new("L", (temp_size, temp_size), 0)
             mask_draw = ImageDraw.Draw(mask)
-            # 使用抗锯齿绘制圆形
             mask_draw.ellipse((0, 0, temp_size - 1, temp_size - 1), fill=255)
 
             # 应用遮罩
@@ -185,7 +198,7 @@ class CommonRenderer(BaseRenderer):
         avatar_img = self._load_and_process_avatar(await result.author.avatar_path)
 
         # 计算文字区域宽度（始终预留头像空间）
-        text_area_width = content_width - (self.AVATAR_SIZE + 15)
+        text_area_width = content_width - (self.AVATAR_SIZE + self.AVATAR_TEXT_GAP)
 
         # 发布者名称
         name_lines = self._wrap_text(result.author.name, text_area_width, fonts["name"])
@@ -195,9 +208,9 @@ class CommonRenderer(BaseRenderer):
         time_lines = self._wrap_text(time_text, text_area_width, fonts["extra"]) if time_text else []
 
         # 计算 header 高度（取头像和文字中较大者）
-        text_height = len(name_lines) * self.LINE_HEIGHTS["name"] + (
-            len(time_lines) * self.LINE_HEIGHTS["extra"] + 5 if time_lines else 0
-        )
+        text_height = len(name_lines) * self.LINE_HEIGHTS["name"]
+        if time_lines:
+            text_height += self.NAME_TIME_GAP + len(time_lines) * self.LINE_HEIGHTS["extra"]
         header_height = max(self.AVATAR_SIZE, text_height)
 
         return {
@@ -227,6 +240,53 @@ class CommonRenderer(BaseRenderer):
             elif section_type == "extra":
                 y_pos = self._draw_extra(draw, content, y_pos, fonts["extra"])
 
+    def _create_avatar_placeholder(self) -> Image.Image:
+        """创建默认头像占位符"""
+        placeholder = Image.new("RGBA", (self.AVATAR_SIZE, self.AVATAR_SIZE), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(placeholder)
+
+        # 绘制圆形背景
+        draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=self.AVATAR_PLACEHOLDER_BG_COLOR)
+
+        # 绘制简单的用户图标（圆形头部 + 肩部）
+        center_x = self.AVATAR_SIZE // 2
+
+        # 头部圆形
+        head_radius = int(self.AVATAR_SIZE * self.AVATAR_HEAD_RADIUS_RATIO)
+        head_y = int(self.AVATAR_SIZE * self.AVATAR_HEAD_RATIO)
+        draw.ellipse(
+            (
+                center_x - head_radius,
+                head_y - head_radius,
+                center_x + head_radius,
+                head_y + head_radius,
+            ),
+            fill=self.AVATAR_PLACEHOLDER_FG_COLOR,
+        )
+
+        # 肩部
+        shoulder_y = int(self.AVATAR_SIZE * self.AVATAR_SHOULDER_Y_RATIO)
+        shoulder_width = int(self.AVATAR_SIZE * self.AVATAR_SHOULDER_WIDTH_RATIO)
+        shoulder_height = int(self.AVATAR_SIZE * self.AVATAR_SHOULDER_HEIGHT_RATIO)
+        draw.ellipse(
+            (
+                center_x - shoulder_width // 2,
+                shoulder_y,
+                center_x + shoulder_width // 2,
+                shoulder_y + shoulder_height,
+            ),
+            fill=self.AVATAR_PLACEHOLDER_FG_COLOR,
+        )
+
+        # 创建圆形遮罩确保不超出边界
+        mask = Image.new("L", (self.AVATAR_SIZE, self.AVATAR_SIZE), 0)
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=255)
+
+        # 应用遮罩
+        placeholder.putalpha(mask)
+        return placeholder
+
     def _draw_header(
         self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, fonts: dict
     ) -> int:
@@ -234,57 +294,11 @@ class CommonRenderer(BaseRenderer):
         x_pos = self.PADDING
 
         # 绘制头像或占位符
-        if content["avatar"]:
-            image.paste(content["avatar"], (x_pos, y_pos), content["avatar"])
-        else:
-            # 绘制默认头像占位符（淡灰色圆形）
-            placeholder = Image.new("RGBA", (self.AVATAR_SIZE, self.AVATAR_SIZE), (0, 0, 0, 0))
-            placeholder_draw = ImageDraw.Draw(placeholder)
+        avatar = content["avatar"] if content["avatar"] else self._create_avatar_placeholder()
+        image.paste(avatar, (x_pos, y_pos), avatar)
 
-            # 绘制圆形背景
-            placeholder_draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=(230, 230, 230, 255))
-
-            # 绘制简单的用户图标（圆形头部 + 肩部）
-            center_x = self.AVATAR_SIZE // 2
-
-            # 头部圆形（较小，不会超出）
-            head_radius = self.AVATAR_SIZE // 6
-            head_y = int(self.AVATAR_SIZE * 0.35)
-            placeholder_draw.ellipse(
-                (
-                    center_x - head_radius,
-                    head_y - head_radius,
-                    center_x + head_radius,
-                    head_y + head_radius,
-                ),
-                fill=(200, 200, 200, 255),
-            )
-
-            # 肩部（确保不超出圆形边界）
-            shoulder_y = int(self.AVATAR_SIZE * 0.55)
-            shoulder_width = int(self.AVATAR_SIZE * 0.55)
-            shoulder_height = int(self.AVATAR_SIZE * 0.6)
-            placeholder_draw.ellipse(
-                (
-                    center_x - shoulder_width // 2,
-                    shoulder_y,
-                    center_x + shoulder_width // 2,
-                    shoulder_y + shoulder_height,
-                ),
-                fill=(200, 200, 200, 255),
-            )
-
-            # 创建圆形遮罩确保不超出边界
-            mask = Image.new("L", (self.AVATAR_SIZE, self.AVATAR_SIZE), 0)
-            mask_draw = ImageDraw.Draw(mask)
-            mask_draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=255)
-
-            # 应用遮罩
-            placeholder.putalpha(mask)
-            image.paste(placeholder, (x_pos, y_pos), placeholder)
-
-        # 文字始终从头像位置后面开始（占位）
-        text_x = self.PADDING + self.AVATAR_SIZE + 15
+        # 文字始终从头像位置后面开始
+        text_x = self.PADDING + self.AVATAR_SIZE + self.AVATAR_TEXT_GAP
 
         # 计算文字垂直居中位置（对齐头像中轴）
         avatar_center = y_pos + self.AVATAR_SIZE // 2
@@ -298,7 +312,7 @@ class CommonRenderer(BaseRenderer):
 
         # 时间（灰色）
         if content["time_lines"]:
-            text_y += 5
+            text_y += self.NAME_TIME_GAP
             for line in content["time_lines"]:
                 draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=fonts["extra"])
                 text_y += self.LINE_HEIGHTS["extra"]
@@ -343,6 +357,9 @@ class CommonRenderer(BaseRenderer):
         Returns:
             换行后的文本列表
         """
+        if not text:
+            return [""]
+
         lines = []
         paragraphs = text.split("\n")
 
@@ -351,10 +368,8 @@ class CommonRenderer(BaseRenderer):
                 lines.append("")
                 continue
 
-            words = paragraph
             current_line = ""
-
-            for char in words:
+            for char in paragraph:
                 test_line = current_line + char
                 # 使用 getbbox 计算文本宽度
                 bbox = font.getbbox(test_line)
@@ -363,10 +378,16 @@ class CommonRenderer(BaseRenderer):
                 if width <= max_width:
                     current_line = test_line
                 else:
+                    # 如果当前行不为空，保存并开始新行
                     if current_line:
                         lines.append(current_line)
-                    current_line = char
+                        current_line = char
+                    else:
+                        # 单个字符就超宽，强制添加
+                        lines.append(char)
+                        current_line = ""
 
+            # 保存最后一行
             if current_line:
                 lines.append(current_line)
 

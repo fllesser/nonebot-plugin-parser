@@ -5,7 +5,6 @@ from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_uninfo")
-require("nonebot_plugin_htmlkit")
 
 from .config import Config, plugin_cache_dir, scheduler
 from .matchers import parser_matcher  # noqa: F401
