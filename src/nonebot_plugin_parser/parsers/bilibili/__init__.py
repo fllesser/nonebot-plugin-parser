@@ -114,7 +114,7 @@ class BilibiliParser(BaseParser):
         video_info = msgspec.convert(await video.get_info(), VideoInfo)
 
         # 处理分 p
-        page_idx, title, duration, cover_url = video_info.extract_info_with_page(page_num)
+        page_idx, title, duration, timestamp, cover_url = video_info.extract_info_with_page(page_num)
 
         # 获取 AI 总结
         if self._credential:
@@ -131,9 +131,7 @@ class BilibiliParser(BaseParser):
         # 下载封面
         cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers) if cover_url else None
 
-        url = f"https://bilibili.com/{video.get_bvid()}"
-        if page_idx > 0:
-            url += f"?p={page_idx + 1}"
+        url = f"https://bilibili.com/{video_info.bvid}" + (f"?p={page_idx + 1}" if page_idx > 0 else "")
 
         # 视频下载 task
         async def download_video(output_path: Path):
@@ -147,7 +145,7 @@ class BilibiliParser(BaseParser):
             else:
                 return await DOWNLOADER.streamd(v_url, file_name=output_path.name, ext_headers=self.headers)
 
-        path_or_task = plugin_cache_dir / f"{bvid or avid}-{page_num}.mp4"
+        path_or_task = plugin_cache_dir / f"{video_info.bvid}-{page_num}.mp4"
         # 下载视频
         if not path_or_task.exists():
             # 下载视频和音频
@@ -157,7 +155,7 @@ class BilibiliParser(BaseParser):
             title=title,
             url=url,
             extra=extra,
-            timestamp=213213123,
+            timestamp=timestamp,
             cover_path=cover_path,
             author=Author(name=video_info.owner.name, avatar=video_info.owner.face),
             contents=[VideoContent(path_or_task, cover_path=cover_path, duration=duration)],

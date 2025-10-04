@@ -219,8 +219,8 @@ class Renderer(BaseRenderer):
         # 加载头像
         avatar_img = await self._load_and_process_avatar(result.author.avatar)
 
-        # 计算文字区域宽度
-        text_area_width = content_width - (self.AVATAR_SIZE + 15 if avatar_img else 0)
+        # 计算文字区域宽度（始终预留头像空间）
+        text_area_width = content_width - (self.AVATAR_SIZE + 15)
 
         # 发布者名称
         name_lines = self._wrap_text(result.author.name, text_area_width, fonts["name"])
@@ -267,24 +267,70 @@ class Renderer(BaseRenderer):
         """绘制 header 部分"""
         x_pos = self.PADDING
 
-        # 绘制头像
+        # 绘制头像或占位符
         if content["avatar"]:
             image.paste(content["avatar"], (x_pos, y_pos), content["avatar"])
-            x_pos += self.AVATAR_SIZE + 15
+        else:
+            # 绘制默认头像占位符（淡灰色圆形）
+            placeholder = Image.new("RGBA", (self.AVATAR_SIZE, self.AVATAR_SIZE), (0, 0, 0, 0))
+            placeholder_draw = ImageDraw.Draw(placeholder)
 
-        # 绘制名称和时间
+            # 绘制圆形背景
+            placeholder_draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=(230, 230, 230, 255))
+
+            # 绘制简单的用户图标（圆形头部 + 肩部）
+            center_x = self.AVATAR_SIZE // 2
+
+            # 头部圆形（较小，不会超出）
+            head_radius = self.AVATAR_SIZE // 6
+            head_y = int(self.AVATAR_SIZE * 0.35)
+            placeholder_draw.ellipse(
+                (
+                    center_x - head_radius,
+                    head_y - head_radius,
+                    center_x + head_radius,
+                    head_y + head_radius,
+                ),
+                fill=(200, 200, 200, 255),
+            )
+
+            # 肩部（确保不超出圆形边界）
+            shoulder_y = int(self.AVATAR_SIZE * 0.55)
+            shoulder_width = int(self.AVATAR_SIZE * 0.55)
+            shoulder_height = int(self.AVATAR_SIZE * 0.6)
+            placeholder_draw.ellipse(
+                (
+                    center_x - shoulder_width // 2,
+                    shoulder_y,
+                    center_x + shoulder_width // 2,
+                    shoulder_y + shoulder_height,
+                ),
+                fill=(200, 200, 200, 255),
+            )
+
+            # 创建圆形遮罩确保不超出边界
+            mask = Image.new("L", (self.AVATAR_SIZE, self.AVATAR_SIZE), 0)
+            mask_draw = ImageDraw.Draw(mask)
+            mask_draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=255)
+
+            # 应用遮罩
+            placeholder.putalpha(mask)
+            image.paste(placeholder, (x_pos, y_pos), placeholder)
+
+        # 文字始终从头像位置后面开始（占位）
+        text_x = self.PADDING + self.AVATAR_SIZE + 15
         text_y = y_pos
 
         # 发布者名称（蓝色）
         for line in content["name_lines"]:
-            draw.text((x_pos, text_y), line, fill=self.HEADER_COLOR, font=fonts["name"])
+            draw.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=fonts["name"])
             text_y += self.LINE_HEIGHTS["name"]
 
         # 时间（灰色）
         if content["time_lines"]:
             text_y += 5
             for line in content["time_lines"]:
-                draw.text((x_pos, text_y), line, fill=self.EXTRA_COLOR, font=fonts["extra"])
+                draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=fonts["extra"])
                 text_y += self.LINE_HEIGHTS["extra"]
 
         return y_pos + content["height"] + self.SECTION_SPACING
