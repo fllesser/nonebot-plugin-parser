@@ -158,8 +158,8 @@ class ParseResult:
     def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
 
-    async def convert_segs(self):
-        """转换为消息段
+    async def contents_to_segs(self):
+        """将内容列表转换为消息段
 
         Returns:
             tuple[list[Segment], list[str | Segment | UniMessage]]: 消息段

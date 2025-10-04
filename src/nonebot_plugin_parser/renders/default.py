@@ -28,21 +28,5 @@ class Renderer(BaseRenderer):
 
         yield first_message
 
-        separate_segs, forwardable_segs = await result.convert_segs()
-
-        # 处理可以合并转发的消息段
-        if forwardable_segs:
-            # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息
-            if self.need_forward or len(forwardable_segs) > 2:
-                forward_msg = UniHelper.construct_forward_message(forwardable_segs)
-                yield UniMessage(forward_msg)
-            else:
-                forwardable_segs[:-1] = [seg + "\n" for seg in forwardable_segs[:-1]]
-                # 单条消息
-                single_msg = UniMessage() + forwardable_segs
-                yield single_msg
-
-        # 处理必须单独发送的消息段
-        if separate_segs:
-            for seg in separate_segs:
-                yield UniMessage(seg)
+        async for message in self.render_contents(result):
+            yield message
