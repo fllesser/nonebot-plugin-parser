@@ -192,9 +192,8 @@ class WeiBoParser(BaseParser):
             contents.append(VideoContent(video_task, cover_path))
 
         if pic_urls := data.pic_urls:
-            contents.extend(
-                ImageContent(DOWNLOADER.download_img(url, ext_headers=self.ext_headers)) for url in pic_urls
-            )
+            img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.ext_headers) for url in pic_urls]
+            contents.extend(ImageContent(task) for task in img_tasks)
 
         # 下载头像
         avatar = DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.ext_headers)
@@ -308,8 +307,11 @@ class WeiboData(Struct):
 
     @property
     def text_content(self) -> str:
+        # 将 <br /> 转换为 \n
+        text = self.text.replace("<br />", "\n")
         # 去除 html 标签
-        return re.sub(r"<[^>]*>", "", self.text)
+        text = re.sub(r"<[^>]*>", "", text)
+        return text
 
     @property
     def cover_url(self) -> str | None:

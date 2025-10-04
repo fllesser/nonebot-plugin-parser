@@ -181,7 +181,7 @@ class ParseResult:
                     case AudioContent():
                         separate_segs.append(UniHelper.record_seg(await cont.get_path()))
                     case DynamicContent():
-                        separate_segs.append(UniHelper.video_seg(await cont.get_path()))
+                        forwardable_segs.append(UniHelper.video_seg(await cont.get_path()))
                     case GraphicsContent(_, text):
                         forwardable_segs.append(text + UniHelper.img_seg(await cont.get_path()))
             except ParseException as e:

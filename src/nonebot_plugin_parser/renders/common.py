@@ -5,7 +5,6 @@ from typing_extensions import override
 
 from PIL import Image, ImageDraw, ImageFont
 
-from ..download import DOWNLOADER
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
@@ -54,7 +53,7 @@ class CommonRenderer(BaseRenderer):
             PNG 图片的字节数据，如果没有足够的内容则返回 None
         """
         # 如果既没有标题, 文本也没有封面，不生成图片
-        if not result.title and not result.text and not result.cover_path:
+        if not result.title and not result.text:
             return None
 
         # 使用预加载的字体
@@ -101,7 +100,7 @@ class CommonRenderer(BaseRenderer):
 
         return cover_img
 
-    async def _load_and_process_avatar(self, avatar: str | Path | None) -> Image.Image | None:
+    def _load_and_process_avatar(self, avatar: str | Path | None) -> Image.Image | None:
         """加载并处理头像（圆形裁剪，带抗锯齿）"""
         if not avatar:
             return None
@@ -110,11 +109,6 @@ class CommonRenderer(BaseRenderer):
         try:
             if isinstance(avatar, Path) and avatar.exists():
                 avatar_img = Image.open(avatar)
-            elif isinstance(avatar, str) and avatar.startswith(("http://", "https://")):
-                # 下载 URL 头像
-                avatar_path = await DOWNLOADER.download_img(avatar)
-                if avatar_path and avatar_path.exists():
-                    avatar_img = Image.open(avatar_path)
 
             if not avatar_img:
                 return None
@@ -188,7 +182,7 @@ class CommonRenderer(BaseRenderer):
             return None
 
         # 加载头像
-        avatar_img = await self._load_and_process_avatar(await result.author.avatar_path)
+        avatar_img = self._load_and_process_avatar(await result.author.avatar_path)
 
         # 计算文字区域宽度（始终预留头像空间）
         text_area_width = content_width - (self.AVATAR_SIZE + 15)
