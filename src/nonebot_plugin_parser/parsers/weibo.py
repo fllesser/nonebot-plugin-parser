@@ -197,13 +197,13 @@ class WeiBoParser(BaseParser):
             contents.extend(ImageContent(path) for path in pic_paths)
 
         # 下载头像
-        avator = await DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.ext_headers)
+        avatar = await DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.ext_headers)
 
         return self.result(
             title=data.title,
             text=data.text_content,
             cover_path=cover_path,
-            author=Author(name=data.display_name, avatar=avator),
+            author=Author(name=data.display_name, avatar=avatar),
             contents=contents,
             url=f"https://weibo.com/{data.user.id}/{data.bid}",
             repost=repost,
