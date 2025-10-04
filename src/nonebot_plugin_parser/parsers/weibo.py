@@ -95,6 +95,7 @@ class WeiBoParser(BaseParser):
             user.get("profile_image_url"),
             user.get("description"),
         )
+        avatar = await DOWNLOADER.download_img(avatar, ext_headers=self.ext_headers)
         author = Author(name=author_name, avatar=avatar, description=description)
 
         # 提取标题和文本

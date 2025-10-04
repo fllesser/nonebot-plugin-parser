@@ -1,3 +1,4 @@
+from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 from typing import Any, ClassVar
@@ -41,6 +42,7 @@ class Renderer(BaseRenderer):
         async for message in self.render_contents(result):
             yield message
 
+    @lru_cache(maxsize=20)
     async def draw_common_message(self, result: ParseResult) -> bytes | None:
         """使用 PIL 绘制通用社交媒体帖子卡片
 
@@ -50,8 +52,8 @@ class Renderer(BaseRenderer):
         Returns:
             PNG 图片的字节数据，如果没有足够的内容则返回 None
         """
-        # 如果既没有文本也没有封面，不生成图片
-        if not result.text and not result.cover_path:
+        # 如果既没有标题, 文本也没有封面，不生成图片
+        if not result.title and not result.text and not result.cover_path:
             return None
 
         # 加载字体
@@ -83,11 +85,12 @@ class Renderer(BaseRenderer):
         """加载字体"""
         try:
             # macOS 系统字体
+            mac_os_font_path = "/System/Library/Fonts/PingFang.ttc"
             return {
-                "name": ImageFont.truetype("/System/Library/Fonts/PingFang.ttc", self.FONT_SIZES["name"]),
-                "title": ImageFont.truetype("/System/Library/Fonts/PingFang.ttc", self.FONT_SIZES["title"]),
-                "text": ImageFont.truetype("/System/Library/Fonts/PingFang.ttc", self.FONT_SIZES["text"]),
-                "extra": ImageFont.truetype("/System/Library/Fonts/PingFang.ttc", self.FONT_SIZES["extra"]),
+                "name": ImageFont.truetype(mac_os_font_path, self.FONT_SIZES["name"]),
+                "title": ImageFont.truetype(mac_os_font_path, self.FONT_SIZES["title"]),
+                "text": ImageFont.truetype(mac_os_font_path, self.FONT_SIZES["text"]),
+                "extra": ImageFont.truetype(mac_os_font_path, self.FONT_SIZES["extra"]),
             }
         except OSError:
             try:
