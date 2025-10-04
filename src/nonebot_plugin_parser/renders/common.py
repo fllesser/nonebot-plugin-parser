@@ -1,4 +1,3 @@
-from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 from typing import Any, ClassVar
@@ -45,7 +44,6 @@ class CommonRenderer(BaseRenderer):
         async for message in self.render_contents(result):
             yield message
 
-    @lru_cache(maxsize=20)
     async def draw_common_image(self, result: ParseResult) -> bytes | None:
         """使用 PIL 绘制通用社交媒体帖子卡片
 
