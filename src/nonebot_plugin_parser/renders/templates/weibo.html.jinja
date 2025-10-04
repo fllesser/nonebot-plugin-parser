@@ -312,7 +312,7 @@
             <div class="avatar-wrapper">
                 <div class="avatar">
                     {% if result.author and result.author.avatar %}
-                    <img src="{{ result.author.avatar }}" alt="用户头像" loading="lazy">
+                    <img src="{{ result.author.avatar }}" alt="用户头像">
                     {% else %}
                     <div class="avatar-placeholder"></div>
                     {% endif %}
@@ -337,7 +337,7 @@
                 <div class="media-grid">
                     {% for img_path in result.img_paths[:9] %}
                     <div class="media-item">
-                        <img src="file://{{ img_path }}" alt="图片{{ loop.index }}" loading="lazy">
+                        <img src="file://{{ img_path }}" alt="图片{{ loop.index }}">
                     </div>
                     {% endfor %}
                 </div>
@@ -348,9 +348,9 @@
             {% if result.video_contents and result.video_contents | length > 0 %}
             <div class="weibo-media" style="margin-top: 12px;">
                 {% for video_content in result.video_contents %}
-                <a href="file://{{ video_content.path_or_task }}" target="_blank" class="video-placeholder">
+                <a class="video-placeholder">
                     {% if video_content.cover_path %}
-                    <img src="file://{{ video_content.cover_path }}" alt="视频封面" loading="lazy">
+                    <img src="file://{{ video_content.cover_path }}" alt="视频封面">
                     {% endif %}
                     <div class="video-overlay">
                         <div class="video-icon">▶️</div>
@@ -368,7 +368,7 @@
                 <div class="repost-header">
                     <div class="repost-avatar">
                         {% if result.repost.author and result.repost.author.avatar %}
-                        <img src="{{ result.repost.author.avatar }}" alt="原作者头像" loading="lazy">
+                        <img src="{{ result.repost.author.avatar }}" alt="原作者头像">
                         {% else %}
                         <div class="repost-avatar-placeholder"></div>
                         {% endif %}
@@ -393,7 +393,7 @@
                     <div class="media-grid">
                         {% for img_path in result.repost.img_paths[:9] %}
                         <div class="media-item">
-                            <img src="file://{{ img_path }}" alt="图片{{ loop.index }}" loading="lazy">
+                            <img src="file://{{ img_path }}" alt="图片{{ loop.index }}">
                         </div>
                         {% endfor %}
                     </div>
@@ -404,9 +404,9 @@
                 {% if result.repost.video_contents and result.repost.video_contents | length > 0 %}
                 <div class="repost-media">
                     {% for video_content in result.repost.video_contents %}
-                    <a href="file://{{ video_content.path_or_task }}" target="_blank" class="video-placeholder">
+                    <a class="video-placeholder">
                         {% if video_content.cover_path %}
-                        <img src="file://{{ video_content.cover_path }}" alt="视频封面" loading="lazy">
+                        <img src="file://{{ video_content.cover_path }}" alt="视频封面">
                         {% endif %}
                         <div class="video-overlay">
                             <div class="video-icon">▶️</div>
