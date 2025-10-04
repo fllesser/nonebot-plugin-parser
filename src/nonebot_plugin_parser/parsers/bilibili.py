@@ -9,10 +9,10 @@ from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.video import Video
 from nonebot import logger
 
-from ..config import plugin_cache_dir, plugin_config_dir, rconfig
+from ..config import DURATION_MAXIMUM, plugin_cache_dir, plugin_config_dir, rconfig
 from ..cookie import ck2dict
 from ..download import DOWNLOADER
-from ..exception import ParseException
+from ..exception import DownloadException, ParseException
 from .base import BaseParser
 from .data import Content, ImageContent, Platform, TextImageContent, VideoContent
 
@@ -57,10 +57,8 @@ class BilibiliParser(BaseParser):
         # 从匹配对象中获取原始URL, 视频ID, 页码
         url, video_id, page_num = str(matched.group(0)), str(matched.group(1)), matched.group(2)
 
-        link = None
         # 处理短链
         if "b23.tv" in url or "bili2233.cn" in url:
-            link = url
             url = await self.get_redirect_url(url, self.headers)
 
         avid, bvid = None, None
@@ -68,12 +66,8 @@ class BilibiliParser(BaseParser):
         if video_id:
             if video_id.isdigit():
                 avid = int(video_id)
-                link = f"https://bilibili.com/av{avid}"
             else:
                 bvid = video_id
-                link = f"https://bilibili.com/video/{bvid}"
-            if page_num is not None:
-                link += f"?p={page_num}"
         else:
             if _matched := re.search(r"(BV[\dA-Za-z]{10})[^?]*?(?:\?[^#]*?p=(\d{1,3}))?", url):
                 bvid = _matched.group(1)
@@ -87,10 +81,7 @@ class BilibiliParser(BaseParser):
         page_num = int(page_num) if page_num and page_num.isdigit() else 1
 
         # 解析视频信息
-        parser_result = await self.parse_video(bvid=bvid, avid=avid, page_num=page_num)
-        if link is not None:
-            parser_result.url = link
-        return parser_result
+        return await self.parse_video(bvid=bvid, avid=avid, page_num=page_num)
 
     async def parse_video(
         self,
@@ -110,7 +101,7 @@ class BilibiliParser(BaseParser):
         video = await self._parse_video(bvid=bvid, avid=avid)
         video_info: dict[str, Any] = await video.get_info()
 
-        video_duration: int = int(video_info["duration"])
+        duration: int = int(video_info["duration"])
         cover_url: str | None = None
         title: str = video_info["title"]
 
@@ -122,7 +113,7 @@ class BilibiliParser(BaseParser):
             page_idx = page_idx % len(pages)
             p_video = pages[page_idx]
             # 获取分集时长
-            video_duration = int(p_video.get("duration", video_duration))
+            duration = int(p_video.get("duration", duration))
             # 获取分集标题
             if p_name := p_video.get("part").strip():
                 title += f"\n分集: {p_name}"
@@ -141,12 +132,14 @@ class BilibiliParser(BaseParser):
         )
 
         # 获取 AI 总结
-        ai_summary: str = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
         if self._credential:
             cid = await video.get_cid(page_idx)
             ai_conclusion = await video.get_ai_conclusion(cid)
             ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "").strip()
             ai_summary = f"AI总结: {ai_summary}" if ai_summary else "该视频暂不支持AI总结"
+        else:
+            ai_summary: str = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
+
         # 额外信息
         extra = {"info": f"{display_info}\n{ai_summary}".strip()}
 
@@ -158,6 +151,8 @@ class BilibiliParser(BaseParser):
         cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers) if cover_url else None
 
         async def download_video(output_path: Path):
+            if duration > DURATION_MAXIMUM:
+                raise DownloadException("视频时长超过最大限制")
             if a_url is not None:
                 return await DOWNLOADER.download_av_and_merge(
                     v_url, a_url, output_path=output_path, ext_headers=self.headers
@@ -171,10 +166,15 @@ class BilibiliParser(BaseParser):
             # 下载视频和音频
             path_or_task = asyncio.create_task(download_video(path_or_task))
 
+        url = f"https://bilibili.com/{video.get_bvid()}"
+        if page_num > 1:
+            url += f"?p={page_num}"
+
         return self.result(
             title=title,
             cover_path=cover_path,
-            contents=[VideoContent(path_or_task, cover_path=cover_path)],
+            url=url,
+            contents=[VideoContent(path_or_task, cover_path=cover_path, duration=duration)],
             extra=extra,
         )
 
@@ -419,12 +419,9 @@ class BilibiliParser(BaseParser):
                 fav["intro"],
                 fav["link"],
             )
-            matched = re.search(r"\d+", link)
-            if not matched:
-                continue
-            avid = matched.group(0) if matched else ""
+            link: str = link.replace("bilibili://video/", "https://bilibili.com/video/av")
             urls.append(cover)
-            texts.append(f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接：{link}\nhttps://bilibili.com/video/av{avid}")
+            texts.append(f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接: {link}")
         return texts, urls
 
     async def _parse_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
