@@ -27,6 +27,7 @@ class Renderer(BaseRenderer):
     HEADER_COLOR = (0, 122, 255)
     EXTRA_COLOR = (136, 136, 136)
 
+    ITEM_NAMES = ("name", "title", "text", "extra")
     # 字体大小和行高
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 24, "text": 30, "extra": 24}
     LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 28, "text": 36, "extra": 28}
@@ -85,34 +86,26 @@ class Renderer(BaseRenderer):
         """加载字体"""
         try:
             # macOS 系统字体
-            mac_os_font_path = "/System/Library/Fonts/PingFang.ttc"
+            font_path = Path("/System/Library/Fonts/PingFang.ttc")
             return {
-                "name": ImageFont.truetype(mac_os_font_path, self.FONT_SIZES["name"]),
-                "title": ImageFont.truetype(mac_os_font_path, self.FONT_SIZES["title"]),
-                "text": ImageFont.truetype(mac_os_font_path, self.FONT_SIZES["text"]),
-                "extra": ImageFont.truetype(mac_os_font_path, self.FONT_SIZES["extra"]),
+                item_name: ImageFont.truetype(font_path, self.FONT_SIZES[item_name]) for item_name in self.ITEM_NAMES
             }
         except OSError:
             try:
                 # Linux 常见字体
+                font_path = Path("/usr/share/fonts/truetype/dejavu/")
+                bold_path = font_path / "DejaVuSans-Bold.ttf"
+                normal_path = font_path / "DejaVuSans.ttf"
                 return {
-                    "name": ImageFont.truetype(
-                        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", self.FONT_SIZES["name"]
-                    ),
-                    "title": ImageFont.truetype(
-                        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", self.FONT_SIZES["title"]
-                    ),
-                    "text": ImageFont.truetype(
-                        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", self.FONT_SIZES["text"]
-                    ),
-                    "extra": ImageFont.truetype(
-                        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", self.FONT_SIZES["extra"]
-                    ),
+                    "name": ImageFont.truetype(bold_path, self.FONT_SIZES["name"]),
+                    "title": ImageFont.truetype(normal_path, self.FONT_SIZES["title"]),
+                    "text": ImageFont.truetype(normal_path, self.FONT_SIZES["text"]),
+                    "extra": ImageFont.truetype(normal_path, self.FONT_SIZES["extra"]),
                 }
             except OSError:
                 # 使用默认字体
                 default_font = ImageFont.load_default()
-                return {"name": default_font, "title": default_font, "text": default_font, "extra": default_font}
+                return dict.fromkeys(self.ITEM_NAMES, default_font)
 
     def _load_and_resize_cover(self, cover_path: Path | None) -> Image.Image | None:
         """加载并调整封面尺寸"""
@@ -243,6 +236,7 @@ class Renderer(BaseRenderer):
             "avatar": avatar_img,
             "name_lines": name_lines,
             "time_lines": time_lines,
+            "text_height": text_height,
         }
 
     def _draw_sections(
@@ -322,7 +316,11 @@ class Renderer(BaseRenderer):
 
         # 文字始终从头像位置后面开始（占位）
         text_x = self.PADDING + self.AVATAR_SIZE + 15
-        text_y = y_pos
+
+        # 计算文字垂直居中位置（对齐头像中轴）
+        avatar_center = y_pos + self.AVATAR_SIZE // 2
+        text_start_y = avatar_center - content["text_height"] // 2
+        text_y = text_start_y
 
         # 发布者名称（蓝色）
         for line in content["name_lines"]:
