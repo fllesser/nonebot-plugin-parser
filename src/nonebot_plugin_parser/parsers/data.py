@@ -1,5 +1,4 @@
 from asyncio import Task
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from itertools import chain
@@ -15,14 +14,18 @@ from ..helper import Segment, UniHelper, UniMessage
 
 @dataclass
 class MediaContent:
-    pass
+    path_task: Path | Task[Path]
+
+    async def get_path(self) -> Path:
+        if isinstance(self.path_task, Path):
+            return self.path_task
+        return await self.path_task
 
 
 @dataclass
 class AudioContent(MediaContent):
     """音频内容"""
 
-    path: Path
     duration: float = 0.0
 
 
@@ -30,20 +33,13 @@ class AudioContent(MediaContent):
 class VideoContent(MediaContent):
     """视频内容"""
 
-    path_or_task: Path | Task[Path]
-    """视频路径"""
-    cover_path: Path | None = None
+    cover: Task[Path] | None = None
     """视频封面"""
     duration: float = 0.0
     """时长 单位: 秒"""
 
-    async def video_path(self) -> Path:
-        if isinstance(self.path_or_task, Path):
-            return self.path_or_task
-        if isinstance(self.path_or_task, Task):
-            self.path_or_task = await self.path_or_task
-            return self.path_or_task
-        raise ValueError("视频路径或下载任务为空")
+    async def get_cover_path(self) -> Path | None:
+        return await self.cover if self.cover else None
 
     @property
     def display_duration(self) -> str:
@@ -56,26 +52,21 @@ class VideoContent(MediaContent):
 class ImageContent(MediaContent):
     """图片内容"""
 
-    path: Path
+    pass
 
 
 @dataclass
 class DynamicContent(MediaContent):
     """动态内容 视频格式 后续转 gif"""
 
-    path: Path
     gif_path: Path | None = None
 
 
 @dataclass
-class TextImageContent:
+class GraphicsContent(MediaContent):
     """图文内容"""
 
     text: str
-    image_path: Path
-
-
-Content = str | MediaContent | TextImageContent
 
 
 @dataclass
@@ -94,10 +85,14 @@ class Author:
 
     name: str
     """作者名称"""
-    avatar: str | Path | None = None
+    avatar: Task[Path] | None = None
     """作者头像 URL 或本地路径"""
     description: str | None = None
     """作者个性签名等"""
+
+    @property
+    async def avatar_path(self) -> Path | None:
+        return await self.avatar if self.avatar else None
 
 
 @dataclass
@@ -110,9 +105,7 @@ class ParseResult:
     """标题"""
     text: str = ""
     """文本内容"""
-    cover_path: Path | None = None
-    """封面"""
-    contents: list[Content] = field(default_factory=list)
+    contents: list[MediaContent] = field(default_factory=list)
     """内容列表，主体以外的内容"""
     timestamp: float | None = None
     """发布时间戳, 秒"""
@@ -144,27 +137,6 @@ class ParseResult:
         return header
 
     @property
-    def video_contents(self) -> Sequence[VideoContent]:
-        return [cont for cont in self.contents if isinstance(cont, VideoContent)]
-
-    @property
-    def audio_paths(self) -> Sequence[Path]:
-        return [cont.path for cont in self.contents if isinstance(cont, AudioContent)]
-
-    @property
-    def img_paths(self) -> Sequence[Path]:
-        return [cont.path for cont in self.contents if isinstance(cont, ImageContent)]
-
-    @property
-    def dynamic_paths(self) -> Sequence[Path]:
-        return [cont.path for cont in self.contents if isinstance(cont, DynamicContent)]
-
-    @property
-    def gif_paths(self) -> Sequence[Path]:
-        paths = [cont.gif_path for cont in self.contents if isinstance(cont, DynamicContent)]
-        return [path for path in paths if path is not None]
-
-    @property
     def display_url(self) -> str:
         return f"链接: {self.url}" if self.url else ""
 
@@ -179,6 +151,15 @@ class ParseResult:
     def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
 
+    @property
+    async def cover_path(self) -> Path | None:
+        for cont in self.contents:
+            if isinstance(cont, VideoContent):
+                return await cont.get_cover_path()
+            if isinstance(cont, ImageContent):
+                return await cont.get_path()
+        return None
+
     async def contents_to_segs(self):
         """将内容列表转换为消息段
 
@@ -191,24 +172,20 @@ class ParseResult:
         forwardable_segs: list[str | Segment | UniMessage] = []
 
         for cont in chain(self.contents, self.repost.contents if self.repost else ()):
-            match cont:
-                case str():
-                    forwardable_segs.append(cont)
-                case ImageContent(path):
-                    forwardable_segs.append(UniHelper.img_seg(path))
-                case DynamicContent(path):
-                    # gif_path
-                    forwardable_segs.append(UniHelper.video_seg(path))
-                case TextImageContent(text, image_path):
-                    forwardable_segs.append(text + UniHelper.img_seg(image_path))
-                case AudioContent(path):
-                    separate_segs.append(UniHelper.record_seg(path))
-                case VideoContent() as video:
-                    try:
-                        video_path = await video.video_path()
-                        separate_segs.append(UniHelper.video_seg(video_path))
-                    except ParseException as e:
-                        forwardable_segs.append(e.message)
+            try:
+                match cont:
+                    case VideoContent():
+                        separate_segs.append(UniHelper.video_seg(await cont.get_path()))
+                    case ImageContent():
+                        forwardable_segs.append(UniHelper.img_seg(await cont.get_path()))
+                    case AudioContent():
+                        separate_segs.append(UniHelper.record_seg(await cont.get_path()))
+                    case DynamicContent():
+                        separate_segs.append(UniHelper.video_seg(await cont.get_path()))
+                    case GraphicsContent(_, text):
+                        forwardable_segs.append(text + UniHelper.img_seg(await cont.get_path()))
+            except ParseException as e:
+                forwardable_segs.append(e.message)
 
         return separate_segs, forwardable_segs
 
@@ -223,8 +200,7 @@ from typing import Any, TypedDict
 class ParseResultKwargs(TypedDict, total=False):
     title: str
     text: str
-    cover_path: Path | None
-    contents: list[Content]
+    contents: list[MediaContent]
     timestamp: float | None
     url: str | None
     author: Author | None

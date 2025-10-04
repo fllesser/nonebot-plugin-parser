@@ -1,4 +1,3 @@
-import asyncio
 import random
 import re
 from typing import ClassVar
@@ -10,7 +9,7 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Content, ImageContent, ParseResult, Platform, VideoContent
+from .data import ImageContent, MediaContent, ParseResult, Platform, VideoContent
 
 
 class KuaiShouParser(BaseParser):
@@ -76,20 +75,19 @@ class KuaiShouParser(BaseParser):
 
     async def _photo2result(self, photo: "Photo"):
         # 下载封面
-        cover_path = None
+        cover = None
         if photo.cover_url:
-            cover_path = await DOWNLOADER.download_img(photo.cover_url, ext_headers=self.headers)
+            cover = DOWNLOADER.download_img(photo.cover_url, ext_headers=self.headers)
 
         # 下载内容
-        contents: list[Content] = []
+        contents: list[MediaContent] = []
         if video_url := photo.video_url:
-            video_task = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.headers))
-            contents.append(VideoContent(video_task))
+            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
+            contents.append(VideoContent(video_task, cover))
         elif img_urls := photo.img_urls:
-            pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
-            contents.extend(ImageContent(path) for path in pic_paths)
+            contents.extend(ImageContent(DOWNLOADER.download_img(url, ext_headers=self.headers)) for url in img_urls)
 
-        return self.result(title=photo.caption, cover_path=cover_path, contents=contents)
+        return self.result(title=photo.caption, contents=contents)
 
 
 from typing import TypeAlias

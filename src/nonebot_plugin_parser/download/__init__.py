@@ -10,6 +10,7 @@ from ..config import MAX_SIZE, plugin_cache_dir
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException, DownloadSizeLimitException
 from ..utils import generate_file_name, merge_av, safe_unlink
+from .task import auto_task
 from .ytdlp import YtdlpDownloader
 
 
@@ -24,6 +25,7 @@ class StreamDownloader:
             verify=False,
         )
 
+    @auto_task
     async def streamd(
         self,
         url: str,
@@ -98,6 +100,7 @@ class StreamDownloader:
             desc=desc,
         )
 
+    @auto_task
     async def download_video(
         self,
         url: str,
@@ -122,6 +125,7 @@ class StreamDownloader:
             video_name = generate_file_name(url, ".mp4")
         return await self.streamd(url, file_name=video_name, ext_headers=ext_headers)
 
+    @auto_task
     async def download_audio(
         self,
         url: str,
@@ -146,6 +150,7 @@ class StreamDownloader:
             audio_name = generate_file_name(url, ".mp3")
         return await self.streamd(url, file_name=audio_name, ext_headers=ext_headers)
 
+    @auto_task
     async def download_img(
         self,
         url: str,
@@ -190,6 +195,7 @@ class StreamDownloader:
         )
         return [p for p in paths_or_errs if isinstance(p, Path)]
 
+    @auto_task
     async def download_av_and_merge(
         self,
         v_url: str,

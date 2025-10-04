@@ -23,8 +23,8 @@ class DefaultRenderer(BaseRenderer):
         texts = [text for text in texts if text]
         texts[:-1] = [seg + "\n" for seg in texts[:-1]]
 
-        if result.cover_path:
-            segs = [texts[0], UniHelper.img_seg(result.cover_path), *texts[1:]]
+        if cover_path := await result.cover_path:
+            segs = [texts[0], UniHelper.img_seg(cover_path), *texts[1:]]
         else:
             segs = texts
         yield UniMessage(segs)

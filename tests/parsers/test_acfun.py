@@ -27,7 +27,7 @@ async def test_parse():
         assert parse_result.title, "视频标题为空"
         assert parse_result.author, "作者信息为空"
 
-        video_contents = parse_result.video_contents
+        video_contents = parse_result.contents
         assert video_contents
         video_path = await video_contents[0].video_path()
         assert video_path.exists()

@@ -1,5 +1,3 @@
-import asyncio
-from pathlib import Path
 import re
 from typing import Any, ClassVar
 
@@ -9,7 +7,7 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Content, DynamicContent, ImageContent, ParseResult, Platform, VideoContent
+from .data import DynamicContent, ImageContent, MediaContent, ParseResult, Platform, VideoContent
 
 
 class TwitterParser(BaseParser):
@@ -37,7 +35,7 @@ class TwitterParser(BaseParser):
             return response.json()
 
     @classmethod
-    async def parse_x_url(cls, x_url: str) -> list[Content]:
+    async def parse_x_url(cls, x_url: str) -> list[MediaContent]:
         resp = await cls._req_xdown_api(x_url)
         if resp.get("status") != "ok":
             raise ParseException("解析失败")
@@ -49,24 +47,14 @@ class TwitterParser(BaseParser):
 
         first_video_url = await cls._get_first_video_url(html_content)
         if first_video_url is not None:
-            video_task = asyncio.create_task(DOWNLOADER.download_video(first_video_url))
+            video_task = DOWNLOADER.download_video(first_video_url)
             return [VideoContent(video_task)]
 
-        contents: list[Content] = []
-        pic_urls = await cls._get_all_pic_urls(html_content)
-        dynamic_urls = await cls._get_all_gif_urls(html_content)
-        if len(pic_urls) != 0:
-            # 下载图片和动态图
-            pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
-            dynamic_paths = []
-            if dynamic_urls:
-                results = await asyncio.gather(
-                    *[DOWNLOADER.download_video(url) for url in dynamic_urls], return_exceptions=True
-                )
-                dynamic_paths = [p for p in results if isinstance(p, Path)]
-
-            contents.extend(ImageContent(path) for path in pic_paths)
-            contents.extend(DynamicContent(path) for path in dynamic_paths)
+        contents: list[MediaContent] = []
+        if pic_urls := await cls._get_all_pic_urls(html_content):
+            contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in pic_urls)
+        if dynamic_urls := await cls._get_all_gif_urls(html_content):
+            contents.extend(DynamicContent(DOWNLOADER.download_video(url)) for url in dynamic_urls)
 
         return contents
 

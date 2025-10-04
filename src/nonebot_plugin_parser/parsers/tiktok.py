@@ -1,4 +1,3 @@
-import asyncio
 import re
 from typing import ClassVar
 
@@ -42,13 +41,11 @@ class TikTokParser(BaseParser):
         duration = int(info_dict.get("duration", 0))
 
         # 下载封面和视频
-        cover_path = await DOWNLOADER.download_img(thumbnail) if thumbnail else None
-
-        video_task = asyncio.create_task(YTDLP_DOWNLOADER.download_video(url))
+        cover = DOWNLOADER.download_img(thumbnail) if thumbnail else None
+        video = YTDLP_DOWNLOADER.download_video(url)
 
         return self.result(
             title=title,
             author=Author(name=author) if author else None,
-            cover_path=cover_path,
-            contents=[VideoContent(video_task, cover_path=cover_path, duration=duration)],
+            contents=[VideoContent(video, cover, duration=duration)],
         )

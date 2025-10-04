@@ -1,4 +1,3 @@
-import asyncio
 import re
 import time
 from typing import ClassVar
@@ -10,7 +9,7 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Author, Content, ImageContent, ParseResult, Platform, VideoContent
+from .data import Author, ImageContent, MediaContent, ParseResult, Platform, VideoContent
 
 
 class WeiBoParser(BaseParser):
@@ -95,7 +94,7 @@ class WeiBoParser(BaseParser):
             user.get("profile_image_url"),
             user.get("description"),
         )
-        avatar = await DOWNLOADER.download_img(avatar, ext_headers=self.ext_headers)
+        avatar = DOWNLOADER.download_img(avatar, ext_headers=self.ext_headers)
         author = Author(name=author_name, avatar=avatar, description=description)
 
         # 提取标题和文本
@@ -108,10 +107,10 @@ class WeiBoParser(BaseParser):
         cover_path = None
         if cover_url := data.get("cover_image"):
             cover_url = "https:" + cover_url
-            cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
+            cover_path = DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
 
         # 下载视频
-        contents: list[Content] = []
+        contents: list[MediaContent] = []
         video_url_dict = data.get("urls")
         if video_url_dict and isinstance(video_url_dict, dict) and len(video_url_dict) > 0:
             # stream_url码率最低，urls中第一条码率最高
@@ -121,7 +120,7 @@ class WeiBoParser(BaseParser):
             video_url = data.get("stream_url")
 
         if video_url:
-            video_task = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
+            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
             contents.append(VideoContent(video_task, cover_path))
 
         # 时间戳
@@ -131,7 +130,6 @@ class WeiBoParser(BaseParser):
             title=title,
             text=text,
             author=author,
-            cover_path=cover_path,
             contents=contents,
             timestamp=timestamp,
         )
@@ -184,26 +182,26 @@ class WeiBoParser(BaseParser):
             repost = await self._parse_weibodata(data.retweeted_status)
 
         # 下载内容
-        contents: list[Content] = []
+        contents: list[MediaContent] = []
         cover_path = None
         if video_url := data.video_url:
-            video_task = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
+            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
             cover_path = None
             if data.cover_url:
-                cover_path = await DOWNLOADER.download_img(data.cover_url, ext_headers=self.ext_headers)
+                cover_path = DOWNLOADER.download_img(data.cover_url, ext_headers=self.ext_headers)
             contents.append(VideoContent(video_task, cover_path))
 
         if pic_urls := data.pic_urls:
-            pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
-            contents.extend(ImageContent(path) for path in pic_paths)
+            contents.extend(
+                ImageContent(DOWNLOADER.download_img(url, ext_headers=self.ext_headers)) for url in pic_urls
+            )
 
         # 下载头像
-        avatar = await DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.ext_headers)
+        avatar = DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.ext_headers)
 
         return self.result(
             title=data.title,
             text=data.text_content,
-            cover_path=cover_path,
             author=Author(name=data.display_name, avatar=avatar),
             contents=contents,
             url=f"https://weibo.com/{data.user.id}/{data.bid}",

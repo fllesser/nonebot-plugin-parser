@@ -61,7 +61,7 @@ class CommonRenderer(BaseRenderer):
         fonts = self.FONTS
 
         # 加载并处理封面
-        cover_img = self._load_and_resize_cover(result.cover_path)
+        cover_img = self._load_and_resize_cover(await result.cover_path)
 
         # 计算卡片宽度
         card_width = cover_img.width + 2 * self.PADDING if cover_img else self.DEFAULT_CARD_WIDTH
@@ -188,7 +188,7 @@ class CommonRenderer(BaseRenderer):
             return None
 
         # 加载头像
-        avatar_img = await self._load_and_process_avatar(result.author.avatar)
+        avatar_img = await self._load_and_process_avatar(await result.author.avatar_path)
 
         # 计算文字区域宽度（始终预留头像空间）
         text_area_width = content_width - (self.AVATAR_SIZE + 15)
