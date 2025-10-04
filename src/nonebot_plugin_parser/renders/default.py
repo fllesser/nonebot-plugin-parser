@@ -19,14 +19,15 @@ class Renderer(BaseRenderer):
             Generator[UniMessage[Any], None, None]: 消息生成器
         """
 
-        texts = (result.header, result.text, result.extra.get("info"), result.url)
-        texts = (text for text in texts if text)
-        first_message = UniMessage("\n".join(texts))
+        texts: list[str] = [result.header, result.text, result.extra_info, result.display_url]
+        texts = [text for text in texts if text]
+        texts[:-1] = [seg + "\n" for seg in texts[:-1]]
 
         if result.cover_path:
-            first_message += UniHelper.img_seg(result.cover_path)
-
-        yield first_message
+            segs = [texts[0], UniHelper.img_seg(result.cover_path), *texts[1:]]
+        else:
+            segs = texts
+        yield UniMessage(segs)
 
         async for message in self.render_contents(result):
             yield message

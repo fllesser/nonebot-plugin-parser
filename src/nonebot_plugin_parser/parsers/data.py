@@ -128,10 +128,10 @@ class ParseResult:
     @property
     def header(self) -> str:
         header = self.platform.display_name
+        if self.author:
+            header += f" @{self.author.name}"
         if self.title:
             header += f" | {self.title}"
-        if self.author:
-            header += f" - {self.author.name}"
         return header
 
     @property
@@ -154,6 +154,18 @@ class ParseResult:
     def gif_paths(self) -> Sequence[Path]:
         paths = [cont.gif_path for cont in self.contents if isinstance(cont, DynamicContent)]
         return [path for path in paths if path is not None]
+
+    @property
+    def display_url(self) -> str:
+        return f"链接: {self.url}" if self.url else ""
+
+    @property
+    def repost_display_url(self) -> str:
+        return f"原帖: {self.repost.url}" if self.repost and self.repost.url else ""
+
+    @property
+    def extra_info(self) -> str:
+        return self.extra.get("info", "")
 
     def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
