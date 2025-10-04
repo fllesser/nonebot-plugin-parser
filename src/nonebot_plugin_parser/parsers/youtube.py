@@ -4,9 +4,9 @@ from typing import ClassVar
 from typing_extensions import override
 
 from ..config import rconfig, ytb_cookies_file
-from ..cookie import save_cookies_with_netscape
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from .base import BaseParser
+from .cookie import save_cookies_with_netscape
 from .data import AudioContent, Author, ParseResult, Platform, VideoContent
 
 
