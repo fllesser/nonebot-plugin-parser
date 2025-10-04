@@ -503,15 +503,10 @@ class CommonRenderer(BaseRenderer):
                 Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
                 Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
             ),
-            # Ubuntu 字体
             (
-                Path("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf"),
-                Path("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf"),
-            ),
-            # Liberation 字体
-            (
-                Path("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"),
-                Path("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"),
+                # DejaVuSansMono
+                Path("/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf"),
+                Path("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"),
             ),
             # Noto 字体（支持中文）
             (
