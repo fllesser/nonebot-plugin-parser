@@ -14,7 +14,7 @@ from ..cookie import ck2dict
 from ..download import DOWNLOADER
 from ..exception import DownloadException, ParseException
 from .base import BaseParser
-from .data import Content, ImageContent, Platform, TextImageContent, VideoContent
+from .data import Author, Content, ImageContent, Platform, TextImageContent, VideoContent
 
 
 class BilibiliParser(BaseParser):
@@ -104,6 +104,8 @@ class BilibiliParser(BaseParser):
         duration: int = int(video_info["duration"])
         cover_url: str | None = None
         title: str = video_info["title"]
+        owner: dict[str, str] = video_info["owner"]
+        author = Author(name=owner["name"], avatar=owner["face"])
 
         # 处理分 p
         page_idx = page_num - 1
@@ -116,7 +118,7 @@ class BilibiliParser(BaseParser):
             duration = int(p_video.get("duration", duration))
             # 获取分集标题
             if p_name := p_video.get("part").strip():
-                title += f"\n分集: {p_name}"
+                title += f" - 分集: {p_name}"
             # 获取分集封面
             if first_frame_url := p_video.get("first_frame"):
                 cover_url = first_frame_url
@@ -173,6 +175,7 @@ class BilibiliParser(BaseParser):
         return self.result(
             title=title,
             cover_path=cover_path,
+            author=author,
             url=url,
             contents=[VideoContent(path_or_task, cover_path=cover_path, duration=duration)],
             extra=extra,
