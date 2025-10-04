@@ -174,26 +174,45 @@
         .video-placeholder {
             position: relative;
             width: 100%;
-            min-height: 300px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: inline-block;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-placeholder img {
+            width: 100%;
+            height: auto;
+            display: block;
+            z-index: 1;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            overflow: hidden;
+            z-index: 2;
+            background: rgba(0, 0, 0, 0.3);
         }
 
         .video-icon {
             font-size: 48px;
             color: white;
             margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .video-text {
             font-size: 16px;
             color: white;
             font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         /* 转发微博样式 */
@@ -293,7 +312,7 @@
             <div class="avatar-wrapper">
                 <div class="avatar">
                     {% if result.author and result.author.avatar %}
-                    <img src="{{ result.author.avatar }}" alt="用户头像" loading="lazy">
+                    <img src="{{ result.author.avatar }}" alt="用户头像">
                     {% else %}
                     <div class="avatar-placeholder"></div>
                     {% endif %}
@@ -302,7 +321,7 @@
             <div class="user-info">
                 <h3 class="username">{{ result.author.name if result.author else "微博用户" }}</h3>
                 {% if result.timestamp %}
-                <p class="timestamp">{{ result.timestamp | format_datetime('%Y年%m月%d日 %H:%M') }}</p>
+                <p class="timestamp">{{ result.formart_datetime('%Y年%m月%d日 %H:%M') }}</p>
                 {% endif %}
             </div>
         </header>
@@ -318,7 +337,7 @@
                 <div class="media-grid">
                     {% for img_path in result.img_paths[:9] %}
                     <div class="media-item">
-                        <img src="file://{{ img_path }}" alt="图片{{ loop.index }}" loading="lazy">
+                        <img src="file://{{ img_path }}" alt="图片{{ loop.index }}">
                     </div>
                     {% endfor %}
                 </div>
@@ -326,15 +345,20 @@
             {% endif %}
 
             <!-- 视频内容 -->
-            {% if result.video_paths and result.video_paths | length > 0 %}
+            {% if result.video_contents and result.video_contents | length > 0 %}
             <div class="weibo-media" style="margin-top: 12px;">
-                {% for video_path in result.video_paths %}
-                <a href="file://{{ video_path }}" target="_blank" class="video-placeholder">
-                    <div class="video-icon">▶️</div>
-                    <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                {% for video_content in result.video_contents %}
+                <a class="video-placeholder">
+                    {% if video_content.cover_path %}
+                    <img src="file://{{ video_content.cover_path }}" alt="视频封面">
+                    {% endif %}
+                    <div class="video-overlay">
+                        <div class="video-icon">▶️</div>
+                        <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                    </div>
                 </a>
+                {% endfor %}
             </div>
-            {% endfor %}
             {% endif %}
 
             <!-- 转发的微博 -->
@@ -344,7 +368,7 @@
                 <div class="repost-header">
                     <div class="repost-avatar">
                         {% if result.repost.author and result.repost.author.avatar %}
-                        <img src="{{ result.repost.author.avatar }}" alt="原作者头像" loading="lazy">
+                        <img src="{{ result.repost.author.avatar }}" alt="原作者头像">
                         {% else %}
                         <div class="repost-avatar-placeholder"></div>
                         {% endif %}
@@ -353,8 +377,7 @@
                         <h4 class="repost-username">{{ result.repost.author.name if result.repost.author else "微博用户" }}
                         </h4>
                         {% if result.repost.timestamp %}
-                        <p class="repost-timestamp">{{ result.repost.timestamp | int | format_datetime('%Y年%m月%d日
-                            %H:%M') }}</p>
+                        <p class="repost-timestamp">{{ result.repost.formart_datetime('%Y年%m月%d日 %H:%M') }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -370,7 +393,7 @@
                     <div class="media-grid">
                         {% for img_path in result.repost.img_paths[:9] %}
                         <div class="media-item">
-                            <img src="file://{{ img_path }}" alt="图片{{ loop.index }}" loading="lazy">
+                            <img src="file://{{ img_path }}" alt="图片{{ loop.index }}">
                         </div>
                         {% endfor %}
                     </div>
@@ -378,12 +401,17 @@
                 {% endif %}
 
                 <!-- 原微博视频 -->
-                {% if result.repost.video_paths and result.repost.video_paths | length > 0 %}
+                {% if result.repost.video_contents and result.repost.video_contents | length > 0 %}
                 <div class="repost-media">
-                    {% for video_path in result.repost.video_paths %}
-                    <a href="file://{{ video_path }}" target="_blank" class="video-placeholder">
-                        <div class="video-icon">▶️</div>
-                        <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                    {% for video_content in result.repost.video_contents %}
+                    <a class="video-placeholder">
+                        {% if video_content.cover_path %}
+                        <img src="file://{{ video_content.cover_path }}" alt="视频封面">
+                        {% endif %}
+                        <div class="video-overlay">
+                            <div class="video-icon">▶️</div>
+                            <div class="video-text">点击查看视频 {{ loop.index }}</div>
+                        </div>
                     </a>
                     {% endfor %}
                 </div>

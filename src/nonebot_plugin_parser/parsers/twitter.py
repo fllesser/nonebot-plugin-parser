@@ -1,3 +1,5 @@
+import asyncio
+from pathlib import Path
 import re
 from typing import Any, ClassVar
 
@@ -47,8 +49,8 @@ class TwitterParser(BaseParser):
 
         first_video_url = await cls._get_first_video_url(html_content)
         if first_video_url is not None:
-            video_path = await DOWNLOADER.download_video(first_video_url)
-            return [VideoContent(video_path)]
+            video_task = asyncio.create_task(DOWNLOADER.download_video(first_video_url))
+            return [VideoContent(video_task)]
 
         contents: list[Content] = []
         pic_urls = await cls._get_all_pic_urls(html_content)
@@ -58,10 +60,7 @@ class TwitterParser(BaseParser):
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls)
             dynamic_paths = []
             if dynamic_urls:
-                from asyncio import gather
-                from pathlib import Path
-
-                results = await gather(
+                results = await asyncio.gather(
                     *[DOWNLOADER.download_video(url) for url in dynamic_urls], return_exceptions=True
                 )
                 dynamic_paths = [p for p in results if isinstance(p, Path)]

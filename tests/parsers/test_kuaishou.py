@@ -38,8 +38,9 @@ async def test_parse():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.title, "视频标题为空"
 
-        if video_paths := parse_result.video_paths:
-            for video_path in video_paths:
+        if video_contents := parse_result.video_contents:
+            for video_content in video_contents:
+                video_path = await video_content.video_path()
                 assert video_path.exists()
                 logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
 

@@ -84,8 +84,7 @@ async def _(
 
     # 3. 渲染内容消息并发送
     renderer = get_renderer(result.platform.name)
-    messages = await renderer.render_messages(result)
-    for message in messages:
+    async for message in renderer.render_messages(result):
         await message.send()
 
     # 4. 添加成功的消息响应

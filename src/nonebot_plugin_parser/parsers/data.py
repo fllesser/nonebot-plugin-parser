@@ -1,5 +1,7 @@
+from asyncio import Task
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from datetime import datetime
 from itertools import chain
 from pathlib import Path
 from typing import Any
@@ -7,13 +9,41 @@ from typing import Any
 from ..constants import ANDROID_HEADER as ANDROID_HEADER
 from ..constants import COMMON_HEADER as COMMON_HEADER
 from ..constants import IOS_HEADER as IOS_HEADER
+from ..exception import DownloadException
 from ..helper import Segment, UniHelper, UniMessage
 
 
 @dataclass
 class MediaContent:
+    pass
+
+
+@dataclass
+class AudioContent(MediaContent):
+    """音频内容"""
+
     path: Path
     duration: float = 0.0
+
+
+@dataclass
+class VideoContent(MediaContent):
+    """视频内容"""
+
+    path_or_task: Path | Task[Path]
+    """视频路径"""
+    cover_path: Path | None = None
+    """视频封面"""
+    duration: float = 0.0
+    """时长 单位: 秒"""
+
+    async def video_path(self) -> Path:
+        if isinstance(self.path_or_task, Path):
+            return self.path_or_task
+        if isinstance(self.path_or_task, Task):
+            self.path_or_task = await self.path_or_task
+            return self.path_or_task
+        raise ValueError("视频路径或下载任务为空")
 
     @property
     def display_duration(self) -> str:
@@ -21,37 +51,19 @@ class MediaContent:
         seconds = int(self.duration) % 60
         return f"时长: {minutes}:{seconds:02d}"
 
-    @property
-    def size_in_mb(self) -> float:
-        return self.path.stat().st_size / 1024 / 1024
-
-
-@dataclass
-class AudioContent(MediaContent):
-    """音频内容"""
-
-    pass
-
-
-@dataclass
-class VideoContent(MediaContent):
-    """视频内容"""
-
-    cover_path: Path | None = None
-    """视频封面"""
-
 
 @dataclass
 class ImageContent(MediaContent):
     """图片内容"""
 
-    pass
+    path: Path
 
 
 @dataclass
 class DynamicContent(MediaContent):
     """动态内容 视频格式 后续转 gif"""
 
+    path: Path
     gif_path: Path | None = None
 
 
@@ -123,8 +135,8 @@ class ParseResult:
         return header
 
     @property
-    def video_paths(self) -> Sequence[Path]:
-        return [cont.path for cont in self.contents if isinstance(cont, VideoContent)]
+    def video_contents(self) -> Sequence[VideoContent]:
+        return [cont for cont in self.contents if isinstance(cont, VideoContent)]
 
     @property
     def audio_paths(self) -> Sequence[Path]:
@@ -143,8 +155,11 @@ class ParseResult:
         paths = [cont.gif_path for cont in self.contents if isinstance(cont, DynamicContent)]
         return [path for path in paths if path is not None]
 
-    def convert_segs(self):
-        """转换为消息段
+    def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+        return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
+
+    async def contents_to_segs(self):
+        """将内容列表转换为消息段
 
         Returns:
             tuple[list[Segment], list[str | Segment | UniMessage]]: 消息段
@@ -167,8 +182,12 @@ class ParseResult:
                     forwardable_segs.append(text + UniHelper.img_seg(image_path))
                 case AudioContent(path):
                     separate_segs.append(UniHelper.record_seg(path))
-                case VideoContent(path):
-                    separate_segs.append(UniHelper.video_seg(path))
+                case VideoContent() as video:
+                    try:
+                        video_path = await video.video_path()
+                        separate_segs.append(UniHelper.video_seg(video_path))
+                    except DownloadException as e:
+                        forwardable_segs.append(e.message)
 
         return separate_segs, forwardable_segs
 

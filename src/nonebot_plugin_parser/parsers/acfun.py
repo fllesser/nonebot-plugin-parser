@@ -1,3 +1,4 @@
+import asyncio
 import json
 from pathlib import Path
 import re
@@ -154,7 +155,7 @@ class AcfunParser(BaseParser):
         extra_info = f"简介: {description}\n上传于 {upload_time}" if description or upload_time else None
 
         # 下载视频
-        video_path = await self.download_video(m3u8_url, acid)
+        video_task = asyncio.create_task(self.download_video(m3u8_url, acid))
 
         extra = {}
         if extra_info:
@@ -163,6 +164,6 @@ class AcfunParser(BaseParser):
         return self.result(
             title=title,
             author=Author(name=author) if author else None,
-            contents=[VideoContent(path=video_path)],
+            contents=[VideoContent(video_task)],
             extra=extra,
         )

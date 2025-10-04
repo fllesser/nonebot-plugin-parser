@@ -9,7 +9,7 @@ from tqdm.asyncio import tqdm
 from ..config import MAX_SIZE, plugin_cache_dir
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException, DownloadSizeLimitException
-from ..utils import generate_file_name, safe_unlink
+from ..utils import generate_file_name, merge_av, safe_unlink
 from .ytdlp import YtdlpDownloader
 
 
@@ -189,6 +189,22 @@ class StreamDownloader:
             *[self.download_img(url, ext_headers=ext_headers) for url in urls], return_exceptions=True
         )
         return [p for p in paths_or_errs if isinstance(p, Path)]
+
+    async def download_av_and_merge(
+        self,
+        v_url: str,
+        a_url: str,
+        *,
+        output_path: Path,
+        ext_headers: dict[str, str] | None = None,
+    ) -> Path:
+        """download video and audio file by url with stream and merge"""
+        v_path, a_path = await asyncio.gather(
+            self.download_video(v_url, ext_headers=ext_headers),
+            self.download_audio(a_url, ext_headers=ext_headers),
+        )
+        await merge_av(v_path=v_path, a_path=a_path, output_path=output_path)
+        return output_path
 
 
 DOWNLOADER: StreamDownloader = StreamDownloader()

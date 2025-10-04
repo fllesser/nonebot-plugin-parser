@@ -27,7 +27,6 @@ async def test_favlist():
 
 
 async def test_video():
-    from nonebot_plugin_parser.config import plugin_cache_dir
     from nonebot_plugin_parser.parsers import BilibiliParser
     from nonebot_plugin_parser.utils import encode_video_to_h264
 
@@ -41,8 +40,7 @@ async def test_video():
     except Exception:
         pytest.skip("B站视频 BV1584y167sD p40 解析失败(风控)")
 
-    file_name = "BV1584y167sD-40"
-    video_path = plugin_cache_dir / f"{file_name}.mp4"
+    video_path = await parse_result.video_contents[0].video_path()
 
     video_h264_path = await encode_video_to_h264(video_path)
     assert video_h264_path.exists()

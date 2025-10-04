@@ -23,7 +23,9 @@ async def test_common_video():
         assert parse_result.text
         assert parse_result.author
         assert parse_result.cover_path
-        assert parse_result.video_paths
+        assert parse_result.video_contents
+        video_path = await parse_result.video_contents[0].video_path()
+        assert video_path.exists()
         logger.success(f"{url} | 抖音视频解析成功")
 
     await asyncio.gather(*[test_parse_share_url(url) for url in common_urls])
