@@ -10,7 +10,7 @@ from ..download import DOWNLOADER
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
-class Renderer(BaseRenderer):
+class CommonRenderer(BaseRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
     # 卡片配置常量
@@ -31,11 +31,13 @@ class Renderer(BaseRenderer):
     # 字体大小和行高
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 24, "text": 30, "extra": 24}
     LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 28, "text": 36, "extra": 28}
+    # 预加载的字体（在类定义后立即加载）
+    FONTS: ClassVar[dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]]
 
     @override
     async def render_messages(self, result: ParseResult):
         # 生成图片卡片
-        image_raw = await self.draw_common_message(result)
+        image_raw = await self.draw_common_image(result)
         if image_raw:
             yield UniMessage([UniHelper.img_seg(raw=image_raw)])
 
@@ -44,7 +46,7 @@ class Renderer(BaseRenderer):
             yield message
 
     @lru_cache(maxsize=20)
-    async def draw_common_message(self, result: ParseResult) -> bytes | None:
+    async def draw_common_image(self, result: ParseResult) -> bytes | None:
         """使用 PIL 绘制通用社交媒体帖子卡片
 
         Args:
@@ -57,8 +59,8 @@ class Renderer(BaseRenderer):
         if not result.title and not result.text and not result.cover_path:
             return None
 
-        # 加载字体
-        fonts = self._load_fonts()
+        # 使用预加载的字体
+        fonts = self.FONTS
 
         # 加载并处理封面
         cover_img = self._load_and_resize_cover(result.cover_path)
@@ -81,31 +83,6 @@ class Renderer(BaseRenderer):
         output = BytesIO()
         image.save(output, format="PNG")
         return output.getvalue()
-
-    def _load_fonts(self) -> dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]:
-        """加载字体"""
-        try:
-            # macOS 系统字体
-            font_path = Path("/System/Library/Fonts/PingFang.ttc")
-            return {
-                item_name: ImageFont.truetype(font_path, self.FONT_SIZES[item_name]) for item_name in self.ITEM_NAMES
-            }
-        except OSError:
-            try:
-                # Linux 常见字体
-                font_path = Path("/usr/share/fonts/truetype/dejavu/")
-                bold_path = font_path / "DejaVuSans-Bold.ttf"
-                normal_path = font_path / "DejaVuSans.ttf"
-                return {
-                    "name": ImageFont.truetype(bold_path, self.FONT_SIZES["name"]),
-                    "title": ImageFont.truetype(normal_path, self.FONT_SIZES["title"]),
-                    "text": ImageFont.truetype(normal_path, self.FONT_SIZES["text"]),
-                    "extra": ImageFont.truetype(normal_path, self.FONT_SIZES["extra"]),
-                }
-            except OSError:
-                # 使用默认字体
-                default_font = ImageFont.load_default()
-                return dict.fromkeys(self.ITEM_NAMES, default_font)
 
     def _load_and_resize_cover(self, cover_path: Path | None) -> Image.Image | None:
         """加载并调整封面尺寸"""
@@ -402,3 +379,150 @@ class Renderer(BaseRenderer):
                 lines.append(current_line)
 
         return lines if lines else [""]
+
+    @classmethod
+    def load_fonts(cls):
+        """根据系统加载字体"""
+
+        from platform import system
+
+        os_type = system()
+
+        fonts: dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]
+        if os_type == "Darwin":  # macOS
+            fonts = cls._load_macos_fonts()
+        elif os_type == "Windows":  # Windows
+            fonts = cls._load_windows_fonts()
+        elif os_type == "Linux":  # Linux
+            fonts = cls._load_linux_fonts()
+        else:
+            # 未知系统，使用默认字体
+            default_font = ImageFont.load_default()
+            fonts = dict.fromkeys(cls.ITEM_NAMES, default_font)
+
+        cls.FONTS = fonts
+
+    @classmethod
+    def _load_macos_fonts(cls) -> dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]:
+        """加载 macOS 字体"""
+        # 优先尝试 PingFang（苹方）
+        font_candidates = [
+            Path("/System/Library/Fonts/PingFang.ttc"),
+        ]
+
+        for font_path in font_candidates:
+            if font_path.exists():
+                try:
+                    return {
+                        item_name: ImageFont.truetype(font_path, cls.FONT_SIZES[item_name])
+                        for item_name in cls.ITEM_NAMES
+                    }
+                except OSError:
+                    continue
+
+        # 所有字体都失败，返回默认字体
+        default_font = ImageFont.load_default()
+        return dict.fromkeys(cls.ITEM_NAMES, default_font)
+
+    @classmethod
+    def _load_windows_fonts(cls) -> dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]:
+        """加载 Windows 字体"""
+        # Windows 字体路径
+        windows_fonts_path = Path("C:/Windows/Fonts")
+
+        # 优先尝试微软雅黑，然后是黑体，最后是宋体
+        font_candidates = [
+            windows_fonts_path / "msyh.ttc",  # 微软雅黑
+            windows_fonts_path / "msyhbd.ttc",  # 微软雅黑 Bold
+            windows_fonts_path / "msyh.ttf",  # 微软雅黑（旧版本）
+            windows_fonts_path / "simhei.ttf",  # 黑体
+            windows_fonts_path / "simsun.ttc",  # 宋体
+            windows_fonts_path / "arial.ttf",  # Arial（英文）
+        ]
+
+        # 尝试加载粗体和普通字体
+        bold_font_candidates = [
+            windows_fonts_path / "msyhbd.ttc",  # 微软雅黑粗体
+            windows_fonts_path / "arialbd.ttf",  # Arial Bold
+        ]
+
+        # 先尝试加载普通字体
+        normal_font = None
+        for font_path in font_candidates:
+            if font_path.exists():
+                normal_font = font_path
+                break
+
+        # 尝试加载粗体字体用于名称
+        bold_font = None
+        for font_path in bold_font_candidates:
+            if font_path.exists():
+                bold_font = font_path
+                break
+
+        # 如果没有找到粗体，使用普通字体
+        if not bold_font:
+            bold_font = normal_font
+
+        # 如果找到了字体，尝试加载
+        if normal_font and bold_font:
+            try:
+                return {
+                    "name": ImageFont.truetype(str(bold_font), cls.FONT_SIZES["name"]),
+                    "title": ImageFont.truetype(str(normal_font), cls.FONT_SIZES["title"]),
+                    "text": ImageFont.truetype(str(normal_font), cls.FONT_SIZES["text"]),
+                    "extra": ImageFont.truetype(str(normal_font), cls.FONT_SIZES["extra"]),
+                }
+            except OSError:
+                pass
+
+        # 所有字体都失败，返回默认字体
+        default_font = ImageFont.load_default()
+        return dict.fromkeys(cls.ITEM_NAMES, default_font)
+
+    @classmethod
+    def _load_linux_fonts(cls) -> dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]:
+        """加载 Linux 字体"""
+        # Linux 常见字体路径
+        font_candidates = [
+            # DejaVu 字体（最常见）
+            (
+                Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+                Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+            ),
+            # Ubuntu 字体
+            (
+                Path("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf"),
+                Path("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf"),
+            ),
+            # Liberation 字体
+            (
+                Path("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"),
+                Path("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"),
+            ),
+            # Noto 字体（支持中文）
+            (
+                Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"),
+                Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
+            ),
+            (
+                Path("/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc"),
+                Path("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"),
+            ),
+        ]
+
+        for bold_path, normal_path in font_candidates:
+            if bold_path.exists() and normal_path.exists():
+                try:
+                    return {
+                        "name": ImageFont.truetype(bold_path, cls.FONT_SIZES["name"]),
+                        "title": ImageFont.truetype(normal_path, cls.FONT_SIZES["title"]),
+                        "text": ImageFont.truetype(normal_path, cls.FONT_SIZES["text"]),
+                        "extra": ImageFont.truetype(normal_path, cls.FONT_SIZES["extra"]),
+                    }
+                except OSError:
+                    continue
+
+        # 所有字体都失败，返回默认字体
+        default_font = ImageFont.load_default()
+        return dict.fromkeys(cls.ITEM_NAMES, default_font)

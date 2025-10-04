@@ -5,7 +5,7 @@ from typing_extensions import override
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
-class Renderer(BaseRenderer):
+class DefaultRenderer(BaseRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
     @override

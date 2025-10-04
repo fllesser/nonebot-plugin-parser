@@ -2,8 +2,8 @@ import importlib
 
 from ..config import RenderType, rconfig
 from .base import BaseRenderer
-from .common import Renderer as CommonRenderer
-from .default import Renderer as DefaultRenderer
+from .common import CommonRenderer
+from .default import DefaultRenderer
 
 _DEFAULT_RENDERER = DefaultRenderer()
 _COMMON_RENDERER = CommonRenderer()
@@ -32,3 +32,11 @@ def get_renderer(platform: str) -> BaseRenderer:
         pass
     # fallback to default renderer
     return _COMMON_RENDERER
+
+
+from nonebot import get_driver
+
+
+@get_driver().on_startup
+async def _():
+    CommonRenderer.load_fonts()
