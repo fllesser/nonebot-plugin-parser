@@ -7,14 +7,22 @@ from typing_extensions import override
 
 from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.video import Video
+import msgspec
 from nonebot import logger
 
-from ..config import DURATION_MAXIMUM, plugin_cache_dir, plugin_config_dir, rconfig
+from ...config import DURATION_MAXIMUM, plugin_cache_dir, plugin_config_dir, rconfig
+from ...download import DOWNLOADER
+from ...exception import DownloadException, ParseException
+from ..base import BaseParser
 from ..cookie import ck2dict
-from ..download import DOWNLOADER
-from ..exception import DownloadException, ParseException
-from .base import BaseParser
-from .data import Author, Content, ImageContent, Platform, TextImageContent, VideoContent
+from ..data import (
+    Author,
+    Content,
+    ImageContent,
+    Platform,
+    TextImageContent,
+    VideoContent,
+)
 
 
 class BilibiliParser(BaseParser):
@@ -98,61 +106,38 @@ class BilibiliParser(BaseParser):
             page_num (int): 页码
         """
 
-        video = await self._parse_video(bvid=bvid, avid=avid)
-        video_info: dict[str, Any] = await video.get_info()
+        from .video import AIConclusion, VideoInfo
 
-        duration: int = int(video_info["duration"])
-        cover_url: str | None = None
-        title: str = video_info["title"]
-        owner: dict[str, str] = video_info["owner"]
-        author = Author(name=owner["name"], avatar=owner["face"])
+        video = await self._parse_video(bvid=bvid, avid=avid)
+
+        # 转换为 msgspec struct
+        video_info = msgspec.convert(await video.get_info(), VideoInfo)
 
         # 处理分 p
-        page_idx = page_num - 1
-        if (pages := video_info.get("pages")) and len(pages) > 1:
-            assert isinstance(pages, list)
-            # 取模防止数组越界
-            page_idx = page_idx % len(pages)
-            p_video = pages[page_idx]
-            # 获取分集时长
-            duration = int(p_video.get("duration", duration))
-            # 获取分集标题
-            if p_name := p_video.get("part").strip():
-                title += f" - 分集: {p_name}"
-            # 获取分集封面
-            if first_frame_url := p_video.get("first_frame"):
-                cover_url = first_frame_url
-        else:
-            page_idx = 0
-
-        # 获取在线观看人数
-        online = await video.get_online()
-        display_info = (
-            f"{self._extra_bili_info(video_info)}\n"
-            f"📝 简介：{video_info['desc']}\n"
-            f"🏄‍♂️ {online['total']} 人正在观看，{online['count']} 人在网页端观看"
-        )
+        page_idx, title, duration, cover_url = video_info.extract_info_with_page(page_num)
 
         # 获取 AI 总结
         if self._credential:
             cid = await video.get_cid(page_idx)
             ai_conclusion = await video.get_ai_conclusion(cid)
-            ai_summary = ai_conclusion.get("model_result", {"summary": ""}).get("summary", "").strip()
-            ai_summary = f"AI总结: {ai_summary}" if ai_summary else "该视频暂不支持AI总结"
+            ai_conclusion = msgspec.convert(ai_conclusion, AIConclusion)
+            ai_summary = ai_conclusion.summary
         else:
             ai_summary: str = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
 
         # 额外信息
-        extra = {"info": f"{display_info}\n{ai_summary}".strip()}
-
-        # 获取下载链接
-        cover_url = cover_url if cover_url else video_info.get("pic")
-        v_url, a_url = await self.parse_video_download_url(video=video, page_index=page_idx)
+        extra = {"info": f"{video_info.formatted_stats_info}\n📝 简介：{video_info.desc}\n{ai_summary}"}
 
         # 下载封面
         cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers) if cover_url else None
 
+        url = f"https://bilibili.com/{video.get_bvid()}"
+        if page_idx > 0:
+            url += f"?p={page_idx + 1}"
+
+        # 视频下载 task
         async def download_video(output_path: Path):
+            v_url, a_url = await self.parse_video_download_url(video=video, page_index=page_idx)
             if duration > DURATION_MAXIMUM:
                 raise DownloadException("视频时长超过最大限制")
             if a_url is not None:
@@ -168,17 +153,13 @@ class BilibiliParser(BaseParser):
             # 下载视频和音频
             path_or_task = asyncio.create_task(download_video(path_or_task))
 
-        url = f"https://bilibili.com/{video.get_bvid()}"
-        if page_num > 1:
-            url += f"?p={page_num}"
-
         return self.result(
             title=title,
-            cover_path=cover_path,
-            author=author,
             url=url,
-            contents=[VideoContent(path_or_task, cover_path=cover_path, duration=duration)],
             extra=extra,
+            cover_path=cover_path,
+            author=Author(name=video_info.owner.name, avatar=video_info.owner.face),
+            contents=[VideoContent(path_or_task, cover_path=cover_path, duration=duration)],
         )
 
     async def parse_others(self, url: str):
@@ -484,31 +465,3 @@ class BilibiliParser(BaseParser):
             return video_stream.url, None
         logger.debug(f"音频流质量: {audio_stream.audio_quality.name}")
         return video_stream.url, audio_stream.url
-
-    def _extra_bili_info(self, video_info: dict[str, Any]) -> str:
-        """
-        格式化视频信息
-        """
-        # 获取视频统计数据
-        video_state: dict[str, Any] = video_info["stat"]
-
-        # 定义需要展示的数据及其显示名称
-        stats_mapping = [
-            ("👍", "like"),
-            ("🪙", "coin"),
-            ("⭐", "favorite"),
-            ("↩️", "share"),
-            ("💬", "reply"),
-            ("👀", "view"),
-            ("💭", "danmaku"),
-        ]
-
-        # 构建结果字符串
-        result_parts = []
-        for display_name, stat_key in stats_mapping:
-            value = video_state[stat_key]
-            # 数值超过10000时转换为万为单位
-            formatted_value = f"{value / 10000:.1f}万" if value > 10000 else str(value)
-            result_parts.append(f"{display_name} {formatted_value}")
-
-        return " ".join(result_parts)

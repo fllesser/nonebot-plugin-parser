@@ -9,7 +9,7 @@ from typing import Any
 from ..constants import ANDROID_HEADER as ANDROID_HEADER
 from ..constants import COMMON_HEADER as COMMON_HEADER
 from ..constants import IOS_HEADER as IOS_HEADER
-from ..exception import DownloadException
+from ..exception import ParseException
 from ..helper import Segment, UniHelper, UniMessage
 
 
@@ -198,7 +198,7 @@ class ParseResult:
                     try:
                         video_path = await video.video_path()
                         separate_segs.append(UniHelper.video_seg(video_path))
-                    except DownloadException as e:
+                    except ParseException as e:
                         forwardable_segs.append(e.message)
 
         return separate_segs, forwardable_segs
