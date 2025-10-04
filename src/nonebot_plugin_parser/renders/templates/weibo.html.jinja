@@ -172,18 +172,24 @@
 
         /* 视频占位符 */
         .video-placeholder {
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: inline-block;
-            border-radius: 8px;
-            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .video-placeholder img {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: auto;
-            display: block;
+            height: 100%;
+            object-fit: cover;
             z-index: 1;
         }
 
@@ -212,6 +218,27 @@
             font-size: 16px;
             color: white;
             font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 更多媒体数量提示 */
+        .more-media-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .more-media-text {
+            font-size: 32px;
+            color: white;
+            font-weight: 600;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
@@ -331,33 +358,47 @@
             <!-- 文本内容 -->
             <div class="weibo-text">{{ result.text | safe }}</div>
 
-            <!-- 图片内容 -->
-            {% if result.img_paths and result.img_paths | length > 0 %}
+            <!-- 图片和视频内容合并 -->
+            <!-- 图片和视频内容合并 -->
+            {% set media_items = [] %}
+            {% if result.img_paths %}
+            {% for img_path in result.img_paths %}
+            {% set _ = media_items.append({'type': 'image', 'path': img_path}) %}
+            {% endfor %}
+            {% endif %}
+            {% if result.video_contents %}
+            {% for video_content in result.video_contents %}
+            {% set _ = media_items.append({'type': 'video', 'content': video_content}) %}
+            {% endfor %}
+            {% endif %}
+
+            {% set total_count = media_items | length %}
+            {% set show_count = 9 if total_count > 9 else total_count %}
+            {% set remaining_count = total_count - 9 %}
+
+            {% if media_items | length > 0 %}
             <div class="weibo-media">
                 <div class="media-grid">
-                    {% for img_path in result.img_paths[:9] %}
+                    {% for item in media_items[:show_count] %}
                     <div class="media-item">
-                        <img src="file://{{ img_path }}" alt="图片{{ loop.index }}">
+                        {% if item.type == 'image' %}
+                        <img src="file://{{ item.path }}" alt="图片{{ loop.index }}">
+                        {% elif item.type == 'video' %}
+                        <div class="video-placeholder">
+                            <img src="file://{{ item.path }}">
+                            <div class="video-overlay">
+                                <div class="video-icon">▶️</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if loop.index == 9 and remaining_count > 0 %}
+                        <div class="more-media-overlay">
+                            <div class="more-media-text">+{{ remaining_count }}</div>
+                        </div>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>
-            </div>
-            {% endif %}
-
-            <!-- 视频内容 -->
-            {% if result.video_contents and result.video_contents | length > 0 %}
-            <div class="weibo-media" style="margin-top: 12px;">
-                {% for video_content in result.video_contents %}
-                <a class="video-placeholder">
-                    {% if video_content.cover_path %}
-                    <img src="file://{{ video_content.cover_path }}" alt="视频封面">
-                    {% endif %}
-                    <div class="video-overlay">
-                        <div class="video-icon">▶️</div>
-                        <div class="video-text">点击查看视频 {{ loop.index }}</div>
-                    </div>
-                </a>
-                {% endfor %}
             </div>
             {% endif %}
 
@@ -368,7 +409,7 @@
                 <div class="repost-header">
                     <div class="repost-avatar">
                         {% if result.repost.author and result.repost.author.avatar %}
-                        <img src="{{ result.repost.author.avatar }}" alt="原作者头像">
+                        <img src="{{ result.repost.author.avatar }}">
                         {% else %}
                         <div class="repost-avatar-placeholder"></div>
                         {% endif %}
@@ -387,33 +428,46 @@
                 <div class="repost-text">{{ result.repost.text | safe }}</div>
                 {% endif %}
 
-                <!-- 原微博图片 -->
-                {% if result.repost.img_paths and result.repost.img_paths | length > 0 %}
+                <!-- 原微博图片和视频合并 -->
+                {% set repost_media_items = [] %}
+                {% if result.repost.img_paths %}
+                {% for img_path in result.repost.img_paths %}
+                {% set _ = repost_media_items.append({'type': 'image', 'path': img_path}) %}
+                {% endfor %}
+                {% endif %}
+                {% if result.repost.video_contents %}
+                {% for video_content in result.repost.video_contents %}
+                {% set _ = repost_media_items.append({'type': 'video', 'content': video_content}) %}
+                {% endfor %}
+                {% endif %}
+
+                {% set repost_total_count = repost_media_items | length %}
+                {% set repost_show_count = 9 if repost_total_count > 9 else repost_total_count %}
+                {% set repost_remaining_count = repost_total_count - 9 %}
+
+                {% if repost_media_items | length > 0 %}
                 <div class="repost-media">
                     <div class="media-grid">
-                        {% for img_path in result.repost.img_paths[:9] %}
+                        {% for item in repost_media_items[:repost_show_count] %}
                         <div class="media-item">
-                            <img src="file://{{ img_path }}" alt="图片{{ loop.index }}">
+                            {% if item.type == 'image' %}
+                            <img src="file://{{ item.path }}">
+                            {% elif item.type == 'video' %}
+                            <div class="video-placeholder">
+                                <img src="file://{{ item.path }}">
+                                <div class="video-overlay">
+                                    <div class="video-icon">▶️</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if loop.index == 9 and repost_remaining_count > 0 %}
+                            <div class="more-media-overlay">
+                                <div class="more-media-text">+{{ repost_remaining_count }}</div>
+                            </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
-                </div>
-                {% endif %}
-
-                <!-- 原微博视频 -->
-                {% if result.repost.video_contents and result.repost.video_contents | length > 0 %}
-                <div class="repost-media">
-                    {% for video_content in result.repost.video_contents %}
-                    <a class="video-placeholder">
-                        {% if video_content.cover_path %}
-                        <img src="file://{{ video_content.cover_path }}" alt="视频封面">
-                        {% endif %}
-                        <div class="video-overlay">
-                            <div class="video-icon">▶️</div>
-                            <div class="video-text">点击查看视频 {{ loop.index }}</div>
-                        </div>
-                    </a>
-                    {% endfor %}
                 </div>
                 {% endif %}
             </div>
