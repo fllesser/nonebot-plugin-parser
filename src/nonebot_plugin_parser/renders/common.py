@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 from typing_extensions import override
 
+from nonebot import logger
 from PIL import Image, ImageDraw, ImageFont
 
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
@@ -400,6 +401,7 @@ class CommonRenderer(BaseRenderer):
         from platform import system
 
         os_type = system()
+        logger.info(f"开始加载字体: 系统类型 {os_type}")
 
         fonts: dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]
         if os_type == "Darwin":  # macOS
