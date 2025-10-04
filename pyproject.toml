@@ -24,13 +24,16 @@ dependencies = [
   "jinja2>=3.1.6",
   "beautifulsoup4>=4.12.0,<5.0.0",
   "nonebot2>=2.4.3,<3.0.0",
+  "bilibili-api-python>=17.3.0,<18.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
-  "bilibili-api-python>=17.3.0,<18.0.0",
   "nonebot-plugin-alconna>=0.59.4",
   "nonebot-plugin-uninfo>=0.9.0",
-  "nonebot-plugin-htmlkit>=0.1.0rc1",
 ]
+
+[project.optional-dependencies]
+htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc1"]
+pillow = ["pillow>=11.0.0"]
 
 [project.urls]
 Repository = "https://github.com/fllesser/nonebot-plugin-parser"
@@ -58,9 +61,11 @@ test = [
   "respx>=0.22.0",
 ]
 
+all_extras = ["nonebot-plugin-htmlkit>=0.1.0rc1", "pillow>=11.0.0"]
+
 [tool.uv]
 required-version = ">=0.8.14"
-default-groups = ["test", "dev"]
+default-groups = ["test", "dev", "all_extras"]
 
 [tool.nonebot]
 adapters = [

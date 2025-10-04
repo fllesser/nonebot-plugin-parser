@@ -1,3 +1,4 @@
+from enum import Enum
 from pathlib import Path
 from typing import Literal
 
@@ -13,6 +14,12 @@ import nonebot_plugin_localstore as store
 PlatformNames = Literal[
     "bilibili", "acfun", "douyin", "youtube", "kuaishou", "twitter", "tiktok", "weibo", "xiaohongshu", "nga"
 ]
+
+
+class RenderType(str, Enum):
+    default = "default"
+    common = "common"
+    htmlkit = "htmlkit"
 
 
 class Config(BaseModel):
@@ -38,6 +45,8 @@ class Config(BaseModel):
     r_disabled_platforms: list[PlatformNames] = []
     # B站视频编码
     r_bili_video_codes: list[VideoCodecs] = [VideoCodecs.AVC, VideoCodecs.AV1, VideoCodecs.HEV]
+    # 是否使用 CommonRenderer
+    r_render_type: RenderType = RenderType.default
 
 
 plugin_cache_dir: Path = store.get_plugin_cache_dir()

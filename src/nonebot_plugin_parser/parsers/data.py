@@ -125,6 +125,15 @@ class ParseResult:
     repost: "ParseResult | None" = None
     """转发的内容"""
 
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.platform.name,
+                self.timestamp,
+                self.url,
+            )
+        )
+
     @property
     def header(self) -> str:
         header = self.platform.display_name

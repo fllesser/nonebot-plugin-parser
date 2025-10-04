@@ -1325,7 +1325,6 @@ dependencies = [
     { name = "msgspec" },
     { name = "nonebot-plugin-alconna" },
     { name = "nonebot-plugin-apscheduler" },
-    { name = "nonebot-plugin-htmlkit" },
     { name = "nonebot-plugin-localstore" },
     { name = "nonebot-plugin-uninfo" },
     { name = "nonebot2" },
@@ -1333,7 +1332,19 @@ dependencies = [
     { name = "yt-dlp" },
 ]
 
+[package.optional-dependencies]
+htmlkit = [
+    { name = "nonebot-plugin-htmlkit" },
+]
+pillow = [
+    { name = "pillow" },
+]
+
 [package.dev-dependencies]
+all-extras = [
+    { name = "nonebot-plugin-htmlkit" },
+    { name = "pillow" },
+]
 dev = [
     { name = "bump-my-version" },
     { name = "nb-cli" },
@@ -1364,15 +1375,21 @@ requires-dist = [
     { name = "msgspec", specifier = ">=0.19.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4" },
     { name = "nonebot-plugin-apscheduler", specifier = ">=0.5.0,<1.0.0" },
-    { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc1" },
+    { name = "nonebot-plugin-htmlkit", marker = "extra == 'htmlkit'", specifier = ">=0.1.0rc1" },
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
     { name = "nonebot-plugin-uninfo", specifier = ">=0.9.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
+    { name = "pillow", marker = "extra == 'pillow'", specifier = ">=11.0.0" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
     { name = "yt-dlp", specifier = ">=2025.9.26" },
 ]
+provides-extras = ["htmlkit", "pillow"]
 
 [package.metadata.requires-dev]
+all-extras = [
+    { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc1" },
+    { name = "pillow", specifier = ">=11.0.0" },
+]
 dev = [
     { name = "bump-my-version", specifier = ">=1.2.3" },
     { name = "nb-cli", specifier = ">=1.4.2" },

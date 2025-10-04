@@ -95,6 +95,7 @@ class WeiBoParser(BaseParser):
             user.get("profile_image_url"),
             user.get("description"),
         )
+        avatar = await DOWNLOADER.download_img(avatar, ext_headers=self.ext_headers)
         author = Author(name=author_name, avatar=avatar, description=description)
 
         # 提取标题和文本
@@ -184,6 +185,7 @@ class WeiBoParser(BaseParser):
 
         # 下载内容
         contents: list[Content] = []
+        cover_path = None
         if video_url := data.video_url:
             video_task = asyncio.create_task(DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers))
             cover_path = None
@@ -195,10 +197,14 @@ class WeiBoParser(BaseParser):
             pic_paths = await DOWNLOADER.download_imgs_without_raise(pic_urls, ext_headers=self.ext_headers)
             contents.extend(ImageContent(path) for path in pic_paths)
 
+        # 下载头像
+        avatar = await DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.ext_headers)
+
         return self.result(
             title=data.title,
             text=data.text_content,
-            author=Author(name=data.display_name, avatar=data.user.profile_image_url),
+            cover_path=cover_path,
+            author=Author(name=data.display_name, avatar=avatar),
             contents=contents,
             url=f"https://weibo.com/{data.user.id}/{data.bid}",
             repost=repost,
