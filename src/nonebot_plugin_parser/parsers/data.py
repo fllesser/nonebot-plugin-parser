@@ -131,7 +131,7 @@ class ParseResult:
         if self.title:
             header += f" | {self.title}"
         if self.author:
-            header += f" - {self.author.name}"
+            header += f" @{self.author.name}"
         return header
 
     @property

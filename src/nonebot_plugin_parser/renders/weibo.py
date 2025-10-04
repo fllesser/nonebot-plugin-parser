@@ -15,13 +15,15 @@ class Renderer(BaseRenderer):
             templates={"result": result},
         )
         # 组合文本消息
-        texts = [result.header]
-        if result.repost and result.repost.url:
-            texts.append(f"源微博详情: {result.repost.url}")
-        if result.url:
-            texts.append(f"微博详情: {result.url}" if result.url else "")
+        texts = [
+            result.header,
+            f"源微博: {result.repost.url}" if result.repost and result.repost.url else "",
+            f"微博详情: {result.url}" if result.url else "",
+        ]
+        texts = [text for text in texts if text]
+        texts[:-1] = [seg + "\n" for seg in texts[:-1]]
 
-        yield UniMessage("\n".join(texts) + UniHelper.img_seg(raw=image_raw))
+        yield UniMessage([texts[0], UniHelper.img_seg(raw=image_raw), *texts[1:]])
 
         async for message in self.render_contents(result):
             yield message
