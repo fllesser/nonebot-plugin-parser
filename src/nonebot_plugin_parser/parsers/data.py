@@ -155,6 +155,18 @@ class ParseResult:
         paths = [cont.gif_path for cont in self.contents if isinstance(cont, DynamicContent)]
         return [path for path in paths if path is not None]
 
+    @property
+    def display_url(self) -> str:
+        return f"链接: {self.url}" if self.url else ""
+
+    @property
+    def repost_display_url(self) -> str:
+        return f"原帖: {self.repost.url}" if self.repost and self.repost.url else ""
+
+    @property
+    def extra_info(self) -> str:
+        return self.extra.get("info", "")
+
     def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
 

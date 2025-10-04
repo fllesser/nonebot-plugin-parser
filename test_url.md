@@ -32,11 +32,12 @@ bilibili:
 - bm BV1584y167sD 40
 
 tiktok:
-- https://www.tiktok.com/@xwc1897/video/7436010419002608928?is_from_webapp=1&sender_device=pc
-- https://www.tiktok.com/@mssethi.ss/video/7479816398814973227?is_from_webapp=1&sender_device=pc
+- https://www.tiktok.com/@xwc1897/video/7436010419002608928
+- https://www.tiktok.com/@mdominikagorecka/video/7555616821018414339
 
 acfun:
 - https://www.acfun.cn/v/ac46593564
+- https://www.acfun.cn/v/ac44260463
 
 X:
 - https://x.com/fortnitegame/status/1870484479980052921?s=46
@@ -62,9 +63,14 @@ xiaohongshu:
 - http://xhslink.com/m/1nhWDzSpHXB  视频短链
 
 weibo:
-- https://video.weibo.com/show?fid=1034:5145615399845897 视频（fid)
-- https://weibo.com/7207262816/P5kWdcfDe 多图 > 9 张
-- https://weibo.com/7207262816/O70aCbjnd
-- http://m.weibo.cn/status/5112672433738061
-- ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html 纯文
-- https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html 图文
+- 视频
+  - https://video.weibo.com/show?fid=1034:5145615399845897 视频（fid)
+  - https://weibo.com/7207262816/O70aCbjnd 视频
+  - http://m.weibo.cn/status/5112672433738061 视频(m.weibo.cn)
+- 图集
+  - https://weibo.com/7207262816/P5kWdcfDe 多图 > 9 张
+- 纯文
+  - ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
+- 转发
+  - https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html 图文
+  - https://weibo.com/1694917363/Q0KtXh6z2 视频

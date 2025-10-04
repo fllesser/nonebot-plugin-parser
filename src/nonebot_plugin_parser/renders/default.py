@@ -19,7 +19,8 @@ class Renderer(BaseRenderer):
             Generator[UniMessage[Any], None, None]: 消息生成器
         """
 
-        texts: list[str] = [text for text in (result.header, result.text, result.extra.get("info"), result.url) if text]
+        texts: list[str] = [result.header, result.text, result.extra_info, result.display_url]
+        texts = [text for text in texts if text]
         texts[:-1] = [seg + "\n" for seg in texts[:-1]]
 
         if result.cover_path:

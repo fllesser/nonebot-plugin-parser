@@ -15,11 +15,7 @@ class Renderer(BaseRenderer):
             templates={"result": result},
         )
         # 组合文本消息
-        texts = [
-            result.header,
-            f"源微博: {result.repost.url}" if result.repost and result.repost.url else "",
-            f"微博详情: {result.url}" if result.url else "",
-        ]
+        texts = [result.header, result.display_url, result.repost_display_url]
         texts = [text for text in texts if text]
         texts[:-1] = [seg + "\n" for seg in texts[:-1]]
 
