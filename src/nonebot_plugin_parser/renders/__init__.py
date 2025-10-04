@@ -39,4 +39,5 @@ from nonebot import get_driver
 
 @get_driver().on_startup
 async def _():
-    CommonRenderer.load_fonts()
+    # CommonRenderer.load_fonts()
+    CommonRenderer.load_custom_fonts()
