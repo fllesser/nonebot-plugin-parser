@@ -100,14 +100,14 @@ class CommonRenderer(BaseRenderer):
 
         return cover_img
 
-    def _load_and_process_avatar(self, avatar: str | Path | None) -> Image.Image | None:
+    def _load_and_process_avatar(self, avatar: Path | None) -> Image.Image | None:
         """加载并处理头像（圆形裁剪，带抗锯齿）"""
         if not avatar:
             return None
 
         avatar_img = None
         try:
-            if isinstance(avatar, Path) and avatar.exists():
+            if avatar and avatar.exists():
                 avatar_img = Image.open(avatar)
 
             if not avatar_img:
