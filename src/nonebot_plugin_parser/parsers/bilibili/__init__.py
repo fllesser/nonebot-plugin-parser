@@ -126,7 +126,7 @@ class BilibiliParser(BaseParser):
             ai_summary: str = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
 
         # 额外信息
-        extra = {"info": f"{video_info.formatted_stats_info}\n📝 简介：{video_info.desc}\n{ai_summary}"}
+        extra = {"info": f"简介：{video_info.desc}\n\n{ai_summary}"}
 
         # 下载封面
         cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers) if cover_url else None
@@ -157,6 +157,7 @@ class BilibiliParser(BaseParser):
             title=title,
             url=url,
             extra=extra,
+            timestamp=213213123,
             cover_path=cover_path,
             author=Author(name=video_info.owner.name, avatar=video_info.owner.face),
             contents=[VideoContent(path_or_task, cover_path=cover_path, duration=duration)],

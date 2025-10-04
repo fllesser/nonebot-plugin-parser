@@ -1,7 +1,9 @@
 import importlib
 
 from .base import BaseRenderer
-from .default import Renderer as DefaultRenderer
+from .common import Renderer as CommonRenderer
+
+# from .default import Renderer as DefaultRenderer
 
 
 def get_renderer(platform: str) -> BaseRenderer:
@@ -15,4 +17,4 @@ def get_renderer(platform: str) -> BaseRenderer:
         # 如果没有对应的 Renderer 模块或类，返回默认的 Renderer
         pass
 
-    return DefaultRenderer()
+    return CommonRenderer()

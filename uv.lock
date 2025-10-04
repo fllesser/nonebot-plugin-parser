@@ -1329,6 +1329,7 @@ dependencies = [
     { name = "nonebot-plugin-localstore" },
     { name = "nonebot-plugin-uninfo" },
     { name = "nonebot2" },
+    { name = "pillow" },
     { name = "tqdm" },
     { name = "yt-dlp" },
 ]
@@ -1368,6 +1369,7 @@ requires-dist = [
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
     { name = "nonebot-plugin-uninfo", specifier = ">=0.9.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
+    { name = "pillow", specifier = ">=11.0.0" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
     { name = "yt-dlp", specifier = ">=2025.9.26" },
 ]
