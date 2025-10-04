@@ -173,17 +173,18 @@ class ParseResult:
 
         for cont in chain(self.contents, self.repost.contents if self.repost else ()):
             try:
+                path = await cont.get_path()
                 match cont:
                     case VideoContent():
-                        separate_segs.append(UniHelper.video_seg(await cont.get_path()))
+                        separate_segs.append(UniHelper.video_seg(path))
                     case ImageContent():
-                        forwardable_segs.append(UniHelper.img_seg(await cont.get_path()))
+                        forwardable_segs.append(UniHelper.img_seg(path))
                     case AudioContent():
-                        separate_segs.append(UniHelper.record_seg(await cont.get_path()))
+                        separate_segs.append(UniHelper.record_seg(path))
                     case DynamicContent():
-                        forwardable_segs.append(UniHelper.video_seg(await cont.get_path()))
+                        forwardable_segs.append(UniHelper.video_seg(path))
                     case GraphicsContent(_, text):
-                        forwardable_segs.append(text + UniHelper.img_seg(await cont.get_path()))
+                        forwardable_segs.append(text + UniHelper.img_seg(path))
             except ParseException as e:
                 forwardable_segs.append(e.message)
 
