@@ -5,10 +5,9 @@ from typing import ClassVar
 import httpx
 import msgspec
 
-from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Author, ImageContent, MediaContent, ParseResult, Platform, VideoContent
+from .data import ParseResult, Platform
 
 
 class KuaiShouParser(BaseParser):
@@ -67,32 +66,35 @@ class KuaiShouParser(BaseParser):
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        return await self._photo2result(photo)
-
-    async def _photo2result(self, photo: "Photo"):
-        # 下载封面
-        cover = None
-        if photo.cover_url:
-            cover = DOWNLOADER.download_img(photo.cover_url, ext_headers=self.headers)
-
-        # 下载内容
-        contents: list[MediaContent] = []
-        if video_url := photo.video_url:
-            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
-            contents.append(VideoContent(video_task, cover, duration=photo.duration))
-        elif img_urls := photo.img_urls:
-            contents.extend(ImageContent(DOWNLOADER.download_img(url, ext_headers=self.headers)) for url in img_urls)
-        # 下载作者头像
-        avatar = DOWNLOADER.download_img(photo.head_url, ext_headers=self.headers) if photo.head_url else None
-        return self.result(
-            title=photo.caption,
-            author=Author(name=photo.name, avatar=avatar),
-            contents=contents,
-            timestamp=photo.timestamp // 1000,
-        )
+        transition_data = KuaishouTransitionData(photo)
+        return self.convert_transition_to_result(transition_data)
 
 
-from typing import TypeAlias
+from .data import TransitionData
+
+
+class KuaishouTransitionData(TransitionData):
+    def __init__(self, photo: "Photo"):
+        self.photo = photo
+
+    def name_avatar_desc(self):
+        return self.photo.name, self.photo.head_url, None
+
+    def get_title(self) -> str:
+        return self.photo.caption
+
+    def get_timestamp(self):
+        return self.photo.timestamp // 1000
+
+    def get_video_url(self):
+        return self.photo.video_url
+
+    def get_cover_url(self):
+        return self.photo.cover_url
+
+    def get_images_urls(self):
+        return self.photo.img_urls
+
 
 from msgspec import Struct, field
 
@@ -152,5 +154,7 @@ class TusjohData(Struct):
     result: int
     photo: Photo | None = None
 
+
+from typing import TypeAlias
 
 KuaishouInitState: TypeAlias = dict[str, TusjohData]

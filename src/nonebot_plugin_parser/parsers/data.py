@@ -286,5 +286,5 @@ class TransitionData(ABC):
     def get_extra(self) -> dict[str, Any]:
         return {}
 
-    def get_repost(self) -> ParseResult | None:
+    def get_repost(self) -> "TransitionData | None":
         return None

@@ -5,10 +5,9 @@ from typing import ClassVar
 import httpx
 import msgspec
 
-from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Author, ImageContent, MediaContent, ParseResult, Platform, VideoContent
+from .data import ParseResult, Platform
 
 
 class WeiBoParser(BaseParser):
@@ -72,6 +71,9 @@ class WeiBoParser(BaseParser):
         """
         解析带 fid 的微博视频
         """
+        from ..download import DOWNLOADER
+        from .data import Author, MediaContent, VideoContent
+
         req_url = f"https://h5.video.weibo.com/api/component?page=/show/{fid}"
         headers = {
             "Referer": f"https://h5.video.weibo.com/show/{fid}",
@@ -173,41 +175,9 @@ class WeiBoParser(BaseParser):
 
         # 用 bytes 更稳，避免编码歧义
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
-
-        return await self._parse_weibodata(weibo_data)
-
-    async def _parse_weibodata(self, data: "WeiboData") -> ParseResult:
-        """解析 WeiboData 对象，返回 ParseResult"""
-        repost = None
-        if data.retweeted_status:
-            repost = await self._parse_weibodata(data.retweeted_status)
-
-        # 下载内容
-        contents: list[MediaContent] = []
-        cover_path = None
-        if video_url := data.video_url:
-            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
-            cover_path = None
-            if data.cover_url:
-                cover_path = DOWNLOADER.download_img(data.cover_url, ext_headers=self.headers)
-            contents.append(VideoContent(video_task, cover_path))
-
-        if pic_urls := data.pic_urls:
-            img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in pic_urls]
-            contents.extend(ImageContent(task) for task in img_tasks)
-
-        # 下载头像
-        avatar = DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.headers)
-        timestamp = int(time.mktime(time.strptime(data.created_at, "%a %b %d %H:%M:%S %z %Y")))
-        return self.result(
-            title=data.title,
-            text=data.text_content,
-            author=Author(name=data.display_name, avatar=avatar),
-            contents=contents,
-            url=f"https://weibo.com/{data.user.id}/{data.bid}",
-            repost=repost,
-            timestamp=timestamp,
-        )
+        url = f"https://weibo.com/{weibo_data.user.id}/{weibo_data.bid}"
+        transition_data = WeiboTransitionData(weibo_data, url)
+        return self.convert_transition_to_result(transition_data)
 
     def _base62_encode(self, number: int) -> str:
         """将数字转换为 base62 编码"""
@@ -245,6 +215,45 @@ class WeiBoParser(BaseParser):
 
 
 from msgspec import Struct
+
+from .data import TransitionData
+
+
+class WeiboTransitionData(TransitionData):
+    def __init__(self, weibo_data: "WeiboData", url: str | None = None):
+        self.weibo_data = weibo_data
+        self._url = url
+
+    def name_avatar_desc(self):
+        return self.weibo_data.display_name, self.weibo_data.user.profile_image_url, None
+
+    def get_title(self):
+        return self.weibo_data.title
+
+    def get_text(self):
+        return self.weibo_data.text_content
+
+    def get_timestamp(self):
+        import time
+
+        return int(time.mktime(time.strptime(self.weibo_data.created_at, "%a %b %d %H:%M:%S %z %Y")))
+
+    def get_url(self):
+        return self._url
+
+    def get_video_url(self):
+        return self.weibo_data.video_url
+
+    def get_cover_url(self):
+        return self.weibo_data.cover_url
+
+    def get_images_urls(self):
+        return self.weibo_data.pic_urls if self.weibo_data.pic_urls else None
+
+    def get_repost(self):
+        if self.weibo_data.retweeted_status:
+            return WeiboTransitionData(self.weibo_data.retweeted_status)
+        return None
 
 
 class LargeInPic(Struct):

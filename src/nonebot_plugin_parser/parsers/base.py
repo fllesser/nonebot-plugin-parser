@@ -87,7 +87,7 @@ class BaseParser(ABC):
         # 填充作者信息
         name, avatar, desc = data.name_avatar_desc()
         if avatar is not None:
-            avatar = DOWNLOADER.download_img(avatar)
+            avatar = DOWNLOADER.download_img(avatar, ext_headers=self.headers)
         author = Author(name=name, avatar=avatar, description=desc)
 
         # 填充封面信息
@@ -111,6 +111,9 @@ class BaseParser(ABC):
             if cover_task:
                 contents.append(ImageContent(cover_task))
 
+        if repost := data.get_repost():
+            repost = self.convert_transition_to_result(repost)
+
         return self.result(
             author=author,
             contents=contents,
@@ -119,5 +122,5 @@ class BaseParser(ABC):
             timestamp=data.get_timestamp(),
             url=data.get_url(),
             extra=data.get_extra(),
-            repost=data.get_repost(),
+            repost=repost,
         )
