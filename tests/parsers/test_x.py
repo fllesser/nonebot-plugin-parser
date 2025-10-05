@@ -13,9 +13,11 @@ async def test_parse():
         "https://x.com/Dithmenos9/status/1966798448499286345",  # gif
     ]
 
+    parser = TwitterParser()
+
     async def parse_x(url: str):
         logger.info(f"开始解析推特 {url}")
-        contents = await TwitterParser.parse_x_url(url)
+        contents = await parser.parse_x_url(url)
         for content in contents:
             path = await content.get_path()
             assert path.exists()
