@@ -7,20 +7,9 @@ import msgspec
 from nonebot import logger
 
 from ...constants import COMMON_TIMEOUT
-from ...download import DOWNLOADER
 from ...exception import ParseException
 from ..base import BaseParser
-from ..data import (
-    ANDROID_HEADER,
-    IOS_HEADER,
-    Author,
-    DynamicContent,
-    ImageContent,
-    MediaContent,
-    ParseResult,
-    Platform,
-    VideoContent,
-)
+from ..data import ParseResult, Platform
 
 
 class DouyinParser(BaseParser):
@@ -35,10 +24,6 @@ class DouyinParser(BaseParser):
             r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+",
         ),
     ]
-
-    def __init__(self):
-        self.ios_headers = IOS_HEADER.copy()
-        self.android_headers = {"Accept": "application/json, text/plain, */*", **ANDROID_HEADER}
 
     def _build_iesdouyin_url(self, _type: str, video_id: str) -> str:
         return f"https://www.iesdouyin.com/share/{_type}/{video_id}"
@@ -85,39 +70,6 @@ class DouyinParser(BaseParser):
                 raise ParseException(f"status: {response.status_code}")
             text = response.text
 
-        video_data = self._extract_data(text)
-
-        # 下载封面
-        cover_path = None
-        if video_data.cover_url:
-            cover_path = DOWNLOADER.download_img(video_data.cover_url)
-
-        # 下载内容
-        contents: list[MediaContent] = []
-        if image_urls := video_data.images_urls:
-            contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in image_urls)
-        elif video_url := video_data.video_url:
-            video_url = await self.get_redirect_url(video_url)
-            contents.append(VideoContent(DOWNLOADER.download_video(video_url), cover_path))
-
-        return self.result(
-            text=video_data.desc,
-            author=Author(name=video_data.author.nickname) if video_data.author.nickname else None,
-            contents=contents,
-        )
-
-    def _extract_data(self, text: str):
-        """从html中提取视频数据
-
-        Args:
-            text (str): 网页源码
-
-        Raises:
-            ParseException: 解析失败
-
-        Returns:
-            VideoData: 数据
-        """
         pattern = re.compile(
             pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
             flags=re.DOTALL,
@@ -127,9 +79,11 @@ class DouyinParser(BaseParser):
         if not matched or not matched.group(1):
             raise ParseException("can't find _ROUTER_DATA in html")
 
-        from .video import RouterData
+        from .video import RouterData, VideoTransitionData
 
-        return msgspec.json.decode(matched.group(1).strip(), type=RouterData).video_data
+        video_data = msgspec.json.decode(matched.group(1).strip(), type=RouterData).video_data
+
+        return self.convert_transition_to_result(VideoTransitionData(video_data))
 
     async def parse_slides(self, video_id: str) -> ParseResult:
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
@@ -141,24 +95,10 @@ class DouyinParser(BaseParser):
             response = await client.get(url, params=params)
             response.raise_for_status()
 
-        from .slides import SlidesInfo
+        from .slides import SlidesInfo, SlidesTransitionData
 
         slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
-        # 下载图片
-        contents: list[MediaContent] = []
-        contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in slides_data.images_urls)
-
-        if slides_data.dynamic_urls:
-            contents.extend(DynamicContent(DOWNLOADER.download_video(url)) for url in slides_data.dynamic_urls)
-
-        author = Author(name=slides_data.name, avatar=DOWNLOADER.download_img(slides_data.avatar_url))
-
-        return self.result(
-            title=slides_data.desc,
-            timestamp=slides_data.create_time,
-            author=author,
-            contents=contents,
-        )
+        return self.convert_transition_to_result(SlidesTransitionData(slides_data))
 
     @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:

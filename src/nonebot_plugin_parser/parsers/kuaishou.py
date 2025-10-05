@@ -5,7 +5,6 @@ from typing import ClassVar
 import httpx
 import msgspec
 
-from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
@@ -26,11 +25,8 @@ class KuaiShouParser(BaseParser):
     ]
 
     def __init__(self):
-        self.headers = COMMON_HEADER
-        self.v_headers = {
-            **IOS_HEADER,
-            "Referer": "https://v.kuaishou.com/",
-        }
+        super().__init__()
+        self.ios_headers["Referer"] = "https://v.kuaishou.com/"
 
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
@@ -46,7 +42,7 @@ class KuaiShouParser(BaseParser):
         """
         # 从匹配对象中获取原始URL
         url = matched.group(0)
-        location_url = await self.get_redirect_url(url, headers=self.v_headers)
+        location_url = await self.get_redirect_url(url, headers=self.ios_headers)
 
         if len(location_url) <= 0:
             raise ParseException("failed to get location url from url")
@@ -54,7 +50,7 @@ class KuaiShouParser(BaseParser):
         # /fw/long-video/ 返回结果不一样, 统一替换为 /fw/photo/ 请求
         location_url = location_url.replace("/fw/long-video/", "/fw/photo/")
 
-        async with httpx.AsyncClient(headers=self.v_headers, timeout=COMMON_TIMEOUT) as client:
+        async with httpx.AsyncClient(headers=self.ios_headers, timeout=self.timeout) as client:
             response = await client.get(location_url)
             response.raise_for_status()
             response_text = response.text

@@ -7,7 +7,6 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import msgspec
 
-from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
@@ -25,11 +24,12 @@ class XiaoHongShuParser(BaseParser):
     ]
 
     def __init__(self):
-        self.headers = {
+        super().__init__()
+        extra_headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,"
             "application/signed-exchange;v=b3;q=0.9",
-            **COMMON_HEADER,
         }
+        self.headers.update(extra_headers)
 
     @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
@@ -64,7 +64,7 @@ class XiaoHongShuParser(BaseParser):
 
         # 构造完整 URL
         url = f"https://www.xiaohongshu.com/explore/{xhs_id}?xsec_source={xsec_source}&xsec_token={xsec_token}"
-        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
+        async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
             response = await client.get(url)
             html = response.text
 

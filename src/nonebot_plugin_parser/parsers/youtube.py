@@ -6,7 +6,6 @@ import httpx
 import msgspec
 
 from ..config import pconfig
-from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from .base import BaseParser
 from .cookie import save_cookies_with_netscape
@@ -24,6 +23,7 @@ class YouTubeParser(BaseParser):
     ]
 
     def __init__(self):
+        super().__init__()
         self.cookies_file = pconfig.config_dir / "ytb_cookies.txt"
         if pconfig.ytb_ck:
             save_cookies_with_netscape(pconfig.ytb_ck, self.cookies_file, "youtube.com")
@@ -90,7 +90,6 @@ class YouTubeParser(BaseParser):
 
     async def _fetch_author_info(self, channel_id: str):
         url = "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false"
-        headers = COMMON_HEADER.copy()
         payload = {
             "context": {
                 "client": {
@@ -108,7 +107,7 @@ class YouTubeParser(BaseParser):
             },
             "browseId": channel_id,
         }
-        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
+        async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
             response = await client.post(url, json=payload)
             response.raise_for_status()
         browse_response = msgspec.json.decode(response.content, type=BrowseResponse)

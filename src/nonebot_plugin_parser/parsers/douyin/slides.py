@@ -56,3 +56,26 @@ class SlidesData(Struct):
 
 class SlidesInfo(Struct):
     aweme_details: list[SlidesData] = field(default_factory=list)
+
+
+from ..data import TransitionData
+
+
+class SlidesTransitionData(TransitionData):
+    def __init__(self, slides_data: SlidesData):
+        self.slides_data = slides_data
+
+    def name_avatar_desc(self) -> tuple[str, str | None, str | None]:
+        return self.slides_data.name, self.slides_data.avatar_url, self.slides_data.desc
+
+    def get_title(self) -> str:
+        return self.slides_data.desc
+
+    def get_images_urls(self) -> list[str] | None:
+        return self.slides_data.images_urls
+
+    def get_dynamic_urls(self) -> list[str] | None:
+        return self.slides_data.dynamic_urls
+
+    def get_timestamp(self) -> int | None:
+        return self.slides_data.create_time

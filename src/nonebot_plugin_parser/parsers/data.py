@@ -259,22 +259,29 @@ class TransitionData(ABC):
         return ""
 
     @abstractmethod
-    def get_author(self) -> Author:
+    def name_avatar_desc(self) -> tuple[str, str | None, str | None]:
         raise NotImplementedError
 
     def get_text(self) -> str:
         return ""
 
-    @abstractmethod
-    def get_contents(self) -> list[MediaContent]:
-        raise NotImplementedError
-
     def get_timestamp(self) -> int | None:
         return None
 
-    @abstractmethod
-    def get_url(self) -> str:
-        raise NotImplementedError
+    def get_url(self) -> str | None:
+        return None
+
+    def get_video_url(self) -> str | None:
+        return None
+
+    def get_cover_url(self) -> str | None:
+        return None
+
+    def get_images_urls(self) -> list[str] | None:
+        return None
+
+    def get_dynamic_urls(self) -> list[str] | None:
+        return None
 
     def get_extra(self) -> dict[str, Any]:
         return {}

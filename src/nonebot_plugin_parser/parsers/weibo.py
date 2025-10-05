@@ -5,7 +5,6 @@ from typing import ClassVar
 import httpx
 import msgspec
 
-from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
@@ -24,10 +23,12 @@ class WeiBoParser(BaseParser):
     ]
 
     def __init__(self):
-        self.ext_headers = {
+        super().__init__()
+        extra_headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
             "referer": "https://weibo.com/",
         }
+        self.headers.update(extra_headers)
 
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
@@ -75,11 +76,11 @@ class WeiBoParser(BaseParser):
         headers = {
             "Referer": f"https://h5.video.weibo.com/show/{fid}",
             "Content-Type": "application/x-www-form-urlencoded",
-            **COMMON_HEADER,
+            **self.headers,
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + fid + '"}}'
 
-        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
+        async with httpx.AsyncClient(headers=headers, timeout=self.timeout) as client:
             response = await client.post(req_url, content=post_content)
             response.raise_for_status()
             json_data = response.json()
@@ -94,7 +95,7 @@ class WeiBoParser(BaseParser):
             user.get("profile_image_url"),
             user.get("description"),
         )
-        avatar = DOWNLOADER.download_img(avatar, ext_headers=self.ext_headers)
+        avatar = DOWNLOADER.download_img(avatar, ext_headers=self.headers)
         author = Author(name=author_name, avatar=avatar, description=description)
 
         # 提取标题和文本
@@ -107,7 +108,7 @@ class WeiBoParser(BaseParser):
         cover_path = None
         if cover_url := data.get("cover_image"):
             cover_url = "https:" + cover_url
-            cover_path = DOWNLOADER.download_img(cover_url, ext_headers=self.ext_headers)
+            cover_path = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
 
         # 下载视频
         contents: list[MediaContent] = []
@@ -120,7 +121,7 @@ class WeiBoParser(BaseParser):
             video_url = data.get("stream_url")
 
         if video_url:
-            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
             contents.append(VideoContent(video_task, cover_path))
 
         # 时间戳
@@ -145,7 +146,7 @@ class WeiBoParser(BaseParser):
             "sec-fetch-site": "same-origin",
             "sec-fetch-mode": "cors",
             "sec-fetch-dest": "empty",
-            **COMMON_HEADER,
+            **self.headers,
         }
 
         # 加时间戳参数，减少被缓存/规则命中的概率
@@ -155,7 +156,7 @@ class WeiBoParser(BaseParser):
         # 关键：不带 cookie、不跟随重定向（避免二跳携 cookie）
         async with httpx.AsyncClient(
             headers=headers,
-            timeout=COMMON_TIMEOUT,
+            timeout=self.timeout,
             follow_redirects=False,
             cookies=httpx.Cookies(),
             trust_env=False,
@@ -185,18 +186,18 @@ class WeiBoParser(BaseParser):
         contents: list[MediaContent] = []
         cover_path = None
         if video_url := data.video_url:
-            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.ext_headers)
+            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
             cover_path = None
             if data.cover_url:
-                cover_path = DOWNLOADER.download_img(data.cover_url, ext_headers=self.ext_headers)
+                cover_path = DOWNLOADER.download_img(data.cover_url, ext_headers=self.headers)
             contents.append(VideoContent(video_task, cover_path))
 
         if pic_urls := data.pic_urls:
-            img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.ext_headers) for url in pic_urls]
+            img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in pic_urls]
             contents.extend(ImageContent(task) for task in img_tasks)
 
         # 下载头像
-        avatar = DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.ext_headers)
+        avatar = DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.headers)
         timestamp = int(time.mktime(time.strptime(data.created_at, "%a %b %d %H:%M:%S %z %Y")))
         return self.result(
             title=data.title,

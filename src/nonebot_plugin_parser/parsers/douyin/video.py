@@ -3,7 +3,6 @@ from typing import Any
 from msgspec import Struct, field
 
 from ...exception import ParseException
-from ..data import TransitionData
 
 
 class Author(Struct):
@@ -29,7 +28,7 @@ class Image(Struct):
     url_list: list[str] = field(default_factory=list)
 
 
-class VideoData(TransitionData, Struct):
+class VideoData(Struct):
     author: Author
     desc: str
     images: list[Image] | None = None
@@ -78,3 +77,26 @@ class RouterData(Struct):
         elif page := self.loaderData.note_page:
             return page.videoInfoRes.video_data
         raise ParseException("can't find video_(id)/page or note_(id)/page in router data")
+
+
+from ..data import TransitionData
+
+
+class VideoTransitionData(TransitionData):
+    def __init__(self, video_data: VideoData):
+        self.video_data = video_data
+
+    def name_avatar_desc(self) -> tuple[str, str | None, str | None]:
+        return self.video_data.author.nickname, None, self.video_data.desc
+
+    def get_title(self) -> str:
+        return self.video_data.desc
+
+    def get_images_urls(self) -> list[str] | None:
+        return self.video_data.images_urls
+
+    def get_video_url(self) -> str | None:
+        return self.video_data.video_url
+
+    def get_cover_url(self) -> str | None:
+        return self.video_data.cover_url
