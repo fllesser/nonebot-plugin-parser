@@ -122,7 +122,7 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 |  parser_duration_maximum  |  否   |           480            |                                                                                                                          视频最大解析时长，单位：_秒_                                                                                                                           |
 |      parser_max_size      |  否   |           100            |                                                                                                              音视频下载最大文件大小，单位 MB，超过该配置将阻断下载                                                                                                              |
 | parser_disabled_platforms |  否   |            []            |                               全局禁止的解析，示例 parser_disabled_platforms=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kuaishou", "twitter", "youtube", "acfun", "tiktok", "weibo", "xiaohongshu"]                               |
-
+| parser_render_type        |  否   |         "default"        |                                               渲染器类型，可选 "default"(无图片渲染), "common"(PIL 通用图片渲染), "htmlkit"(htmlkit)                                                                                                                |
 
 ## 🎉 使用
 ### 指令表
