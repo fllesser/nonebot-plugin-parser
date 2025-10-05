@@ -195,8 +195,6 @@ class ParseResult:
         for cont in self.contents:
             if isinstance(cont, VideoContent):
                 return await cont.get_cover_path()
-            if isinstance(cont, ImageContent):
-                return await cont.get_path()
         return None
 
     async def contents_to_segs(self):

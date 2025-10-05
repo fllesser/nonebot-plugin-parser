@@ -193,6 +193,11 @@ class CommonRenderer(BaseRenderer):
         # 3. 封面部分
         if cover_img:
             heights.append(("cover", cover_img.height, cover_img))
+        elif result.img_contents:
+            # 如果没有封面但有图片，处理图片列表
+            img_grid_data = await self._calculate_image_grid_section(result, content_width)
+            if img_grid_data:
+                heights.append(("image_grid", img_grid_data["height"], img_grid_data))
 
         # 4. 文本内容
         if result.text:
@@ -251,83 +256,91 @@ class CommonRenderer(BaseRenderer):
         if not repost:
             return None
 
-        # 转发内容区域宽度（减去内边距）
-        repost_content_width = content_width - 2 * self.REPOST_PADDING
+        # 使用原内容绘制逻辑，但缩小尺寸
+        repost_scale = 0.9  # 转发内容缩小到70%
+        repost_width = int(content_width * repost_scale)
 
-        # 计算转发头部高度
-        repost_header_height = 0
-        repost_avatar = None
-        repost_name_lines = []
-        repost_time_lines = []
-
-        if repost.author:
-            # 加载转发头像
-            repost_avatar = self._load_and_process_repost_avatar(await repost.author.avatar_path)
-
-            # 计算转发用户名
-            name_area_width = repost_content_width - (self.REPOST_AVATAR_SIZE + self.REPOST_AVATAR_GAP)
-            repost_name_lines = self._wrap_text(repost.author.name, name_area_width, fonts["repost_name"])
-
-            # 计算转发时间
-            if repost.timestamp:
-                time_text = repost.formart_datetime()
-                repost_time_lines = self._wrap_text(time_text, name_area_width, fonts["repost_time"])
-
-            # 计算头部高度
-            name_height = len(repost_name_lines) * self.REPOST_LINE_HEIGHTS["repost_name"]
-            time_height = len(repost_time_lines) * self.REPOST_LINE_HEIGHTS["repost_time"] if repost_time_lines else 0
-            repost_header_height = max(self.REPOST_AVATAR_SIZE, name_height + time_height)
-
-        # 计算转发文本高度
-        repost_text_height = 0
-        repost_text_lines = []
-        if repost.text:
-            repost_text_lines = self._wrap_text(repost.text, repost_content_width, fonts["repost_text"])
-            repost_text_height = len(repost_text_lines) * self.REPOST_LINE_HEIGHTS["repost_text"]
-
-        # 计算转发媒体高度
-        repost_media_height = 0
-        repost_media_items = []
-        if repost.img_contents:
-            # 处理转发图片
-            for img_content in repost.img_contents[:9]:  # 最多9张图片
-                try:
-                    img_path = await img_content.get_path()
-                    if img_path and img_path.exists():
-                        img = Image.open(img_path)
-                        # 调整图片尺寸以适应转发区域
-                        max_size = min(200, repost_content_width // 3)  # 转发图片较小
-                        if img.width > max_size or img.height > max_size:
-                            ratio = min(max_size / img.width, max_size / img.height)
-                            new_size = (int(img.width * ratio), int(img.height * ratio))
-                            img = img.resize(new_size, Image.Resampling.LANCZOS)
-                        repost_media_items.append(img)
-                except Exception:
-                    continue
-
-        # 计算总高度
-        total_height = self.REPOST_PADDING * 2  # 上下内边距
-        if repost_header_height > 0:
-            total_height += repost_header_height + 8  # 头部高度 + 间距
-        if repost_text_height > 0:
-            total_height += repost_text_height + 8  # 文本高度 + 间距
-        if repost_media_items:
-            # 计算媒体网格高度
-            cols = min(3, len(repost_media_items))
-            rows = (len(repost_media_items) + cols - 1) // cols
-            max_img_height = max(img.height for img in repost_media_items) if repost_media_items else 0
-            repost_media_height = rows * max_img_height + (rows - 1) * 4  # 图片间距
-            total_height += repost_media_height
+        # 计算转发内容的完整卡片
+        repost_cover = self._load_and_resize_cover(await repost.cover_path)
+        repost_heights = await self._calculate_sections(repost, repost_cover, repost_width, fonts)
+        repost_height = (
+            sum(h for _, h, _ in repost_heights) + self.PADDING * 2 + self.SECTION_SPACING * (len(repost_heights) - 1)
+        )
 
         return {
-            "height": total_height,
-            "avatar": repost_avatar,
-            "name_lines": repost_name_lines,
-            "time_lines": repost_time_lines,
-            "text_lines": repost_text_lines,
-            "media_items": repost_media_items,
-            "content_width": repost_content_width,
+            "height": repost_height + self.REPOST_PADDING * 2,  # 加上转发容器的内边距
+            "scale": repost_scale,
+            "width": repost_width,
+            "heights": repost_heights,
+            "repost": repost,
         }
+
+    async def _calculate_image_grid_section(self, result: ParseResult, content_width: int) -> dict | None:
+        """计算图片网格部分的高度和内容"""
+        if not result.img_contents:
+            return None
+
+        # 最多处理9张图片
+        img_contents = result.img_contents[:9]
+        processed_images = []
+
+        for img_content in img_contents:
+            try:
+                img_path = await img_content.get_path()
+                if img_path and img_path.exists():
+                    img = Image.open(img_path)
+
+                    # 根据图片数量决定处理方式
+                    if len(img_contents) > 3:
+                        # 超过3张图片，统一为方形
+                        img = self._crop_to_square(img)
+
+                    # 调整图片尺寸
+                    max_size = min(300, content_width // 3)
+                    if img.width > max_size or img.height > max_size:
+                        ratio = min(max_size / img.width, max_size / img.height)
+                        new_size = (int(img.width * ratio), int(img.height * ratio))
+                        img = img.resize(new_size, Image.Resampling.LANCZOS)
+
+                    processed_images.append(img)
+            except Exception:
+                continue
+
+        if not processed_images:
+            return None
+
+        # 计算网格布局
+        cols = min(3, len(processed_images))
+        rows = (len(processed_images) + cols - 1) // cols
+
+        # 计算高度
+        max_img_height = max(img.height for img in processed_images)
+        grid_height = rows * max_img_height + (rows - 1) * 4  # 图片间距
+
+        return {
+            "height": grid_height,
+            "images": processed_images,
+            "cols": cols,
+            "rows": rows,
+        }
+
+    def _crop_to_square(self, img: Image.Image) -> Image.Image:
+        """将图片裁剪为方形（上下切割）"""
+        width, height = img.size
+
+        if width == height:
+            return img
+
+        if width > height:
+            # 宽图片，左右切割
+            left = (width - height) // 2
+            right = left + height
+            return img.crop((left, 0, right, height))
+        else:
+            # 高图片，上下切割
+            top = (height - width) // 2
+            bottom = top + width
+            return img.crop((0, top, width, bottom))
 
     def _draw_sections(
         self, image: Image.Image, heights: list[tuple[str, int, Any]], card_width: int, fonts: dict
@@ -349,6 +362,8 @@ class CommonRenderer(BaseRenderer):
                 y_pos = self._draw_extra(draw, content, y_pos, fonts["extra"])
             elif section_type == "repost":
                 y_pos = self._draw_repost(image, draw, content, y_pos, card_width, fonts)
+            elif section_type == "image_grid":
+                y_pos = self._draw_image_grid(image, content, y_pos, card_width)
 
     def _create_avatar_placeholder(self) -> Image.Image:
         """创建默认头像占位符"""
@@ -566,27 +581,88 @@ class CommonRenderer(BaseRenderer):
             width=1,
         )
 
-        # 转发内容区域
-        content_x = repost_x + self.REPOST_PADDING
-        content_y = repost_y + self.REPOST_PADDING
-        content_width = content["content_width"]
-        current_y = content_y
+        # 创建转发内容的完整卡片
+        repost_card = self._create_repost_card(content, fonts)
 
-        # 绘制转发头部（头像和用户名）
-        if content["avatar"] or content["name_lines"]:
-            current_y = self._draw_repost_header(image, draw, content, content_x, current_y, fonts)
+        # 计算转发卡片在转发容器中的位置（居中）
+        card_x = repost_x + self.REPOST_PADDING
+        card_y = repost_y + self.REPOST_PADDING
 
-        # 绘制转发文本
-        if content["text_lines"]:
-            current_y += 8  # 间距
-            current_y = self._draw_repost_text(draw, content["text_lines"], content_x, current_y, fonts)
-
-        # 绘制转发媒体
-        if content["media_items"]:
-            current_y += 8  # 间距
-            current_y = self._draw_repost_media(image, content["media_items"], content_x, current_y, content_width)
+        # 将转发卡片贴到主画布上
+        image.paste(repost_card, (card_x, card_y))
 
         return y_pos + repost_height + self.SECTION_SPACING
+
+    def _draw_image_grid(self, image: Image.Image, content: dict, y_pos: int, card_width: int) -> int:
+        """绘制图片网格"""
+        images = content["images"]
+        cols = content["cols"]
+        rows = content["rows"]
+
+        if not images:
+            return y_pos
+
+        # 计算每个图片的尺寸和间距
+        available_width = card_width - 2 * self.PADDING  # 可用宽度
+        img_spacing = 4
+
+        # 根据列数计算每个图片的尺寸
+        if cols == 1:
+            max_img_size = min(300, available_width)
+        elif cols == 2:
+            max_img_size = min(300, (available_width - img_spacing) // 2)
+        else:  # cols == 3
+            max_img_size = min(300, (available_width - 2 * img_spacing) // 3)
+
+        current_y = y_pos
+
+        for row in range(rows):
+            row_start = row * cols
+            row_end = min(row_start + cols, len(images))
+            row_images = images[row_start:row_end]
+
+            # 计算这一行的最大高度
+            max_height = max(img.height for img in row_images)
+
+            # 绘制这一行的图片（左对齐）
+            for i, img in enumerate(row_images):
+                img_x = self.PADDING + i * (max_img_size + img_spacing)
+                img_y = current_y
+
+                # 居中放置图片
+                y_offset = (max_height - img.height) // 2
+                image.paste(img, (img_x, img_y + y_offset))
+
+            current_y += max_height + img_spacing
+
+        return current_y + self.SECTION_SPACING
+
+    def _create_repost_card(self, content: dict, fonts: dict) -> Image.Image:
+        """创建转发内容的完整卡片"""
+        scale = content["scale"]
+        card_width = content["width"]
+        heights = content["heights"]
+
+        # 计算卡片高度
+        card_height = sum(h for _, h, _ in heights) + self.PADDING * 2 + self.SECTION_SPACING * (len(heights) - 1)
+
+        # 创建转发卡片画布
+        repost_card = Image.new("RGB", (card_width, card_height), self.REPOST_BG_COLOR)
+
+        # 使用缩放后的字体
+        scaled_fonts = {}
+        for name, font in fonts.items():
+            if hasattr(font, "size"):
+                # 使用默认字体路径
+                font_path = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
+                scaled_fonts[name] = ImageFont.truetype(font_path, int(font.size * scale))
+            else:
+                scaled_fonts[name] = font
+
+        # 绘制转发内容的所有部分
+        self._draw_sections(repost_card, heights, card_width, scaled_fonts)
+
+        return repost_card
 
     def _draw_repost_header(
         self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, x_pos: int, y_pos: int, fonts: dict
@@ -636,8 +712,8 @@ class CommonRenderer(BaseRenderer):
         rows = (len(media_items) + cols - 1) // cols
 
         # 计算每个图片的尺寸
-        max_img_size = min(200, content_width // 3)
-        img_spacing = 4
+        max_img_size = min(300, content_width // 3)
+        img_spacing = 6
 
         current_y = y_pos
 
