@@ -34,18 +34,15 @@ class TikTokParser(BaseParser):
             url = await self.get_redirect_url(url)
 
         # 获取视频信息
-        info_dict = await YTDLP_DOWNLOADER.extract_video_info(url)
-        title = info_dict.get("title", "未知")
-        author = info_dict.get("uploader", None)
-        thumbnail = info_dict.get("thumbnail", None)
-        duration = int(info_dict.get("duration", 0))
+        video_info = await YTDLP_DOWNLOADER.extract_video_info(url)
 
         # 下载封面和视频
-        cover = DOWNLOADER.download_img(thumbnail) if thumbnail else None
+        cover = DOWNLOADER.download_img(video_info.thumbnail)
         video = YTDLP_DOWNLOADER.download_video(url)
 
         return self.result(
-            title=title,
-            author=Author(name=author) if author else None,
-            contents=[VideoContent(video, cover, duration=duration)],
+            title=video_info.title,
+            author=Author(name=video_info.channel),
+            contents=[VideoContent(video, cover, duration=video_info.duration)],
+            timestamp=video_info.timestamp,
         )

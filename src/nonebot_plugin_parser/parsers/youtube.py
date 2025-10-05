@@ -3,14 +3,13 @@ from typing import ClassVar
 from typing_extensions import override
 
 import httpx
-import msgspec
 
 from ..config import pconfig
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from .base import BaseParser
 from .cookie import save_cookies_with_netscape
-from .data import AudioContent, Author, ParseResult, Platform, VideoContent
+from .data import AudioContent, Author, ImageContent, ParseResult, Platform, VideoContent
 
 
 class YouTubeParser(BaseParser):
@@ -44,15 +43,15 @@ class YouTubeParser(BaseParser):
         # 从匹配对象中获取原始URL
         url = matched.group(0)
 
-        info_dict = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
-        video_info = msgspec.convert(info_dict, VideoInfo)
+        video_info = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
         author = await self._fetch_author_info(video_info.channel_id)
-
-        cover = DOWNLOADER.download_img(video_info.thumbnail) if video_info.thumbnail else None
+        cover = DOWNLOADER.download_img(video_info.thumbnail)
         contents = []
         if video_info.duration <= pconfig.duration_maximum:
             video = YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
             contents.append(VideoContent(video, cover, duration=video_info.duration))
+        else:
+            contents.append(ImageContent(cover))
 
         return self.result(
             title=video_info.title,
@@ -71,17 +70,21 @@ class YouTubeParser(BaseParser):
             ParseResult: 解析结果（音频内容）
 
         """
-        info_dict = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
-        title = info_dict.get("title", "未知")
-        author = info_dict.get("uploader", None)
-        duration = int(info_dict.get("duration", 0))
+        video_info = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
+        author = await self._fetch_author_info(video_info.channel_id)
 
-        audio_path = YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
+        contents = []
+        contents.append(ImageContent(DOWNLOADER.download_img(video_info.thumbnail)))
+
+        if video_info.duration <= pconfig.duration_maximum:
+            audio_task = YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
+            contents.append(AudioContent(audio_task, duration=video_info.duration))
 
         return self.result(
-            title=title,
-            author=Author(name=author) if author else None,
-            contents=[AudioContent(audio_path, duration)],
+            title=video_info.title,
+            author=author,
+            contents=contents,
+            timestamp=video_info.timestamp,
         )
 
     async def _fetch_author_info(self, channel_id: str):
@@ -115,18 +118,3 @@ class YouTubeParser(BaseParser):
         if avatar:
             avatar = DOWNLOADER.download_img(avatar)
         return Author(name=name, avatar=avatar, description=description)
-
-
-from msgspec import Struct
-
-
-class VideoInfo(Struct):
-    title: str
-    uploader: str
-    duration: int
-    timestamp: int
-    thumbnail: str
-    description: str
-    channel_id: str
-
-    view_count: int

@@ -2,6 +2,8 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
+import msgspec
+from msgspec import Struct
 import yt_dlp
 
 from ..config import pconfig
@@ -10,11 +12,36 @@ from ..utils import LimitedSizeDict, generate_file_name
 from .task import auto_task
 
 
+class VideoInfo(Struct):
+    title: str
+    """标题"""
+    channel: str
+    """频道名称"""
+    uploader: str
+    """上传者 id"""
+    duration: int
+    """时长"""
+    timestamp: int
+    """发布时间戳"""
+    thumbnail: str
+    """封面图片"""
+    description: str
+    """简介"""
+    channel_id: str
+    """频道 id"""
+    view_count: int
+    """浏览量"""
+
+    @property
+    def author_name(self) -> str:
+        return f"{self.channel}@{self.uploader}"
+
+
 class YtdlpDownloader:
     """YtdlpDownloader class"""
 
     def __init__(self):
-        self._url_info_mapping = LimitedSizeDict[str, dict[str, str]]()
+        self._url_info_mapping = LimitedSizeDict[str, VideoInfo]()
         self._ydl_extract_base_opts: dict[str, Any] = {
             "quiet": True,
             "skip_download": True,
@@ -25,7 +52,7 @@ class YtdlpDownloader:
             self._ydl_download_base_opts["proxy"] = pconfig.proxy
             self._ydl_extract_base_opts["proxy"] = pconfig.proxy
 
-    async def extract_video_info(self, url: str, cookiefile: Path | None = None) -> dict[str, str]:
+    async def extract_video_info(self, url: str, cookiefile: Path | None = None) -> VideoInfo:
         """get video info by url
 
         Args:
@@ -47,8 +74,9 @@ class YtdlpDownloader:
             info_dict = await asyncio.to_thread(ydl.extract_info, url, download=False)
             if not info_dict:
                 raise ParseException("获取视频信息失败")
-            self._url_info_mapping[url] = info_dict
-            return info_dict
+        video_info = msgspec.convert(info_dict, VideoInfo)
+        self._url_info_mapping[url] = video_info
+        return video_info
 
     @auto_task
     async def download_video(self, url: str, cookiefile: Path | None = None) -> Path:
@@ -62,7 +90,7 @@ class YtdlpDownloader:
             Path: video file path
         """
         info_dict = await self.extract_video_info(url, cookiefile)
-        duration = int(info_dict.get("duration", 600))
+        duration = info_dict.duration
         video_path = pconfig.cache_dir / generate_file_name(url, ".mp4")
         if video_path.exists():
             return video_path
