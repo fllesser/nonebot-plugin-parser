@@ -69,6 +69,10 @@ weibo:
 - 图集
   - https://weibo.com/7207262816/P5kWdcfDe 多图 > 9 张
   - https://weibo.com/7207262816/P2AFBk387 9张
+  - https://weibo.com/7207262816/Q6YCbtAn8 单张，转发，横屏
+  - https://weibo.com/7207262816/Q617WgOm4 单张，转发，长图
+  - https://weibo.com/7207262816/PsFzpzUX2 两张
+  - https://weibo.com/7207262816/P2rJE157H 三张
 - 纯文
   - ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
 - 转发

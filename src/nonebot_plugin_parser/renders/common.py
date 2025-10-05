@@ -80,8 +80,8 @@ class CommonRenderer(BaseRenderer):
             PNG 图片的字节数据，如果没有足够的内容则返回 None
         """
         # 如果既没有标题, 文本也没有封面，不生成图片
-        if not result.title and not result.text:
-            return None
+        # if not result.title and not result.text:
+        #     return None
 
         # 使用预加载的字体
         fonts = self.FONTS
@@ -270,7 +270,7 @@ class CommonRenderer(BaseRenderer):
             return None
 
         # 使用原内容绘制逻辑，但缩小尺寸
-        repost_scale = 0.9  # 转发内容缩小到70%
+        repost_scale = 0.88  # 转发内容缩小到70%
         repost_width = int(content_width * repost_scale)
 
         # 计算转发内容的完整卡片
@@ -314,16 +314,26 @@ class CommonRenderer(BaseRenderer):
                     img = Image.open(img_path)
 
                     # 根据图片数量决定处理方式
-                    if len(img_contents) > 3:
-                        # 超过3张图片，统一为方形
+                    if len(img_contents) >= 2:
+                        # 2张及以上图片，统一为方形
                         img = self._crop_to_square(img)
 
                     # 调整图片尺寸
-                    max_size = min(300, content_width // 3)
-                    if img.width > max_size or img.height > max_size:
-                        ratio = min(max_size / img.width, max_size / img.height)
-                        new_size = (int(img.width * ratio), int(img.height * ratio))
-                        img = img.resize(new_size, Image.Resampling.LANCZOS)
+                    if len(img_contents) == 1:
+                        # 单张图片，根据卡片宽度调整，与视频封面保持一致
+                        max_width = content_width
+                        max_height = min(800, content_width)  # 限制最大高度
+                        if img.width > max_width or img.height > max_height:
+                            ratio = min(max_width / img.width, max_height / img.height)
+                            new_size = (int(img.width * ratio), int(img.height * ratio))
+                            img = img.resize(new_size, Image.Resampling.LANCZOS)
+                    else:
+                        # 多张图片，使用网格布局
+                        max_size = min(300, content_width // 3)
+                        if img.width > max_size or img.height > max_size:
+                            ratio = min(max_size / img.width, max_size / img.height)
+                            new_size = (int(img.width * ratio), int(img.height * ratio))
+                            img = img.resize(new_size, Image.Resampling.LANCZOS)
 
                     processed_images.append(img)
             except Exception:
@@ -333,8 +343,14 @@ class CommonRenderer(BaseRenderer):
             return None
 
         # 计算网格布局
-        cols = min(3, len(processed_images))
-        rows = (len(processed_images) + cols - 1) // cols
+        if len(processed_images) == 1:
+            # 单张图片，使用1列布局
+            cols = 1
+            rows = 1
+        else:
+            # 多张图片，统一使用3列布局（九宫格）
+            cols = 3
+            rows = (len(processed_images) + cols - 1) // cols
 
         # 计算高度
         max_img_height = max(img.height for img in processed_images)
@@ -669,12 +685,12 @@ class CommonRenderer(BaseRenderer):
         available_width = card_width - 2 * self.PADDING  # 可用宽度
         img_spacing = 4
 
-        # 根据列数计算每个图片的尺寸
-        if cols == 1:
-            max_img_size = min(300, available_width)
-        elif cols == 2:
-            max_img_size = min(300, (available_width - img_spacing) // 2)
-        else:  # cols == 3
+        # 根据图片数量计算每个图片的尺寸
+        if len(images) == 1:
+            # 单张图片，使用完整的可用宽度，与视频封面保持一致
+            max_img_size = available_width
+        else:
+            # 多张图片，统一使用3列布局（九宫格），使用较小尺寸
             max_img_size = min(300, (available_width - 2 * img_spacing) // 3)
 
         current_y = y_pos
