@@ -29,9 +29,11 @@ async def test_parse():
 
         video_contents = parse_result.contents
         assert video_contents
-        video_path = await video_contents[0].video_path()
-        assert video_path.exists()
-        logger.info(f"{url} | 视频下载成功, 视频{fmt_size(video_path)}")
+        for video_content in video_contents:
+            video_path = await video_content.get_path()
+            assert video_path.exists()
+            logger.info(f"{url} | 视频下载成功, 视频{fmt_size(video_path)}")
+
         logger.success(f"{url} | Acfun 视频解析成功")
 
     await parse_acfun_url(url)

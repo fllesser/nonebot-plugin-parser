@@ -4,7 +4,6 @@ from nonebot import logger
 
 
 async def test_parse():
-    from nonebot_plugin_parser.parsers.data import ImageContent, VideoContent
     from nonebot_plugin_parser.parsers.twitter import TwitterParser
 
     urls = [
@@ -18,12 +17,7 @@ async def test_parse():
         logger.info(f"开始解析推特 {url}")
         contents = await TwitterParser.parse_x_url(url)
         for content in contents:
-            if isinstance(content, VideoContent):
-                video_path = await content.video_path()
-                assert video_path.exists()
-            elif isinstance(content, ImageContent):
-                assert content.path.exists()
-            else:
-                pass
+            path = await content.get_path()
+            assert path.exists()
 
     await asyncio.gather(*(parse_x(url) for url in urls))

@@ -24,7 +24,7 @@ async def test_common_video():
         assert parse_result.author
         assert parse_result.cover_path
         assert parse_result.video_contents
-        video_path = await parse_result.video_contents[0].video_path()
+        video_path = await parse_result.video_contents[0].get_path()
         assert video_path.exists()
         logger.success(f"{url} | 抖音视频解析成功")
 
@@ -71,7 +71,10 @@ async def test_note():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.text
         assert parse_result.author
-        assert parse_result.img_paths
+        if img_contents := parse_result.img_contents:
+            for img_content in img_contents:
+                path = await img_content.get_path()
+                assert path.exists()
         logger.success(f"{url} | 抖音图文解析成功")
 
     await asyncio.gather(*[test_parse_share_url(url) for url in note_urls])
@@ -95,12 +98,20 @@ async def test_slides():
     parse_result = await douyin_parser.parse_share_url(dynamic_image_url)
     logger.debug(f"{dynamic_image_url} | 解析结果: \n{parse_result}")
     assert parse_result.text
-    assert parse_result.dynamic_paths
+    dynamic_contents = parse_result.dynamic_contents
+    assert dynamic_contents
+    for dynamic_content in dynamic_contents:
+        path = await dynamic_content.get_path()
+        assert path.exists()
     logger.success(f"抖音图集(含视频解析出视频)解析成功 {dynamic_image_url}")
 
     logger.info(f"开始解析抖音图集(含视频解析出静态图片) {static_image_url}")
     parse_result = await douyin_parser.parse_share_url(static_image_url)
     logger.debug(f"{static_image_url} | 解析结果: \n{parse_result}")
     assert parse_result.text
-    assert parse_result.img_paths
+    img_contents = parse_result.img_contents
+    assert img_contents
+    for img_content in img_contents:
+        path = await img_content.get_path()
+        assert path.exists()
     logger.success(f"抖音图集(含视频解析出静态图片)解析成功 {static_image_url}")

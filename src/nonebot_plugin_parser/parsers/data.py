@@ -12,24 +12,46 @@ from ..exception import ParseException
 from ..helper import Segment, UniHelper, UniMessage
 
 
-@dataclass
+@dataclass(repr=False)
 class MediaContent:
     path_task: Path | Task[Path]
 
     async def get_path(self) -> Path:
         if isinstance(self.path_task, Path):
             return self.path_task
-        return await self.path_task
+        self.path_task = await self.path_task
+        return self.path_task
+
+    def __repr__(self) -> str:
+        # 类名
+        header = f"{self.__class__.__name__}("
+
+        if isinstance(self.path_task, Path):
+            path_task = f"path: {self.path_task}"
+        elif isinstance(self.path_task, Task):
+            path_task = f"task: {self.path_task.get_name()}"
+        else:
+            path_task = f"path_task: {self.path_task}"
+
+        # 子类的其他参数
+        other_params = ""
+        # 排除 path_task
+        for key, value in self.__dict__.items():
+            if key != "path_task":
+                other_params += f", {key}: {value}"
+        other_params = other_params[:-2]
+
+        return f"{header}{path_task}{other_params})"
 
 
-@dataclass
+@dataclass(repr=False)
 class AudioContent(MediaContent):
     """音频内容"""
 
     duration: float = 0.0
 
 
-@dataclass
+@dataclass(repr=False)
 class VideoContent(MediaContent):
     """视频内容"""
 
@@ -48,21 +70,21 @@ class VideoContent(MediaContent):
         return f"时长: {minutes}:{seconds:02d}"
 
 
-@dataclass
+@dataclass(repr=False)
 class ImageContent(MediaContent):
     """图片内容"""
 
     pass
 
 
-@dataclass
+@dataclass(repr=False)
 class DynamicContent(MediaContent):
     """动态内容 视频格式 后续转 gif"""
 
     gif_path: Path | None = None
 
 
-@dataclass
+@dataclass(repr=False)
 class GraphicsContent(MediaContent):
     """图文内容"""
 
@@ -150,6 +172,26 @@ class ParseResult:
 
     def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
+
+    @property
+    def video_contents(self) -> list[VideoContent]:
+        return [cont for cont in self.contents if isinstance(cont, VideoContent)]
+
+    @property
+    def img_contents(self) -> list[ImageContent]:
+        return [cont for cont in self.contents if isinstance(cont, ImageContent)]
+
+    @property
+    def audio_contents(self) -> list[AudioContent]:
+        return [cont for cont in self.contents if isinstance(cont, AudioContent)]
+
+    @property
+    def dynamic_contents(self) -> list[DynamicContent]:
+        return [cont for cont in self.contents if isinstance(cont, DynamicContent)]
+
+    @property
+    def graphics_contents(self) -> list[GraphicsContent]:
+        return [cont for cont in self.contents if isinstance(cont, GraphicsContent)]
 
     @property
     async def cover_path(self) -> Path | None:
