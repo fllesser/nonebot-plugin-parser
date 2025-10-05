@@ -7,6 +7,7 @@ from nonebot_plugin_alconna.uniseg import Segment, UniMessage, Voice
 from nonebot_plugin_alconna.uniseg.segment import CustomNode, Reference
 
 from .config import pconfig
+from .exception import ParseException
 
 
 class UniHelper:
@@ -102,7 +103,7 @@ class UniHelper:
         # 检测文件大小
         file_size_byte_count = int(video_path.stat().st_size)
         if file_size_byte_count == 0:
-            return Text("视频文件大小为 0")
+            raise ParseException("视频文件大小为 0")
         elif file_size_byte_count > 100 * 1024 * 1024:
             # 转为文件 Seg
             return cls.file_seg(video_path, display_name=video_path.name)
