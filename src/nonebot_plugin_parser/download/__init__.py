@@ -6,7 +6,7 @@ import httpx
 from nonebot import logger
 from tqdm.asyncio import tqdm
 
-from ..config import MAX_SIZE, plugin_cache_dir
+from ..config import pconfig
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException, DownloadSizeLimitException
 from ..utils import generate_file_name, merge_av, safe_unlink
@@ -19,7 +19,7 @@ class StreamDownloader:
 
     def __init__(self):
         self.headers: dict[str, str] = COMMON_HEADER.copy()
-        self.cache_dir: Path = plugin_cache_dir
+        self.cache_dir: Path = pconfig.cache_dir
         self.client: httpx.AsyncClient = httpx.AsyncClient(
             timeout=DOWNLOAD_TIMEOUT,
             verify=False,
@@ -63,8 +63,8 @@ class StreamDownloader:
                 content_length = response.headers.get("Content-Length")
                 content_length = int(content_length) if content_length else None
 
-                if content_length and (file_size := content_length / 1024 / 1024) > MAX_SIZE:
-                    logger.warning(f"预下载 {file_name} 大小 {file_size:.2f} MB 超过 {MAX_SIZE} MB 限制, 取消下载")
+                if content_length and (file_size := content_length / 1024 / 1024) > pconfig.max_size:
+                    logger.warning(f"{file_name} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
                     raise DownloadSizeLimitException
 
                 with self.get_progress_bar(file_name, content_length) as bar:

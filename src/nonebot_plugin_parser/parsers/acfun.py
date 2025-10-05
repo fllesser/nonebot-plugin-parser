@@ -9,7 +9,7 @@ import aiofiles
 import httpx
 from nonebot import logger
 
-from ..config import MAX_SIZE, plugin_cache_dir
+from ..config import pconfig
 from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import DownloadException, ParseException
@@ -79,12 +79,12 @@ class AcfunParser(BaseParser):
         """
 
         m3u8_full_urls = await self._parse_m3u8(m3u8s_url)
-        video_file = plugin_cache_dir / f"acfun_{acid}.mp4"
+        video_file = pconfig.cache_dir / f"acfun_{acid}.mp4"
         if video_file.exists():
             return video_file
 
         try:
-            max_size_in_bytes = MAX_SIZE * 1024 * 1024
+            max_size_in_bytes = pconfig.max_size * 1024 * 1024
             async with (
                 aiofiles.open(video_file, "wb") as f,
                 httpx.AsyncClient(headers=self.headers, timeout=DOWNLOAD_TIMEOUT) as client,

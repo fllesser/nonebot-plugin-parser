@@ -6,10 +6,16 @@ from bilibili_api.video import VideoCodecs
 from nonebot import get_driver, get_plugin_config, require
 from pydantic import BaseModel
 
+_nickname: str = next(iter(get_driver().config.nickname), "")
+"""全局名称"""
+
 require("nonebot_plugin_localstore")
-require("nonebot_plugin_apscheduler")
-from nonebot_plugin_apscheduler import scheduler  # noqa: F401
-import nonebot_plugin_localstore as store
+import nonebot_plugin_localstore as _store
+
+_cache_dir: Path = _store.get_plugin_cache_dir()
+_config_dir: Path = _store.get_plugin_config_dir()
+_data_dir: Path = _store.get_plugin_data_dir()
+
 
 PlatformNames = Literal[
     "bilibili", "acfun", "douyin", "youtube", "kuaishou", "twitter", "tiktok", "weibo", "xiaohongshu", "nga"
@@ -23,53 +29,97 @@ class RenderType(str, Enum):
 
 
 class Config(BaseModel):
-    # 小红书 cookies
-    r_xhs_ck: str | None = None
-    # bilibili cookies
-    r_bili_ck: str | None = None
-    # youtube cookies
-    r_ytb_ck: str | None = None
-    # 代理
-    r_proxy: str | None = None
-    # 是否需要上传音频文件
-    r_need_upload: bool = False
-    # 4 条以内消息，是否需要合并转发
-    r_need_forward: bool = True
-    # 是否使用 base64 编码发送图片，音频，视频
-    r_use_base64: bool = False
-    # 资源最大大小 默认 100 单位 MB
-    r_max_size: int = 100
-    # 视频最大时长
-    r_video_duration_maximum: int = 480
-    # 禁止的解析器
-    r_disabled_platforms: list[PlatformNames] = []
-    # B站视频编码
-    r_bili_video_codes: list[VideoCodecs] = [VideoCodecs.AVC, VideoCodecs.AV1, VideoCodecs.HEV]
-    # 是否使用 CommonRenderer
-    r_render_type: RenderType = RenderType.default
+    parser_bili_ck: str | None = None
+    """bilibili cookies"""
+    parser_ytb_ck: str | None = None
+    """youtube cookies"""
+    parser_proxy: str | None = None
+    """代理"""
+    parser_need_upload: bool = False
+    """是否需要上传音频文件"""
+    parser_use_base64: bool = False
+    """是否使用 base64 编码发送图片，音频，视频"""
+    parser_max_size: int = 100
+    """资源最大大小 默认 100 单位 MB"""
+    parser_duration_maximum: int = 480
+    """视频/音频最大时长"""
+    parser_disabled_platforms: list[PlatformNames] = []
+    """禁止的解析器"""
+    parser_bili_video_codes: list[VideoCodecs] = [VideoCodecs.AVC, VideoCodecs.AV1, VideoCodecs.HEV]
+    """B站视频编码"""
+    parser_render_type: RenderType = RenderType.default
+    """Renderer 类型"""
+
+    @property
+    def nickname(self) -> str:
+        """全局名称"""
+        return _nickname
+
+    @property
+    def cache_dir(self) -> Path:
+        """插件缓存目录"""
+        return _cache_dir
+
+    @property
+    def config_dir(self) -> Path:
+        """插件配置目录"""
+        return _config_dir
+
+    @property
+    def data_dir(self) -> Path:
+        """插件数据目录"""
+        return _data_dir
+
+    @property
+    def max_size(self) -> int:
+        """资源最大大小"""
+        return self.parser_max_size
+
+    @property
+    def duration_maximum(self) -> int:
+        """视频/音频最大时长"""
+        return self.parser_duration_maximum
+
+    @property
+    def disabled_platforms(self) -> list[PlatformNames]:
+        """禁止的解析器"""
+        return self.parser_disabled_platforms
+
+    @property
+    def bili_video_codes(self) -> list[VideoCodecs]:
+        """B站视频编码"""
+        return self.parser_bili_video_codes
+
+    @property
+    def render_type(self) -> RenderType:
+        """Renderer 类型"""
+        return self.parser_render_type
+
+    @property
+    def bili_ck(self) -> str | None:
+        """bilibili cookies"""
+        return self.parser_bili_ck
+
+    @property
+    def ytb_ck(self) -> str | None:
+        """youtube cookies"""
+        return self.parser_ytb_ck
+
+    @property
+    def proxy(self) -> str | None:
+        """代理"""
+        return self.parser_proxy
+
+    @property
+    def need_upload(self) -> bool:
+        """是否需要上传音频文件"""
+        return self.parser_need_upload
+
+    @property
+    def use_base64(self) -> bool:
+        """是否使用 base64 编码发送图片，音频，视频"""
+        return self.parser_use_base64
 
 
-plugin_cache_dir: Path = store.get_plugin_cache_dir()
-plugin_config_dir: Path = store.get_plugin_config_dir()
-plugin_data_dir: Path = store.get_plugin_data_dir()
-
-# 配置加载
-rconfig: Config = get_plugin_config(Config)
-
-# cookie 存储位置
-ytb_cookies_file: Path = plugin_config_dir / "ytb_cookies.txt"
-
-# 全局名称
-NICKNAME: str = next(iter(get_driver().config.nickname), "")
-# 根据是否为国外机器声明代理
-PROXY: str | None = rconfig.r_proxy
-# 哔哩哔哩限制的最大视频时长（默认8分钟）单位：秒
-DURATION_MAXIMUM: int = rconfig.r_video_duration_maximum
-# 资源最大大小
-MAX_SIZE: int = rconfig.r_max_size
-# 是否需要上传音频文件
-NEED_UPLOAD: bool = rconfig.r_need_upload
-# 是否需要合并转发
-NEED_FORWARD: bool = rconfig.r_need_forward
-# 是否使用 base64 编码发送图片，音频，视频
-USE_BASE64: bool = rconfig.r_use_base64
+pconfig: Config = get_plugin_config(Config)
+"""配置"""

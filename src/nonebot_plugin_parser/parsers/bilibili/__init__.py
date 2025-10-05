@@ -9,7 +9,7 @@ from bilibili_api.video import Video
 import msgspec
 from nonebot import logger
 
-from ...config import DURATION_MAXIMUM, plugin_cache_dir, plugin_config_dir, rconfig
+from ...config import pconfig
 from ...download import DOWNLOADER
 from ...exception import DownloadException, ParseException
 from ..base import BaseParser
@@ -40,7 +40,7 @@ class BilibiliParser(BaseParser):
     def __init__(self):
         self.headers = HEADERS.copy()
         self._credential: Credential | None = None
-        self._cookies_file = plugin_config_dir / "bilibili_cookies.json"
+        self._cookies_file = pconfig.config_dir / "bilibili_cookies.json"
         # 选择客户端
         select_client("curl_cffi")
         # 模仿浏览器
@@ -134,11 +134,11 @@ class BilibiliParser(BaseParser):
 
         # 视频下载 task
         async def download_video():
-            output_path = plugin_cache_dir / f"{video_info.bvid}-{page_num}.mp4"
+            output_path = pconfig.cache_dir / f"{video_info.bvid}-{page_num}.mp4"
             if output_path.exists():
                 return output_path
             v_url, a_url = await self.parse_video_download_url(video=video, page_index=page_idx)
-            if duration > DURATION_MAXIMUM:
+            if duration > pconfig.duration_maximum:
                 raise DownloadException("视频时长超过最大限制")
             if a_url is not None:
                 return await DOWNLOADER.download_av_and_merge(
@@ -236,11 +236,11 @@ class BilibiliParser(BaseParser):
     async def _init_credential(self) -> Credential | None:
         """初始化 bilibili api"""
 
-        if not rconfig.r_bili_ck:
+        if not pconfig.bili_ck:
             logger.warning("未配置 r_bili_ck, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
             return None
 
-        credential = Credential.from_cookies(ck2dict(rconfig.r_bili_ck))
+        credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
         if not await credential.check_valid() and self._cookies_file.exists():
             logger.info(f"r_bili_ck 已过期, 尝试从 {self._cookies_file} 加载")
             credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
@@ -445,7 +445,7 @@ class BilibiliParser(BaseParser):
         detecter = VideoDownloadURLDataDetecter(download_url_data)
         streams = detecter.detect_best_streams(
             video_max_quality=VideoQuality._1080P,
-            codecs=rconfig.r_bili_video_codes,
+            codecs=pconfig.bili_video_codes,
             no_dolby_video=True,
             no_hdr=True,
         )

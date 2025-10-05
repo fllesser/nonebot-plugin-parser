@@ -6,7 +6,7 @@ from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_uninfo")
 
-from .config import Config, plugin_cache_dir, scheduler
+from .config import Config, pconfig
 from .matchers import parser_matcher  # noqa: F401
 from .utils import safe_unlink
 
@@ -25,11 +25,14 @@ __plugin_meta__ = PluginMetadata(
     },
 )
 
+require("nonebot_plugin_apscheduler")
+from nonebot_plugin_apscheduler import scheduler
+
 
 @scheduler.scheduled_job("cron", hour=1, minute=0, id="parser-clean-local-cache")
 async def clean_plugin_cache():
     try:
-        files = [f for f in plugin_cache_dir.iterdir() if f.is_file()]
+        files = [f for f in pconfig.cache_dir.iterdir() if f.is_file()]
         if not files:
             logger.info("No cache files to clean")
             return
