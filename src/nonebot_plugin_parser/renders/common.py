@@ -45,6 +45,28 @@ class CommonRenderer(BaseRenderer):
     REPOST_AVATAR_SIZE = 32  # 转发头像尺寸
     REPOST_AVATAR_GAP = 8  # 转发头像和文字间距
 
+    # 图片处理配置
+    MIN_COVER_WIDTH = 300  # 最小封面宽度
+    MIN_COVER_HEIGHT = 200  # 最小封面高度
+    MAX_IMAGE_HEIGHT = 800  # 图片最大高度限制
+    MAX_IMAGE_GRID_SIZE = 300  # 图片网格最大尺寸
+    IMAGE_GRID_SPACING = 4  # 图片网格间距
+    MAX_IMAGES_DISPLAY = 9  # 最大显示图片数量
+    IMAGE_GRID_COLS = 3  # 图片网格列数
+    IMAGE_GRID_ROWS_SINGLE = 1  # 单张图片行数
+    IMAGE_GRID_COLS_SINGLE = 1  # 单张图片列数
+
+    # 视频播放按钮配置
+    VIDEO_BUTTON_SIZE_RATIO = 0.25  # 播放按钮大小比例（相对于封面）
+    VIDEO_BUTTON_ALPHA = 120  # 播放按钮透明度
+    VIDEO_TRIANGLE_SIZE_RATIO = 0.33  # 三角形大小比例（相对于按钮）
+
+    # 头像处理配置
+    AVATAR_UPSCALE_FACTOR = 2  # 头像超采样倍数
+
+    # 转发缩放配置
+    REPOST_SCALE = 0.88  # 转发内容缩放比例
+
     ITEM_NAMES = ("name", "title", "text", "extra")
     # 字体大小和行高
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 24, "text": 30, "extra": 24}
@@ -134,12 +156,9 @@ class CommonRenderer(BaseRenderer):
                 cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
             # 如果封面太小，需要放大到最小尺寸
-            min_cover_width = 300  # 最小封面宽度
-            min_cover_height = 200  # 最小封面高度
-
-            if cover_img.width < min_cover_width or cover_img.height < min_cover_height:
-                width_ratio = min_cover_width / cover_img.width
-                height_ratio = min_cover_height / cover_img.height
+            if cover_img.width < self.MIN_COVER_WIDTH or cover_img.height < self.MIN_COVER_HEIGHT:
+                width_ratio = self.MIN_COVER_WIDTH / cover_img.width
+                height_ratio = self.MIN_COVER_HEIGHT / cover_img.height
                 scale_ratio = max(width_ratio, height_ratio)  # 使用max确保达到最小尺寸
 
                 new_width = int(cover_img.width * scale_ratio)
@@ -163,8 +182,8 @@ class CommonRenderer(BaseRenderer):
             if avatar_img.mode != "RGBA":
                 avatar_img = avatar_img.convert("RGBA")
 
-            # 使用超采样技术提高质量：先放大到 2 倍
-            scale = 2
+            # 使用超采样技术提高质量：先放大到指定倍数
+            scale = self.AVATAR_UPSCALE_FACTOR
             temp_size = self.AVATAR_SIZE * scale
             avatar_img = avatar_img.resize((temp_size, temp_size), Image.Resampling.LANCZOS)
 
@@ -270,7 +289,7 @@ class CommonRenderer(BaseRenderer):
             return None
 
         # 使用原内容绘制逻辑，但缩小尺寸
-        repost_scale = 0.88  # 转发内容缩小到70%
+        repost_scale = self.REPOST_SCALE  # 转发内容缩放比例
         repost_width = int(content_width * repost_scale)
 
         # 计算转发内容的完整卡片
@@ -293,16 +312,16 @@ class CommonRenderer(BaseRenderer):
         if not result.img_contents:
             return None
 
-        # 检查是否有超过9张图片
+        # 检查是否有超过最大显示数量的图片
         total_images = len(result.img_contents)
-        has_more = total_images > 9
+        has_more = total_images > self.MAX_IMAGES_DISPLAY
 
-        # 如果超过9张，处理前9张，第9张显示+N效果
+        # 如果超过最大显示数量，处理前N张，最后一张显示+N效果
         if has_more:
-            img_contents = result.img_contents[:9]
-            remaining_count = total_images - 9
+            img_contents = result.img_contents[: self.MAX_IMAGES_DISPLAY]
+            remaining_count = total_images - self.MAX_IMAGES_DISPLAY
         else:
-            img_contents = result.img_contents[:9]
+            img_contents = result.img_contents[: self.MAX_IMAGES_DISPLAY]
             remaining_count = 0
 
         processed_images = []
@@ -322,14 +341,14 @@ class CommonRenderer(BaseRenderer):
                     if len(img_contents) == 1:
                         # 单张图片，根据卡片宽度调整，与视频封面保持一致
                         max_width = content_width
-                        max_height = min(800, content_width)  # 限制最大高度
+                        max_height = min(self.MAX_IMAGE_HEIGHT, content_width)  # 限制最大高度
                         if img.width > max_width or img.height > max_height:
                             ratio = min(max_width / img.width, max_height / img.height)
                             new_size = (int(img.width * ratio), int(img.height * ratio))
                             img = img.resize(new_size, Image.Resampling.LANCZOS)
                     else:
                         # 多张图片，使用网格布局
-                        max_size = min(300, content_width // 3)
+                        max_size = min(self.MAX_IMAGE_GRID_SIZE, content_width // self.IMAGE_GRID_COLS)
                         if img.width > max_size or img.height > max_size:
                             ratio = min(max_size / img.width, max_size / img.height)
                             new_size = (int(img.width * ratio), int(img.height * ratio))
@@ -345,16 +364,16 @@ class CommonRenderer(BaseRenderer):
         # 计算网格布局
         if len(processed_images) == 1:
             # 单张图片，使用1列布局
-            cols = 1
-            rows = 1
+            cols = self.IMAGE_GRID_COLS_SINGLE
+            rows = self.IMAGE_GRID_ROWS_SINGLE
         else:
             # 多张图片，统一使用3列布局（九宫格）
-            cols = 3
+            cols = self.IMAGE_GRID_COLS
             rows = (len(processed_images) + cols - 1) // cols
 
         # 计算高度
         max_img_height = max(img.height for img in processed_images)
-        grid_height = rows * max_img_height + (rows - 1) * 4  # 图片间距
+        grid_height = rows * max_img_height + (rows - 1) * self.IMAGE_GRID_SPACING  # 图片间距
 
         return {
             "height": grid_height,
@@ -466,7 +485,7 @@ class CommonRenderer(BaseRenderer):
                 avatar_img = avatar_img.convert("RGBA")
 
             # 使用超采样技术提高质量
-            scale = 2
+            scale = self.AVATAR_UPSCALE_FACTOR
             temp_size = self.REPOST_AVATAR_SIZE * scale
             avatar_img = avatar_img.resize((temp_size, temp_size), Image.Resampling.LANCZOS)
 
@@ -590,20 +609,20 @@ class CommonRenderer(BaseRenderer):
         draw = ImageDraw.Draw(image)
 
         # 计算播放按钮的位置和尺寸
-        button_size = min(width, height) // 4  # 按钮大小为封面尺寸的1/4
+        button_size = int(min(width, height) * self.VIDEO_BUTTON_SIZE_RATIO)  # 按钮大小比例
         button_x = x_pos + (width - button_size) // 2
         button_y = y_pos + (height - button_size) // 2
 
         # 绘制半透明圆形背景
         overlay = Image.new("RGBA", (button_size, button_size), (0, 0, 0, 0))
         overlay_draw = ImageDraw.Draw(overlay)
-        overlay_draw.ellipse((0, 0, button_size - 1, button_size - 1), fill=(0, 0, 0, 120))
+        overlay_draw.ellipse((0, 0, button_size - 1, button_size - 1), fill=(0, 0, 0, self.VIDEO_BUTTON_ALPHA))
 
         # 将半透明背景贴到主画布上
         image.paste(overlay, (button_x, button_y), overlay)
 
         # 绘制播放三角形
-        triangle_size = button_size // 3
+        triangle_size = int(button_size * self.VIDEO_TRIANGLE_SIZE_RATIO)
         triangle_x = button_x + (button_size - triangle_size) // 2
         triangle_y = button_y + (button_size - triangle_size) // 2
 
@@ -683,7 +702,7 @@ class CommonRenderer(BaseRenderer):
 
         # 计算每个图片的尺寸和间距
         available_width = card_width - 2 * self.PADDING  # 可用宽度
-        img_spacing = 4
+        img_spacing = self.IMAGE_GRID_SPACING
 
         # 根据图片数量计算每个图片的尺寸
         if len(images) == 1:
@@ -691,7 +710,7 @@ class CommonRenderer(BaseRenderer):
             max_img_size = available_width
         else:
             # 多张图片，统一使用3列布局（九宫格），使用较小尺寸
-            max_img_size = min(300, (available_width - 2 * img_spacing) // 3)
+            max_img_size = min(self.MAX_IMAGE_GRID_SIZE, (available_width - 2 * img_spacing) // self.IMAGE_GRID_COLS)
 
         current_y = y_pos
 
@@ -712,8 +731,8 @@ class CommonRenderer(BaseRenderer):
                 y_offset = (max_height - img.height) // 2
                 image.paste(img, (img_x, img_y + y_offset))
 
-                # 如果是第9张图片且有更多图片，绘制+N效果
-                if has_more and row == rows - 1 and i == len(row_images) - 1 and len(images) == 9:  # 第9张图片
+                # 如果是最后一张图片且有更多图片，绘制+N效果
+                if has_more and row == rows - 1 and i == len(row_images) - 1 and len(images) == self.MAX_IMAGES_DISPLAY:
                     self._draw_more_indicator(image, img_x, img_y, max_img_size, max_height, remaining_count)
 
             current_y += max_height + img_spacing
