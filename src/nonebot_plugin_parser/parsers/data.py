@@ -5,9 +5,6 @@ from itertools import chain
 from pathlib import Path
 from typing import Any
 
-from ..constants import ANDROID_HEADER as ANDROID_HEADER
-from ..constants import COMMON_HEADER as COMMON_HEADER
-from ..constants import IOS_HEADER as IOS_HEADER
 from ..exception import ParseException
 from ..helper import Segment, UniHelper, UniMessage
 
@@ -251,40 +248,20 @@ class ParseResultKwargs(TypedDict, total=False):
     repost: ParseResult | None
 
 
-from abc import ABC, abstractmethod
+@dataclass
+class ParseData:
+    title: str = ""
+    text: str = ""
 
+    name: str | None = None
+    avatar_url: str | None = None
+    description: str | None = None
 
-class TransitionData(ABC):
-    def get_title(self) -> str:
-        return ""
-
-    @abstractmethod
-    def name_avatar_desc(self) -> tuple[str, str | None, str | None]:
-        raise NotImplementedError
-
-    def get_text(self) -> str:
-        return ""
-
-    def get_timestamp(self) -> int | None:
-        return None
-
-    def get_url(self) -> str | None:
-        return None
-
-    def get_video_url(self) -> str | None:
-        return None
-
-    def get_cover_url(self) -> str | None:
-        return None
-
-    def get_images_urls(self) -> list[str] | None:
-        return None
-
-    def get_dynamic_urls(self) -> list[str] | None:
-        return None
-
-    def get_extra(self) -> dict[str, Any]:
-        return {}
-
-    def get_repost(self) -> "TransitionData | None":
-        return None
+    timestamp: int | None = None
+    url: str | None = None
+    video_url: str | None = None
+    cover_url: str | None = None
+    images_urls: list[str] | None = None
+    dynamic_urls: list[str] | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
+    repost: "ParseData | None" = None

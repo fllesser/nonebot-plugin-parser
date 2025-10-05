@@ -7,7 +7,7 @@ import msgspec
 
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ParseResult, Platform
+from .data import ParseData, ParseResult, Platform
 
 
 class WeiBoParser(BaseParser):
@@ -176,8 +176,7 @@ class WeiBoParser(BaseParser):
         # 用 bytes 更稳，避免编码歧义
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
         url = f"https://weibo.com/{weibo_data.user.id}/{weibo_data.bid}"
-        transition_data = WeiboTransitionData(weibo_data, url)
-        return self.convert_transition_to_result(transition_data)
+        return self.build_result(weibo_data.parse_data)
 
     def _base62_encode(self, number: int) -> str:
         """将数字转换为 base62 编码"""
@@ -215,45 +214,6 @@ class WeiBoParser(BaseParser):
 
 
 from msgspec import Struct
-
-from .data import TransitionData
-
-
-class WeiboTransitionData(TransitionData):
-    def __init__(self, weibo_data: "WeiboData", url: str | None = None):
-        self.weibo_data = weibo_data
-        self._url = url
-
-    def name_avatar_desc(self):
-        return self.weibo_data.display_name, self.weibo_data.user.profile_image_url, None
-
-    def get_title(self):
-        return self.weibo_data.title
-
-    def get_text(self):
-        return self.weibo_data.text_content
-
-    def get_timestamp(self):
-        import time
-
-        return int(time.mktime(time.strptime(self.weibo_data.created_at, "%a %b %d %H:%M:%S %z %Y")))
-
-    def get_url(self):
-        return self._url
-
-    def get_video_url(self):
-        return self.weibo_data.video_url
-
-    def get_cover_url(self):
-        return self.weibo_data.cover_url
-
-    def get_images_urls(self):
-        return self.weibo_data.pic_urls if self.weibo_data.pic_urls else None
-
-    def get_repost(self):
-        if self.weibo_data.retweeted_status:
-            return WeiboTransitionData(self.weibo_data.retweeted_status)
-        return None
 
 
 class LargeInPic(Struct):
@@ -342,6 +302,20 @@ class WeiboData(Struct):
         if self.pics:
             return [x.large.url for x in self.pics]
         return []
+
+    @property
+    def parse_data(self) -> ParseData:
+        return ParseData(
+            title=self.title,
+            name=self.display_name,
+            avatar_url=self.user.profile_image_url,
+            text=self.text_content,
+            timestamp=int(time.mktime(time.strptime(self.created_at, "%a %b %d %H:%M:%S %z %Y"))),
+            video_url=self.video_url,
+            cover_url=self.cover_url,
+            images_urls=self.pic_urls,
+            repost=self.retweeted_status.parse_data if self.retweeted_status else None,
+        )
 
 
 class WeiboResponse(Struct):

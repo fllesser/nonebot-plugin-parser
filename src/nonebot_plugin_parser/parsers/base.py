@@ -6,9 +6,10 @@ from typing import ClassVar
 from typing_extensions import Unpack
 
 import httpx
+from nonebot import logger
 
 from ..constants import ANDROID_HEADER, COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
-from .data import ParseResult, ParseResultKwargs, Platform, TransitionData
+from .data import ParseData, ParseResult, ParseResultKwargs, Platform
 
 
 class BaseParser(ABC):
@@ -79,48 +80,49 @@ class BaseParser(ABC):
                 response.raise_for_status()
             return response.headers.get("Location", url)
 
-    def convert_transition_to_result(self, data: TransitionData) -> ParseResult:
+    def build_result(self, data: ParseData) -> ParseResult:
         """转换为解析结果"""
+
         from ..download import DOWNLOADER
         from .data import Author, DynamicContent, ImageContent, MediaContent, VideoContent
 
+        logger.debug(f"data: {data}")
         # 填充作者信息
-        name, avatar, desc = data.name_avatar_desc()
-        if avatar is not None:
-            avatar = DOWNLOADER.download_img(avatar, ext_headers=self.headers)
-        author = Author(name=name, avatar=avatar, description=desc)
-
-        # 填充封面信息
-        cover_task = None
-        if cover_url := data.get_cover_url():
-            cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
+        author = None
+        name, avatar = data.name, data.avatar_url
+        if name is not None:
+            if avatar is not None:
+                avatar = DOWNLOADER.download_img(avatar, ext_headers=self.headers)
+            author = Author(name=name, avatar=avatar, description=data.description)
 
         # 填充内容信息
         contents: list[MediaContent] = []
-        if images_urls := data.get_images_urls():
-            img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in images_urls]
-            contents.extend(ImageContent(task) for task in img_tasks)
-        if dynamic_urls := data.get_dynamic_urls():
-            dynamic_tasks = [DOWNLOADER.download_video(url, ext_headers=self.headers) for url in dynamic_urls]
-            contents.extend(DynamicContent(task) for task in dynamic_tasks)
-
-        if video_url := data.get_video_url():
+        if video_url := data.video_url:
+            cover_task = None
+            if cover_url := data.cover_url:
+                cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
             video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
             contents.append(VideoContent(video_task, cover_task))
         else:
-            if cover_task:
-                contents.append(ImageContent(cover_task))
+            if images_urls := data.images_urls:
+                img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in images_urls]
+                contents.extend(ImageContent(task) for task in img_tasks)
+            if dynamic_urls := data.dynamic_urls:
+                dynamic_tasks = [DOWNLOADER.download_video(url, ext_headers=self.headers) for url in dynamic_urls]
+                contents.extend(DynamicContent(task) for task in dynamic_tasks)
 
-        if repost := data.get_repost():
-            repost = self.convert_transition_to_result(repost)
+        if repost := data.repost:
+            repost = self.build_result(repost)
+        else:
+            repost = None
 
         return self.result(
             author=author,
             contents=contents,
-            title=data.get_title(),
-            text=data.get_text(),
-            timestamp=data.get_timestamp(),
-            url=data.get_url(),
-            extra=data.get_extra(),
+            title=data.title,
+            text=data.text,
+            timestamp=data.timestamp,
+            url=data.url,
+            extra=data.extra,
             repost=repost,
         )

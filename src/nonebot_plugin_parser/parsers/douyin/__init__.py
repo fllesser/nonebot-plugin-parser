@@ -8,7 +8,6 @@ from nonebot import logger
 
 from ...constants import COMMON_TIMEOUT
 from ...exception import ParseException
-from ...utils import write_json_to_data
 from ..base import BaseParser
 from ..data import ParseResult, Platform
 
@@ -80,12 +79,11 @@ class DouyinParser(BaseParser):
         if not matched or not matched.group(1):
             raise ParseException("can't find _ROUTER_DATA in html")
 
-        from .video import RouterData, VideoTransitionData
+        from .video import RouterData
 
-        write_json_to_data(matched.group(1).strip(), "douyin_video.json")
         video_data = msgspec.json.decode(matched.group(1).strip(), type=RouterData).video_data
 
-        return self.convert_transition_to_result(VideoTransitionData(video_data))
+        return self.build_result(video_data.parse_data)
 
     async def parse_slides(self, video_id: str) -> ParseResult:
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
@@ -97,10 +95,10 @@ class DouyinParser(BaseParser):
             response = await client.get(url, params=params)
             response.raise_for_status()
 
-        from .slides import SlidesInfo, SlidesTransitionData
+        from .slides import SlidesInfo
 
         slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
-        return self.convert_transition_to_result(SlidesTransitionData(slides_data))
+        return self.build_result(slides_data.parse_data)
 
     @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:
