@@ -3,7 +3,7 @@ from collections import OrderedDict
 import hashlib
 from pathlib import Path
 import re
-from typing import TypeVar
+from typing import Any, TypeVar
 from urllib.parse import urlparse
 
 from nonebot import logger
@@ -202,3 +202,19 @@ def generate_file_name(url: str, default_suffix: str = "") -> str:
     url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
     file_name = f"{url_hash}{suffix}"
     return file_name
+
+
+def write_json_to_data(data: dict[str, Any] | str, file_name: str):
+    """将数据写入数据目录
+
+    Args:
+        data (dict[str, Any] | str): 数据
+        file_name (str): 文件名
+    """
+    import json
+
+    from .config import pconfig
+
+    path = pconfig.data_dir / file_name
+    with open(path, "w") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)

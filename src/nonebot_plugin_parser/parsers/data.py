@@ -129,7 +129,7 @@ class ParseResult:
     """文本内容"""
     contents: list[MediaContent] = field(default_factory=list)
     """内容列表，主体以外的内容"""
-    timestamp: float | None = None
+    timestamp: int | None = None
     """发布时间戳, 秒"""
     url: str | None = None
     """来源链接"""
@@ -244,7 +244,7 @@ class ParseResultKwargs(TypedDict, total=False):
     title: str
     text: str
     contents: list[MediaContent]
-    timestamp: float | None
+    timestamp: int | None
     url: str | None
     author: Author | None
     extra: dict[str, Any]
