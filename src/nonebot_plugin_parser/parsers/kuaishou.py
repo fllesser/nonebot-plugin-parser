@@ -9,7 +9,7 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ImageContent, MediaContent, ParseResult, Platform, VideoContent
+from .data import Author, ImageContent, MediaContent, ParseResult, Platform, VideoContent
 
 
 class KuaiShouParser(BaseParser):
@@ -83,11 +83,17 @@ class KuaiShouParser(BaseParser):
         contents: list[MediaContent] = []
         if video_url := photo.video_url:
             video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
-            contents.append(VideoContent(video_task, cover))
+            contents.append(VideoContent(video_task, cover, duration=photo.duration))
         elif img_urls := photo.img_urls:
             contents.extend(ImageContent(DOWNLOADER.download_img(url, ext_headers=self.headers)) for url in img_urls)
-
-        return self.result(title=photo.caption, contents=contents)
+        # 下载作者头像
+        avatar = DOWNLOADER.download_img(photo.head_url, ext_headers=self.headers) if photo.head_url else None
+        return self.result(
+            title=photo.caption,
+            author=Author(name=photo.name, avatar=avatar),
+            contents=contents,
+            timestamp=photo.timestamp // 1000,
+        )
 
 
 from typing import TypeAlias
@@ -121,9 +127,17 @@ class ExtParams(Struct):
 class Photo(Struct):
     # 标题
     caption: str
+    timestamp: int
+    duration: int = 0
+    user_name: str = field(default="未知用户", name="userName")
+    head_url: str | None = field(default=None, name="headUrl")
     cover_urls: list[CdnUrl] = field(name="coverUrls", default_factory=list)
     main_mv_urls: list[CdnUrl] = field(name="mainMvUrls", default_factory=list)
     ext_params: ExtParams = field(name="ext_params", default_factory=ExtParams)
+
+    @property
+    def name(self) -> str:
+        return self.user_name.replace("\u3164", "").strip()
 
     @property
     def cover_url(self):
