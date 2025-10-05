@@ -1333,10 +1333,6 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-all = [
-    { name = "jinja2" },
-    { name = "nonebot-plugin-htmlkit" },
-]
 htmlkit = [
     { name = "jinja2" },
     { name = "nonebot-plugin-htmlkit" },
@@ -1346,7 +1342,6 @@ htmlkit = [
 all-extras = [
     { name = "jinja2" },
     { name = "nonebot-plugin-htmlkit" },
-    { name = "pillow" },
 ]
 dev = [
     { name = "bump-my-version" },
@@ -1374,12 +1369,10 @@ requires-dist = [
     { name = "bilibili-api-python", specifier = ">=17.3.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
-    { name = "jinja2", marker = "extra == 'all'", specifier = ">=3.1.6" },
     { name = "jinja2", marker = "extra == 'htmlkit'", specifier = ">=3.1.6" },
     { name = "msgspec", specifier = ">=0.19.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4" },
     { name = "nonebot-plugin-apscheduler", specifier = ">=0.5.0,<1.0.0" },
-    { name = "nonebot-plugin-htmlkit", marker = "extra == 'all'", specifier = ">=0.1.0rc1" },
     { name = "nonebot-plugin-htmlkit", marker = "extra == 'htmlkit'", specifier = ">=0.1.0rc1" },
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
     { name = "nonebot-plugin-uninfo", specifier = ">=0.9.0" },
@@ -1388,13 +1381,12 @@ requires-dist = [
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
     { name = "yt-dlp", specifier = ">=2025.9.26" },
 ]
-provides-extras = ["htmlkit", "all"]
+provides-extras = ["htmlkit"]
 
 [package.metadata.requires-dev]
 all-extras = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc1" },
-    { name = "pillow", specifier = ">=11.0.0" },
 ]
 dev = [
     { name = "bump-my-version", specifier = ">=1.2.4" },
