@@ -39,7 +39,7 @@ class Config(BaseModel):
     """是否需要上传音频文件"""
     parser_use_base64: bool = False
     """是否使用 base64 编码发送图片，音频，视频"""
-    parser_max_size: int = 100
+    parser_max_size: int = 90
     """资源最大大小 默认 100 单位 MB"""
     parser_duration_maximum: int = 480
     """视频/音频最大时长"""
@@ -47,7 +47,7 @@ class Config(BaseModel):
     """禁止的解析器"""
     parser_bili_video_codes: list[VideoCodecs] = [VideoCodecs.AVC, VideoCodecs.AV1, VideoCodecs.HEV]
     """B站视频编码"""
-    parser_render_type: RenderType = RenderType.default
+    parser_render_type: RenderType = RenderType.common
     """Renderer 类型"""
 
     @property
