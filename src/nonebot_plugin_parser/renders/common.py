@@ -5,6 +5,7 @@ from typing_extensions import override
 
 from PIL import Image, ImageDraw, ImageFont
 
+from ..config import pconfig
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
@@ -47,11 +48,14 @@ class CommonRenderer(BaseRenderer):
     @override
     async def render_messages(self, result: ParseResult):
         # 生成图片卡片
-        image_raw = await self.draw_common_image(result)
-        if image_raw:
-            yield UniMessage([UniHelper.img_seg(raw=image_raw)])
+        if image_raw := await self.draw_common_image(result):
+            msg = UniMessage(UniHelper.img_seg(raw=image_raw))
+            if pconfig.append_url:
+                urls = (result.display_url, result.repost_display_url)
+                msg += "\n".join(urls)
+            yield msg
 
-        # 渲染其他内容
+        # 媒体内容
         async for message in self.render_contents(result):
             yield message
 

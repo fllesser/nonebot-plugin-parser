@@ -43,6 +43,8 @@ class Config(BaseModel):
     """资源最大大小 默认 100 单位 MB"""
     parser_duration_maximum: int = 480
     """视频/音频最大时长"""
+    parser_append_url: bool = False
+    """是否在解析结果中附加原始URL"""
     parser_disabled_platforms: list[PlatformNames] = []
     """禁止的解析器"""
     parser_bili_video_codes: list[VideoCodecs] = [VideoCodecs.AVC, VideoCodecs.AV1, VideoCodecs.HEV]
@@ -119,6 +121,11 @@ class Config(BaseModel):
     def use_base64(self) -> bool:
         """是否使用 base64 编码发送图片，音频，视频"""
         return self.parser_use_base64
+
+    @property
+    def append_url(self) -> bool:
+        """是否在解析结果中附加原始URL"""
+        return self.parser_append_url
 
 
 pconfig: Config = get_plugin_config(Config)
