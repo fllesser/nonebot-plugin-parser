@@ -5,8 +5,14 @@ from msgspec import Struct, field
 from ...exception import ParseException
 
 
+class Avatar(Struct):
+    url_list: list[str]
+
+
 class Author(Struct):
     nickname: str
+    avatar_thumb: Avatar | None = None
+    avatar_medium: Avatar | None = None
 
 
 class PlayAddr(Struct):
@@ -29,6 +35,7 @@ class Image(Struct):
 
 
 class VideoData(Struct):
+    create_time: int
     author: Author
     desc: str
     images: list[Image] | None = None
@@ -87,7 +94,13 @@ class VideoTransitionData(TransitionData):
         self.video_data = video_data
 
     def name_avatar_desc(self) -> tuple[str, str | None, str | None]:
-        return self.video_data.author.nickname, None, self.video_data.desc
+        if avatar := self.video_data.author.avatar_thumb:
+            avatar_url = avatar.url_list[0]
+        elif avatar := self.video_data.author.avatar_medium:
+            avatar_url = avatar.url_list[0]
+        else:
+            avatar_url = None
+        return self.video_data.author.nickname, avatar_url, self.video_data.desc
 
     def get_title(self) -> str:
         return self.video_data.desc
@@ -100,3 +113,6 @@ class VideoTransitionData(TransitionData):
 
     def get_cover_url(self) -> str | None:
         return self.video_data.cover_url
+
+    def get_timestamp(self):
+        return self.video_data.create_time
