@@ -3,7 +3,6 @@ from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Any, ClassVar
 
-from ..config import NEED_FORWARD
 from ..helper import UniHelper as UniHelper
 from ..helper import UniMessage as UniMessage
 from ..parsers import ParseResult as ParseResult
@@ -44,7 +43,7 @@ class BaseRenderer(ABC):
         if forwardable_segs:
             # 根据 NEED_FORWARD 和消息段数量决定是否使用转发消息
             # 后续去掉 NEED_FORWARD 配置项, 并根据适配器判断是否合并转发
-            if NEED_FORWARD or len(forwardable_segs) > 2:
+            if len(forwardable_segs) > 2:
                 forward_msg = UniHelper.construct_forward_message(forwardable_segs)
                 yield UniMessage(forward_msg)
             else:

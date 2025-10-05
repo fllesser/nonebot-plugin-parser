@@ -47,7 +47,7 @@ async def test_video():
 
 
 async def test_merge_av_h264():
-    from nonebot_plugin_parser.config import plugin_cache_dir
+    from nonebot_plugin_parser.config import pconfig
     from nonebot_plugin_parser.download import DOWNLOADER
     from nonebot_plugin_parser.parsers import BilibiliParser
     from nonebot_plugin_parser.utils import merge_av_h264
@@ -63,7 +63,7 @@ async def test_merge_av_h264():
         pytest.skip("B站视频 av605821754 p41 解析失败(风控)")
 
     file_name = "av605821754-41"
-    video_path = plugin_cache_dir / f"{file_name}.mp4"
+    video_path = pconfig.cache_dir / f"{file_name}.mp4"
 
     assert audio_url is not None
 
@@ -79,7 +79,7 @@ async def test_merge_av_h264():
 async def test_encode_h264_video():
     import asyncio
 
-    from nonebot_plugin_parser.config import plugin_cache_dir
+    from nonebot_plugin_parser.config import pconfig
     from nonebot_plugin_parser.download import DOWNLOADER
     from nonebot_plugin_parser.parsers import BilibiliParser
     from nonebot_plugin_parser.utils import encode_video_to_h264, merge_av
@@ -97,7 +97,7 @@ async def test_encode_h264_video():
     except Exception:
         pytest.skip("B站视频 BV1VLk9YDEzB 下载失败")
 
-    video_path = plugin_cache_dir / f"{bvid}.mp4"
+    video_path = pconfig.cache_dir / f"{bvid}.mp4"
     await merge_av(v_path=v_path, a_path=a_path, output_path=video_path)
     video_h264_path = await encode_video_to_h264(video_path)
     assert not video_path.exists()

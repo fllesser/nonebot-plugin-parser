@@ -8,7 +8,7 @@ from nonebot.adapters import Event
 from nonebot_plugin_alconna import SupportAdapter
 from nonebot_plugin_alconna.uniseg import get_message_id, get_target, message_reaction
 
-from ..config import rconfig
+from ..config import pconfig
 from ..parsers import BaseParser, ParseResult
 from ..renders import get_renderer
 from ..utils import LimitedSizeDict
@@ -16,7 +16,7 @@ from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
 
 
 def _get_enabled_parser_classes() -> list[type[BaseParser]]:
-    disabled_platforms = set(rconfig.r_disabled_platforms)
+    disabled_platforms = set(pconfig.disabled_platforms)
     all_subclass = BaseParser.get_all_subclass()
     return [_cls for _cls in all_subclass if _cls.platform.name not in disabled_platforms]
 

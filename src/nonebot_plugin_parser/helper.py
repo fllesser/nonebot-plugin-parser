@@ -6,7 +6,7 @@ from nonebot_plugin_alconna import File, Image, Text, Video
 from nonebot_plugin_alconna.uniseg import Segment, UniMessage, Voice
 from nonebot_plugin_alconna.uniseg.segment import CustomNode, Reference
 
-from .config import NEED_FORWARD, NICKNAME, USE_BASE64
+from .config import pconfig
 
 
 class UniHelper:
@@ -33,7 +33,7 @@ class UniHelper:
                 content = UniMessage([seg])
             else:
                 content = seg
-            node = CustomNode(uid=user_id, name=NICKNAME, content=content)
+            node = CustomNode(uid=user_id, name=pconfig.nickname, content=content)
             nodes.append(node)
 
         return Reference(nodes=nodes)
@@ -46,7 +46,7 @@ class UniHelper:
             segments (Sequence[Segment | str]): 消息段
         """
 
-        if NEED_FORWARD or len(segments) > 4:
+        if len(segments) > 2:
             forward_msg = cls.construct_forward_message(segments)
             await UniMessage([forward_msg]).send()
 
@@ -72,7 +72,7 @@ class UniHelper:
         if img_path is None:
             raise ValueError("img_path 和 raw 不能都为 None")
 
-        if USE_BASE64:
+        if pconfig.use_base64:
             return Image(raw=img_path.read_bytes())
         else:
             return Image(path=img_path)
@@ -87,7 +87,7 @@ class UniHelper:
         Returns:
             Voice: 语音 Seg
         """
-        if USE_BASE64:
+        if pconfig.use_base64:
             return Voice(raw=audio_path.read_bytes())
         else:
             return Voice(path=audio_path)
@@ -107,7 +107,7 @@ class UniHelper:
             # 转为文件 Seg
             return cls.file_seg(video_path, display_name=video_path.name)
         else:
-            if USE_BASE64:
+            if pconfig.use_base64:
                 return Video(raw=video_path.read_bytes())
             else:
                 return Video(path=video_path)
@@ -127,7 +127,7 @@ class UniHelper:
             display_name = file.name
         if not display_name:
             raise ValueError("文件名不能为空")
-        if USE_BASE64:
+        if pconfig.use_base64:
             return File(raw=file.read_bytes(), name=display_name)
         else:
             return File(path=file, name=display_name)

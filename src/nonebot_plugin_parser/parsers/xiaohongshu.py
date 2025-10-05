@@ -7,7 +7,6 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import msgspec
 
-from ..config import rconfig
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
@@ -31,8 +30,6 @@ class XiaoHongShuParser(BaseParser):
             "application/signed-exchange;v=b3;q=0.9",
             **COMMON_HEADER,
         }
-        if rconfig.r_xhs_ck:
-            self.headers["cookie"] = rconfig.r_xhs_ck
 
     @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:

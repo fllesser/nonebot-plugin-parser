@@ -2,7 +2,7 @@ import re
 from typing import ClassVar
 from typing_extensions import override
 
-from ..config import rconfig, ytb_cookies_file
+from ..config import pconfig
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from .base import BaseParser
 from .cookie import save_cookies_with_netscape
@@ -20,9 +20,9 @@ class YouTubeParser(BaseParser):
     ]
 
     def __init__(self):
-        self.cookies_file = ytb_cookies_file
-        if rconfig.r_ytb_ck:
-            save_cookies_with_netscape(rconfig.r_ytb_ck, self.cookies_file, "youtube.com")
+        self.cookies_file = pconfig.config_dir / "ytb_cookies.txt"
+        if pconfig.ytb_ck:
+            save_cookies_with_netscape(pconfig.ytb_ck, self.cookies_file, "youtube.com")
 
     @override
     async def parse(self, matched: re.Match[str]) -> ParseResult:

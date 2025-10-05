@@ -1,6 +1,6 @@
 import importlib
 
-from ..config import RenderType, rconfig
+from ..config import RenderType, pconfig
 from .base import BaseRenderer
 from .common import CommonRenderer
 from .default import DefaultRenderer
@@ -8,7 +8,7 @@ from .default import DefaultRenderer
 _DEFAULT_RENDERER = DefaultRenderer()
 _COMMON_RENDERER = CommonRenderer()
 
-match rconfig.r_render_type:
+match pconfig.render_type:
     case RenderType.common:
         RENDERER = _COMMON_RENDERER
     case RenderType.default:

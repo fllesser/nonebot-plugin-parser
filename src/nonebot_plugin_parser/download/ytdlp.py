@@ -4,7 +4,7 @@ from typing import Any
 
 import yt_dlp
 
-from ..config import PROXY, plugin_cache_dir
+from ..config import pconfig
 from ..exception import ParseException
 from ..utils import LimitedSizeDict, generate_file_name
 from .task import auto_task
@@ -21,9 +21,9 @@ class YtdlpDownloader:
             "force_generic_extractor": True,
         }
         self._ydl_download_base_opts: dict[str, Any] = {}
-        if PROXY is not None:
-            self._ydl_download_base_opts["proxy"] = PROXY
-            self._ydl_extract_base_opts["proxy"] = PROXY
+        if pconfig.proxy is not None:
+            self._ydl_download_base_opts["proxy"] = pconfig.proxy
+            self._ydl_extract_base_opts["proxy"] = pconfig.proxy
 
     async def extract_video_info(self, url: str, cookiefile: Path | None = None) -> dict[str, str]:
         """get video info by url
@@ -63,7 +63,7 @@ class YtdlpDownloader:
         """
         info_dict = await self.extract_video_info(url, cookiefile)
         duration = int(info_dict.get("duration", 600))
-        video_path = plugin_cache_dir / generate_file_name(url, ".mp4")
+        video_path = pconfig.cache_dir / generate_file_name(url, ".mp4")
         if video_path.exists():
             return video_path
         ydl_opts = {
@@ -92,11 +92,11 @@ class YtdlpDownloader:
             Path: audio file path
         """
         file_name = generate_file_name(url)
-        audio_path = plugin_cache_dir / f"{file_name}.flac"
+        audio_path = pconfig.cache_dir / f"{file_name}.flac"
         if audio_path.exists():
             return audio_path
         ydl_opts = {
-            "outtmpl": f"{plugin_cache_dir / file_name}.%(ext)s",
+            "outtmpl": f"{pconfig.cache_dir / file_name}.%(ext)s",
             "format": "bestaudio/best",
             "postprocessors": [
                 {

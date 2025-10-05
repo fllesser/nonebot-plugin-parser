@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from nonebot import on_command
 from nonebot.matcher import Matcher
@@ -6,27 +7,26 @@ from nonebot.permission import SUPERUSER
 from nonebot.rule import to_me
 from nonebot_plugin_uninfo import ADMIN, Session, UniSession
 
-from ..config import store
-from ..constants import DISABLED_GROUPS
+from ..config import pconfig
+
+_DISABLED_GROUPS_PATH: Path = pconfig.data_dir / "disabled_groups.json"
 
 
 def load_or_initialize_set() -> set[str]:
     """加载或初始化关闭解析的名单"""
-    data_file = store.get_plugin_data_file(DISABLED_GROUPS)
     # 判断是否存在
-    if not data_file.exists():
-        data_file.write_text(json.dumps([]))
-    return set(json.loads(data_file.read_text()))
+    if not _DISABLED_GROUPS_PATH.exists():
+        _DISABLED_GROUPS_PATH.write_text(json.dumps([]))
+    return set(json.loads(_DISABLED_GROUPS_PATH.read_text()))
 
 
 def save_disabled_groups():
     """保存关闭解析的名单"""
-    data_file = store.get_plugin_data_file(DISABLED_GROUPS)
-    data_file.write_text(json.dumps(list(disabled_group_set)))
+    _DISABLED_GROUPS_PATH.write_text(json.dumps(list(_DISABLED_GROUPS_SET)))
 
 
 # 内存中关闭解析的名单，第一次先进行初始化
-disabled_group_set: set[str] = load_or_initialize_set()
+_DISABLED_GROUPS_SET: set[str] = load_or_initialize_set()
 
 
 def get_group_key(session: Session) -> str:
@@ -44,7 +44,7 @@ def is_not_in_disabled_groups(session: Session = UniSession()) -> bool:
         return True
 
     group_key = get_group_key(session)
-    if group_key in disabled_group_set:
+    if group_key in _DISABLED_GROUPS_SET:
         return False
     return True
 
@@ -53,8 +53,8 @@ def is_not_in_disabled_groups(session: Session = UniSession()) -> bool:
 async def _(matcher: Matcher, session: Session = UniSession()):
     """开启解析"""
     group_key = get_group_key(session)
-    if group_key in disabled_group_set:
-        disabled_group_set.remove(group_key)
+    if group_key in _DISABLED_GROUPS_SET:
+        _DISABLED_GROUPS_SET.remove(group_key)
         save_disabled_groups()
         await matcher.finish("解析已开启")
     else:
@@ -65,8 +65,8 @@ async def _(matcher: Matcher, session: Session = UniSession()):
 async def _(matcher: Matcher, session: Session = UniSession()):
     """关闭解析"""
     group_key = get_group_key(session)
-    if group_key not in disabled_group_set:
-        disabled_group_set.add(group_key)
+    if group_key not in _DISABLED_GROUPS_SET:
+        _DISABLED_GROUPS_SET.add(group_key)
         save_disabled_groups()
         await matcher.finish("解析已关闭")
     else:
