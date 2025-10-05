@@ -197,7 +197,7 @@ class WeiBoParser(BaseParser):
 
         # 下载头像
         avatar = DOWNLOADER.download_img(data.user.profile_image_url, ext_headers=self.ext_headers)
-
+        timestamp = int(time.mktime(time.strptime(data.created_at, "%a %b %d %H:%M:%S %z %Y")))
         return self.result(
             title=data.title,
             text=data.text_content,
@@ -205,7 +205,7 @@ class WeiBoParser(BaseParser):
             contents=contents,
             url=f"https://weibo.com/{data.user.id}/{data.bid}",
             repost=repost,
-            timestamp=time.mktime(time.strptime(data.created_at, "%a %b %d %H:%M:%S %z %Y")),
+            timestamp=timestamp,
         )
 
     def _base62_encode(self, number: int) -> str:

@@ -8,7 +8,7 @@ from typing_extensions import Unpack
 import httpx
 
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
-from .data import ParseResult, ParseResultKwargs, Platform
+from .data import ParseResult, ParseResultKwargs, Platform, TransitionData
 
 
 class BaseParser(ABC):
@@ -72,3 +72,17 @@ class BaseParser(ABC):
             if response.status_code >= 400:
                 response.raise_for_status()
             return response.headers.get("Location", url)
+
+    @classmethod
+    def convert_transition_to_result(cls, data: TransitionData) -> ParseResult:
+        """转换为解析结果"""
+        return cls.result(
+            title=data.get_title(),
+            author=data.get_author(),
+            text=data.get_text(),
+            contents=data.get_contents(),
+            timestamp=data.get_timestamp(),
+            url=data.get_url(),
+            extra=data.get_extra(),
+            repost=data.get_repost(),
+        )

@@ -216,5 +216,7 @@ def write_json_to_data(data: dict[str, Any] | str, file_name: str):
     from .config import pconfig
 
     path = pconfig.data_dir / file_name
+    if isinstance(data, str):
+        data = json.loads(data)
     with open(path, "w") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)

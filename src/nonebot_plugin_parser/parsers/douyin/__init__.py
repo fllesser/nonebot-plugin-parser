@@ -1,16 +1,16 @@
 import re
-from typing import Any, ClassVar
+from typing import ClassVar
 from typing_extensions import override
 
 import httpx
 import msgspec
 from nonebot import logger
 
-from ..constants import COMMON_TIMEOUT
-from ..download import DOWNLOADER
-from ..exception import ParseException
-from .base import BaseParser
-from .data import (
+from ...constants import COMMON_TIMEOUT
+from ...download import DOWNLOADER
+from ...exception import ParseException
+from ..base import BaseParser
+from ..data import (
     ANDROID_HEADER,
     IOS_HEADER,
     Author,
@@ -106,7 +106,7 @@ class DouyinParser(BaseParser):
             contents=contents,
         )
 
-    def _extract_data(self, text: str) -> "VideoData":
+    def _extract_data(self, text: str):
         """从html中提取视频数据
 
         Args:
@@ -127,6 +127,8 @@ class DouyinParser(BaseParser):
         if not matched or not matched.group(1):
             raise ParseException("can't find _ROUTER_DATA in html")
 
+        from .video import RouterData
+
         return msgspec.json.decode(matched.group(1).strip(), type=RouterData).video_data
 
     async def parse_slides(self, video_id: str) -> ParseResult:
@@ -139,8 +141,9 @@ class DouyinParser(BaseParser):
             response = await client.get(url, params=params)
             response.raise_for_status()
 
-        slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
+        from .slides import SlidesInfo
 
+        slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
         # 下载图片
         contents: list[MediaContent] = []
         contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in slides_data.images_urls)
@@ -148,9 +151,12 @@ class DouyinParser(BaseParser):
         if slides_data.dynamic_urls:
             contents.extend(DynamicContent(DOWNLOADER.download_video(url)) for url in slides_data.dynamic_urls)
 
+        author = Author(name=slides_data.name, avatar=DOWNLOADER.download_img(slides_data.avatar_url))
+
         return self.result(
-            text=slides_data.share_info.share_desc_info,
-            author=Author(name=slides_data.author.nickname) if slides_data.author.nickname else None,
+            title=slides_data.desc,
+            timestamp=slides_data.create_time,
+            author=author,
             contents=contents,
         )
 
@@ -170,101 +176,3 @@ class DouyinParser(BaseParser):
         # 从匹配对象中获取原始URL
         url = matched.group(0)
         return await self.parse_share_url(url)
-
-
-from msgspec import Struct, field
-
-
-class PlayAddr(Struct):
-    url_list: list[str]
-
-
-class Cover(Struct):
-    url_list: list[str]
-
-
-class Video(Struct):
-    play_addr: PlayAddr
-    cover: Cover
-
-
-class Image(Struct):
-    video: Video | None = None
-    url_list: list[str] = field(default_factory=list)
-
-
-class ShareInfo(Struct):
-    share_desc_info: str
-
-
-class DouyinAuthor(Struct):
-    nickname: str
-
-
-class SlidesData(Struct):
-    author: DouyinAuthor
-    share_info: ShareInfo
-    images: list[Image]
-
-    @property
-    def images_urls(self) -> list[str]:
-        return [image.url_list[0] for image in self.images]
-
-    @property
-    def dynamic_urls(self) -> list[str]:
-        return [image.video.play_addr.url_list[0] for image in self.images if image.video]
-
-
-class SlidesInfo(Struct):
-    aweme_details: list[SlidesData] = field(default_factory=list)
-
-
-class VideoData(Struct):
-    author: DouyinAuthor
-    desc: str
-    images: list[Image] | None = None
-    video: Video | None = None
-
-    @property
-    def images_urls(self) -> list[str] | None:
-        return [image.url_list[0] for image in self.images] if self.images else None
-
-    @property
-    def video_url(self) -> str | None:
-        return self.video.play_addr.url_list[0].replace("playwm", "play") if self.video else None
-
-    @property
-    def cover_url(self) -> str | None:
-        return self.video.cover.url_list[0] if self.video else None
-
-
-class VideoInfoRes(Struct):
-    item_list: list[VideoData] = field(default_factory=list)
-
-    @property
-    def video_data(self) -> VideoData:
-        if len(self.item_list) == 0:
-            raise ParseException("can't find data in videoInfoRes")
-        return self.item_list[0]
-
-
-class VideoOrNotePage(Struct):
-    videoInfoRes: VideoInfoRes
-
-
-class LoaderData(Struct):
-    video_page: VideoOrNotePage | None = field(name="video_(id)/page", default=None)
-    note_page: VideoOrNotePage | None = field(name="note_(id)/page", default=None)
-
-
-class RouterData(Struct):
-    loaderData: LoaderData
-    errors: dict[str, Any] | None = None
-
-    @property
-    def video_data(self) -> VideoData:
-        if page := self.loaderData.video_page:
-            return page.videoInfoRes.video_data
-        elif page := self.loaderData.note_page:
-            return page.videoInfoRes.video_data
-        raise ParseException("can't find video_(id)/page or note_(id)/page in router data")

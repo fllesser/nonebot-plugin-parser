@@ -249,3 +249,35 @@ class ParseResultKwargs(TypedDict, total=False):
     author: Author | None
     extra: dict[str, Any]
     repost: ParseResult | None
+
+
+from abc import ABC, abstractmethod
+
+
+class TransitionData(ABC):
+    def get_title(self) -> str:
+        return ""
+
+    @abstractmethod
+    def get_author(self) -> Author:
+        raise NotImplementedError
+
+    def get_text(self) -> str:
+        return ""
+
+    @abstractmethod
+    def get_contents(self) -> list[MediaContent]:
+        raise NotImplementedError
+
+    def get_timestamp(self) -> int | None:
+        return None
+
+    @abstractmethod
+    def get_url(self) -> str:
+        raise NotImplementedError
+
+    def get_extra(self) -> dict[str, Any]:
+        return {}
+
+    def get_repost(self) -> ParseResult | None:
+        return None

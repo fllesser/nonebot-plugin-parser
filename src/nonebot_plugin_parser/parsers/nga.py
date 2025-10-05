@@ -136,7 +136,7 @@ class NGAParser(BaseParser):
         time_tag = soup.find(id="postdate0")
         if time_tag and isinstance(time_tag, Tag):
             timestr = time_tag.get_text(strip=True)
-            timestamp = time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M"))
+            timestamp = int(time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M")))
 
         # 提取文本 - postcontent0
         text = ""
