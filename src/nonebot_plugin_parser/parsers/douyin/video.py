@@ -3,6 +3,7 @@ from typing import Any
 from msgspec import Struct, field
 
 from ...exception import ParseException
+from ..data import ParseData
 
 
 class Avatar(Struct):
@@ -53,6 +54,28 @@ class VideoData(Struct):
     def cover_url(self) -> str | None:
         return self.video.cover.url_list[0] if self.video else None
 
+    @property
+    def avatar_url(self) -> str | None:
+        if avatar := self.author.avatar_thumb:
+            return avatar.url_list[0]
+        elif avatar := self.author.avatar_medium:
+            return avatar.url_list[0]
+        return None
+
+    @property
+    def parse_data(self) -> ParseData:
+        """转换为ParseData对象"""
+
+        return ParseData(
+            title=self.desc,
+            name=self.author.nickname,
+            avatar_url=self.avatar_url,
+            timestamp=self.create_time,
+            images_urls=self.images_urls,
+            video_url=self.video_url,
+            cover_url=self.cover_url,
+        )
+
 
 class VideoInfoRes(Struct):
     item_list: list[VideoData] = field(default_factory=list)
@@ -84,35 +107,3 @@ class RouterData(Struct):
         elif page := self.loaderData.note_page:
             return page.videoInfoRes.video_data
         raise ParseException("can't find video_(id)/page or note_(id)/page in router data")
-
-
-from ..data import TransitionData
-
-
-class VideoTransitionData(TransitionData):
-    def __init__(self, video_data: VideoData):
-        self.video_data = video_data
-
-    def name_avatar_desc(self) -> tuple[str, str | None, str | None]:
-        if avatar := self.video_data.author.avatar_thumb:
-            avatar_url = avatar.url_list[0]
-        elif avatar := self.video_data.author.avatar_medium:
-            avatar_url = avatar.url_list[0]
-        else:
-            avatar_url = None
-        return self.video_data.author.nickname, avatar_url, self.video_data.desc
-
-    def get_title(self) -> str:
-        return self.video_data.desc
-
-    def get_images_urls(self) -> list[str] | None:
-        return self.video_data.images_urls
-
-    def get_video_url(self) -> str | None:
-        return self.video_data.video_url
-
-    def get_cover_url(self) -> str | None:
-        return self.video_data.cover_url
-
-    def get_timestamp(self):
-        return self.video_data.create_time

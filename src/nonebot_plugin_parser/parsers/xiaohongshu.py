@@ -7,10 +7,9 @@ from urllib.parse import parse_qs, urlparse
 import httpx
 import msgspec
 
-from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Author, ImageContent, MediaContent, ParseResult, Platform, VideoContent
+from .data import ParseData, ParseResult, Platform
 
 
 class XiaoHongShuParser(BaseParser):
@@ -81,23 +80,10 @@ class XiaoHongShuParser(BaseParser):
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
         note_detail = msgspec.convert(note_data, type=NoteDetail)
 
-        contents: list[MediaContent] = []
-        cover_path = None
-        if video_url := note_detail.video_url:
-            # 下载视频和封面
-            video_task = DOWNLOADER.download_video(video_url)
-            if note_detail.img_urls:
-                cover_path = DOWNLOADER.download_img(note_detail.img_urls[0])
-            contents.append(VideoContent(video_task, cover_path))
-        else:
-            # 下载图片
-            contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in note_detail.img_urls)
+        # 使用实体类的转换方法
+        data = note_detail.parse_data()
 
-        return self.result(
-            title=note_detail.title_desc,
-            author=Author(name=note_detail.user.nickname) if note_detail.user.nickname else None,
-            contents=contents,
-        )
+        return self.build_result(data)
 
 
 from msgspec import Struct, field
@@ -157,3 +143,13 @@ class NoteDetail(Struct):
         elif stream.h266:
             return stream.h266[0]["masterUrl"]
         return None
+
+    def parse_data(self) -> ParseData:
+        """转换为ParseData对象"""
+        return ParseData(
+            title=self.title_desc,
+            name=self.user.nickname,
+            images_urls=self.img_urls,
+            video_url=self.video_url,
+            cover_url=self.img_urls[0],
+        )

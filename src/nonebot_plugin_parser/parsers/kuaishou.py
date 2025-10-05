@@ -7,7 +7,7 @@ import msgspec
 
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ParseResult, Platform
+from .data import ParseData, ParseResult, Platform
 
 
 class KuaiShouParser(BaseParser):
@@ -66,34 +66,7 @@ class KuaiShouParser(BaseParser):
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        transition_data = KuaishouTransitionData(photo)
-        return self.convert_transition_to_result(transition_data)
-
-
-from .data import TransitionData
-
-
-class KuaishouTransitionData(TransitionData):
-    def __init__(self, photo: "Photo"):
-        self.photo = photo
-
-    def name_avatar_desc(self):
-        return self.photo.name, self.photo.head_url, None
-
-    def get_title(self) -> str:
-        return self.photo.caption
-
-    def get_timestamp(self):
-        return self.photo.timestamp // 1000
-
-    def get_video_url(self):
-        return self.photo.video_url
-
-    def get_cover_url(self):
-        return self.photo.cover_url
-
-    def get_images_urls(self):
-        return self.photo.img_urls
+        return self.build_result(photo.parse_data)
 
 
 from msgspec import Struct, field
@@ -148,6 +121,19 @@ class Photo(Struct):
     @property
     def img_urls(self):
         return self.ext_params.atlas.img_urls
+
+    @property
+    def parse_data(self) -> ParseData:
+        """转换为ParseData对象"""
+        return ParseData(
+            title=self.caption,
+            name=self.name,
+            avatar_url=self.head_url,
+            timestamp=self.timestamp // 1000,  # 转换为秒
+            images_urls=self.img_urls,
+            video_url=self.video_url,
+            cover_url=self.cover_url,
+        )
 
 
 class TusjohData(Struct):

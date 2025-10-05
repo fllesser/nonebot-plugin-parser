@@ -1,5 +1,7 @@
 from msgspec import Struct, field
 
+from ..data import ParseData
+
 
 class PlayAddr(Struct):
     url_list: list[str]
@@ -53,29 +55,21 @@ class SlidesData(Struct):
     def dynamic_urls(self) -> list[str]:
         return [image.video.play_addr.url_list[0] for image in self.images if image.video]
 
+    @property
+    def parse_data(self) -> ParseData:
+        """转换为ParseData对象"""
+        return ParseData(
+            title=self.desc,
+            name=self.name,
+            avatar_url=self.avatar_url,
+            timestamp=self.create_time,
+            images_urls=self.images_urls,
+            dynamic_urls=self.dynamic_urls,
+        )
+
 
 class SlidesInfo(Struct):
     aweme_details: list[SlidesData] = field(default_factory=list)
 
 
-from ..data import TransitionData
-
-
-class SlidesTransitionData(TransitionData):
-    def __init__(self, slides_data: SlidesData):
-        self.slides_data = slides_data
-
-    def name_avatar_desc(self) -> tuple[str, str | None, str | None]:
-        return self.slides_data.name, self.slides_data.avatar_url, self.slides_data.desc
-
-    def get_title(self) -> str:
-        return self.slides_data.desc
-
-    def get_images_urls(self) -> list[str] | None:
-        return self.slides_data.images_urls
-
-    def get_dynamic_urls(self) -> list[str] | None:
-        return self.slides_data.dynamic_urls
-
-    def get_timestamp(self) -> int | None:
-        return self.slides_data.create_time
+from ..data import ParseData
