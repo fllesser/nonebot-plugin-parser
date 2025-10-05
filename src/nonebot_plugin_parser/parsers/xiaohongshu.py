@@ -1,4 +1,3 @@
-import asyncio
 import json
 import re
 from typing import ClassVar
@@ -13,7 +12,7 @@ from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import Author, Content, ImageContent, ParseResult, Platform, VideoContent
+from .data import Author, ImageContent, MediaContent, ParseResult, Platform, VideoContent
 
 
 class XiaoHongShuParser(BaseParser):
@@ -85,23 +84,21 @@ class XiaoHongShuParser(BaseParser):
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
         note_detail = msgspec.convert(note_data, type=NoteDetail)
 
-        contents: list[Content] = []
+        contents: list[MediaContent] = []
         cover_path = None
         if video_url := note_detail.video_url:
             # 下载视频和封面
-            video_task = asyncio.create_task(DOWNLOADER.download_video(video_url))
+            video_task = DOWNLOADER.download_video(video_url)
             if note_detail.img_urls:
-                cover_path = await DOWNLOADER.download_img(note_detail.img_urls[0])
-            contents.append(VideoContent(video_task, cover_path=cover_path))
+                cover_path = DOWNLOADER.download_img(note_detail.img_urls[0])
+            contents.append(VideoContent(video_task, cover_path))
         else:
             # 下载图片
-            pic_paths = await DOWNLOADER.download_imgs_without_raise(note_detail.img_urls)
-            contents.extend(ImageContent(path) for path in pic_paths)
+            contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in note_detail.img_urls)
 
         return self.result(
             title=note_detail.title_desc,
             author=Author(name=note_detail.user.nickname) if note_detail.user.nickname else None,
-            cover_path=cover_path,
             contents=contents,
         )
 

@@ -1,5 +1,3 @@
-import asyncio
-from pathlib import Path
 import re
 from typing import Any, ClassVar
 from typing_extensions import override
@@ -16,9 +14,9 @@ from .data import (
     ANDROID_HEADER,
     IOS_HEADER,
     Author,
-    Content,
     DynamicContent,
     ImageContent,
+    MediaContent,
     ParseResult,
     Platform,
     VideoContent,
@@ -92,22 +90,19 @@ class DouyinParser(BaseParser):
         # 下载封面
         cover_path = None
         if video_data.cover_url:
-            cover_path = await DOWNLOADER.download_img(video_data.cover_url)
+            cover_path = DOWNLOADER.download_img(video_data.cover_url)
 
         # 下载内容
-        contents: list[Content] = []
+        contents: list[MediaContent] = []
         if image_urls := video_data.images_urls:
-            pic_paths = await DOWNLOADER.download_imgs_without_raise(image_urls)
-            contents.extend(ImageContent(path) for path in pic_paths)
+            contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in image_urls)
         elif video_url := video_data.video_url:
             video_url = await self.get_redirect_url(video_url)
-            video_task = asyncio.create_task(DOWNLOADER.download_video(video_url))
-            contents.append(VideoContent(video_task, cover_path=cover_path))
+            contents.append(VideoContent(DOWNLOADER.download_video(video_url), cover_path))
 
         return self.result(
             text=video_data.desc,
             author=Author(name=video_data.author.nickname) if video_data.author.nickname else None,
-            cover_path=cover_path,
             contents=contents,
         )
 
@@ -147,20 +142,11 @@ class DouyinParser(BaseParser):
         slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
 
         # 下载图片
-        pic_paths = await DOWNLOADER.download_imgs_without_raise(slides_data.images_urls)
+        contents: list[MediaContent] = []
+        contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in slides_data.images_urls)
 
-        # 下载动态图片
-        dynamic_paths = []
         if slides_data.dynamic_urls:
-            video_paths = await asyncio.gather(
-                *[DOWNLOADER.download_video(url) for url in slides_data.dynamic_urls],
-                return_exceptions=True,
-            )
-            dynamic_paths = [p for p in video_paths if isinstance(p, Path)]
-
-        contents: list[Content] = []
-        contents.extend(ImageContent(path) for path in pic_paths)
-        contents.extend(DynamicContent(path) for path in dynamic_paths)
+            contents.extend(DynamicContent(DOWNLOADER.download_video(url)) for url in slides_data.dynamic_urls)
 
         return self.result(
             text=slides_data.share_info.share_desc_info,

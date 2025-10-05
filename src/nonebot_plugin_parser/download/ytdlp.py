@@ -7,6 +7,7 @@ import yt_dlp
 from ..config import PROXY, plugin_cache_dir
 from ..exception import ParseException
 from ..utils import LimitedSizeDict, generate_file_name
+from .task import auto_task
 
 
 class YtdlpDownloader:
@@ -49,6 +50,7 @@ class YtdlpDownloader:
             self._url_info_mapping[url] = info_dict
             return info_dict
 
+    @auto_task
     async def download_video(self, url: str, cookiefile: Path | None = None) -> Path:
         """download video by yt-dlp
 
@@ -78,6 +80,7 @@ class YtdlpDownloader:
             await asyncio.to_thread(ydl.download, [url])
         return video_path
 
+    @auto_task
     async def download_audio(self, url: str, cookiefile: Path | None = None) -> Path:
         """download audio by yt-dlp
 

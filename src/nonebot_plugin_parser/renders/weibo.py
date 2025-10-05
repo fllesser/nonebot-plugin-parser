@@ -1,5 +1,8 @@
 from typing_extensions import override
 
+from nonebot import require
+
+require("nonebot_plugin_htmlkit")
 from nonebot_plugin_htmlkit import template_to_pic
 
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage

@@ -40,13 +40,16 @@ async def test_parse():
 
         if video_contents := parse_result.video_contents:
             for video_content in video_contents:
-                video_path = await video_content.video_path()
+                video_path = await video_content.get_path()
                 assert video_path.exists()
                 logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
 
         # 检查图片
-        if pic_paths := parse_result.img_paths:
-            logger.debug(f"{url} | 图片下载完成: {pic_paths}")
+        if pic_paths := parse_result.img_contents:
+            for pic_path in pic_paths:
+                path = await pic_path.get_path()
+                assert path.exists()
+                logger.debug(f"{url} | 图片下载完成: {path}, 图片{fmt_size(path)}")
             assert len(pic_paths) > 0, "图片下载数量为0"
 
         logger.success(f"{url} | 快手视频解析成功")

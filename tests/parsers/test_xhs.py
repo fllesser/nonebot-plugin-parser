@@ -23,12 +23,15 @@ async def test_parse():
         logger.info(f"{url} | 开始解析小红书")
         # 使用 patterns 匹配 URL
         matched = None
-        for keyword, pattern in xhs_parser.patterns:
+        for _, pattern in xhs_parser.patterns:
             matched = re.search(pattern, url)
             if matched:
                 break
         assert matched, f"无法匹配 URL: {url}"
         parse_result = await xhs_parser.parse(matched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
+        for content in parse_result.contents:
+            path = await content.get_path()
+            assert path.exists()
 
     await asyncio.gather(*[parse(url) for url in urls])

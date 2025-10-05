@@ -1,6 +1,5 @@
 import asyncio
 import json
-from pathlib import Path
 import re
 from typing import Any, ClassVar
 from typing_extensions import override
@@ -17,10 +16,10 @@ from ..base import BaseParser
 from ..cookie import ck2dict
 from ..data import (
     Author,
-    Content,
+    GraphicsContent,
     ImageContent,
+    MediaContent,
     Platform,
-    TextImageContent,
     VideoContent,
 )
 
@@ -129,12 +128,15 @@ class BilibiliParser(BaseParser):
         extra = {"info": f"简介：{video_info.desc}\n\n{ai_summary}"}
 
         # 下载封面
-        cover_path = await DOWNLOADER.download_img(cover_url, ext_headers=self.headers) if cover_url else None
+        cover_path = DOWNLOADER.download_img(cover_url, ext_headers=self.headers) if cover_url else None
 
         url = f"https://bilibili.com/{video_info.bvid}" + (f"?p={page_idx + 1}" if page_idx > 0 else "")
 
         # 视频下载 task
-        async def download_video(output_path: Path):
+        async def download_video():
+            output_path = plugin_cache_dir / f"{video_info.bvid}-{page_num}.mp4"
+            if output_path.exists():
+                return output_path
             v_url, a_url = await self.parse_video_download_url(video=video, page_index=page_idx)
             if duration > DURATION_MAXIMUM:
                 raise DownloadException("视频时长超过最大限制")
@@ -145,20 +147,15 @@ class BilibiliParser(BaseParser):
             else:
                 return await DOWNLOADER.streamd(v_url, file_name=output_path.name, ext_headers=self.headers)
 
-        path_or_task = plugin_cache_dir / f"{video_info.bvid}-{page_num}.mp4"
-        # 下载视频
-        if not path_or_task.exists():
-            # 下载视频和音频
-            path_or_task = asyncio.create_task(download_video(path_or_task))
+        video_task = asyncio.create_task(download_video())
 
         return self.result(
             title=title,
             url=url,
             extra=extra,
             timestamp=timestamp,
-            cover_path=cover_path,
-            author=Author(name=video_info.owner.name, avatar=video_info.owner.face),
-            contents=[VideoContent(path_or_task, cover_path=cover_path, duration=duration)],
+            author=Author(name=video_info.owner.name, avatar=DOWNLOADER.download_img(video_info.owner.face)),
+            contents=[VideoContent(video_task, cover_path, duration)],
         )
 
     async def parse_others(self, url: str):
@@ -173,13 +170,12 @@ class BilibiliParser(BaseParser):
             img_urls, text = await self.parse_opus(opus_id)
 
             # 下载图片
-            contents: list[Content] = []
-            contents.append(text)
+            contents: list[MediaContent] = []
             if img_urls:
-                pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
-                contents.extend(ImageContent(path) for path in pic_paths)
+                img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in img_urls]
+                contents.extend(ImageContent(task) for task in img_tasks)
 
-            return self.result(title=f"动态 - {opus_id}", contents=contents)
+            return self.result(title=f"动态 - {opus_id}", text=text, contents=contents)
 
         # 2. 直播
         if "/live" in url:
@@ -189,19 +185,18 @@ class BilibiliParser(BaseParser):
             room_id = int(match_result.group(1))
             title, cover, keyframe = await self.parse_live(room_id)
 
-            # 下载封面
-            cover_path = None
-            if cover:
-                cover_path = await DOWNLOADER.download_img(cover, ext_headers=self.headers)
-
             contents = []
+            # 下载封面
+            if cover:
+                cover_task = DOWNLOADER.download_img(cover, ext_headers=self.headers)
+                contents.append(ImageContent(cover_task))
 
             # 下载关键帧
             if keyframe:
-                keyframe_path = await DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
-                contents.append(ImageContent(keyframe_path))
+                keyframe_task = DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
+                contents.append(ImageContent(keyframe_task))
 
-            return self.result(title="直播 - " + title, cover_path=cover_path, contents=contents)
+            return self.result(title="直播 - " + title, contents=contents)
 
         # 3. 专栏
         if "/read" in url:
@@ -214,12 +209,11 @@ class BilibiliParser(BaseParser):
 
             # 下载图片
             contents = []
-            contents.append(combined_text)
             if img_urls:
-                pic_paths = await DOWNLOADER.download_imgs_without_raise(img_urls, ext_headers=self.headers)
-                contents.extend(ImageContent(path) for path in pic_paths)
+                img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in img_urls]
+                contents.extend(ImageContent(task) for task in img_tasks)
 
-            return self.result(title=f"专栏 - {read_id}", contents=contents)
+            return self.result(title=f"专栏 - {read_id}", text=combined_text, contents=contents)
 
         # 4. 收藏夹
         if "/favlist" in url:
@@ -230,11 +224,11 @@ class BilibiliParser(BaseParser):
             titles, cover_urls = await self.parse_favlist(fav_id)
 
             # 并发下载封面
-            cover_paths = await DOWNLOADER.download_imgs_without_raise(cover_urls, ext_headers=self.headers)
-
+            cover_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in cover_urls]
+            contents = [GraphicsContent(task, title) for task, title in zip(cover_tasks, titles)]
             return self.result(
                 title=f"收藏夹 - {fav_id}",
-                contents=[TextImageContent(title, cover_path) for title, cover_path in zip(titles, cover_paths)],
+                contents=contents,
             )
 
         raise ParseException("不支持的 Bilibili 链接")

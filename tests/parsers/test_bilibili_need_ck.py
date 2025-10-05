@@ -40,7 +40,7 @@ async def test_video():
     except Exception:
         pytest.skip("B站视频 BV1584y167sD p40 解析失败(风控)")
 
-    video_path = await parse_result.video_contents[0].video_path()
+    video_path = await parse_result.video_contents[0].get_path()
 
     video_h264_path = await encode_video_to_h264(video_path)
     assert video_h264_path.exists()

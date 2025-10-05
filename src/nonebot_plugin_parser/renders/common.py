@@ -5,7 +5,6 @@ from typing_extensions import override
 
 from PIL import Image, ImageDraw, ImageFont
 
-from ..download import DOWNLOADER
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
@@ -15,10 +14,21 @@ class CommonRenderer(BaseRenderer):
     # 卡片配置常量
     PADDING = 20
     AVATAR_SIZE = 80
+    AVATAR_TEXT_GAP = 15  # 头像和文字之间的间距
     MAX_COVER_WIDTH = 1000
     MAX_COVER_HEIGHT = 800
     DEFAULT_CARD_WIDTH = 800
     SECTION_SPACING = 15
+    NAME_TIME_GAP = 5  # 名称和时间之间的间距
+
+    # 头像占位符配置
+    AVATAR_PLACEHOLDER_BG_COLOR = (230, 230, 230, 255)
+    AVATAR_PLACEHOLDER_FG_COLOR = (200, 200, 200, 255)
+    AVATAR_HEAD_RATIO = 0.35  # 头部位置比例
+    AVATAR_HEAD_RADIUS_RATIO = 1 / 6  # 头部半径比例
+    AVATAR_SHOULDER_Y_RATIO = 0.55  # 肩部 Y 位置比例
+    AVATAR_SHOULDER_WIDTH_RATIO = 0.55  # 肩部宽度比例
+    AVATAR_SHOULDER_HEIGHT_RATIO = 0.6  # 肩部高度比例
 
     # 颜色配置
     BG_COLOR = (255, 255, 255)
@@ -54,14 +64,14 @@ class CommonRenderer(BaseRenderer):
             PNG 图片的字节数据，如果没有足够的内容则返回 None
         """
         # 如果既没有标题, 文本也没有封面，不生成图片
-        if not result.title and not result.text and not result.cover_path:
+        if not result.title and not result.text:
             return None
 
         # 使用预加载的字体
         fonts = self.FONTS
 
         # 加载并处理封面
-        cover_img = self._load_and_resize_cover(result.cover_path)
+        cover_img = self._load_and_resize_cover(await result.cover_path)
 
         # 计算卡片宽度
         card_width = cover_img.width + 2 * self.PADDING if cover_img else self.DEFAULT_CARD_WIDTH
@@ -87,37 +97,35 @@ class CommonRenderer(BaseRenderer):
         if not cover_path or not cover_path.exists():
             return None
 
-        cover_img = Image.open(cover_path)
+        try:
+            cover_img = Image.open(cover_path)
 
-        # 如果封面太大，需要缩放
-        if cover_img.width > self.MAX_COVER_WIDTH or cover_img.height > self.MAX_COVER_HEIGHT:
-            width_ratio = self.MAX_COVER_WIDTH / cover_img.width
-            height_ratio = self.MAX_COVER_HEIGHT / cover_img.height
-            scale_ratio = min(width_ratio, height_ratio)
+            # 转换为 RGB 模式以确保兼容性
+            if cover_img.mode not in ("RGB", "RGBA"):
+                cover_img = cover_img.convert("RGB")
 
-            new_width = int(cover_img.width * scale_ratio)
-            new_height = int(cover_img.height * scale_ratio)
-            cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            # 如果封面太大，需要缩放
+            if cover_img.width > self.MAX_COVER_WIDTH or cover_img.height > self.MAX_COVER_HEIGHT:
+                width_ratio = self.MAX_COVER_WIDTH / cover_img.width
+                height_ratio = self.MAX_COVER_HEIGHT / cover_img.height
+                scale_ratio = min(width_ratio, height_ratio)
 
-        return cover_img
+                new_width = int(cover_img.width * scale_ratio)
+                new_height = int(cover_img.height * scale_ratio)
+                cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-    async def _load_and_process_avatar(self, avatar: str | Path | None) -> Image.Image | None:
-        """加载并处理头像（圆形裁剪，带抗锯齿）"""
-        if not avatar:
+            return cover_img
+        except Exception:
+            # 加载失败时返回 None
             return None
 
-        avatar_img = None
-        try:
-            if isinstance(avatar, Path) and avatar.exists():
-                avatar_img = Image.open(avatar)
-            elif isinstance(avatar, str) and avatar.startswith(("http://", "https://")):
-                # 下载 URL 头像
-                avatar_path = await DOWNLOADER.download_img(avatar)
-                if avatar_path and avatar_path.exists():
-                    avatar_img = Image.open(avatar_path)
+    def _load_and_process_avatar(self, avatar: Path | None) -> Image.Image | None:
+        """加载并处理头像（圆形裁剪，带抗锯齿）"""
+        if not avatar or not avatar.exists():
+            return None
 
-            if not avatar_img:
-                return None
+        try:
+            avatar_img = Image.open(avatar)
 
             # 转换为 RGBA 模式（用于更好的抗锯齿效果）
             if avatar_img.mode != "RGBA":
@@ -131,7 +139,6 @@ class CommonRenderer(BaseRenderer):
             # 创建高分辨率圆形遮罩（带抗锯齿）
             mask = Image.new("L", (temp_size, temp_size), 0)
             mask_draw = ImageDraw.Draw(mask)
-            # 使用抗锯齿绘制圆形
             mask_draw.ellipse((0, 0, temp_size - 1, temp_size - 1), fill=255)
 
             # 应用遮罩
@@ -188,10 +195,10 @@ class CommonRenderer(BaseRenderer):
             return None
 
         # 加载头像
-        avatar_img = await self._load_and_process_avatar(result.author.avatar)
+        avatar_img = self._load_and_process_avatar(await result.author.avatar_path)
 
         # 计算文字区域宽度（始终预留头像空间）
-        text_area_width = content_width - (self.AVATAR_SIZE + 15)
+        text_area_width = content_width - (self.AVATAR_SIZE + self.AVATAR_TEXT_GAP)
 
         # 发布者名称
         name_lines = self._wrap_text(result.author.name, text_area_width, fonts["name"])
@@ -201,9 +208,9 @@ class CommonRenderer(BaseRenderer):
         time_lines = self._wrap_text(time_text, text_area_width, fonts["extra"]) if time_text else []
 
         # 计算 header 高度（取头像和文字中较大者）
-        text_height = len(name_lines) * self.LINE_HEIGHTS["name"] + (
-            len(time_lines) * self.LINE_HEIGHTS["extra"] + 5 if time_lines else 0
-        )
+        text_height = len(name_lines) * self.LINE_HEIGHTS["name"]
+        if time_lines:
+            text_height += self.NAME_TIME_GAP + len(time_lines) * self.LINE_HEIGHTS["extra"]
         header_height = max(self.AVATAR_SIZE, text_height)
 
         return {
@@ -233,6 +240,53 @@ class CommonRenderer(BaseRenderer):
             elif section_type == "extra":
                 y_pos = self._draw_extra(draw, content, y_pos, fonts["extra"])
 
+    def _create_avatar_placeholder(self) -> Image.Image:
+        """创建默认头像占位符"""
+        placeholder = Image.new("RGBA", (self.AVATAR_SIZE, self.AVATAR_SIZE), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(placeholder)
+
+        # 绘制圆形背景
+        draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=self.AVATAR_PLACEHOLDER_BG_COLOR)
+
+        # 绘制简单的用户图标（圆形头部 + 肩部）
+        center_x = self.AVATAR_SIZE // 2
+
+        # 头部圆形
+        head_radius = int(self.AVATAR_SIZE * self.AVATAR_HEAD_RADIUS_RATIO)
+        head_y = int(self.AVATAR_SIZE * self.AVATAR_HEAD_RATIO)
+        draw.ellipse(
+            (
+                center_x - head_radius,
+                head_y - head_radius,
+                center_x + head_radius,
+                head_y + head_radius,
+            ),
+            fill=self.AVATAR_PLACEHOLDER_FG_COLOR,
+        )
+
+        # 肩部
+        shoulder_y = int(self.AVATAR_SIZE * self.AVATAR_SHOULDER_Y_RATIO)
+        shoulder_width = int(self.AVATAR_SIZE * self.AVATAR_SHOULDER_WIDTH_RATIO)
+        shoulder_height = int(self.AVATAR_SIZE * self.AVATAR_SHOULDER_HEIGHT_RATIO)
+        draw.ellipse(
+            (
+                center_x - shoulder_width // 2,
+                shoulder_y,
+                center_x + shoulder_width // 2,
+                shoulder_y + shoulder_height,
+            ),
+            fill=self.AVATAR_PLACEHOLDER_FG_COLOR,
+        )
+
+        # 创建圆形遮罩确保不超出边界
+        mask = Image.new("L", (self.AVATAR_SIZE, self.AVATAR_SIZE), 0)
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=255)
+
+        # 应用遮罩
+        placeholder.putalpha(mask)
+        return placeholder
+
     def _draw_header(
         self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, fonts: dict
     ) -> int:
@@ -240,57 +294,11 @@ class CommonRenderer(BaseRenderer):
         x_pos = self.PADDING
 
         # 绘制头像或占位符
-        if content["avatar"]:
-            image.paste(content["avatar"], (x_pos, y_pos), content["avatar"])
-        else:
-            # 绘制默认头像占位符（淡灰色圆形）
-            placeholder = Image.new("RGBA", (self.AVATAR_SIZE, self.AVATAR_SIZE), (0, 0, 0, 0))
-            placeholder_draw = ImageDraw.Draw(placeholder)
+        avatar = content["avatar"] if content["avatar"] else self._create_avatar_placeholder()
+        image.paste(avatar, (x_pos, y_pos), avatar)
 
-            # 绘制圆形背景
-            placeholder_draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=(230, 230, 230, 255))
-
-            # 绘制简单的用户图标（圆形头部 + 肩部）
-            center_x = self.AVATAR_SIZE // 2
-
-            # 头部圆形（较小，不会超出）
-            head_radius = self.AVATAR_SIZE // 6
-            head_y = int(self.AVATAR_SIZE * 0.35)
-            placeholder_draw.ellipse(
-                (
-                    center_x - head_radius,
-                    head_y - head_radius,
-                    center_x + head_radius,
-                    head_y + head_radius,
-                ),
-                fill=(200, 200, 200, 255),
-            )
-
-            # 肩部（确保不超出圆形边界）
-            shoulder_y = int(self.AVATAR_SIZE * 0.55)
-            shoulder_width = int(self.AVATAR_SIZE * 0.55)
-            shoulder_height = int(self.AVATAR_SIZE * 0.6)
-            placeholder_draw.ellipse(
-                (
-                    center_x - shoulder_width // 2,
-                    shoulder_y,
-                    center_x + shoulder_width // 2,
-                    shoulder_y + shoulder_height,
-                ),
-                fill=(200, 200, 200, 255),
-            )
-
-            # 创建圆形遮罩确保不超出边界
-            mask = Image.new("L", (self.AVATAR_SIZE, self.AVATAR_SIZE), 0)
-            mask_draw = ImageDraw.Draw(mask)
-            mask_draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=255)
-
-            # 应用遮罩
-            placeholder.putalpha(mask)
-            image.paste(placeholder, (x_pos, y_pos), placeholder)
-
-        # 文字始终从头像位置后面开始（占位）
-        text_x = self.PADDING + self.AVATAR_SIZE + 15
+        # 文字始终从头像位置后面开始
+        text_x = self.PADDING + self.AVATAR_SIZE + self.AVATAR_TEXT_GAP
 
         # 计算文字垂直居中位置（对齐头像中轴）
         avatar_center = y_pos + self.AVATAR_SIZE // 2
@@ -304,7 +312,7 @@ class CommonRenderer(BaseRenderer):
 
         # 时间（灰色）
         if content["time_lines"]:
-            text_y += 5
+            text_y += self.NAME_TIME_GAP
             for line in content["time_lines"]:
                 draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=fonts["extra"])
                 text_y += self.LINE_HEIGHTS["extra"]
@@ -349,6 +357,9 @@ class CommonRenderer(BaseRenderer):
         Returns:
             换行后的文本列表
         """
+        if not text:
+            return [""]
+
         lines = []
         paragraphs = text.split("\n")
 
@@ -357,10 +368,8 @@ class CommonRenderer(BaseRenderer):
                 lines.append("")
                 continue
 
-            words = paragraph
             current_line = ""
-
-            for char in words:
+            for char in paragraph:
                 test_line = current_line + char
                 # 使用 getbbox 计算文本宽度
                 bbox = font.getbbox(test_line)
@@ -369,158 +378,23 @@ class CommonRenderer(BaseRenderer):
                 if width <= max_width:
                     current_line = test_line
                 else:
+                    # 如果当前行不为空，保存并开始新行
                     if current_line:
                         lines.append(current_line)
-                    current_line = char
+                        current_line = char
+                    else:
+                        # 单个字符就超宽，强制添加
+                        lines.append(char)
+                        current_line = ""
 
+            # 保存最后一行
             if current_line:
                 lines.append(current_line)
 
         return lines if lines else [""]
 
     @classmethod
-    def load_fonts(cls):
-        """根据系统加载字体"""
-
-        from platform import system
-
-        os_type = system()
-
-        fonts: dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]
-        if os_type == "Darwin":  # macOS
-            fonts = cls._load_macos_fonts()
-        elif os_type == "Windows":  # Windows
-            fonts = cls._load_windows_fonts()
-        elif os_type == "Linux":  # Linux
-            fonts = cls._load_linux_fonts()
-        else:
-            # 未知系统，使用默认字体
-            default_font = ImageFont.load_default()
-            fonts = dict.fromkeys(cls.ITEM_NAMES, default_font)
-
-        cls.FONTS = fonts
-
-    @classmethod
-    def _load_macos_fonts(cls) -> dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]:
-        """加载 macOS 字体"""
-        # 优先尝试 PingFang（苹方）
-        font_candidates = [
-            Path("/System/Library/Fonts/PingFang.ttc"),
-        ]
-
-        for font_path in font_candidates:
-            if font_path.exists():
-                try:
-                    return {
-                        item_name: ImageFont.truetype(font_path, cls.FONT_SIZES[item_name])
-                        for item_name in cls.ITEM_NAMES
-                    }
-                except OSError:
-                    continue
-
-        # 所有字体都失败，返回默认字体
-        default_font = ImageFont.load_default()
-        return dict.fromkeys(cls.ITEM_NAMES, default_font)
-
-    @classmethod
-    def _load_windows_fonts(cls) -> dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]:
-        """加载 Windows 字体"""
-        # Windows 字体路径
-        windows_fonts_path = Path("C:/Windows/Fonts")
-
-        # 优先尝试微软雅黑，然后是黑体，最后是宋体
-        font_candidates = [
-            windows_fonts_path / "msyh.ttc",  # 微软雅黑
-            windows_fonts_path / "msyhbd.ttc",  # 微软雅黑 Bold
-            windows_fonts_path / "msyh.ttf",  # 微软雅黑（旧版本）
-            windows_fonts_path / "simhei.ttf",  # 黑体
-            windows_fonts_path / "simsun.ttc",  # 宋体
-            windows_fonts_path / "arial.ttf",  # Arial（英文）
-        ]
-
-        # 尝试加载粗体和普通字体
-        bold_font_candidates = [
-            windows_fonts_path / "msyhbd.ttc",  # 微软雅黑粗体
-            windows_fonts_path / "arialbd.ttf",  # Arial Bold
-        ]
-
-        # 先尝试加载普通字体
-        normal_font = None
-        for font_path in font_candidates:
-            if font_path.exists():
-                normal_font = font_path
-                break
-
-        # 尝试加载粗体字体用于名称
-        bold_font = None
-        for font_path in bold_font_candidates:
-            if font_path.exists():
-                bold_font = font_path
-                break
-
-        # 如果没有找到粗体，使用普通字体
-        if not bold_font:
-            bold_font = normal_font
-
-        # 如果找到了字体，尝试加载
-        if normal_font and bold_font:
-            try:
-                return {
-                    "name": ImageFont.truetype(str(bold_font), cls.FONT_SIZES["name"]),
-                    "title": ImageFont.truetype(str(normal_font), cls.FONT_SIZES["title"]),
-                    "text": ImageFont.truetype(str(normal_font), cls.FONT_SIZES["text"]),
-                    "extra": ImageFont.truetype(str(normal_font), cls.FONT_SIZES["extra"]),
-                }
-            except OSError:
-                pass
-
-        # 所有字体都失败，返回默认字体
-        default_font = ImageFont.load_default()
-        return dict.fromkeys(cls.ITEM_NAMES, default_font)
-
-    @classmethod
-    def _load_linux_fonts(cls) -> dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]:
-        """加载 Linux 字体"""
-        # Linux 常见字体路径
-        font_candidates = [
-            # DejaVu 字体（最常见）
-            (
-                Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
-                Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
-            ),
-            # Ubuntu 字体
-            (
-                Path("/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf"),
-                Path("/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf"),
-            ),
-            # Liberation 字体
-            (
-                Path("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"),
-                Path("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"),
-            ),
-            # Noto 字体（支持中文）
-            (
-                Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"),
-                Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
-            ),
-            (
-                Path("/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc"),
-                Path("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"),
-            ),
-        ]
-
-        for bold_path, normal_path in font_candidates:
-            if bold_path.exists() and normal_path.exists():
-                try:
-                    return {
-                        "name": ImageFont.truetype(bold_path, cls.FONT_SIZES["name"]),
-                        "title": ImageFont.truetype(normal_path, cls.FONT_SIZES["title"]),
-                        "text": ImageFont.truetype(normal_path, cls.FONT_SIZES["text"]),
-                        "extra": ImageFont.truetype(normal_path, cls.FONT_SIZES["extra"]),
-                    }
-                except OSError:
-                    continue
-
-        # 所有字体都失败，返回默认字体
-        default_font = ImageFont.load_default()
-        return dict.fromkeys(cls.ITEM_NAMES, default_font)
+    def load_custom_fonts(cls):
+        """加载字体"""
+        font_path = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
+        cls.FONTS = {name: ImageFont.truetype(font_path, size) for name, size in cls.FONT_SIZES.items()}

@@ -1,4 +1,3 @@
-import asyncio
 import re
 from typing import ClassVar
 from typing_extensions import override
@@ -47,17 +46,13 @@ class YouTubeParser(BaseParser):
         thumbnail = info_dict.get("thumbnail", None)
         duration = int(info_dict.get("duration", 0))
 
-        cover_path = None
-        if thumbnail:
-            cover_path = await DOWNLOADER.download_img(thumbnail)
-
-        video_task = asyncio.create_task(YTDLP_DOWNLOADER.download_video(url, self.cookies_file))
+        cover = DOWNLOADER.download_img(thumbnail) if thumbnail else None
+        video = YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
 
         return self.result(
             title=title,
             author=Author(name=author) if author else None,
-            cover_path=cover_path,
-            contents=[VideoContent(video_task, duration=duration, cover_path=cover_path)],
+            contents=[VideoContent(video, cover, duration)],
         )
 
     async def parse_url_as_audio(self, url: str) -> ParseResult:
@@ -73,18 +68,12 @@ class YouTubeParser(BaseParser):
         info_dict = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
         title = info_dict.get("title", "未知")
         author = info_dict.get("uploader", None)
-        thumbnail = info_dict.get("thumbnail", None)
         duration = int(info_dict.get("duration", 0))
 
-        cover_path = None
-        if thumbnail:
-            cover_path = await DOWNLOADER.download_img(thumbnail)
-
-        audio_path = await YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
+        audio_path = YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
 
         return self.result(
             title=title,
             author=Author(name=author) if author else None,
-            cover_path=cover_path,
             contents=[AudioContent(audio_path, duration)],
         )
