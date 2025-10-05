@@ -175,7 +175,6 @@ class WeiBoParser(BaseParser):
 
         # 用 bytes 更稳，避免编码歧义
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
-        url = f"https://weibo.com/{weibo_data.user.id}/{weibo_data.bid}"
         return self.build_result(weibo_data.parse_data)
 
     def _base62_encode(self, number: int) -> str:
@@ -304,16 +303,25 @@ class WeiboData(Struct):
         return []
 
     @property
+    def url(self) -> str:
+        return f"https://weibo.com/{self.user.id}/{self.bid}"
+
+    @property
+    def timestamp(self) -> int:
+        return int(time.mktime(time.strptime(self.created_at, "%a %b %d %H:%M:%S %z %Y")))
+
+    @property
     def parse_data(self) -> ParseData:
         return ParseData(
             title=self.title,
             name=self.display_name,
             avatar_url=self.user.profile_image_url,
             text=self.text_content,
-            timestamp=int(time.mktime(time.strptime(self.created_at, "%a %b %d %H:%M:%S %z %Y"))),
+            timestamp=self.timestamp,
             video_url=self.video_url,
             cover_url=self.cover_url,
             images_urls=self.pic_urls,
+            url=self.url,
             repost=self.retweeted_status.parse_data if self.retweeted_status else None,
         )
 
