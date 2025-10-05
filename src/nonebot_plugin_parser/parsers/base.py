@@ -6,6 +6,7 @@ from typing import ClassVar
 from typing_extensions import Unpack
 
 import httpx
+from nonebot import logger
 
 from ..constants import ANDROID_HEADER, COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
 from .data import ParseData, ParseResult, ParseResultKwargs, Platform
@@ -81,9 +82,11 @@ class BaseParser(ABC):
 
     def build_result(self, data: ParseData) -> ParseResult:
         """转换为解析结果"""
+
         from ..download import DOWNLOADER
         from .data import Author, DynamicContent, ImageContent, MediaContent, VideoContent
 
+        logger.debug(f"data: {data}")
         # 填充作者信息
         author = None
         name, avatar = data.name, data.avatar_url

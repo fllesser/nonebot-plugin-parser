@@ -8,7 +8,6 @@ from nonebot import logger
 
 from ...constants import COMMON_TIMEOUT
 from ...exception import ParseException
-from ...utils import write_json_to_data
 from ..base import BaseParser
 from ..data import ParseResult, Platform
 
@@ -82,7 +81,6 @@ class DouyinParser(BaseParser):
 
         from .video import RouterData
 
-        write_json_to_data(matched.group(1).strip(), "douyin_video.json")
         video_data = msgspec.json.decode(matched.group(1).strip(), type=RouterData).video_data
 
         return self.build_result(video_data.parse_data)

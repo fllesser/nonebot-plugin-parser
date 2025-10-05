@@ -72,7 +72,7 @@ class VideoData(Struct):
             avatar_url=self.avatar_url,
             timestamp=self.create_time,
             images_urls=self.images_urls,
-            video_url=self.video_url,
+            video_url=self.video_url if self.images_urls is None else None,
             cover_url=self.cover_url,
         )
 
