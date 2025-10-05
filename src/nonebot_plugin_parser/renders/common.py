@@ -18,6 +18,7 @@ class CommonRenderer(BaseRenderer):
     MAX_COVER_WIDTH = 1000
     MAX_COVER_HEIGHT = 800
     DEFAULT_CARD_WIDTH = 800
+    MIN_CARD_WIDTH = 400  # 最小卡片宽度，确保头像、名称、时间显示正常
     SECTION_SPACING = 15
     NAME_TIME_GAP = 5  # 名称和时间之间的间距
 
@@ -74,7 +75,10 @@ class CommonRenderer(BaseRenderer):
         cover_img = self._load_and_resize_cover(await result.cover_path)
 
         # 计算卡片宽度
-        card_width = cover_img.width + 2 * self.PADDING if cover_img else self.DEFAULT_CARD_WIDTH
+        if cover_img:
+            card_width = max(cover_img.width + 2 * self.PADDING, self.MIN_CARD_WIDTH)
+        else:
+            card_width = max(self.DEFAULT_CARD_WIDTH, self.MIN_CARD_WIDTH)
         content_width = card_width - 2 * self.PADDING
 
         # 计算各部分内容的高度
