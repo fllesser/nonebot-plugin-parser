@@ -268,7 +268,7 @@ class WeiboData(Struct):
 
     @property
     def title(self) -> str:
-        return self.status_title or self.page_info.title if self.page_info else ""
+        return self.page_info.title if self.page_info else ""
 
     @property
     def display_name(self) -> str:

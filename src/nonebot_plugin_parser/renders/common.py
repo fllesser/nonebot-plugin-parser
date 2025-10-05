@@ -133,6 +133,19 @@ class CommonRenderer(BaseRenderer):
                 new_height = int(cover_img.height * scale_ratio)
                 cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
+            # 如果封面太小，需要放大到最小尺寸
+            min_cover_width = 300  # 最小封面宽度
+            min_cover_height = 200  # 最小封面高度
+
+            if cover_img.width < min_cover_width or cover_img.height < min_cover_height:
+                width_ratio = min_cover_width / cover_img.width
+                height_ratio = min_cover_height / cover_img.height
+                scale_ratio = max(width_ratio, height_ratio)  # 使用max确保达到最小尺寸
+
+                new_width = int(cover_img.width * scale_ratio)
+                new_height = int(cover_img.height * scale_ratio)
+                cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
             return cover_img
         except Exception:
             # 加载失败时返回 None
