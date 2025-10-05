@@ -3,6 +3,7 @@ from typing import ClassVar
 from typing_extensions import override
 
 import httpx
+import msgspec
 
 from ..config import pconfig
 from ..constants import COMMON_HEADER, COMMON_TIMEOUT
@@ -18,7 +19,7 @@ class YouTubeParser(BaseParser):
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
-        ("youtube.com", r"https?://(?:www\.)?youtube\.com/[A-Za-z\d\._\?%&\+\-=/#]+"),
+        ("youtube.com", r"https?://(?:www\.)?youtube\.com/(?:watch|shorts)(?:/[A-Za-z\d_\-]+|\?v=[A-Za-z\d_\-]+)"),
         ("youtu.be", r"https?://(?:www\.)?youtu\.be/[A-Za-z\d\._\?%&\+\-=/#]+"),
     ]
 
@@ -110,11 +111,44 @@ class YouTubeParser(BaseParser):
         async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.post(url, json=payload)
             response.raise_for_status()
-        response_json = response.json()
-        channel_metadata = response_json.get("metadata", {}).get("channelMetadataRenderer", {})
-        name = channel_metadata.get("title", "")
-        description = channel_metadata.get("description", None)
-        avatar = channel_metadata.get("avatar", {}).get("thumbnails", [{}])[0].get("url", None)
-        if avatar:
-            avatar = DOWNLOADER.download_img(avatar)
-        return Author(name=name, avatar=avatar, description=description)
+        browse_response = msgspec.json.decode(response.content, type=BrowseResponse)
+        return browse_response.conert_to_author()
+
+
+from msgspec import Struct
+
+
+class Thumbnail(Struct):
+    url: str
+
+
+class AvatarInfo(Struct):
+    thumbnails: list[Thumbnail]
+
+
+class ChannelMetadataRenderer(Struct):
+    title: str
+    description: str
+    avatar: AvatarInfo
+
+
+class Metadata(Struct):
+    channelMetadataRenderer: ChannelMetadataRenderer
+
+
+class Avatar(Struct):
+    thumbnails: list[Thumbnail]
+
+
+class BrowseResponse(Struct):
+    metadata: Metadata
+
+    def conert_to_author(self) -> Author:
+        channel_metadata = self.metadata.channelMetadataRenderer
+        thumbnails = channel_metadata.avatar.thumbnails
+        avatar = DOWNLOADER.download_img(thumbnails[0].url) if thumbnails else None
+        return Author(
+            name=channel_metadata.title,
+            avatar=avatar,
+            description=channel_metadata.description,
+        )

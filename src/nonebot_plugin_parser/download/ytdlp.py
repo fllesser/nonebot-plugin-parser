@@ -29,8 +29,6 @@ class VideoInfo(Struct):
     """简介"""
     channel_id: str
     """频道 id"""
-    view_count: int
-    """浏览量"""
 
     @property
     def author_name(self) -> str:
