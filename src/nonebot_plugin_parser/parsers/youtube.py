@@ -112,7 +112,7 @@ class YouTubeParser(BaseParser):
             response = await client.post(url, json=payload)
             response.raise_for_status()
         browse_response = msgspec.json.decode(response.content, type=BrowseResponse)
-        return browse_response.conert_to_author()
+        return browse_response.convert_to_author()
 
 
 from msgspec import Struct
@@ -143,7 +143,7 @@ class Avatar(Struct):
 class BrowseResponse(Struct):
     metadata: Metadata
 
-    def conert_to_author(self) -> Author:
+    def convert_to_author(self) -> Author:
         channel_metadata = self.metadata.channelMetadataRenderer
         thumbnails = channel_metadata.avatar.thumbnails
         avatar = DOWNLOADER.download_img(thumbnails[0].url) if thumbnails else None
