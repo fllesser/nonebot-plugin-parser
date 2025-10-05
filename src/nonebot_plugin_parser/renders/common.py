@@ -280,8 +280,18 @@ class CommonRenderer(BaseRenderer):
         if not result.img_contents:
             return None
 
-        # 最多处理9张图片
-        img_contents = result.img_contents[:9]
+        # 检查是否有超过9张图片
+        total_images = len(result.img_contents)
+        has_more = total_images > 9
+
+        # 如果超过9张，处理前9张，第9张显示+N效果
+        if has_more:
+            img_contents = result.img_contents[:9]
+            remaining_count = total_images - 9
+        else:
+            img_contents = result.img_contents[:9]
+            remaining_count = 0
+
         processed_images = []
 
         for img_content in img_contents:
@@ -322,6 +332,8 @@ class CommonRenderer(BaseRenderer):
             "images": processed_images,
             "cols": cols,
             "rows": rows,
+            "has_more": has_more,
+            "remaining_count": remaining_count,
         }
 
     def _crop_to_square(self, img: Image.Image) -> Image.Image:
@@ -538,7 +550,43 @@ class CommonRenderer(BaseRenderer):
         """绘制封面"""
         x_pos = (card_width - cover_img.width) // 2
         image.paste(cover_img, (x_pos, y_pos))
+
+        # 添加视频播放标志
+        self._draw_video_play_button(image, x_pos, y_pos, cover_img.width, cover_img.height)
+
         return y_pos + cover_img.height + self.SECTION_SPACING
+
+    def _draw_video_play_button(self, image: Image.Image, x_pos: int, y_pos: int, width: int, height: int):
+        """在封面上绘制视频播放按钮"""
+        draw = ImageDraw.Draw(image)
+
+        # 计算播放按钮的位置和尺寸
+        button_size = min(width, height) // 4  # 按钮大小为封面尺寸的1/4
+        button_x = x_pos + (width - button_size) // 2
+        button_y = y_pos + (height - button_size) // 2
+
+        # 绘制半透明圆形背景
+        overlay = Image.new("RGBA", (button_size, button_size), (0, 0, 0, 0))
+        overlay_draw = ImageDraw.Draw(overlay)
+        overlay_draw.ellipse((0, 0, button_size - 1, button_size - 1), fill=(0, 0, 0, 120))
+
+        # 将半透明背景贴到主画布上
+        image.paste(overlay, (button_x, button_y), overlay)
+
+        # 绘制播放三角形
+        triangle_size = button_size // 3
+        triangle_x = button_x + (button_size - triangle_size) // 2
+        triangle_y = button_y + (button_size - triangle_size) // 2
+
+        # 计算三角形的三个顶点（向右的三角形）
+        triangle_points = [
+            (triangle_x, triangle_y),  # 左上
+            (triangle_x, triangle_y + triangle_size),  # 左下
+            (triangle_x + triangle_size, triangle_y + triangle_size // 2),  # 右中
+        ]
+
+        # 绘制浅色三角形
+        draw.polygon(triangle_points, fill=(255, 255, 255, 200))
 
     def _draw_text(self, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制文本内容"""
@@ -598,6 +646,8 @@ class CommonRenderer(BaseRenderer):
         images = content["images"]
         cols = content["cols"]
         rows = content["rows"]
+        has_more = content.get("has_more", False)
+        remaining_count = content.get("remaining_count", 0)
 
         if not images:
             return y_pos
@@ -633,9 +683,47 @@ class CommonRenderer(BaseRenderer):
                 y_offset = (max_height - img.height) // 2
                 image.paste(img, (img_x, img_y + y_offset))
 
+                # 如果是第9张图片且有更多图片，绘制+N效果
+                if has_more and row == rows - 1 and i == len(row_images) - 1 and len(images) == 9:  # 第9张图片
+                    self._draw_more_indicator(image, img_x, img_y, max_img_size, max_height, remaining_count)
+
             current_y += max_height + img_spacing
 
         return current_y + self.SECTION_SPACING
+
+    def _draw_more_indicator(
+        self, image: Image.Image, img_x: int, img_y: int, img_width: int, img_height: int, count: int
+    ):
+        """在图片上绘制+N指示器"""
+        draw = ImageDraw.Draw(image)
+
+        # 创建半透明黑色遮罩
+        overlay = Image.new("RGBA", (img_width, img_height), (0, 0, 0, 0))
+        overlay_draw = ImageDraw.Draw(overlay)
+        overlay_draw.rectangle((0, 0, img_width - 1, img_height - 1), fill=(0, 0, 0, 150))
+
+        # 将遮罩贴到图片上
+        image.paste(overlay, (img_x, img_y), overlay)
+
+        # 绘制+N文字
+        text = f"+{count}"
+        # 使用较大的字体
+        font_size = min(img_width, img_height) // 6
+        try:
+            font_path = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
+            font = ImageFont.truetype(font_path, font_size)
+        except Exception:
+            font = ImageFont.load_default()
+
+        # 计算文字位置（居中）
+        bbox = font.getbbox(text)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        text_x = img_x + (img_width - text_width) // 2
+        text_y = img_y + (img_height - text_height) // 2
+
+        # 绘制白色文字
+        draw.text((text_x, text_y), text, fill=(255, 255, 255, 255), font=font)
 
     def _create_repost_card(self, content: dict, fonts: dict) -> Image.Image:
         """创建转发内容的完整卡片"""

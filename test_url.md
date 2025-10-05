@@ -68,6 +68,7 @@ weibo:
   - http://m.weibo.cn/status/5112672433738061 视频(m.weibo.cn)
 - 图集
   - https://weibo.com/7207262816/P5kWdcfDe 多图 > 9 张
+  - https://weibo.com/7207262816/P2AFBk387 9张
 - 纯文
   - ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
 - 转发
