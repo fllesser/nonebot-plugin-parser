@@ -3,7 +3,6 @@ from typing import Any, ClassVar
 
 import httpx
 
-from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
@@ -19,24 +18,22 @@ class TwitterParser(BaseParser):
         ("x.com", r"https?://x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)"),
     ]
 
-    @staticmethod
-    async def _req_xdown_api(url: str) -> dict[str, Any]:
+    async def _req_xdown_api(self, url: str) -> dict[str, Any]:
         headers = {
             "Accept": "application/json, text/plain, */*",
             "Content-Type": "application/x-www-form-urlencoded",
             "Origin": "https://xdown.app",
             "Referer": "https://xdown.app/",
-            **COMMON_HEADER,
+            **self.headers,
         }
         data = {"q": url, "lang": "zh-cn"}
-        async with httpx.AsyncClient(headers=headers, timeout=COMMON_TIMEOUT) as client:
+        async with httpx.AsyncClient(headers=headers, timeout=self.timeout) as client:
             url = "https://xdown.app/api/ajaxSearch"
             response = await client.post(url, data=data)
             return response.json()
 
-    @classmethod
-    async def parse_x_url(cls, x_url: str) -> list[MediaContent]:
-        resp = await cls._req_xdown_api(x_url)
+    async def parse_x_url(self, x_url: str) -> list[MediaContent]:
+        resp = await self._req_xdown_api(x_url)
         if resp.get("status") != "ok":
             raise ParseException("解析失败")
 
@@ -45,15 +42,15 @@ class TwitterParser(BaseParser):
         if html_content is None:
             raise ParseException("解析失败, 数据为空")
 
-        first_video_url = await cls._get_first_video_url(html_content)
+        first_video_url = await self._get_first_video_url(html_content)
         if first_video_url is not None:
             video_task = DOWNLOADER.download_video(first_video_url)
             return [VideoContent(video_task)]
 
         contents: list[MediaContent] = []
-        if pic_urls := await cls._get_all_pic_urls(html_content):
+        if pic_urls := await self._get_all_pic_urls(html_content):
             contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in pic_urls)
-        if dynamic_urls := await cls._get_all_gif_urls(html_content):
+        if dynamic_urls := await self._get_all_gif_urls(html_content):
             contents.extend(DynamicContent(DOWNLOADER.download_video(url)) for url in dynamic_urls)
 
         return contents

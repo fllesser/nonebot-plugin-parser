@@ -7,8 +7,8 @@ from typing_extensions import Unpack
 
 import httpx
 
-from ..constants import COMMON_HEADER, COMMON_TIMEOUT
-from .data import ParseResult, ParseResultKwargs, Platform
+from ..constants import ANDROID_HEADER, COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
+from .data import ParseResult, ParseResultKwargs, Platform, TransitionData
 
 
 class BaseParser(ABC):
@@ -28,6 +28,12 @@ class BaseParser(ABC):
 
     patterns: ClassVar[list[tuple[str, str]]]
     """ URL 正则表达式模式列表 [(keyword, pattern), ...] """
+
+    def __init__(self):
+        self.headers = COMMON_HEADER.copy()
+        self.ios_headers = IOS_HEADER.copy()
+        self.android_headers = ANDROID_HEADER.copy()
+        self.timeout = COMMON_TIMEOUT
 
     def __init_subclass__(cls, **kwargs):
         """自动注册子类到 _registry"""
@@ -72,3 +78,49 @@ class BaseParser(ABC):
             if response.status_code >= 400:
                 response.raise_for_status()
             return response.headers.get("Location", url)
+
+    def convert_transition_to_result(self, data: TransitionData) -> ParseResult:
+        """转换为解析结果"""
+        from ..download import DOWNLOADER
+        from .data import Author, DynamicContent, ImageContent, MediaContent, VideoContent
+
+        # 填充作者信息
+        name, avatar, desc = data.name_avatar_desc()
+        if avatar is not None:
+            avatar = DOWNLOADER.download_img(avatar, ext_headers=self.headers)
+        author = Author(name=name, avatar=avatar, description=desc)
+
+        # 填充封面信息
+        cover_task = None
+        if cover_url := data.get_cover_url():
+            cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
+
+        # 填充内容信息
+        contents: list[MediaContent] = []
+        if images_urls := data.get_images_urls():
+            img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in images_urls]
+            contents.extend(ImageContent(task) for task in img_tasks)
+        if dynamic_urls := data.get_dynamic_urls():
+            dynamic_tasks = [DOWNLOADER.download_video(url, ext_headers=self.headers) for url in dynamic_urls]
+            contents.extend(DynamicContent(task) for task in dynamic_tasks)
+
+        if video_url := data.get_video_url():
+            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
+            contents.append(VideoContent(video_task, cover_task))
+        else:
+            if cover_task:
+                contents.append(ImageContent(cover_task))
+
+        if repost := data.get_repost():
+            repost = self.convert_transition_to_result(repost)
+
+        return self.result(
+            author=author,
+            contents=contents,
+            title=data.get_title(),
+            text=data.get_text(),
+            timestamp=data.get_timestamp(),
+            url=data.get_url(),
+            extra=data.get_extra(),
+            repost=repost,
+        )

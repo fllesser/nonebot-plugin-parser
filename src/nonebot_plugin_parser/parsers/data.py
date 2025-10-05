@@ -129,7 +129,7 @@ class ParseResult:
     """文本内容"""
     contents: list[MediaContent] = field(default_factory=list)
     """内容列表，主体以外的内容"""
-    timestamp: float | None = None
+    timestamp: int | None = None
     """发布时间戳, 秒"""
     url: str | None = None
     """来源链接"""
@@ -244,8 +244,47 @@ class ParseResultKwargs(TypedDict, total=False):
     title: str
     text: str
     contents: list[MediaContent]
-    timestamp: float | None
+    timestamp: int | None
     url: str | None
     author: Author | None
     extra: dict[str, Any]
     repost: ParseResult | None
+
+
+from abc import ABC, abstractmethod
+
+
+class TransitionData(ABC):
+    def get_title(self) -> str:
+        return ""
+
+    @abstractmethod
+    def name_avatar_desc(self) -> tuple[str, str | None, str | None]:
+        raise NotImplementedError
+
+    def get_text(self) -> str:
+        return ""
+
+    def get_timestamp(self) -> int | None:
+        return None
+
+    def get_url(self) -> str | None:
+        return None
+
+    def get_video_url(self) -> str | None:
+        return None
+
+    def get_cover_url(self) -> str | None:
+        return None
+
+    def get_images_urls(self) -> list[str] | None:
+        return None
+
+    def get_dynamic_urls(self) -> list[str] | None:
+        return None
+
+    def get_extra(self) -> dict[str, Any]:
+        return {}
+
+    def get_repost(self) -> "TransitionData | None":
+        return None

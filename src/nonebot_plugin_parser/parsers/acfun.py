@@ -15,7 +15,7 @@ from ..download import DOWNLOADER
 from ..exception import DownloadException, ParseException
 from ..utils import safe_unlink
 from .base import BaseParser
-from .data import COMMON_HEADER, Author, ParseResult, Platform, VideoContent
+from .data import Author, ParseResult, Platform, VideoContent
 
 
 class AcfunParser(BaseParser):
@@ -28,7 +28,8 @@ class AcfunParser(BaseParser):
     ]
 
     def __init__(self):
-        self.headers = {"referer": "https://www.acfun.cn/", **COMMON_HEADER}
+        super().__init__()
+        self.headers["referer"] = "https://www.acfun.cn/"
 
     async def parse_video_info(self, url: str) -> tuple[str, str, str, str, str]:
         """解析acfun链接获取详细信息

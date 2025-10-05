@@ -5,11 +5,9 @@ from typing import ClassVar
 import httpx
 import msgspec
 
-from ..constants import COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
-from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ImageContent, MediaContent, ParseResult, Platform, VideoContent
+from .data import ParseResult, Platform
 
 
 class KuaiShouParser(BaseParser):
@@ -26,11 +24,8 @@ class KuaiShouParser(BaseParser):
     ]
 
     def __init__(self):
-        self.headers = COMMON_HEADER
-        self.v_headers = {
-            **IOS_HEADER,
-            "Referer": "https://v.kuaishou.com/",
-        }
+        super().__init__()
+        self.ios_headers["Referer"] = "https://v.kuaishou.com/"
 
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
@@ -46,7 +41,7 @@ class KuaiShouParser(BaseParser):
         """
         # 从匹配对象中获取原始URL
         url = matched.group(0)
-        location_url = await self.get_redirect_url(url, headers=self.v_headers)
+        location_url = await self.get_redirect_url(url, headers=self.ios_headers)
 
         if len(location_url) <= 0:
             raise ParseException("failed to get location url from url")
@@ -54,7 +49,7 @@ class KuaiShouParser(BaseParser):
         # /fw/long-video/ 返回结果不一样, 统一替换为 /fw/photo/ 请求
         location_url = location_url.replace("/fw/long-video/", "/fw/photo/")
 
-        async with httpx.AsyncClient(headers=self.v_headers, timeout=COMMON_TIMEOUT) as client:
+        async with httpx.AsyncClient(headers=self.ios_headers, timeout=self.timeout) as client:
             response = await client.get(location_url)
             response.raise_for_status()
             response_text = response.text
@@ -71,26 +66,35 @@ class KuaiShouParser(BaseParser):
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        return await self._photo2result(photo)
-
-    async def _photo2result(self, photo: "Photo"):
-        # 下载封面
-        cover = None
-        if photo.cover_url:
-            cover = DOWNLOADER.download_img(photo.cover_url, ext_headers=self.headers)
-
-        # 下载内容
-        contents: list[MediaContent] = []
-        if video_url := photo.video_url:
-            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
-            contents.append(VideoContent(video_task, cover))
-        elif img_urls := photo.img_urls:
-            contents.extend(ImageContent(DOWNLOADER.download_img(url, ext_headers=self.headers)) for url in img_urls)
-
-        return self.result(title=photo.caption, contents=contents)
+        transition_data = KuaishouTransitionData(photo)
+        return self.convert_transition_to_result(transition_data)
 
 
-from typing import TypeAlias
+from .data import TransitionData
+
+
+class KuaishouTransitionData(TransitionData):
+    def __init__(self, photo: "Photo"):
+        self.photo = photo
+
+    def name_avatar_desc(self):
+        return self.photo.name, self.photo.head_url, None
+
+    def get_title(self) -> str:
+        return self.photo.caption
+
+    def get_timestamp(self):
+        return self.photo.timestamp // 1000
+
+    def get_video_url(self):
+        return self.photo.video_url
+
+    def get_cover_url(self):
+        return self.photo.cover_url
+
+    def get_images_urls(self):
+        return self.photo.img_urls
+
 
 from msgspec import Struct, field
 
@@ -121,9 +125,17 @@ class ExtParams(Struct):
 class Photo(Struct):
     # 标题
     caption: str
+    timestamp: int
+    duration: int = 0
+    user_name: str = field(default="未知用户", name="userName")
+    head_url: str | None = field(default=None, name="headUrl")
     cover_urls: list[CdnUrl] = field(name="coverUrls", default_factory=list)
     main_mv_urls: list[CdnUrl] = field(name="mainMvUrls", default_factory=list)
     ext_params: ExtParams = field(name="ext_params", default_factory=ExtParams)
+
+    @property
+    def name(self) -> str:
+        return self.user_name.replace("\u3164", "").strip()
 
     @property
     def cover_url(self):
@@ -142,5 +154,7 @@ class TusjohData(Struct):
     result: int
     photo: Photo | None = None
 
+
+from typing import TypeAlias
 
 KuaishouInitState: TypeAlias = dict[str, TusjohData]

@@ -22,7 +22,7 @@ async def test_common_video():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.text
         assert parse_result.author
-        assert parse_result.cover_path
+        assert await parse_result.cover_path
         assert parse_result.video_contents
         video_path = await parse_result.video_contents[0].get_path()
         assert video_path.exists()

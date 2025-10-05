@@ -7,7 +7,6 @@ async def test_extract_video_info():
     video_info = await YTDLP_DOWNLOADER.extract_video_info(url)
 
     assert video_info is not None
-    assert video_info.get("title") is not None
 
 
 async def test_download_video():

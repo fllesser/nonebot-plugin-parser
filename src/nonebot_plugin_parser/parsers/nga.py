@@ -9,7 +9,6 @@ from typing_extensions import override
 from bs4 import BeautifulSoup, Tag
 import httpx
 
-from ..constants import COMMON_HEADER, COMMON_TIMEOUT
 from ..exception import ParseException
 from .base import BaseParser
 from .data import Author, ParseResult, Platform
@@ -30,8 +29,8 @@ class NGAParser(BaseParser):
     ]
 
     def __init__(self):
-        self.headers = {
-            **COMMON_HEADER,
+        super().__init__()
+        extra_headers = {
             "Referer": "https://nga.178.com/",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
@@ -39,6 +38,7 @@ class NGAParser(BaseParser):
             "Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1",
         }
+        self.headers.update(extra_headers)
 
     @staticmethod
     def nga_url(tid: str | int) -> str:
@@ -61,7 +61,7 @@ class NGAParser(BaseParser):
         tid = matched.group("tid")
         url = self.nga_url(tid)
 
-        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT, follow_redirects=True) as client:
+        async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout, follow_redirects=True) as client:
             try:
                 # 第一次请求可能返回403，但包含设置cookie的JavaScript
                 resp = await client.get(url)
@@ -136,7 +136,7 @@ class NGAParser(BaseParser):
         time_tag = soup.find(id="postdate0")
         if time_tag and isinstance(time_tag, Tag):
             timestr = time_tag.get_text(strip=True)
-            timestamp = time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M"))
+            timestamp = int(time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M")))
 
         # 提取文本 - postcontent0
         text = ""
