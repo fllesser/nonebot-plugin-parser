@@ -65,14 +65,14 @@ class VideoData(Struct):
     @property
     def parse_data(self) -> ParseData:
         """转换为ParseData对象"""
-
+        images_urls = self.images_urls
         return ParseData(
             title=self.desc,
             name=self.author.nickname,
             avatar_url=self.avatar_url,
             timestamp=self.create_time,
-            images_urls=self.images_urls,
-            video_url=self.video_url if self.images_urls is None else None,
+            images_urls=images_urls,
+            video_url=self.video_url if len(images_urls) == 0 else None,
             cover_url=self.cover_url,
         )
 
