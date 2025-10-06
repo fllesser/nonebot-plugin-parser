@@ -3,27 +3,31 @@ class ParseException(Exception):
 
     def __init__(self, message: str):
         self.message = message
-        super().__init__(message)
 
 
 class DownloadException(ParseException):
     """下载异常"""
 
-    pass
+    def __init__(self, message: str | None = None):
+        self.message = message or "媒体下载失败"
 
 
-class DownloadSizeLimitException(DownloadException):
+class DownloadLimitException(DownloadException):
+    """下载超过限制异常"""
+
+    def __init__(self):
+        raise NotImplementedError
+
+
+class SizeLimitException(DownloadLimitException):
     """下载大小超过限制异常"""
 
     def __init__(self):
         self.message = "媒体大小超过配置限制，取消下载"
-        super().__init__(self.message)
 
 
-class MultiException(ParseException):
-    """多个异常"""
+class DurationLimitException(DownloadLimitException):
+    """下载时长超过限制异常"""
 
-    def __init__(self, exceptions: list[ParseException]):
-        self.exceptions = exceptions
-        message = ",".join([e.message for e in exceptions])
-        super().__init__(f"[{message}]")
+    def __init__(self):
+        self.message = "媒体时长超过配置限制，取消下载"

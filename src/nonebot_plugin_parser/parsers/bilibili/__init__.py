@@ -11,7 +11,7 @@ from nonebot import logger
 
 from ...config import pconfig
 from ...download import DOWNLOADER
-from ...exception import DownloadException, ParseException
+from ...exception import DurationLimitException, ParseException
 from ..base import BaseParser
 from ..cookie import ck2dict
 from ..data import (
@@ -139,7 +139,7 @@ class BilibiliParser(BaseParser):
                 return output_path
             v_url, a_url = await self.parse_video_download_url(video=video, page_index=page_idx)
             if duration > pconfig.duration_maximum:
-                raise DownloadException("视频时长超过最大限制")
+                raise DurationLimitException
             if a_url is not None:
                 return await DOWNLOADER.download_av_and_merge(
                     v_url, a_url, output_path=output_path, ext_headers=self.headers

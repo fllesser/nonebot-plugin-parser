@@ -8,17 +8,18 @@ from nonebot_plugin_alconna.uniseg.segment import CustomNode, Reference
 
 from .config import pconfig
 
+ForwardNodeInner = str | Segment | UniMessage
+"""转发消息节点内部允许的类型"""
+
 
 class UniHelper:
     @staticmethod
-    def construct_forward_message(
-        segments: Sequence[str | Segment | UniMessage], user_id: str | None = None
-    ) -> Reference:
+    def construct_forward_message(segments: Sequence[ForwardNodeInner], user_id: str | None = None) -> Reference:
         """构造转发消息
 
         Args:
             user_id (str): 用户ID
-            segments (Sequence[Segment | str]): 消息段
+            segments (Sequence[ForwardNode]): 消息段
 
         Returns:
             Reference: 转发消息
@@ -37,23 +38,6 @@ class UniHelper:
             nodes.append(node)
 
         return Reference(nodes=nodes)
-
-    @classmethod
-    async def send_segments(cls, segments: Sequence[Segment | str]) -> None:
-        """发送消息段
-
-        Args:
-            segments (Sequence[Segment | str]): 消息段
-        """
-
-        if len(segments) > 2:
-            forward_msg = cls.construct_forward_message(segments)
-            await UniMessage([forward_msg]).send()
-
-        else:
-            segments = list(segments)
-            segments[:-1] = [Text(seg + "\n") if isinstance(seg, str) else seg for seg in segments[:-1]]
-            await UniMessage(segments).send()
 
     @staticmethod
     def img_seg(img_path: Path | None = None, raw: bytes | None = None) -> Image:

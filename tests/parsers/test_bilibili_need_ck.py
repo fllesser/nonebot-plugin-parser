@@ -106,21 +106,21 @@ async def test_encode_h264_video():
 
 async def test_max_size_video():
     from nonebot_plugin_parser.download import DOWNLOADER
-    from nonebot_plugin_parser.exception import DownloadSizeLimitException
+    from nonebot_plugin_parser.exception import DurationLimitException, SizeLimitException
     from nonebot_plugin_parser.parsers import BilibiliParser
 
     parser = BilibiliParser()
     bvid = "BV1du4y1E7Nh"
+    audio_url = None
     try:
         _, audio_url = await parser.parse_video_download_url(bvid=bvid)
-    except DownloadSizeLimitException:
-        pytest.skip("解析B站视频 BV1du4y1E7Nh 失败(风控)")
+    except DurationLimitException:
+        pass
 
     assert audio_url is not None
-
     try:
         await DOWNLOADER.download_audio(audio_url, ext_headers=parser.headers)
-    except DownloadSizeLimitException:
+    except SizeLimitException:
         pass
 
 
