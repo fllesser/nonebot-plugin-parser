@@ -12,8 +12,7 @@
 <br/>
 [![pre-commit](https://results.pre-commit.ci/badge/github/fllesser/nonebot-plugin-parser/master.svg)](https://results.pre-commit.ci/latest/github/fllesser/nonebot-plugin-parser/master)
 [![codecov](https://codecov.io/gh/fllesser/nonebot-plugin-parser/graph/badge.svg?token=VCS8IHSO7U)](https://codecov.io/gh/fllesser/nonebot-plugin-parser)
-[![pepy](https://static.pepy.tech/badge/nonebot-plugin-parser)](https://pepy.tech/projects/nonebot-plugin-parser)
-
+[![qqgroup](https://img.shields.io/badge/QQ%E7%BE%A4-820082006-orange?style=flat-square)](https://qm.qq.com/q/y4T4CjHimc)
 </div>
 
 > [!IMPORTANT]
