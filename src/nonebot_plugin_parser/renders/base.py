@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
+from itertools import chain
 from pathlib import Path
 from typing import Any, ClassVar
 
-from ..helper import UniHelper as UniHelper
-from ..helper import UniMessage as UniMessage
-from ..parsers import ParseResult as ParseResult
+from ..exception import MultiException, ParseException
+from ..helper import Segment, UniHelper, UniMessage
+from ..parsers import ParseResult
+from ..parsers.data import AudioContent, DynamicContent, GraphicsContent, ImageContent, VideoContent
 
 
 class BaseRenderer(ABC):
@@ -29,7 +31,7 @@ class BaseRenderer(ABC):
         raise NotImplementedError
 
     async def render_contents(self, result: ParseResult) -> AsyncGenerator[UniMessage[Any], None]:
-        """渲染内容消息
+        """渲染媒体内容消息
 
         Args:
             result (ParseResult): 解析结果
@@ -37,18 +39,35 @@ class BaseRenderer(ABC):
         Returns:
             AsyncGenerator[UniMessage[Any], None]: 消息生成器
         """
-        separate_segs, forwardable_segs = await result.contents_to_segs()
+        raises: list[ParseException] = []
+        forwardable_segs: list[str | Segment | UniMessage] = []
+        for cont in chain(result.contents, result.repost.contents if result.repost else ()):
+            try:
+                path = await cont.get_path()
+            except ParseException as e:
+                forwardable_segs.append(e.message)
+                raises.append(e)
+                # 继续渲染其他内容
+                continue
 
-        # 处理可以合并转发的消息段
+            match cont:
+                case VideoContent():
+                    yield UniMessage(UniHelper.video_seg(path))
+                case AudioContent():
+                    yield UniMessage(UniHelper.record_seg(path))
+                case ImageContent():
+                    forwardable_segs.append(UniHelper.img_seg(path))
+                case DynamicContent():
+                    forwardable_segs.append(UniHelper.video_seg(path))
+                case GraphicsContent(_, text):
+                    forwardable_segs.append(text + UniHelper.img_seg(path))
+
         if forwardable_segs:
-            # 如果只有 str 类型, 则不使用转发消息
             if all(isinstance(seg, str) for seg in forwardable_segs):
                 yield UniMessage(forwardable_segs)
             else:
                 forward_msg = UniHelper.construct_forward_message(forwardable_segs)
                 yield UniMessage(forward_msg)
 
-        # 处理必须单独发送的消息段
-        if separate_segs:
-            for seg in separate_segs:
-                yield UniMessage(seg)
+        if raises:
+            raise MultiException(raises)

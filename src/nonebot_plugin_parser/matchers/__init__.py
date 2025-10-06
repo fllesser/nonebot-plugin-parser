@@ -62,15 +62,11 @@ async def _(
     await _message_reaction(event, "resolving")
 
     cache_key = matched.group(0)
-    if result := RESULT_CACHE.get(cache_key):
-        logger.debug(f"命中缓存: {cache_key}")
-    else:
-        # 获取对应平台 parser
-        parser = KEYWORD_PARSER_MAP.get(keyword)
-
-        if parser is None:
-            logger.warning("没有找到对应平台的 Parser")
-            return
+    # 1. 获取缓存结果
+    result = RESULT_CACHE.get(cache_key)
+    if result is None:
+        # 2. 获取对应平台 parser
+        parser = KEYWORD_PARSER_MAP[keyword]
 
         try:
             result = await parser.parse(matched)
@@ -78,16 +74,22 @@ async def _(
             # await UniMessage(str(e)).send()
             await _message_reaction(event, "fail")
             raise
-
-        # 缓存解析结果
-        RESULT_CACHE[cache_key] = result
+    else:
+        logger.debug(f"命中缓存: {cache_key}, 结果: {result}")
 
     # 3. 渲染内容消息并发送
-    renderer = get_renderer(result.platform.name)
-    async for message in renderer.render_messages(result):
-        await message.send()
+    try:
+        renderer = get_renderer(result.platform.name)
+        async for message in renderer.render_messages(result):
+            await message.send()
+    except Exception:
+        await _message_reaction(event, "fail")
+        raise
 
-    # 4. 添加成功的消息响应
+    # 4. 无 raise 再缓存解析结果
+    RESULT_CACHE[cache_key] = result
+
+    # 5. 添加成功的消息响应
     await _message_reaction(event, "done")
 
 

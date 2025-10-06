@@ -25,6 +25,8 @@ async def test_video():
         for video_content in video_contents:
             path = await video_content.get_path()
             assert path.exists(), "视频不存在"
+            cover_path = await video_content.get_cover_path()
+            assert cover_path, "封面不存在"
 
     await asyncio.gather(*[parse_video(url) for url in urls])
 

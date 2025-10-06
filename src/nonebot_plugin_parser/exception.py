@@ -18,3 +18,12 @@ class DownloadSizeLimitException(DownloadException):
     def __init__(self):
         self.message = "媒体大小超过配置限制，取消下载"
         super().__init__(self.message)
+
+
+class MultiException(ParseException):
+    """多个异常"""
+
+    def __init__(self, exceptions: list[ParseException]):
+        self.exceptions = exceptions
+        message = ",".join([e.message for e in exceptions])
+        super().__init__(f"[{message}]")

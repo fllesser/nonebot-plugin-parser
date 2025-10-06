@@ -76,25 +76,23 @@ class TwitterParser(BaseParser):
         soup = BeautifulSoup(html_content, "html.parser")
         data = ParseData(name="无用户名")
 
-        def get_tag_href(tag) -> str | None:
-            if isinstance(tag, Tag):
-                if href := tag.get("href"):
-                    return str(href)
-            return None
-
         # 1. 提取缩略图链接
         thumb_tag = soup.find("img")
-        if thumb_tag:
-            data.cover_url = get_tag_href(thumb_tag)
+        if isinstance(thumb_tag, Tag):
+            if cover := thumb_tag.get("src"):
+                data.cover_url = str(cover)
 
         # 2. 提取下载链接
         tw_button_tags = soup.find_all("a", class_="tw-button-dl")
         abutton_tags = soup.find_all("a", class_="abutton")
         for tag in chain(tw_button_tags, abutton_tags):
-            href = get_tag_href(tag)
+            if not isinstance(tag, Tag):
+                continue
+            href = tag.get("href")
             if href is None:
                 continue
 
+            href = str(href)
             text = tag.get_text(strip=True)
             if "下载 MP4" in text:
                 data.video_url = href
