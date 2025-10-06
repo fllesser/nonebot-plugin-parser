@@ -8,7 +8,7 @@ from tqdm.asyncio import tqdm
 
 from ..config import pconfig
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
-from ..exception import DownloadException, DownloadSizeLimitException
+from ..exception import DownloadException, SizeLimitException
 from ..utils import generate_file_name, merge_av, safe_unlink
 from .task import auto_task
 from .ytdlp import YtdlpDownloader
@@ -65,7 +65,7 @@ class StreamDownloader:
 
                 if content_length and (file_size := content_length / 1024 / 1024) > pconfig.max_size:
                     logger.warning(f"{file_name} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
-                    raise DownloadSizeLimitException
+                    raise SizeLimitException
 
                 with self.get_progress_bar(file_name, content_length) as bar:
                     async with aiofiles.open(file_path, "wb") as file:
