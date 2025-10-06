@@ -133,15 +133,6 @@ class ParseResult:
     repost: "ParseResult | None" = None
     """转发的内容"""
 
-    def __hash__(self) -> int:
-        return hash(
-            (
-                self.platform.name,
-                self.timestamp,
-                self.url,
-            )
-        )
-
     @property
     def header(self) -> str:
         header = self.platform.display_name
@@ -162,9 +153,6 @@ class ParseResult:
     @property
     def extra_info(self) -> str:
         return self.extra.get("info", "")
-
-    def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
-        return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
 
     @property
     def video_contents(self) -> list[VideoContent]:
@@ -192,6 +180,9 @@ class ParseResult:
             if isinstance(cont, VideoContent):
                 return await cont.get_cover_path()
         return None
+
+    def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+        return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
 
     def __str__(self) -> str:
         return f"title: {self.title}\nplatform: {self.platform}\nauthor: {self.author}\ncontents: {self.contents}"

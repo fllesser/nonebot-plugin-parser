@@ -19,7 +19,13 @@ class DefaultRenderer(BaseRenderer):
             Generator[UniMessage[Any], None, None]: 消息生成器
         """
 
-        texts: list[str] = [result.header, result.text, result.extra_info, result.display_url]
+        texts: list[str] = [
+            result.header,
+            result.text,
+            result.extra_info,
+            result.display_url,
+            result.repost_display_url,
+        ]
         texts = [text for text in texts if text]
         texts[:-1] = [seg + "\n" for seg in texts[:-1]]
 
