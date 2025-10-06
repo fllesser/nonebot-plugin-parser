@@ -1,12 +1,8 @@
 from asyncio import Task
 from dataclasses import dataclass, field
 from datetime import datetime
-from itertools import chain
 from pathlib import Path
 from typing import Any
-
-from ..exception import ParseException
-from ..helper import Segment, UniHelper, UniMessage
 
 
 @dataclass(repr=False)
@@ -196,36 +192,6 @@ class ParseResult:
             if isinstance(cont, VideoContent):
                 return await cont.get_cover_path()
         return None
-
-    async def contents_to_segs(self):
-        """将内容列表转换为消息段
-
-        Returns:
-            tuple[list[Segment], list[str | Segment | UniMessage]]: 消息段
-            separate_segs: 必须单独发送的消息段(视频、语音、文件)
-            forwardable_segs: 可以合并转发的消息段(文本和图片)
-        """
-        separate_segs: list[Segment] = []
-        forwardable_segs: list[str | Segment | UniMessage] = []
-
-        for cont in chain(self.contents, self.repost.contents if self.repost else ()):
-            try:
-                path = await cont.get_path()
-                match cont:
-                    case VideoContent():
-                        separate_segs.append(UniHelper.video_seg(path))
-                    case ImageContent():
-                        forwardable_segs.append(UniHelper.img_seg(path))
-                    case AudioContent():
-                        separate_segs.append(UniHelper.record_seg(path))
-                    case DynamicContent():
-                        forwardable_segs.append(UniHelper.video_seg(path))
-                    case GraphicsContent(_, text):
-                        forwardable_segs.append(text + UniHelper.img_seg(path))
-            except ParseException as e:
-                forwardable_segs.append(e.message)
-
-        return separate_segs, forwardable_segs
 
     def __str__(self) -> str:
         return f"title: {self.title}\nplatform: {self.platform}\nauthor: {self.author}\ncontents: {self.contents}"
