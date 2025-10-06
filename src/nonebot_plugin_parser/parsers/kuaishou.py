@@ -86,7 +86,7 @@ class Atlas(Struct):
     @property
     def img_urls(self):
         if len(self.cdn_list) == 0 or len(self.img_route_list) == 0:
-            return None
+            return []
         cdn = random.choice(self.cdn_list).cdn
         return [f"https://{cdn}/{url}" for url in self.img_route_list]
 

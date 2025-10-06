@@ -259,7 +259,7 @@ class ParseData:
     url: str | None = None
     video_url: str | None = None
     cover_url: str | None = None
-    images_urls: list[str] | None = None
-    dynamic_urls: list[str] | None = None
+    images_urls: list[str] = field(default_factory=list)
+    dynamic_urls: list[str] = field(default_factory=list)
     extra: dict[str, Any] = field(default_factory=dict)
     repost: "ParseData | None" = None

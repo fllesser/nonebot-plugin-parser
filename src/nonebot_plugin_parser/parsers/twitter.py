@@ -3,10 +3,9 @@ from typing import Any, ClassVar
 
 import httpx
 
-from ..download import DOWNLOADER
 from ..exception import ParseException
 from .base import BaseParser
-from .data import DynamicContent, ImageContent, MediaContent, ParseResult, Platform, VideoContent
+from .data import ParseResult, Platform
 
 
 class TwitterParser(BaseParser):
@@ -32,61 +31,6 @@ class TwitterParser(BaseParser):
             response = await client.post(url, data=data)
             return response.json()
 
-    async def parse_x_url(self, x_url: str) -> list[MediaContent]:
-        resp = await self._req_xdown_api(x_url)
-        if resp.get("status") != "ok":
-            raise ParseException("解析失败")
-
-        html_content = resp.get("data")
-
-        if html_content is None:
-            raise ParseException("解析失败, 数据为空")
-
-        first_video_url = await self._get_first_video_url(html_content)
-        if first_video_url is not None:
-            video_task = DOWNLOADER.download_video(first_video_url)
-            return [VideoContent(video_task)]
-
-        contents: list[MediaContent] = []
-        if pic_urls := await self._get_all_pic_urls(html_content):
-            contents.extend(ImageContent(DOWNLOADER.download_img(url)) for url in pic_urls)
-        if dynamic_urls := await self._get_all_gif_urls(html_content):
-            contents.extend(DynamicContent(DOWNLOADER.download_video(url)) for url in dynamic_urls)
-
-        return contents
-
-    @classmethod
-    def _snapcdn_url_pattern(cls, flag: str) -> re.Pattern[str]:
-        """
-        根据标志生成正则表达式模板
-        """
-        # 非贪婪匹配 href 中的 URL，确保匹配到正确的下载链接
-        pattern = rf'href="(https?://dl\.snapcdn\.app/get\?token=.*?)".*?下载{flag}'
-        return re.compile(pattern, re.DOTALL)  # 允许.匹配换行符
-
-    @classmethod
-    async def _get_first_video_url(cls, html_content: str) -> str | None:
-        """
-        使用正则表达式简单提取第一个视频下载链接
-        """
-        # 匹配第一个视频下载链接
-        matched = re.search(cls._snapcdn_url_pattern(" MP4"), html_content)
-        return matched.group(1) if matched else None
-
-    @classmethod
-    async def _get_all_pic_urls(cls, html_content: str) -> list[str]:
-        """
-        提取所有图片链接
-        """
-        return re.findall(cls._snapcdn_url_pattern("图片"), html_content)
-
-    @classmethod
-    async def _get_all_gif_urls(cls, html_content: str) -> list[str]:
-        """
-        提取所有 GIF 链接
-        """
-        return re.findall(cls._snapcdn_url_pattern(" gif"), html_content)
-
     async def parse(self, matched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
@@ -101,9 +45,77 @@ class TwitterParser(BaseParser):
         """
         # 从匹配对象中获取原始URL
         url = matched.group(0)
-        contents = await self.parse_x_url(url)
+        resp = await self._req_xdown_api(url)
+        if resp.get("status") != "ok":
+            raise ParseException("解析失败")
 
-        if contents is None:
-            raise ParseException("解析失败，未找到内容")
+        html_content = resp.get("data")
 
-        return self.result(contents=contents)
+        if html_content is None:
+            raise ParseException("解析失败, 数据为空")
+
+        data = self.parse_twitter_html(html_content)
+
+        return self.build_result(data)
+
+    @classmethod
+    def parse_twitter_html(cls, html_content: str):
+        """解析 Twitter HTML 内容
+
+        Args:
+            html_content (str): Twitter HTML 内容
+
+        Returns:
+            ParseData: 解析数据
+        """
+        from bs4 import BeautifulSoup, Tag
+
+        from .data import ParseData
+
+        soup = BeautifulSoup(html_content, "html.parser")
+        data = ParseData()
+
+        # 1. 提取缩略图链接
+        img_tag = soup.find("img")
+        if img_tag and isinstance(img_tag, Tag):
+            src = img_tag.get("src")
+            if src and isinstance(src, str):
+                data.cover_url = src
+
+        # 2. 提取下载链接
+        download_links = soup.find_all("a", class_="tw-button-dl")
+        # class="abutton is-success is-fullwidth  btn-premium mt-3"
+        download_items = soup.find_all("a", class_="abutton")
+        for link in download_links + download_items:
+            if isinstance(link, Tag) and (href := link.get("href")) and isinstance(href, str):
+                href = href
+            else:
+                continue
+            text = link.get_text(strip=True)
+
+            if "下载图片" in text:
+                # 从图片下载链接中提取原始图片URL
+                data.images_urls.append(href)
+            elif "下载 gif" in text:
+                data.dynamic_urls.append(href)  # GIF和MP4是同一个文件
+            elif "下载 MP4" in text:
+                # 从GIF/MP4下载链接中提取原始视频URL
+                data.video_url = href
+                break
+
+        # 3. 提取标题
+        title_tag = soup.find("h3")
+        if title_tag:
+            data.title = title_tag.get_text(strip=True)
+
+        # # 4. 提取Twitter ID
+        # twitter_id_input = soup.find("input", {"id": "TwitterId"})
+        # if (
+        #     twitter_id_input
+        #     and isinstance(twitter_id_input, Tag)
+        #     and (value := twitter_id_input.get("value"))
+        #     and isinstance(value, str)
+        # ):
+        data.name = "暂时无法获取用户名"
+
+        return data

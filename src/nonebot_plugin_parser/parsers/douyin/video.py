@@ -43,8 +43,8 @@ class VideoData(Struct):
     video: Video | None = None
 
     @property
-    def images_urls(self) -> list[str] | None:
-        return [image.url_list[0] for image in self.images] if self.images else None
+    def images_urls(self) -> list[str]:
+        return [image.url_list[0] for image in self.images] if self.images else []
 
     @property
     def video_url(self) -> str | None:
