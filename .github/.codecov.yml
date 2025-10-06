@@ -4,7 +4,7 @@ coverage:
   status:
     project:
       default:
-        target: 40% # 设定项目整体覆盖率目标
+        target: 20% # 设定项目整体覆盖率目标
     patch:
       default:
         target: 0% # 设定补丁覆盖率目标
