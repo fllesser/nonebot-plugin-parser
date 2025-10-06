@@ -4,7 +4,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, ClassVar
 
-from ..exception import ParseException
+from ..exception import MultiException, ParseException
 from ..helper import Segment, UniHelper, UniMessage
 from ..parsers import ParseResult
 from ..parsers.data import AudioContent, DynamicContent, GraphicsContent, ImageContent, VideoContent
@@ -39,13 +39,16 @@ class BaseRenderer(ABC):
         Returns:
             AsyncGenerator[UniMessage[Any], None]: 消息生成器
         """
+        raises: list[ParseException] = []
         forwardable_segs: list[str | Segment | UniMessage] = []
         for cont in chain(result.contents, result.repost.contents if result.repost else ()):
             try:
                 path = await cont.get_path()
             except ParseException as e:
-                yield UniMessage(e.message)
-                raise
+                forwardable_segs.append(e.message)
+                raises.append(e)
+                # 继续渲染其他内容
+                continue
 
             match cont:
                 case VideoContent():
@@ -65,3 +68,6 @@ class BaseRenderer(ABC):
             else:
                 forward_msg = UniHelper.construct_forward_message(forwardable_segs)
                 yield UniMessage(forward_msg)
+
+        if raises:
+            raise MultiException(raises)
