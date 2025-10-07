@@ -72,7 +72,7 @@ class CommonRenderer(BaseRenderer):
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24}
     LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28}
 
-    DEFAULT_FONT_PATH: ClassVar[Path] = Path(__file__).parent / "fonts" / "LXGWZhenKaiGB-Regular.ttf"
+    DEFAULT_FONT_PATH: ClassVar[Path] = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
 
     def load_font(self, font_path: Path | None = None):
         self.font_path: Path = font_path if font_path else self.DEFAULT_FONT_PATH
