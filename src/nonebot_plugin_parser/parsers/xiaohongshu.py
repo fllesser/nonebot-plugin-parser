@@ -8,8 +8,7 @@ import httpx
 import msgspec
 
 from ..exception import ParseException
-from .base import BaseParser
-from .data import ParseData, ParseResult, Platform
+from .base import BaseParser, Platform
 
 
 class XiaoHongShuParser(BaseParser):
@@ -31,14 +30,14 @@ class XiaoHongShuParser(BaseParser):
         self.headers.update(extra_headers)
 
     @override
-    async def parse(self, matched: re.Match[str]) -> ParseResult:
+    async def parse(self, matched: re.Match[str]):
         """解析 URL 获取内容信息并下载资源
 
         Args:
             matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path）
+            ParseResult: 解析结果
 
         Raises:
             ParseException: 解析失败时抛出
@@ -80,10 +79,27 @@ class XiaoHongShuParser(BaseParser):
         note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
         note_detail = msgspec.convert(note_data, type=NoteDetail)
 
-        # 使用实体类的转换方法
-        data = note_detail.parse_data()
+        # 使用新的简洁构建方式
+        contents = []
 
-        return self.build_result(data)
+        # 添加视频内容
+        if video_url := note_detail.video_url:
+            # 使用第一张图片作为封面
+            cover_url = note_detail.image_urls[0] if note_detail.image_urls else None
+            contents.append(self.create_video_content(video_url, cover_url))
+
+        # 添加图片内容
+        if image_urls := note_detail.image_urls:
+            contents.extend(self.create_image_contents(image_urls))
+
+        # 构建作者
+        author = self.create_author(note_detail.user.nickname)
+
+        return self.result(
+            title=note_detail.title_desc,
+            author=author,
+            contents=contents,
+        )
 
 
 from msgspec import Struct, field
@@ -125,7 +141,7 @@ class NoteDetail(Struct):
         return f"{self.title}\n{self.desc}".strip()
 
     @property
-    def img_urls(self) -> list[str]:
+    def image_urls(self) -> list[str]:
         return [item.urlDefault for item in self.imageList]
 
     @property
@@ -143,13 +159,3 @@ class NoteDetail(Struct):
         elif stream.h266:
             return stream.h266[0]["masterUrl"]
         return None
-
-    def parse_data(self) -> ParseData:
-        """转换为ParseData对象"""
-        return ParseData(
-            title=self.title_desc,
-            name=self.user.nickname,
-            images_urls=self.img_urls,
-            video_url=self.video_url,
-            cover_url=self.img_urls[0],
-        )

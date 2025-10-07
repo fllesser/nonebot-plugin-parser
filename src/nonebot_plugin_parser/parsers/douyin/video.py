@@ -3,7 +3,6 @@ from typing import Any
 from msgspec import Struct, field
 
 from ...exception import ParseException
-from ..data import ParseData
 
 
 class Avatar(Struct):
@@ -43,7 +42,7 @@ class VideoData(Struct):
     video: Video | None = None
 
     @property
-    def images_urls(self) -> list[str]:
+    def image_urls(self) -> list[str]:
         return [image.url_list[0] for image in self.images] if self.images else []
 
     @property
@@ -61,21 +60,6 @@ class VideoData(Struct):
         elif avatar := self.author.avatar_medium:
             return avatar.url_list[0]
         return None
-
-    @property
-    def parse_data(self) -> ParseData:
-        """转换为ParseData对象"""
-        images_urls = self.images_urls
-        return ParseData(
-            title=self.desc,
-            name=self.author.nickname,
-            avatar_url=self.avatar_url,
-            timestamp=self.create_time,
-            images_urls=images_urls,
-            video_url=self.video_url if len(images_urls) == 0 else None,
-            cover_url=self.cover_url,
-            duration=self.video.duration if self.video else 0,
-        )
 
 
 class VideoInfoRes(Struct):

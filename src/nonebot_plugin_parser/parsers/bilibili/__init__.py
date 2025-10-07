@@ -15,12 +15,10 @@ from ...exception import DownloadException, DurationLimitException, ParseExcepti
 from ..base import BaseParser
 from ..cookie import ck2dict
 from ..data import (
-    Author,
     GraphicsContent,
     ImageContent,
     MediaContent,
     Platform,
-    VideoContent,
 )
 
 
@@ -124,12 +122,6 @@ class BilibiliParser(BaseParser):
         else:
             ai_summary: str = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
 
-        # 额外信息
-        extra = {"info": f"简介：{video_info.desc}\n\n{ai_summary}"}
-
-        # 下载封面
-        cover_path = DOWNLOADER.download_img(cover_url, ext_headers=self.headers) if cover_url else None
-
         url = f"https://bilibili.com/{video_info.bvid}" + (f"?p={page_idx + 1}" if page_idx > 0 else "")
 
         # 视频下载 task
@@ -150,12 +142,13 @@ class BilibiliParser(BaseParser):
         video_task = asyncio.create_task(download_video())
 
         return self.result(
-            title=title,
             url=url,
-            extra=extra,
+            title=title,
             timestamp=timestamp,
-            author=Author(name=video_info.owner.name, avatar=DOWNLOADER.download_img(video_info.owner.face)),
-            contents=[VideoContent(video_task, cover_path, duration)],
+            text=f"简介：{video_info.desc}",
+            author=self.create_author(video_info.owner.name, video_info.owner.face),
+            contents=[self.create_video_content(video_task, cover_url, duration)],
+            extra={"info": ai_summary},
         )
 
     async def parse_others(self, url: str):

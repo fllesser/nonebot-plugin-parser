@@ -6,10 +6,9 @@ import httpx
 import msgspec
 
 from ..config import pconfig
-from ..download import DOWNLOADER, YTDLP_DOWNLOADER
-from .base import BaseParser
+from ..download import YTDLP_DOWNLOADER
+from .base import BaseParser, Platform
 from .cookie import save_cookies_with_netscape
-from .data import AudioContent, Author, ImageContent, ParseResult, Platform, VideoContent
 
 
 class YouTubeParser(BaseParser):
@@ -29,7 +28,7 @@ class YouTubeParser(BaseParser):
             save_cookies_with_netscape(pconfig.ytb_ck, self.cookies_file, "youtube.com")
 
     @override
-    async def parse(self, matched: re.Match[str]) -> ParseResult:
+    async def parse(self, matched: re.Match[str]):
         """解析 URL 获取内容信息并下载资源
 
         Args:
@@ -46,13 +45,12 @@ class YouTubeParser(BaseParser):
 
         video_info = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
         author = await self._fetch_author_info(video_info.channel_id)
-        cover = DOWNLOADER.download_img(video_info.thumbnail)
         contents = []
         if video_info.duration <= pconfig.duration_maximum:
             video = YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
-            contents.append(VideoContent(video, cover, duration=video_info.duration))
+            contents.append(self.create_video_content(video, video_info.thumbnail, video_info.duration))
         else:
-            contents.append(ImageContent(cover))
+            contents.append(self.create_image_contents(video_info.thumbnail))
 
         return self.result(
             title=video_info.title,
@@ -61,7 +59,7 @@ class YouTubeParser(BaseParser):
             timestamp=video_info.timestamp,
         )
 
-    async def parse_url_as_audio(self, url: str) -> ParseResult:
+    async def parse_url_as_audio(self, url: str):
         """解析 YouTube URL 并标记为音频下载
 
         Args:
@@ -75,11 +73,11 @@ class YouTubeParser(BaseParser):
         author = await self._fetch_author_info(video_info.channel_id)
 
         contents = []
-        contents.append(ImageContent(DOWNLOADER.download_img(video_info.thumbnail)))
+        contents.append(self.create_image_contents(video_info.thumbnail))
 
         if video_info.duration <= pconfig.duration_maximum:
             audio_task = YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
-            contents.append(AudioContent(audio_task, duration=video_info.duration))
+            contents.append(self.create_audio_content(audio_task, duration=video_info.duration))
 
         return self.result(
             title=video_info.title,
@@ -110,8 +108,9 @@ class YouTubeParser(BaseParser):
         async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
             response = await client.post(url, json=payload)
             response.raise_for_status()
-        browse_response = msgspec.json.decode(response.content, type=BrowseResponse)
-        return browse_response.convert_to_author()
+
+        browse = msgspec.json.decode(response.content, type=BrowseResponse)
+        return self.create_author(browse.name, browse.avatar_url, browse.description)
 
 
 from msgspec import Struct
@@ -142,12 +141,15 @@ class Avatar(Struct):
 class BrowseResponse(Struct):
     metadata: Metadata
 
-    def convert_to_author(self) -> Author:
-        channel_metadata = self.metadata.channelMetadataRenderer
-        thumbnails = channel_metadata.avatar.thumbnails
-        avatar = DOWNLOADER.download_img(thumbnails[0].url) if thumbnails else None
-        return Author(
-            name=channel_metadata.title,
-            avatar=avatar,
-            description=channel_metadata.description,
-        )
+    @property
+    def name(self) -> str:
+        return self.metadata.channelMetadataRenderer.title
+
+    @property
+    def avatar_url(self) -> str | None:
+        thumbnails = self.metadata.channelMetadataRenderer.avatar.thumbnails
+        return thumbnails[0].url if thumbnails else None
+
+    @property
+    def description(self) -> str:
+        return self.metadata.channelMetadataRenderer.description

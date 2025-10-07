@@ -55,32 +55,33 @@ class TwitterParser(BaseParser):
         if html_content is None:
             raise ParseException("解析失败, 数据为空")
 
-        data = self.parse_twitter_html(html_content)
+        return self.parse_twitter_html(html_content)
 
-        return self.build_result(data)
-
-    @classmethod
-    def parse_twitter_html(cls, html_content: str):
+    def parse_twitter_html(self, html_content: str) -> ParseResult:
         """解析 Twitter HTML 内容
 
         Args:
             html_content (str): Twitter HTML 内容
 
         Returns:
-            ParseData: 解析数据
+            ParseResult: 解析结果
         """
         from bs4 import BeautifulSoup, Tag
 
-        from .data import ParseData
-
         soup = BeautifulSoup(html_content, "html.parser")
-        data = ParseData(name="无用户名")
+
+        # 初始化数据
+        title = ""
+        cover_url = None
+        video_url = None
+        images_urls = []
+        dynamic_urls = []
 
         # 1. 提取缩略图链接
         thumb_tag = soup.find("img")
         if isinstance(thumb_tag, Tag):
             if cover := thumb_tag.get("src"):
-                data.cover_url = str(cover)
+                cover_url = str(cover)
 
         # 2. 提取下载链接
         tw_button_tags = soup.find_all("a", class_="tw-button-dl")
@@ -95,19 +96,38 @@ class TwitterParser(BaseParser):
             href = str(href)
             text = tag.get_text(strip=True)
             if "下载 MP4" in text:
-                data.video_url = href
+                video_url = href
                 break
             elif "下载图片" in text:
-                data.images_urls.append(href)
+                images_urls.append(href)
             elif "下载 gif" in text:
-                data.dynamic_urls.append(href)
+                dynamic_urls.append(href)
 
         # 3. 提取标题
         title_tag = soup.find("h3")
         if title_tag:
-            data.title = title_tag.get_text(strip=True)
+            title = title_tag.get_text(strip=True)
 
-        return data
+        # 简洁的构建方式
+        contents = []
+
+        # 添加视频内容
+        if video_url:
+            contents.append(self.create_video_content(video_url, cover_url))
+
+        # 添加图片内容
+        if images_urls:
+            contents.extend(self.create_image_contents(images_urls))
+
+        # 添加动态内容
+        if dynamic_urls:
+            contents.extend(self.create_dynamic_contents(dynamic_urls))
+
+        return self.result(
+            title=title,
+            author=self.create_author("无用户名"),
+            contents=contents,
+        )
         # # 4. 提取Twitter ID
         # twitter_id_input = soup.find("input", {"id": "TwitterId"})
         # if (

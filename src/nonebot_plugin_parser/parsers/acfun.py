@@ -2,11 +2,12 @@ import asyncio
 import json
 from pathlib import Path
 import re
+import time
 from typing import ClassVar
 from typing_extensions import override
 
 import aiofiles
-import httpx
+from httpx import AsyncClient, HTTPError
 from nonebot import logger
 
 from ..config import pconfig
@@ -14,8 +15,7 @@ from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
 from ..download import DOWNLOADER
 from ..exception import DownloadException, ParseException
 from ..utils import safe_unlink
-from .base import BaseParser
-from .data import Author, ParseResult, Platform, VideoContent
+from .base import BaseParser, Platform
 
 
 class AcfunParser(BaseParser):
@@ -40,10 +40,11 @@ class AcfunParser(BaseParser):
         Returns:
             tuple: (m3u8_url, title, description, author, upload_time)
         """
+
         # 拼接查询参数
         url = f"{url}?quickViewId=videoInfo_new&ajaxpipe=1"
 
-        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
+        async with AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(url)
             response.raise_for_status()
             raw = response.text
@@ -88,7 +89,7 @@ class AcfunParser(BaseParser):
             max_size_in_bytes = pconfig.max_size * 1024 * 1024
             async with (
                 aiofiles.open(video_file, "wb") as f,
-                httpx.AsyncClient(headers=self.headers, timeout=DOWNLOAD_TIMEOUT) as client,
+                AsyncClient(headers=self.headers, timeout=DOWNLOAD_TIMEOUT) as client,
             ):
                 total_size = 0
                 with DOWNLOADER.get_progress_bar(video_file.name) as bar:
@@ -101,7 +102,7 @@ class AcfunParser(BaseParser):
                         if total_size > max_size_in_bytes:
                             # 直接截断
                             break
-        except httpx.HTTPError:
+        except HTTPError:
             await safe_unlink(video_file)
             logger.exception("acfun 视频下载失败")
             raise DownloadException("acfun 视频下载失败")
@@ -116,7 +117,7 @@ class AcfunParser(BaseParser):
         Returns:
             list[str]: 视频链接
         """
-        async with httpx.AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
+        async with AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(m3u8_url)
             m3u8_file = response.text
         # 分离ts文件链接
@@ -135,14 +136,14 @@ class AcfunParser(BaseParser):
         return m3u8_full_urls
 
     @override
-    async def parse(self, matched: re.Match[str]) -> ParseResult:
+    async def parse(self, matched: re.Match[str]):
         """解析 URL 获取内容信息并下载资源
 
         Args:
             matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path）
+            ParseResult: 解析结果
 
         Raises:
             ParseException: 解析失败时抛出
@@ -152,19 +153,19 @@ class AcfunParser(BaseParser):
         url = f"https://www.acfun.cn/v/ac{acid}"
 
         m3u8_url, title, description, author, upload_time = await self.parse_video_info(url)
+        author = self.create_author(author) if author else None
 
-        extra_info = f"简介: {description}\n上传于 {upload_time}" if description or upload_time else None
+        # 2024-12-1 -> timestamp
+        timestamp = int(time.mktime(time.strptime(upload_time, "%Y-%m-%d")))
+        text = f"简介: {description}"
 
         # 下载视频
         video_task = asyncio.create_task(self.download_video(m3u8_url, acid))
 
-        extra = {}
-        if extra_info:
-            extra["info"] = extra_info
-
         return self.result(
             title=title,
-            author=Author(name=author) if author else None,
-            contents=[VideoContent(video_task)],
-            extra=extra,
+            text=text,
+            author=author,
+            timestamp=timestamp,
+            contents=[self.create_video_content(video_task)],
         )
