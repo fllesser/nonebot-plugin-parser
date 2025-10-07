@@ -133,6 +133,7 @@ class Photo(Struct):
             images_urls=self.img_urls,
             video_url=self.video_url,
             cover_url=self.cover_url,
+            duration=self.duration,
         )
 
 
