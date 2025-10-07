@@ -5,7 +5,14 @@ from pathlib import Path
 from typing import Any
 
 
-@dataclass
+def repr_path_task(path_task: Path | Task[Path]) -> str:
+    if isinstance(path_task, Path):
+        return f"path={path_task}"
+    else:
+        return f"task={path_task.get_name()}, done={path_task.done()}"
+
+
+@dataclass(repr=False)
 class MediaContent:
     path_task: Path | Task[Path]
 
@@ -15,15 +22,19 @@ class MediaContent:
         self.path_task = await self.path_task
         return self.path_task
 
+    def __repr__(self) -> str:
+        prefix = self.__class__.__name__
+        return f"{prefix}({repr_path_task(self.path_task)})"
 
-@dataclass
+
+@dataclass(repr=False)
 class AudioContent(MediaContent):
     """音频内容"""
 
     duration: float = 0.0
 
 
-@dataclass
+@dataclass(repr=False)
 class VideoContent(MediaContent):
     """视频内容"""
 
@@ -47,21 +58,21 @@ class VideoContent(MediaContent):
         return f"时长: {minutes}:{seconds:02d}"
 
 
-@dataclass
+@dataclass(repr=False)
 class ImageContent(MediaContent):
     """图片内容"""
 
     pass
 
 
-@dataclass
+@dataclass(repr=False)
 class DynamicContent(MediaContent):
     """动态内容 视频格式 后续转 gif"""
 
     gif_path: Path | None = None
 
 
-@dataclass
+@dataclass(repr=False)
 class GraphicsContent(MediaContent):
     """图文内容"""
 
@@ -78,7 +89,7 @@ class Platform:
     """ 平台显示名称 """
 
 
-@dataclass
+@dataclass(repr=False)
 class Author:
     """作者信息"""
 
@@ -96,6 +107,14 @@ class Author:
             return self.avatar
         self.avatar = await self.avatar
         return self.avatar
+
+    def __repr__(self) -> str:
+        repr = f"Author(name={self.name}"
+        if self.avatar:
+            repr += f", avatar_{repr_path_task(self.avatar)}"
+        if self.description:
+            repr += f", description={self.description}"
+        return repr + ")"
 
 
 @dataclass(repr=False)
