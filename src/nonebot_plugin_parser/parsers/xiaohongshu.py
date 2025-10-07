@@ -89,7 +89,7 @@ class XiaoHongShuParser(BaseParser):
             contents.append(self.create_video_content(video_url, cover_url))
 
         # 添加图片内容
-        if image_urls := note_detail.image_urls:
+        elif image_urls := note_detail.image_urls:
             contents.extend(self.create_image_contents(image_urls))
 
         # 构建作者
