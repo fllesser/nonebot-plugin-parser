@@ -122,15 +122,14 @@ class CommonRenderer(BaseRenderer):
         # 使用预加载的字体
         fonts = self.FONTS
 
-        # 加载并处理封面
-        cover_img = self._load_and_resize_cover(await result.cover_path, apply_min_size=apply_min_cover_size)
-
-        # 计算卡片宽度
-        if cover_img:
-            card_width = max(cover_img.width + 2 * self.PADDING, self.MIN_CARD_WIDTH)
-        else:
-            card_width = max(self.DEFAULT_CARD_WIDTH, self.MIN_CARD_WIDTH)
+        # 先确定固定的卡片宽度和内容区域宽度
+        card_width = max(self.DEFAULT_CARD_WIDTH, self.MIN_CARD_WIDTH)
         content_width = card_width - 2 * self.PADDING
+
+        # 加载并处理封面，传入内容区域宽度以确保封面不超过内容区域
+        cover_img = self._load_and_resize_cover(
+            await result.cover_path, content_width=content_width, apply_min_size=apply_min_cover_size
+        )
 
         # 计算各部分内容的高度
         heights = await self._calculate_sections(result, cover_img, content_width, fonts)
@@ -144,11 +143,14 @@ class CommonRenderer(BaseRenderer):
 
         return image
 
-    def _load_and_resize_cover(self, cover_path: Path | None, apply_min_size: bool = True) -> Image.Image | None:
+    def _load_and_resize_cover(
+        self, cover_path: Path | None, content_width: int, apply_min_size: bool = True
+    ) -> Image.Image | None:
         """加载并调整封面尺寸
 
         Args:
             cover_path: 封面路径
+            content_width: 内容区域宽度，封面会缩放到此宽度以确保左右padding一致
             apply_min_size: 是否应用最小尺寸限制（转发内容不需要）
         """
         if not cover_path or not cover_path.exists():
@@ -161,24 +163,35 @@ class CommonRenderer(BaseRenderer):
             if cover_img.mode not in ("RGB", "RGBA"):
                 cover_img = cover_img.convert("RGB")
 
-            # 如果封面太大，需要缩放
-            if cover_img.width > self.MAX_COVER_WIDTH or cover_img.height > self.MAX_COVER_HEIGHT:
-                width_ratio = self.MAX_COVER_WIDTH / cover_img.width
-                height_ratio = self.MAX_COVER_HEIGHT / cover_img.height
-                scale_ratio = min(width_ratio, height_ratio)
+            # 封面宽度应该等于内容区域宽度，以确保左右padding一致
+            target_width = content_width
 
-                new_width = int(cover_img.width * scale_ratio)
+            # 计算缩放比例（保持宽高比）
+            if cover_img.width != target_width:
+                scale_ratio = target_width / cover_img.width
+                new_width = target_width
                 new_height = int(cover_img.height * scale_ratio)
-                cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-            # 如果封面太小，需要放大到最小尺寸（仅用于主内容）
-            if apply_min_size and (cover_img.width < self.MIN_COVER_WIDTH or cover_img.height < self.MIN_COVER_HEIGHT):
-                width_ratio = self.MIN_COVER_WIDTH / cover_img.width
-                height_ratio = self.MIN_COVER_HEIGHT / cover_img.height
-                scale_ratio = max(width_ratio, height_ratio)  # 使用max确保达到最小尺寸
+                # 检查高度是否超过最大限制
+                if new_height > self.MAX_COVER_HEIGHT:
+                    # 如果高度超限，按高度重新计算
+                    scale_ratio = self.MAX_COVER_HEIGHT / new_height
+                    new_height = self.MAX_COVER_HEIGHT
+                    new_width = int(new_width * scale_ratio)
 
-                new_width = int(cover_img.width * scale_ratio)
-                new_height = int(cover_img.height * scale_ratio)
+                # 如果是主内容且高度太小，需要放大（但不超过最大高度）
+                if apply_min_size and new_height < self.MIN_COVER_HEIGHT:
+                    min_height = min(self.MIN_COVER_HEIGHT, self.MAX_COVER_HEIGHT)
+                    if new_height < min_height:
+                        scale_ratio = min_height / new_height
+                        new_height = min_height
+                        new_width = int(new_width * scale_ratio)
+                        # 再次确保宽度不超过内容区域
+                        if new_width > content_width:
+                            scale_ratio = content_width / new_width
+                            new_width = content_width
+                            new_height = int(new_height * scale_ratio)
+
                 cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
             return cover_img
@@ -533,9 +546,8 @@ class CommonRenderer(BaseRenderer):
 
     def _draw_cover(self, image: Image.Image, cover_img: Image.Image, y_pos: int, card_width: int) -> int:
         """绘制封面"""
-        # 确保左右padding相同：从左边padding开始，居中放置
-        content_width = card_width - 2 * self.PADDING
-        x_pos = self.PADDING + (content_width - cover_img.width) // 2
+        # 封面从左边padding开始，和文字、头像对齐
+        x_pos = self.PADDING
         image.paste(cover_img, (x_pos, y_pos))
 
         # 添加视频播放标志
