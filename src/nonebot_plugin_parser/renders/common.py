@@ -69,8 +69,8 @@ class CommonRenderer(BaseRenderer):
 
     ITEM_NAMES = ("name", "title", "text", "extra")
     # 字体大小和行高
-    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 24, "text": 30, "extra": 24}
-    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 28, "text": 36, "extra": 28}
+    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24}
+    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28}
 
     # 转发内容字体配置
     REPOST_FONT_SIZES: ClassVar[dict[str, int]] = {"repost_name": 14, "repost_text": 14, "repost_time": 12}
@@ -257,7 +257,7 @@ class CommonRenderer(BaseRenderer):
             return None
 
         # 加载头像
-        avatar_img = self._load_and_process_avatar(await result.author.avatar_path)
+        avatar_img = self._load_and_process_avatar(await result.author.get_avatar_path())
 
         # 计算文字区域宽度（始终预留头像空间）
         text_area_width = content_width - (self.AVATAR_SIZE + self.AVATAR_TEXT_GAP)

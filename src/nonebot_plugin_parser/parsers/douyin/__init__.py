@@ -8,8 +8,7 @@ from nonebot import logger
 
 from ...constants import COMMON_TIMEOUT
 from ...exception import ParseException
-from ..base import BaseParser
-from ..data import ParseResult, Platform
+from ..base import BaseParser, Platform
 
 
 class DouyinParser(BaseParser):
@@ -31,7 +30,7 @@ class DouyinParser(BaseParser):
     def _build_m_douyin_url(self, _type: str, video_id: str) -> str:
         return f"https://m.douyin.com/share/{_type}/{video_id}"
 
-    async def parse_share_url(self, share_url: str) -> ParseResult:
+    async def parse_share_url(self, share_url: str):
         if matched := re.match(r"(video|note)/([0-9]+)", share_url):
             # https://www.douyin.com/video/xxxxxx
             _type, video_id = matched.group(1), matched.group(2)
@@ -58,7 +57,7 @@ class DouyinParser(BaseParser):
                 continue
         raise ParseException("分享已删除或资源直链获取失败, 请稍后再试")
 
-    async def parse_video(self, url: str) -> ParseResult:
+    async def parse_video(self, url: str):
         async with httpx.AsyncClient(
             headers=self.ios_headers,
             timeout=COMMON_TIMEOUT,
@@ -83,9 +82,30 @@ class DouyinParser(BaseParser):
 
         video_data = msgspec.json.decode(matched.group(1).strip(), type=RouterData).video_data
 
-        return self.build_result(video_data.parse_data)
+        # 使用新的简洁构建方式
+        contents = []
 
-    async def parse_slides(self, video_id: str) -> ParseResult:
+        # 添加图片内容
+        if image_urls := video_data.image_urls:
+            contents.extend(self.create_image_contents(image_urls))
+
+        # 添加视频内容
+        elif video_url := video_data.video_url:
+            cover_url = video_data.cover_url
+            duration = video_data.video.duration if video_data.video else 0
+            contents.append(self.create_video_content(video_url, cover_url, duration))
+
+        # 构建作者
+        author = self.create_author(video_data.author.nickname, video_data.avatar_url)
+
+        return self.result(
+            title=video_data.desc,
+            author=author,
+            contents=contents,
+            timestamp=video_data.create_time,
+        )
+
+    async def parse_slides(self, video_id: str):
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
         params = {
             "aweme_ids": f"[{video_id}]",
@@ -98,10 +118,28 @@ class DouyinParser(BaseParser):
         from .slides import SlidesInfo
 
         slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
-        return self.build_result(slides_data.parse_data)
+        contents = []
+
+        # 添加图片内容
+        if image_urls := slides_data.image_urls:
+            contents.extend(self.create_image_contents(image_urls))
+
+        # 添加动态内容
+        if dynamic_urls := slides_data.dynamic_urls:
+            contents.extend(self.create_dynamic_contents(dynamic_urls))
+
+        # 构建作者
+        author = self.create_author(slides_data.name, slides_data.avatar_url)
+
+        return self.result(
+            title=slides_data.desc,
+            author=author,
+            contents=contents,
+            timestamp=slides_data.create_time,
+        )
 
     @override
-    async def parse(self, matched: re.Match[str]) -> ParseResult:
+    async def parse(self, matched: re.Match[str]):
         """解析 URL 获取内容信息并下载资源
 
         Args:

@@ -1,15 +1,15 @@
 """Parser 基类定义"""
 
 from abc import ABC, abstractmethod
+from asyncio import Task
+from collections.abc import Sequence
+from pathlib import Path
 import re
 from typing import ClassVar
 from typing_extensions import Unpack
 
-import httpx
-from nonebot import logger
-
 from ..constants import ANDROID_HEADER, COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
-from .data import ParseData, ParseResult, ParseResultKwargs, Platform
+from .data import ParseResult, ParseResultKwargs, Platform
 
 
 class BaseParser(ABC):
@@ -63,6 +63,19 @@ class BaseParser(ABC):
         raise NotImplementedError
 
     @classmethod
+    def search_url(cls, url: str) -> re.Match[str]:
+        from nonebot import logger
+
+        """搜索 URL 匹配模式"""
+        for keyword, pattern in cls.patterns:
+            if keyword not in url:
+                continue
+            if searched := re.search(pattern, url):
+                return searched
+            logger.debug(f"keyword '{keyword}' is in '{url}', but not matched")
+        raise ValueError(f"无法匹配 {url}")
+
+    @classmethod
     def result(cls, **kwargs: Unpack[ParseResultKwargs]) -> ParseResult:
         """构建解析结果"""
         return ParseResult(platform=cls.platform, **kwargs)
@@ -70,59 +83,62 @@ class BaseParser(ABC):
     @staticmethod
     async def get_redirect_url(url: str, headers: dict[str, str] | None = None) -> str:
         """获取重定向后的URL"""
+        from httpx import AsyncClient
 
         headers = headers or COMMON_HEADER.copy()
-        async with httpx.AsyncClient(
-            headers=headers, verify=False, follow_redirects=False, timeout=COMMON_TIMEOUT
-        ) as client:
+        async with AsyncClient(headers=headers, verify=False, follow_redirects=False, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(url)
             if response.status_code >= 400:
                 response.raise_for_status()
             return response.headers.get("Location", url)
 
-    def build_result(self, data: ParseData) -> ParseResult:
-        """转换为解析结果"""
-
+    def create_author(self, name: str, avatar_url: str | None = None, description: str | None = None):
+        """创建作者对象"""
         from ..download import DOWNLOADER
-        from .data import Author, DynamicContent, ImageContent, MediaContent, VideoContent
+        from .data import Author
 
-        logger.debug(f"data: {data}")
-        # 填充作者信息
-        author = None
-        name, avatar = data.name, data.avatar_url
-        if name is not None:
-            if avatar is not None:
-                avatar = DOWNLOADER.download_img(avatar, ext_headers=self.headers)
-            author = Author(name=name, avatar=avatar, description=data.description)
+        avatar_task = None
+        if avatar_url:
+            avatar_task = DOWNLOADER.download_img(avatar_url, ext_headers=self.headers)
+        return Author(name=name, avatar=avatar_task, description=description)
 
-        # 填充内容信息
-        contents: list[MediaContent] = []
-        if video_url := data.video_url:
-            cover_task = None
-            if cover_url := data.cover_url:
-                cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
-            video_task = DOWNLOADER.download_video(video_url, ext_headers=self.headers)
-            contents.append(VideoContent(video_task, cover_task))
+    def create_video_content(self, url_or_task: str | Task[Path], cover_url: str | None = None, duration: float = 0.0):
+        """创建视频内容"""
+        from ..download import DOWNLOADER
+        from .data import VideoContent
+
+        cover_task = None
+        if cover_url:
+            cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
+        if isinstance(url_or_task, str):
+            video_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
         else:
-            if images_urls := data.images_urls:
-                img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in images_urls]
-                contents.extend(ImageContent(task) for task in img_tasks)
-            if dynamic_urls := data.dynamic_urls:
-                dynamic_tasks = [DOWNLOADER.download_video(url, ext_headers=self.headers) for url in dynamic_urls]
-                contents.extend(DynamicContent(task) for task in dynamic_tasks)
+            video_task = url_or_task
+        return VideoContent(video_task, cover_task, duration)
 
-        if repost := data.repost:
-            repost = self.build_result(repost)
+    def create_image_contents(self, image_urls: Sequence[str]):
+        """创建图片内容列表"""
+        from ..download import DOWNLOADER
+        from .data import ImageContent
+
+        img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in image_urls]
+        return [ImageContent(task) for task in img_tasks]
+
+    def create_dynamic_contents(self, dynamic_urls: Sequence[str]):
+        """创建动态内容列表"""
+        from ..download import DOWNLOADER
+        from .data import DynamicContent
+
+        dynamic_tasks = [DOWNLOADER.download_video(url, ext_headers=self.headers) for url in dynamic_urls]
+        return [DynamicContent(task) for task in dynamic_tasks]
+
+    def create_audio_content(self, url_or_task: str | Task[Path], duration: float = 0.0):
+        """创建音频内容"""
+        from ..download import DOWNLOADER
+        from .data import AudioContent
+
+        if isinstance(url_or_task, str):
+            audio_task = DOWNLOADER.download_audio(url_or_task, ext_headers=self.headers)
         else:
-            repost = None
-
-        return self.result(
-            author=author,
-            contents=contents,
-            title=data.title,
-            text=data.text,
-            timestamp=data.timestamp,
-            url=data.url,
-            extra=data.extra,
-            repost=repost,
-        )
+            audio_task = url_or_task
+        return AudioContent(audio_task, duration)

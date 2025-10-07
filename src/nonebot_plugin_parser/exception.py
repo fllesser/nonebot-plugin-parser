@@ -31,3 +31,10 @@ class DurationLimitException(DownloadLimitException):
 
     def __init__(self):
         self.message = "媒体时长超过配置限制，取消下载"
+
+
+class ZeroSizeException(DownloadException):
+    """下载大小为 0 异常"""
+
+    def __init__(self):
+        self.message = "媒体大小为 0, 取消下载"

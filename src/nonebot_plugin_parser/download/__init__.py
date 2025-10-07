@@ -8,7 +8,7 @@ from tqdm.asyncio import tqdm
 
 from ..config import pconfig
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
-from ..exception import DownloadException, SizeLimitException
+from ..exception import DownloadException, SizeLimitException, ZeroSizeException
 from ..utils import generate_file_name, merge_av, safe_unlink
 from .task import auto_task
 from .ytdlp import YtdlpDownloader
@@ -50,7 +50,6 @@ class StreamDownloader:
         if not file_name:
             file_name = generate_file_name(url)
         file_path = self.cache_dir / file_name
-
         # 如果文件存在，则直接返回
         if file_path.exists():
             return file_path
@@ -61,10 +60,14 @@ class StreamDownloader:
             async with self.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
                 response.raise_for_status()
                 content_length = response.headers.get("Content-Length")
-                content_length = int(content_length) if content_length else None
+                content_length = int(content_length) if content_length else 0
 
-                if content_length and (file_size := content_length / 1024 / 1024) > pconfig.max_size:
-                    logger.warning(f"{file_name} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
+                if content_length == 0:
+                    logger.warning(f"媒体 url: {url}, 大小为 0, 取消下载")
+                    raise ZeroSizeException
+
+                if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
+                    logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
                     raise SizeLimitException
 
                 with self.get_progress_bar(file_name, content_length) as bar:

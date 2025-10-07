@@ -4,7 +4,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, ClassVar
 
-from ..exception import DownloadException, DownloadLimitException
+from ..exception import DownloadException, DownloadLimitException, ZeroSizeException
 from ..helper import ForwardNodeInner, UniHelper, UniMessage
 from ..parsers import ParseResult
 from ..parsers.data import AudioContent, DynamicContent, GraphicsContent, ImageContent, VideoContent
@@ -45,13 +45,13 @@ class BaseRenderer(ABC):
         for cont in chain(result.contents, result.repost.contents if result.repost else ()):
             try:
                 path = await cont.get_path()
-            except DownloadLimitException as e:
+            # 继续渲染其他内容, 类似之前 gather (return_exceptions=True) 的处理
+            except (DownloadLimitException, ZeroSizeException):
                 # 预期异常，不抛出
-                yield UniMessage(e.message)
+                # yield UniMessage(e.message)
                 continue
             except DownloadException:
                 failed_count += 1
-                # 继续渲染其他内容, 类似之前 gather (return_exceptions=True) 的处理
                 continue
 
             match cont:

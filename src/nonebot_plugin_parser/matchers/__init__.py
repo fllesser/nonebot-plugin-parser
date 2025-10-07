@@ -74,6 +74,7 @@ async def _(
             # await UniMessage(str(e)).send()
             await _message_reaction(event, "fail")
             raise
+        logger.debug(f"解析结果: {result}")
     else:
         logger.debug(f"命中缓存: {cache_key}, 结果: {result}")
 

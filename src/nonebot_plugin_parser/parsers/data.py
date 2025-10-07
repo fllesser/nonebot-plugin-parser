@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 
-@dataclass(repr=False)
+@dataclass
 class MediaContent:
     path_task: Path | Task[Path]
 
@@ -15,46 +15,30 @@ class MediaContent:
         self.path_task = await self.path_task
         return self.path_task
 
-    def __repr__(self) -> str:
-        # 类名
-        header = f"{self.__class__.__name__}("
 
-        if isinstance(self.path_task, Path):
-            path_task = f"path: {self.path_task}"
-        elif isinstance(self.path_task, Task):
-            path_task = f"task: {self.path_task.get_name()}"
-        else:
-            path_task = f"path_task: {self.path_task}"
-
-        # 子类的其他参数
-        other_params = ""
-        # 排除 path_task
-        for key, value in self.__dict__.items():
-            if key != "path_task":
-                other_params += f", {key}: {value}"
-        other_params = other_params[:-2]
-
-        return f"{header}{path_task}{other_params})"
-
-
-@dataclass(repr=False)
+@dataclass
 class AudioContent(MediaContent):
     """音频内容"""
 
     duration: float = 0.0
 
 
-@dataclass(repr=False)
+@dataclass
 class VideoContent(MediaContent):
     """视频内容"""
 
-    cover: Task[Path] | None = None
+    cover: Path | Task[Path] | None = None
     """视频封面"""
     duration: float = 0.0
     """时长 单位: 秒"""
 
     async def get_cover_path(self) -> Path | None:
-        return await self.cover if self.cover else None
+        if self.cover is None:
+            return None
+        if isinstance(self.cover, Path):
+            return self.cover
+        self.cover = await self.cover
+        return self.cover
 
     @property
     def display_duration(self) -> str:
@@ -63,21 +47,21 @@ class VideoContent(MediaContent):
         return f"时长: {minutes}:{seconds:02d}"
 
 
-@dataclass(repr=False)
+@dataclass
 class ImageContent(MediaContent):
     """图片内容"""
 
     pass
 
 
-@dataclass(repr=False)
+@dataclass
 class DynamicContent(MediaContent):
     """动态内容 视频格式 后续转 gif"""
 
     gif_path: Path | None = None
 
 
-@dataclass(repr=False)
+@dataclass
 class GraphicsContent(MediaContent):
     """图文内容"""
 
@@ -100,14 +84,18 @@ class Author:
 
     name: str
     """作者名称"""
-    avatar: Task[Path] | None = None
+    avatar: Path | Task[Path] | None = None
     """作者头像 URL 或本地路径"""
     description: str | None = None
     """作者个性签名等"""
 
-    @property
-    async def avatar_path(self) -> Path | None:
-        return await self.avatar if self.avatar else None
+    async def get_avatar_path(self) -> Path | None:
+        if self.avatar is None:
+            return None
+        if isinstance(self.avatar, Path):
+            return self.avatar
+        self.avatar = await self.avatar
+        return self.avatar
 
 
 @dataclass
@@ -201,25 +189,3 @@ class ParseResultKwargs(TypedDict, total=False):
     author: Author | None
     extra: dict[str, Any]
     repost: ParseResult | None
-
-
-@dataclass
-class ParseData:
-    title: str = ""
-    text: str = ""
-
-    name: str | None = None
-    avatar_url: str | None = None
-    description: str | None = None
-
-    timestamp: int | None = None
-    url: str | None = None
-
-    video_url: str | None = None
-    cover_url: str | None = None
-    duration: int = 0
-
-    images_urls: list[str] = field(default_factory=list)
-    dynamic_urls: list[str] = field(default_factory=list)
-    extra: dict[str, Any] = field(default_factory=dict)
-    repost: "ParseData | None" = None

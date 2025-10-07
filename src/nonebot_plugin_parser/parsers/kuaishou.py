@@ -7,7 +7,7 @@ import msgspec
 
 from ..exception import ParseException
 from .base import BaseParser
-from .data import ParseData, ParseResult, Platform
+from .data import ParseResult, Platform
 
 
 class KuaiShouParser(BaseParser):
@@ -66,7 +66,26 @@ class KuaiShouParser(BaseParser):
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        return self.build_result(photo.parse_data)
+        # 简洁的构建方式
+        contents = []
+
+        # 添加视频内容
+        if video_url := photo.video_url:
+            contents.append(self.create_video_content(video_url, photo.cover_url, photo.duration))
+
+        # 添加图片内容
+        if img_urls := photo.img_urls:
+            contents.extend(self.create_image_contents(img_urls))
+
+        # 构建作者
+        author = self.create_author(photo.name, photo.head_url)
+
+        return self.result(
+            title=photo.caption,
+            author=author,
+            contents=contents,
+            timestamp=photo.timestamp // 1000,
+        )
 
 
 from msgspec import Struct, field
@@ -121,20 +140,6 @@ class Photo(Struct):
     @property
     def img_urls(self):
         return self.ext_params.atlas.img_urls
-
-    @property
-    def parse_data(self) -> ParseData:
-        """转换为ParseData对象"""
-        return ParseData(
-            title=self.caption,
-            name=self.name,
-            avatar_url=self.head_url,
-            timestamp=self.timestamp // 1000,  # 转换为秒
-            images_urls=self.img_urls,
-            video_url=self.video_url,
-            cover_url=self.cover_url,
-            duration=self.duration,
-        )
 
 
 class TusjohData(Struct):
