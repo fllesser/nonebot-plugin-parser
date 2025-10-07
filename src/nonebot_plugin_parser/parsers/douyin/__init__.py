@@ -85,15 +85,15 @@ class DouyinParser(BaseParser):
         # 使用新的简洁构建方式
         contents = []
 
-        # 添加视频内容
-        if video_url := video_data.video_url:
-            cover_url = video_data.cover_url
-            duration = video_data.video.duration if video_data.video else 0
-            contents.append(self.create_video_content(video_url, cover_url, duration))
-
         # 添加图片内容
         if image_urls := video_data.image_urls:
             contents.extend(self.create_image_contents(image_urls))
+
+        # 添加视频内容
+        elif video_url := video_data.video_url:
+            cover_url = video_data.cover_url
+            duration = video_data.video.duration if video_data.video else 0
+            contents.append(self.create_video_content(video_url, cover_url, duration))
 
         # 构建作者
         author = self.create_author(video_data.author.nickname, video_data.avatar_url)
@@ -118,7 +118,6 @@ class DouyinParser(BaseParser):
         from .slides import SlidesInfo
 
         slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
-        # 使用新的简洁构建方式
         contents = []
 
         # 添加图片内容

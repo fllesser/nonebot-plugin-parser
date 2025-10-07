@@ -13,6 +13,7 @@ def auto_task(func: Callable[P, Coroutine[Any, Any, T]]) -> Callable[P, Task[T]]
     @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> Task[T]:
         coro = func(*args, **kwargs)
-        return create_task(coro)
+        name = " | ".join(str(arg) for arg in args if isinstance(arg, str))
+        return create_task(coro, name=func.__name__ + " | " + name)
 
     return wrapper
