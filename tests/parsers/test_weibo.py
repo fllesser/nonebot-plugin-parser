@@ -17,10 +17,10 @@ async def test_graphics():
     ]
 
     async def parse_graphics(url: str) -> None:
-        searchd = parser.search_url(url)
-        assert searchd, "无法匹配 URL"
+        searched = parser.search_url(url)
+        assert searched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博")
-        parse_result = await parser.parse(searchd)
+        parse_result = await parser.parse(searched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         if img_contents := parse_result.img_contents:
             for img_content in img_contents:
@@ -78,10 +78,10 @@ async def test_video():
     ]
 
     async def parse_video(url: str) -> None:
-        searchd = parser.search_url(url)
-        assert searchd, "无法匹配 URL"
+        searched = parser.search_url(url)
+        assert searched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博")
-        parse_result = await parser.parse(searchd)
+        parse_result = await parser.parse(searched)
         logger.debug(f"{url} | 解析结果: {parse_result}")
         video_paths = parse_result.video_contents
         for video_path in video_paths:
