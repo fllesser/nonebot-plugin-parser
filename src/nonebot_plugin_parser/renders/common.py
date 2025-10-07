@@ -13,7 +13,7 @@ class CommonRenderer(BaseRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
     # 卡片配置常量
-    PADDING = 20
+    PADDING = 25
     AVATAR_SIZE = 80
     AVATAR_TEXT_GAP = 15  # 头像和文字之间的间距
     MAX_COVER_WIDTH = 1000
@@ -42,8 +42,6 @@ class CommonRenderer(BaseRenderer):
     REPOST_BG_COLOR = (247, 247, 247)  # 转发背景色
     REPOST_BORDER_COLOR = (230, 230, 230)  # 转发边框色
     REPOST_PADDING = 12  # 转发内容内边距
-    REPOST_AVATAR_SIZE = 32  # 转发头像尺寸
-    REPOST_AVATAR_GAP = 8  # 转发头像和文字间距
 
     # 图片处理配置
     MIN_COVER_WIDTH = 300  # 最小封面宽度
@@ -72,9 +70,6 @@ class CommonRenderer(BaseRenderer):
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24}
     LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28}
 
-    # 转发内容字体配置
-    REPOST_FONT_SIZES: ClassVar[dict[str, int]] = {"repost_name": 14, "repost_text": 14, "repost_time": 12}
-    REPOST_LINE_HEIGHTS: ClassVar[dict[str, int]] = {"repost_name": 16, "repost_text": 20, "repost_time": 14}
     # 预加载的字体（在类定义后立即加载）
     FONTS: ClassVar[dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]]
 
@@ -85,25 +80,25 @@ class CommonRenderer(BaseRenderer):
             msg = UniMessage(UniHelper.img_seg(raw=image_raw))
             if pconfig.append_url:
                 urls = (result.display_url, result.repost_display_url)
-                msg += "\n".join(urls)
+                msg += "\n".join(url for url in urls if url)
             yield msg
 
         # 媒体内容
         async for message in self.render_contents(result):
             yield message
 
-    async def draw_common_image(self, result: ParseResult) -> bytes | None:
+    async def draw_common_image(
+        self, result: ParseResult, bg_color: tuple[int, int, int] | None = None
+    ) -> bytes | None:
         """使用 PIL 绘制通用社交媒体帖子卡片
 
         Args:
             result: 解析结果
+            bg_color: 背景颜色，默认使用 BG_COLOR
 
         Returns:
             PNG 图片的字节数据，如果没有足够的内容则返回 None
         """
-        # 如果既没有标题, 文本也没有封面，不生成图片
-        # if not result.title and not result.text:
-        #     return None
 
         # 使用预加载的字体
         fonts = self.FONTS
@@ -124,8 +119,9 @@ class CommonRenderer(BaseRenderer):
         # 计算总高度
         card_height = sum(h for _, h, _ in heights) + self.PADDING * 2 + self.SECTION_SPACING * (len(heights) - 1)
 
-        # 创建画布并绘制
-        image = Image.new("RGB", (card_width, card_height), self.BG_COLOR)
+        # 创建画布并绘制（使用指定的背景颜色，或默认背景颜色）
+        background_color = bg_color if bg_color is not None else self.BG_COLOR
+        image = Image.new("RGB", (card_width, card_height), background_color)
         self._draw_sections(image, heights, card_width, fonts)
 
         # 将图片转换为字节
@@ -133,8 +129,13 @@ class CommonRenderer(BaseRenderer):
         image.save(output, format="PNG")
         return output.getvalue()
 
-    def _load_and_resize_cover(self, cover_path: Path | None) -> Image.Image | None:
-        """加载并调整封面尺寸"""
+    def _load_and_resize_cover(self, cover_path: Path | None, apply_min_size: bool = True) -> Image.Image | None:
+        """加载并调整封面尺寸
+
+        Args:
+            cover_path: 封面路径
+            apply_min_size: 是否应用最小尺寸限制（转发内容不需要）
+        """
         if not cover_path or not cover_path.exists():
             return None
 
@@ -155,8 +156,8 @@ class CommonRenderer(BaseRenderer):
                 new_height = int(cover_img.height * scale_ratio)
                 cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-            # 如果封面太小，需要放大到最小尺寸
-            if cover_img.width < self.MIN_COVER_WIDTH or cover_img.height < self.MIN_COVER_HEIGHT:
+            # 如果封面太小，需要放大到最小尺寸（仅用于主内容）
+            if apply_min_size and (cover_img.width < self.MIN_COVER_WIDTH or cover_img.height < self.MIN_COVER_HEIGHT):
                 width_ratio = self.MIN_COVER_WIDTH / cover_img.width
                 height_ratio = self.MIN_COVER_HEIGHT / cover_img.height
                 scale_ratio = max(width_ratio, height_ratio)  # 使用max确保达到最小尺寸
@@ -266,7 +267,7 @@ class CommonRenderer(BaseRenderer):
         name_lines = self._wrap_text(result.author.name, text_area_width, fonts["name"])
 
         # 时间
-        time_text = result.formart_datetime() if result.timestamp else ""
+        time_text = result.formartted_datetime
         time_lines = self._wrap_text(time_text, text_area_width, fonts["extra"]) if time_text else []
 
         # 计算 header 高度（取头像和文字中较大者）
@@ -284,27 +285,26 @@ class CommonRenderer(BaseRenderer):
         }
 
     async def _calculate_repost_section(self, repost: ParseResult, content_width: int, fonts: dict) -> dict | None:
-        """计算转发内容的高度和内容"""
+        """计算转发内容的高度和内容（递归调用绘制方法）"""
         if not repost:
             return None
 
-        # 使用原内容绘制逻辑，但缩小尺寸
-        repost_scale = self.REPOST_SCALE  # 转发内容缩放比例
-        repost_width = int(content_width * repost_scale)
+        # 递归调用绘制方法，生成转发内容的完整卡片（使用转发背景颜色）
+        repost_image_bytes = await self.draw_common_image(repost, bg_color=self.REPOST_BG_COLOR)
+        if not repost_image_bytes:
+            return None
 
-        # 计算转发内容的完整卡片
-        repost_cover = self._load_and_resize_cover(await repost.cover_path)
-        repost_heights = await self._calculate_sections(repost, repost_cover, repost_width, fonts)
-        repost_height = (
-            sum(h for _, h, _ in repost_heights) + self.PADDING * 2 + self.SECTION_SPACING * (len(repost_heights) - 1)
-        )
+        # 将字节数据转换为 PIL Image
+        repost_image = Image.open(BytesIO(repost_image_bytes))
+
+        # 缩放图片
+        scaled_width = int(repost_image.width * self.REPOST_SCALE)
+        scaled_height = int(repost_image.height * self.REPOST_SCALE)
+        repost_image_scaled = repost_image.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
 
         return {
-            "height": repost_height + self.REPOST_PADDING * 2,  # 加上转发容器的内边距
-            "scale": repost_scale,
-            "width": repost_width,
-            "heights": repost_heights,
-            "repost": repost,
+            "height": scaled_height + self.REPOST_PADDING * 2,  # 加上转发容器的内边距
+            "scaled_image": repost_image_scaled,
         }
 
     async def _calculate_image_grid_section(self, result: ParseResult, content_width: int) -> dict | None:
@@ -472,89 +472,6 @@ class CommonRenderer(BaseRenderer):
         placeholder.putalpha(mask)
         return placeholder
 
-    def _load_and_process_repost_avatar(self, avatar: Path | None) -> Image.Image | None:
-        """加载并处理转发头像（小尺寸圆形）"""
-        if not avatar or not avatar.exists():
-            return None
-
-        try:
-            avatar_img = Image.open(avatar)
-
-            # 转换为 RGBA 模式
-            if avatar_img.mode != "RGBA":
-                avatar_img = avatar_img.convert("RGBA")
-
-            # 使用超采样技术提高质量
-            scale = self.AVATAR_UPSCALE_FACTOR
-            temp_size = self.REPOST_AVATAR_SIZE * scale
-            avatar_img = avatar_img.resize((temp_size, temp_size), Image.Resampling.LANCZOS)
-
-            # 创建高分辨率圆形遮罩
-            mask = Image.new("L", (temp_size, temp_size), 0)
-            mask_draw = ImageDraw.Draw(mask)
-            mask_draw.ellipse((0, 0, temp_size - 1, temp_size - 1), fill=255)
-
-            # 应用遮罩
-            output_avatar = Image.new("RGBA", (temp_size, temp_size), (0, 0, 0, 0))
-            output_avatar.paste(avatar_img, (0, 0))
-            output_avatar.putalpha(mask)
-
-            # 缩小到目标尺寸
-            output_avatar = output_avatar.resize(
-                (self.REPOST_AVATAR_SIZE, self.REPOST_AVATAR_SIZE), Image.Resampling.LANCZOS
-            )
-
-            return output_avatar
-        except Exception:
-            return None
-
-    def _create_repost_avatar_placeholder(self) -> Image.Image:
-        """创建转发头像占位符"""
-        placeholder = Image.new("RGBA", (self.REPOST_AVATAR_SIZE, self.REPOST_AVATAR_SIZE), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(placeholder)
-
-        # 绘制圆形背景
-        draw.ellipse(
-            (0, 0, self.REPOST_AVATAR_SIZE - 1, self.REPOST_AVATAR_SIZE - 1), fill=self.AVATAR_PLACEHOLDER_BG_COLOR
-        )
-
-        # 绘制简单的用户图标
-        center_x = self.REPOST_AVATAR_SIZE // 2
-        head_radius = int(self.REPOST_AVATAR_SIZE * self.AVATAR_HEAD_RADIUS_RATIO)
-        head_y = int(self.REPOST_AVATAR_SIZE * self.AVATAR_HEAD_RATIO)
-        draw.ellipse(
-            (
-                center_x - head_radius,
-                head_y - head_radius,
-                center_x + head_radius,
-                head_y + head_radius,
-            ),
-            fill=self.AVATAR_PLACEHOLDER_FG_COLOR,
-        )
-
-        # 肩部
-        shoulder_y = int(self.REPOST_AVATAR_SIZE * self.AVATAR_SHOULDER_Y_RATIO)
-        shoulder_width = int(self.REPOST_AVATAR_SIZE * self.AVATAR_SHOULDER_WIDTH_RATIO)
-        shoulder_height = int(self.REPOST_AVATAR_SIZE * self.AVATAR_SHOULDER_HEIGHT_RATIO)
-        draw.ellipse(
-            (
-                center_x - shoulder_width // 2,
-                shoulder_y,
-                center_x + shoulder_width // 2,
-                shoulder_y + shoulder_height,
-            ),
-            fill=self.AVATAR_PLACEHOLDER_FG_COLOR,
-        )
-
-        # 创建圆形遮罩
-        mask = Image.new("L", (self.REPOST_AVATAR_SIZE, self.REPOST_AVATAR_SIZE), 0)
-        mask_draw = ImageDraw.Draw(mask)
-        mask_draw.ellipse((0, 0, self.REPOST_AVATAR_SIZE - 1, self.REPOST_AVATAR_SIZE - 1), fill=255)
-
-        # 应用遮罩
-        placeholder.putalpha(mask)
-        return placeholder
-
     def _draw_header(
         self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, fonts: dict
     ) -> int:
@@ -654,6 +571,9 @@ class CommonRenderer(BaseRenderer):
         self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, card_width: int, fonts: dict
     ) -> int:
         """绘制转发内容"""
+        # 获取缩放后的转发图片
+        repost_image = content["scaled_image"]
+
         # 计算转发区域位置
         repost_x = self.PADDING
         repost_y = y_pos
@@ -677,15 +597,12 @@ class CommonRenderer(BaseRenderer):
             width=1,
         )
 
-        # 创建转发内容的完整卡片
-        repost_card = self._create_repost_card(content, fonts)
-
-        # 计算转发卡片在转发容器中的位置（居中）
+        # 计算转发图片在转发容器中的位置
         card_x = repost_x + self.REPOST_PADDING
         card_y = repost_y + self.REPOST_PADDING
 
-        # 将转发卡片贴到主画布上
-        image.paste(repost_card, (card_x, card_y))
+        # 将缩放后的转发图片贴到主画布上
+        image.paste(repost_image, (card_x, card_y))
 
         return y_pos + repost_height + self.SECTION_SPACING
 
@@ -772,107 +689,6 @@ class CommonRenderer(BaseRenderer):
 
         # 绘制白色文字
         draw.text((text_x, text_y), text, fill=(255, 255, 255, 255), font=font)
-
-    def _create_repost_card(self, content: dict, fonts: dict) -> Image.Image:
-        """创建转发内容的完整卡片"""
-        scale = content["scale"]
-        card_width = content["width"]
-        heights = content["heights"]
-
-        # 计算卡片高度
-        card_height = sum(h for _, h, _ in heights) + self.PADDING * 2 + self.SECTION_SPACING * (len(heights) - 1)
-
-        # 创建转发卡片画布
-        repost_card = Image.new("RGB", (card_width, card_height), self.REPOST_BG_COLOR)
-
-        # 使用缩放后的字体
-        scaled_fonts = {}
-        for name, font in fonts.items():
-            if hasattr(font, "size"):
-                # 使用默认字体路径
-                font_path = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
-                scaled_fonts[name] = ImageFont.truetype(font_path, int(font.size * scale))
-            else:
-                scaled_fonts[name] = font
-
-        # 绘制转发内容的所有部分
-        self._draw_sections(repost_card, heights, card_width, scaled_fonts)
-
-        return repost_card
-
-    def _draw_repost_header(
-        self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, x_pos: int, y_pos: int, fonts: dict
-    ) -> int:
-        """绘制转发头部"""
-        # 绘制头像
-        avatar = content["avatar"] if content["avatar"] else self._create_repost_avatar_placeholder()
-        image.paste(avatar, (x_pos, y_pos), avatar)
-
-        # 绘制用户名和时间
-        text_x = x_pos + self.REPOST_AVATAR_SIZE + self.REPOST_AVATAR_GAP
-        text_y = y_pos
-
-        # 用户名
-        for line in content["name_lines"]:
-            draw.text((text_x, text_y), line, fill=self.TEXT_COLOR, font=fonts["repost_name"])
-            text_y += self.REPOST_LINE_HEIGHTS["repost_name"]
-
-        # 时间
-        if content["time_lines"]:
-            text_y += 4  # 用户名和时间间距
-            for line in content["time_lines"]:
-                draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=fonts["repost_time"])
-                text_y += self.REPOST_LINE_HEIGHTS["repost_time"]
-
-        return y_pos + max(self.REPOST_AVATAR_SIZE, text_y - y_pos)
-
-    def _draw_repost_text(
-        self, draw: ImageDraw.ImageDraw, lines: list[str], x_pos: int, y_pos: int, fonts: dict
-    ) -> int:
-        """绘制转发文本"""
-        current_y = y_pos
-        for line in lines:
-            draw.text((x_pos, current_y), line, fill=self.TEXT_COLOR, font=fonts["repost_text"])
-            current_y += self.REPOST_LINE_HEIGHTS["repost_text"]
-        return current_y
-
-    def _draw_repost_media(
-        self, image: Image.Image, media_items: list[Image.Image], x_pos: int, y_pos: int, content_width: int
-    ) -> int:
-        """绘制转发媒体（图片网格）"""
-        if not media_items:
-            return y_pos
-
-        # 计算网格布局
-        cols = min(3, len(media_items))
-        rows = (len(media_items) + cols - 1) // cols
-
-        # 计算每个图片的尺寸
-        max_img_size = min(300, content_width // 3)
-        img_spacing = 6
-
-        current_y = y_pos
-
-        for row in range(rows):
-            row_start = row * cols
-            row_end = min(row_start + cols, len(media_items))
-            row_items = media_items[row_start:row_end]
-
-            # 计算这一行的最大高度
-            max_height = max(img.height for img in row_items)
-
-            # 绘制这一行的图片
-            for i, img in enumerate(row_items):
-                img_x = x_pos + i * (max_img_size + img_spacing)
-                img_y = current_y
-
-                # 居中放置图片
-                y_offset = (max_height - img.height) // 2
-                image.paste(img, (img_x, img_y + y_offset))
-
-            current_y += max_height + img_spacing
-
-        return current_y
 
     def _draw_rounded_rectangle(
         self, image: Image.Image, bbox: tuple[int, int, int, int], fill_color: tuple[int, int, int], radius: int = 8
@@ -965,9 +781,5 @@ class CommonRenderer(BaseRenderer):
     def load_custom_fonts(cls):
         """加载字体"""
         font_path = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
-        # 加载主字体
-        main_fonts = {name: ImageFont.truetype(font_path, size) for name, size in cls.FONT_SIZES.items()}
-        # 加载转发字体
-        repost_fonts = {name: ImageFont.truetype(font_path, size) for name, size in cls.REPOST_FONT_SIZES.items()}
-        # 合并字体字典
-        cls.FONTS = {**main_fonts, **repost_fonts}
+        # 加载字体
+        cls.FONTS = {name: ImageFont.truetype(font_path, size) for name, size in cls.FONT_SIZES.items()}
