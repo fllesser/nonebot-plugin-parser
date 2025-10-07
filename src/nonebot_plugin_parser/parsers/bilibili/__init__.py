@@ -11,7 +11,7 @@ from nonebot import logger
 
 from ...config import pconfig
 from ...download import DOWNLOADER
-from ...exception import DurationLimitException, ParseException
+from ...exception import DownloadException, DurationLimitException, ParseException
 from ..base import BaseParser
 from ..cookie import ck2dict
 from ..data import (
@@ -137,7 +137,7 @@ class BilibiliParser(BaseParser):
             output_path = pconfig.cache_dir / f"{video_info.bvid}-{page_num}.mp4"
             if output_path.exists():
                 return output_path
-            v_url, a_url = await self.parse_video_download_url(video=video, page_index=page_idx)
+            v_url, a_url = await self.get_download_urls(video=video, page_index=page_idx)
             if duration > pconfig.duration_maximum:
                 raise DurationLimitException
             if a_url is not None:
@@ -415,7 +415,7 @@ class BilibiliParser(BaseParser):
         else:
             raise ParseException("avid 和 bvid 至少指定一项")
 
-    async def parse_video_download_url(
+    async def get_download_urls(
         self,
         *,
         video: Video | None = None,
@@ -451,8 +451,9 @@ class BilibiliParser(BaseParser):
         )
         video_stream = streams[0]
         if not isinstance(video_stream, VideoStreamDownloadURL):
-            raise ParseException("未找到可下载的视频流")
+            raise DownloadException("未找到可下载的视频流")
         logger.debug(f"视频流质量: {video_stream.video_quality.name}, 编码: {video_stream.video_codecs}")
+
         audio_stream = streams[1]
         if not isinstance(audio_stream, AudioStreamDownloadURL):
             return video_stream.url, None

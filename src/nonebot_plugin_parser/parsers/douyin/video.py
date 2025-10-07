@@ -74,6 +74,7 @@ class VideoData(Struct):
             images_urls=images_urls,
             video_url=self.video_url if len(images_urls) == 0 else None,
             cover_url=self.cover_url,
+            duration=self.video.duration if self.video else 0,
         )
 
 

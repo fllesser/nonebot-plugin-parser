@@ -7,7 +7,7 @@ from msgspec import Struct
 import yt_dlp
 
 from ..config import pconfig
-from ..exception import ParseException
+from ..exception import DurationLimitException, ParseException
 from ..utils import LimitedSizeDict, generate_file_name
 from .task import auto_task
 
@@ -39,7 +39,7 @@ class YtdlpDownloader:
     """YtdlpDownloader class"""
 
     def __init__(self):
-        self._url_info_mapping = LimitedSizeDict[str, VideoInfo]()
+        self._video_info_mapping = LimitedSizeDict[str, VideoInfo]()
         self._ydl_extract_base_opts: dict[str, Any] = {
             "quiet": True,
             "skip_download": True,
@@ -60,9 +60,9 @@ class YtdlpDownloader:
         Returns:
             dict[str, str]: video info
         """
-        info_dict = self._url_info_mapping.get(url, None)
-        if info_dict:
-            return info_dict
+        video_info = self._video_info_mapping.get(url, None)
+        if video_info:
+            return video_info
         ydl_opts = {} | self._ydl_extract_base_opts
 
         if cookiefile:
@@ -72,8 +72,9 @@ class YtdlpDownloader:
             info_dict = await asyncio.to_thread(ydl.extract_info, url, download=False)
             if not info_dict:
                 raise ParseException("获取视频信息失败")
+
         video_info = msgspec.convert(info_dict, VideoInfo)
-        self._url_info_mapping[url] = video_info
+        self._video_info_mapping[url] = video_info
         return video_info
 
     @auto_task
@@ -87,8 +88,11 @@ class YtdlpDownloader:
         Returns:
             Path: video file path
         """
-        info_dict = await self.extract_video_info(url, cookiefile)
-        duration = info_dict.duration
+        video_info = await self.extract_video_info(url, cookiefile)
+        duration = video_info.duration
+        if duration > pconfig.duration_maximum:
+            raise DurationLimitException
+
         video_path = pconfig.cache_dir / generate_file_name(url, ".mp4")
         if video_path.exists():
             return video_path
@@ -121,6 +125,7 @@ class YtdlpDownloader:
         audio_path = pconfig.cache_dir / f"{file_name}.flac"
         if audio_path.exists():
             return audio_path
+
         ydl_opts = {
             "outtmpl": f"{pconfig.cache_dir / file_name}.%(ext)s",
             "format": "bestaudio/best",
