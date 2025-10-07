@@ -4,6 +4,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, ClassVar
 
+from ..config import pconfig
 from ..exception import DownloadException, DownloadLimitException, ZeroSizeException
 from ..helper import ForwardNodeInner, UniHelper, UniMessage
 from ..parsers import ParseResult
@@ -74,3 +75,7 @@ class BaseRenderer(ABC):
             message = f"{failed_count} 项媒体下载失败"
             yield UniMessage(message)
             raise DownloadException(message)
+
+    @property
+    def append_url(self) -> bool:
+        return pconfig.append_url

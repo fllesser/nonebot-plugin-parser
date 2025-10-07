@@ -51,6 +51,8 @@ class Config(BaseModel):
     """B站视频编码"""
     parser_render_type: RenderType = RenderType.common
     """Renderer 类型"""
+    parser_custom_font: str | None = None
+    """自定义字体"""
 
     @property
     def nickname(self) -> str:
@@ -126,6 +128,11 @@ class Config(BaseModel):
     def append_url(self) -> bool:
         """是否在解析结果中附加原始URL"""
         return self.parser_append_url
+
+    @property
+    def custom_font(self) -> Path | None:
+        """自定义字体"""
+        return (self.data_dir / self.parser_custom_font) if self.parser_custom_font else None
 
 
 pconfig: Config = get_plugin_config(Config)
