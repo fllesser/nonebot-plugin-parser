@@ -69,8 +69,8 @@ class CommonRenderer(BaseRenderer):
 
     ITEM_NAMES = ("name", "title", "text", "extra")
     # 字体大小和行高
-    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 24, "text": 30, "extra": 24}
-    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 28, "text": 36, "extra": 28}
+    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24}
+    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28}
 
     # 转发内容字体配置
     REPOST_FONT_SIZES: ClassVar[dict[str, int]] = {"repost_name": 14, "repost_text": 14, "repost_time": 12}
