@@ -361,7 +361,10 @@ class CommonRenderer(BaseRenderer):
                             img = img.resize(new_size, Image.Resampling.LANCZOS)
                     else:
                         # 多张图片，使用网格布局
-                        max_size = min(self.MAX_IMAGE_GRID_SIZE, content_width // self.IMAGE_GRID_COLS)
+                        # 计算图片尺寸，确保左右间距相同：间距 + (图片 + 间距) * 列数 = 总宽度
+                        num_gaps = self.IMAGE_GRID_COLS + 1  # 3列有4个间距
+                        max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // self.IMAGE_GRID_COLS
+                        max_size = min(max_size, self.MAX_IMAGE_GRID_SIZE)
                         if img.width > max_size or img.height > max_size:
                             ratio = min(max_size / img.width, max_size / img.height)
                             new_size = (int(img.width * ratio), int(img.height * ratio))
@@ -386,7 +389,12 @@ class CommonRenderer(BaseRenderer):
 
         # 计算高度
         max_img_height = max(img.height for img in processed_images)
-        grid_height = rows * max_img_height + (rows - 1) * self.IMAGE_GRID_SPACING  # 图片间距
+        if len(processed_images) == 1:
+            # 单张图片
+            grid_height = max_img_height
+        else:
+            # 多张图片：上间距 + (图片 + 间距) * 行数
+            grid_height = self.IMAGE_GRID_SPACING + rows * (max_img_height + self.IMAGE_GRID_SPACING)
 
         return {
             "height": grid_height,
@@ -639,8 +647,11 @@ class CommonRenderer(BaseRenderer):
             # 单张图片，使用完整的可用宽度，与视频封面保持一致
             max_img_size = available_width
         else:
-            # 多张图片，统一使用3列布局（九宫格），使用较小尺寸
-            max_img_size = min(self.MAX_IMAGE_GRID_SIZE, (available_width - 2 * img_spacing) // self.IMAGE_GRID_COLS)
+            # 多张图片，统一使用3列布局（九宫格）
+            # 计算图片尺寸，确保所有间距相同
+            num_gaps = cols + 1  # 3列有4个间距
+            max_img_size = (available_width - img_spacing * num_gaps) // cols
+            max_img_size = min(max_img_size, self.MAX_IMAGE_GRID_SIZE)
 
         current_y = y_pos
 
@@ -652,10 +663,11 @@ class CommonRenderer(BaseRenderer):
             # 计算这一行的最大高度
             max_height = max(img.height for img in row_images)
 
-            # 绘制这一行的图片（左对齐）
+            # 绘制这一行的图片
             for i, img in enumerate(row_images):
-                img_x = self.PADDING + i * (max_img_size + img_spacing)
-                img_y = current_y
+                # 每张图片左侧都有间距：间距 + (间距 + 图片) * i
+                img_x = self.PADDING + img_spacing + i * (max_img_size + img_spacing)
+                img_y = current_y + img_spacing  # 每行上方都有间距
 
                 # 居中放置图片
                 y_offset = (max_height - img.height) // 2
@@ -665,9 +677,9 @@ class CommonRenderer(BaseRenderer):
                 if has_more and row == rows - 1 and i == len(row_images) - 1 and len(images) == self.MAX_IMAGES_DISPLAY:
                     self._draw_more_indicator(image, img_x, img_y, max_img_size, max_height, remaining_count)
 
-            current_y += max_height + img_spacing
+            current_y += img_spacing + max_height
 
-        return current_y + self.SECTION_SPACING
+        return current_y + img_spacing + self.SECTION_SPACING
 
     def _draw_more_indicator(
         self, image: Image.Image, img_x: int, img_y: int, img_width: int, img_height: int, count: int
@@ -675,18 +687,18 @@ class CommonRenderer(BaseRenderer):
         """在图片上绘制+N指示器"""
         draw = ImageDraw.Draw(image)
 
-        # 创建半透明黑色遮罩
+        # 创建半透明黑色遮罩（透明度 1/4）
         overlay = Image.new("RGBA", (img_width, img_height), (0, 0, 0, 0))
         overlay_draw = ImageDraw.Draw(overlay)
-        overlay_draw.rectangle((0, 0, img_width - 1, img_height - 1), fill=(0, 0, 0, 150))
+        overlay_draw.rectangle((0, 0, img_width - 1, img_height - 1), fill=(0, 0, 0, 100))
 
         # 将遮罩贴到图片上
         image.paste(overlay, (img_x, img_y), overlay)
 
         # 绘制+N文字
         text = f"+{count}"
-        # 使用较大的字体
-        font_size = min(img_width, img_height) // 6
+        # 使用更大的字体
+        font_size = min(img_width, img_height) // 4
         try:
             font_path = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
             font = ImageFont.truetype(font_path, font_size)
