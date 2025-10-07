@@ -50,7 +50,7 @@ class YouTubeParser(BaseParser):
             video = YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
             contents.append(self.create_video_content(video, video_info.thumbnail, video_info.duration))
         else:
-            contents.append(self.create_image_contents([video_info.thumbnail]))
+            contents.extend(self.create_image_contents([video_info.thumbnail]))
 
         return self.result(
             title=video_info.title,
@@ -73,7 +73,7 @@ class YouTubeParser(BaseParser):
         author = await self._fetch_author_info(video_info.channel_id)
 
         contents = []
-        contents.append(self.create_image_contents([video_info.thumbnail]))
+        contents.extend(self.create_image_contents([video_info.thumbnail]))
 
         if video_info.duration <= pconfig.duration_maximum:
             audio_task = YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)

@@ -197,12 +197,13 @@ class ParseResult:
 
     def __repr__(self) -> str:
         return (
-            f"\ntitle: {self.title}\n"
-            f"platform: {self.platform}\n"
+            f"\nplatform: {self.platform}\n"
+            f"title: {self.title}\n"
+            f"timestamp: {self.timestamp}\n"
             f"author: {self.author}\n"
+            f"text: {self.text}\n"
             f"contents: {self.contents}\n"
             f"url: {self.url}\n"
-            f"timestamp: {self.timestamp}\n"
             f"extra: {self.extra}\n"
             f"repost: {self.repost}\n"
         )
