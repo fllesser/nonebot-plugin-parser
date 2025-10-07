@@ -93,7 +93,7 @@ class XiaoHongShuParser(BaseParser):
             contents.extend(self.create_image_contents(image_urls))
 
         # 构建作者
-        author = self.create_author(note_detail.user.nickname)
+        author = self.create_author(note_detail.nickname, note_detail.avatar_url)
 
         return self.result(
             title=note_detail.title_desc,
@@ -126,6 +126,7 @@ class Video(Struct):
 
 class User(Struct):
     nickname: str
+    avatar: str
 
 
 class NoteDetail(Struct):
@@ -135,6 +136,14 @@ class NoteDetail(Struct):
     user: User
     imageList: list[Image] = field(default_factory=list)
     video: Video | None = None
+
+    @property
+    def nickname(self) -> str:
+        return self.user.nickname
+
+    @property
+    def avatar_url(self) -> str:
+        return self.user.avatar
 
     @property
     def title_desc(self) -> str:
