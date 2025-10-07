@@ -3,14 +3,16 @@ from pathlib import Path
 from typing import Any, ClassVar
 from typing_extensions import override
 
+from nonebot import logger
 from PIL import Image, ImageDraw, ImageFont
 
-from ..config import pconfig
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
 class CommonRenderer(BaseRenderer):
     """统一的渲染器，将解析结果转换为消息"""
+
+    __slots__ = ("font_path", "fonts")
 
     # 卡片配置常量
     PADDING = 25
@@ -70,15 +72,25 @@ class CommonRenderer(BaseRenderer):
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24}
     LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28}
 
-    # 预加载的字体（在类定义后立即加载）
-    FONTS: ClassVar[dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont]]
+    DEFAULT_FONT_PATH: ClassVar[Path] = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
+
+    def __init__(self, font_path: Path | None = None):
+        self.font_path: Path = self.DEFAULT_FONT_PATH
+
+    def load_font(self, font_path: Path | None = None):
+        if font_path is not None and font_path.exists():
+            self.font_path = font_path
+        self.fonts: dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont] = {
+            name: ImageFont.truetype(self.font_path, size) for name, size in self.FONT_SIZES.items()
+        }
+        logger.success(f"加载字体「{self.font_path.name}」成功")
 
     @override
     async def render_messages(self, result: ParseResult):
         # 生成图片卡片
         if image_raw := await self.draw_common_image(result):
             msg = UniMessage(UniHelper.img_seg(raw=image_raw))
-            if pconfig.append_url:
+            if self.append_url:
                 urls = (result.display_url, result.repost_display_url)
                 msg += "\n".join(url for url in urls if url)
             yield msg
@@ -120,7 +132,6 @@ class CommonRenderer(BaseRenderer):
             PIL Image 对象，如果没有足够的内容则返回 None
         """
         # 使用预加载的字体
-        fonts = self.FONTS
 
         # 先确定固定的卡片宽度和内容区域宽度
         card_width = max(self.DEFAULT_CARD_WIDTH, self.MIN_CARD_WIDTH)
@@ -132,14 +143,14 @@ class CommonRenderer(BaseRenderer):
         )
 
         # 计算各部分内容的高度
-        heights = await self._calculate_sections(result, cover_img, content_width, fonts)
+        heights = await self._calculate_sections(result, cover_img, content_width)
 
         # 计算总高度
         card_height = sum(h for _, h, _ in heights) + self.PADDING * 2 + self.SECTION_SPACING * (len(heights) - 1)
         # 创建画布并绘制（使用指定的背景颜色，或默认背景颜色）
         background_color = bg_color if bg_color is not None else self.BG_COLOR
         image = Image.new("RGB", (card_width, card_height), background_color)
-        self._draw_sections(image, heights, card_width, fonts)
+        self._draw_sections(image, heights, card_width)
 
         return image
 
@@ -234,20 +245,20 @@ class CommonRenderer(BaseRenderer):
             return None
 
     async def _calculate_sections(
-        self, result: ParseResult, cover_img: Image.Image | None, content_width: int, fonts: dict
+        self, result: ParseResult, cover_img: Image.Image | None, content_width: int
     ) -> list[tuple[str, int, Any]]:
         """计算各部分内容的高度和数据"""
         heights = []
 
         # 1. Header 部分
         if result.author:
-            header_data = await self._calculate_header_section(result, content_width, fonts)
+            header_data = await self._calculate_header_section(result, content_width)
             if header_data:
                 heights.append(("header", header_data["height"], header_data))
 
         # 2. 标题部分
         if result.title:
-            title_lines = self._wrap_text(result.title, content_width, fonts["title"])
+            title_lines = self._wrap_text(result.title, content_width, self.fonts["title"])
             title_height = len(title_lines) * self.LINE_HEIGHTS["title"]
             heights.append(("title", title_height, title_lines))
 
@@ -262,25 +273,25 @@ class CommonRenderer(BaseRenderer):
 
         # 4. 文本内容
         if result.text:
-            text_lines = self._wrap_text(result.text, content_width, fonts["text"])
+            text_lines = self._wrap_text(result.text, content_width, self.fonts["text"])
             text_height = len(text_lines) * self.LINE_HEIGHTS["text"]
             heights.append(("text", text_height, text_lines))
 
         # 5. 额外信息
         if result.extra_info:
-            extra_lines = self._wrap_text(result.extra_info, content_width, fonts["extra"])
+            extra_lines = self._wrap_text(result.extra_info, content_width, self.fonts["extra"])
             extra_height = len(extra_lines) * self.LINE_HEIGHTS["extra"]
             heights.append(("extra", extra_height, extra_lines))
 
         # 6. 转发内容
         if result.repost:
-            repost_data = await self._calculate_repost_section(result.repost, content_width, fonts)
+            repost_data = await self._calculate_repost_section(result.repost, content_width)
             if repost_data:
                 heights.append(("repost", repost_data["height"], repost_data))
 
         return heights
 
-    async def _calculate_header_section(self, result: ParseResult, content_width: int, fonts: dict) -> dict | None:
+    async def _calculate_header_section(self, result: ParseResult, content_width: int) -> dict | None:
         """计算 header 部分的高度和内容"""
         if not result.author:
             return None
@@ -292,11 +303,11 @@ class CommonRenderer(BaseRenderer):
         text_area_width = content_width - (self.AVATAR_SIZE + self.AVATAR_TEXT_GAP)
 
         # 发布者名称
-        name_lines = self._wrap_text(result.author.name, text_area_width, fonts["name"])
+        name_lines = self._wrap_text(result.author.name, text_area_width, self.fonts["name"])
 
         # 时间
         time_text = result.formartted_datetime
-        time_lines = self._wrap_text(time_text, text_area_width, fonts["extra"]) if time_text else []
+        time_lines = self._wrap_text(time_text, text_area_width, self.fonts["extra"]) if time_text else []
 
         # 计算 header 高度（取头像和文字中较大者）
         text_height = len(name_lines) * self.LINE_HEIGHTS["name"]
@@ -312,7 +323,7 @@ class CommonRenderer(BaseRenderer):
             "text_height": text_height,
         }
 
-    async def _calculate_repost_section(self, repost: ParseResult, content_width: int, fonts: dict) -> dict | None:
+    async def _calculate_repost_section(self, repost: ParseResult, content_width: int) -> dict | None:
         """计算转发内容的高度和内容（递归调用绘制方法）"""
         if not repost:
             return None
@@ -435,26 +446,24 @@ class CommonRenderer(BaseRenderer):
             bottom = top + width
             return img.crop((0, top, width, bottom))
 
-    def _draw_sections(
-        self, image: Image.Image, heights: list[tuple[str, int, Any]], card_width: int, fonts: dict
-    ) -> None:
+    def _draw_sections(self, image: Image.Image, heights: list[tuple[str, int, Any]], card_width: int) -> None:
         """绘制所有内容到画布上"""
         draw = ImageDraw.Draw(image)
         y_pos = self.PADDING
 
         for section_type, height, content in heights:
             if section_type == "header":
-                y_pos = self._draw_header(image, draw, content, y_pos, fonts)
+                y_pos = self._draw_header(image, draw, content, y_pos)
             elif section_type == "title":
-                y_pos = self._draw_title(draw, content, y_pos, fonts["title"])
+                y_pos = self._draw_title(draw, content, y_pos, self.fonts["title"])
             elif section_type == "cover":
                 y_pos = self._draw_cover(image, content, y_pos, card_width)
             elif section_type == "text":
-                y_pos = self._draw_text(draw, content, y_pos, fonts["text"])
+                y_pos = self._draw_text(draw, content, y_pos, self.fonts["text"])
             elif section_type == "extra":
-                y_pos = self._draw_extra(draw, content, y_pos, fonts["extra"])
+                y_pos = self._draw_extra(draw, content, y_pos, self.fonts["extra"])
             elif section_type == "repost":
-                y_pos = self._draw_repost(image, draw, content, y_pos, card_width, fonts)
+                y_pos = self._draw_repost(image, draw, content, y_pos, card_width)
             elif section_type == "image_grid":
                 y_pos = self._draw_image_grid(image, content, y_pos, card_width)
 
@@ -505,9 +514,7 @@ class CommonRenderer(BaseRenderer):
         placeholder.putalpha(mask)
         return placeholder
 
-    def _draw_header(
-        self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, fonts: dict
-    ) -> int:
+    def _draw_header(self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int) -> int:
         """绘制 header 部分"""
         x_pos = self.PADDING
 
@@ -525,14 +532,14 @@ class CommonRenderer(BaseRenderer):
 
         # 发布者名称（蓝色）
         for line in content["name_lines"]:
-            draw.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=fonts["name"])
+            draw.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=self.fonts["name"])
             text_y += self.LINE_HEIGHTS["name"]
 
         # 时间（灰色）
         if content["time_lines"]:
             text_y += self.NAME_TIME_GAP
             for line in content["time_lines"]:
-                draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=fonts["extra"])
+                draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fonts["extra"])
                 text_y += self.LINE_HEIGHTS["extra"]
 
         return y_pos + content["height"] + self.SECTION_SPACING
@@ -602,7 +609,7 @@ class CommonRenderer(BaseRenderer):
         return y_pos
 
     def _draw_repost(
-        self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, card_width: int, fonts: dict
+        self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, card_width: int
     ) -> int:
         """绘制转发内容"""
         # 获取缩放后的转发图片
@@ -713,11 +720,7 @@ class CommonRenderer(BaseRenderer):
         text = f"+{count}"
         # 使用更大的字体
         font_size = min(img_width, img_height) // 4
-        try:
-            font_path = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
-            font = ImageFont.truetype(font_path, font_size)
-        except Exception:
-            font = ImageFont.load_default()
+        font = ImageFont.truetype(self.font_path, font_size)
 
         # 计算文字位置（居中）
         bbox = font.getbbox(text)
@@ -815,10 +818,3 @@ class CommonRenderer(BaseRenderer):
                 lines.append(current_line)
 
         return lines if lines else [""]
-
-    @classmethod
-    def load_custom_fonts(cls):
-        """加载字体"""
-        font_path = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
-        # 加载字体
-        cls.FONTS = {name: ImageFont.truetype(font_path, size) for name, size in cls.FONT_SIZES.items()}
