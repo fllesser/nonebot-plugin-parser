@@ -112,47 +112,6 @@ def extract_msg_text(message: UniMsg, state: T_State) -> None:
         state[R_EXTRACT_KEY] = text
 
 
-class UrlKeywordsRule:
-    """检查消息是否含有关键词 增强版"""
-
-    __slots__ = ("keywords",)
-
-    def __init__(self, *keywords: str):
-        self.keywords = keywords
-
-    def __repr__(self) -> str:
-        return f"UrlKeywords(keywords={self.keywords})"
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, UrlKeywordsRule) and frozenset(self.keywords) == frozenset(other.keywords)
-
-    def __hash__(self) -> int:
-        return hash(frozenset(self.keywords))
-
-    async def __call__(self, state: T_State, text: str = ExtractText()) -> bool:
-        if not text:
-            return False
-        if key := next((k for k in self.keywords if k in text), None):
-            state[R_KEYWORD_KEY] = key
-            return True
-        return False
-
-
-def url_keywords(*keywords: str) -> Rule:
-    return Rule(UrlKeywordsRule(*keywords))
-
-
-def on_url_keyword(*keywords: str, priority: int = 5) -> type[Matcher]:
-    matcher = Matcher.new(
-        "message",
-        is_not_in_disabled_groups & url_keywords(*keywords),
-        priority=priority,
-        block=True,
-        source=get_matcher_source(1),
-    )
-    return matcher
-
-
 class KeyPatternList(list[tuple[str, re.Pattern[str]]]):
     def __init__(self, *args: tuple[str, str | re.Pattern[str]]):
         super().__init__()

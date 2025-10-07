@@ -9,7 +9,7 @@ async def test_graphics():
     """测试微博图片解析"""
     from nonebot_plugin_parser.parsers import WeiBoParser
 
-    weibo_parser = WeiBoParser()
+    parser = WeiBoParser()
 
     urls = [
         "https://weibo.com/7207262816/P5kWdcfDe",
@@ -17,8 +17,10 @@ async def test_graphics():
     ]
 
     async def parse_graphics(url: str) -> None:
+        searchd = parser.search_url(url)
+        assert searchd, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博")
-        parse_result = await weibo_parser.parse_share_url(url)
+        parse_result = await parser.parse(searchd)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         if img_contents := parse_result.img_contents:
             for img_content in img_contents:
@@ -32,7 +34,7 @@ async def test_graphics():
 async def test_repost():
     from nonebot_plugin_parser.parsers import WeiBoParser
 
-    weibo_parser = WeiBoParser()
+    parser = WeiBoParser()
 
     urls = [
         "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
@@ -40,8 +42,10 @@ async def test_repost():
     ]
 
     async def parse_repost(url) -> None:
+        matched = parser.search_url(url)
+        assert matched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博转发")
-        parse_result = await weibo_parser.parse_share_url(url)
+        parse_result = await parser.parse(matched)
         repost = parse_result.repost
         assert repost
         logger.debug(f"{url} | 转发内容: \n{repost}")
@@ -64,7 +68,7 @@ async def test_video():
     """测试微博视频解析"""
     from nonebot_plugin_parser.parsers import WeiBoParser
 
-    weibo_parser = WeiBoParser()
+    parser = WeiBoParser()
 
     urls = [
         "https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934",
@@ -74,8 +78,10 @@ async def test_video():
     ]
 
     async def parse_video(url: str) -> None:
+        searchd = parser.search_url(url)
+        assert searchd, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博")
-        parse_result = await weibo_parser.parse_share_url(url)
+        parse_result = await parser.parse(searchd)
         logger.debug(f"{url} | 解析结果: {parse_result}")
         video_paths = parse_result.video_contents
         for video_path in video_paths:
@@ -91,7 +97,7 @@ async def test_text():
     """测试微博纯文本"""
     from nonebot_plugin_parser.parsers import WeiBoParser
 
-    weibo_parser = WeiBoParser()
+    parser = WeiBoParser()
 
     urls = [
         "https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html",
@@ -101,8 +107,10 @@ async def test_text():
     ]
 
     async def parse_text(url: str) -> None:
+        matched = parser.search_url(url)
+        assert matched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博")
-        parse_result = await weibo_parser.parse_share_url(url)
+        parse_result = await parser.parse(matched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.text
         logger.success(f"{url} | 微博纯文本解析成功")

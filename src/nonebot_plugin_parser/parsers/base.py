@@ -63,6 +63,19 @@ class BaseParser(ABC):
         raise NotImplementedError
 
     @classmethod
+    def search_url(cls, url: str) -> re.Match[str]:
+        from nonebot import logger
+
+        """搜索 URL 匹配模式"""
+        for keyword, pattern in cls.patterns:
+            if keyword not in url:
+                continue
+            if searched := re.search(pattern, url):
+                return searched
+            logger.debug(f"keyword '{keyword}' is in '{url}', but not matched")
+        raise ValueError(f"无法匹配 {url}")
+
+    @classmethod
     def result(cls, **kwargs: Unpack[ParseResultKwargs]) -> ParseResult:
         """构建解析结果"""
         return ParseResult(platform=cls.platform, **kwargs)

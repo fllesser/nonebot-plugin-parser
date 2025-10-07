@@ -42,25 +42,21 @@ class WeiBoParser(BaseParser):
         """
         # 从匹配对象中获取原始URL
         url = matched.group(0)
-        return await self.parse_share_url(url)
-
-    async def parse_share_url(self, share_url: str):
-        """解析微博分享链接（内部方法）"""
-        if "mapp.api.weibo" in share_url:
+        if "mapp.api.weibo" in url:
             # ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
-            share_url = await self.get_redirect_url(share_url)
+            url = await self.get_redirect_url(url)
         # https://video.weibo.com/show?fid=1034:5145615399845897
-        if matched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", share_url):
-            return await self.parse_fid(matched.group(1))
+        if searched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", url):
+            return await self.parse_fid(searched.group(1))
         # https://m.weibo.cn/detail/4976424138313924
-        elif matched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", share_url):
-            weibo_id = matched.group(1)
+        elif searched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", url):
+            weibo_id = searched.group(1)
         # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934
-        elif matched := re.search(r"mid=([A-Za-z\d]+)", share_url):
-            weibo_id = self._mid2id(matched.group(1))
+        elif searched := re.search(r"mid=([A-Za-z\d]+)", url):
+            weibo_id = self._mid2id(searched.group(1))
         # https://weibo.com/1707895270/5006106478773472
-        elif matched := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", share_url):
-            weibo_id = matched.group(1)
+        elif searched := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", url):
+            weibo_id = searched.group(1)
         else:
             raise ParseException("无法获取到微博的 id")
 
@@ -169,27 +165,35 @@ class WeiBoParser(BaseParser):
 
         # 用 bytes 更稳，避免编码歧义
         weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
-        # 使用新的简洁构建方式
+
+        return self.build_weibo_data(weibo_data)
+
+    def build_weibo_data(self, data: "WeiboData"):
         contents = []
 
         # 添加视频内容
-        if video_url := weibo_data.video_url:
-            cover_url = weibo_data.cover_url
+        if video_url := data.video_url:
+            cover_url = data.cover_url
             contents.append(self.create_video_content(video_url, cover_url))
 
         # 添加图片内容
-        if image_urls := weibo_data.image_urls:
+        if image_urls := data.image_urls:
             contents.extend(self.create_image_contents(image_urls))
 
         # 构建作者
-        author = self.create_author(weibo_data.display_name, weibo_data.user.profile_image_url)
+        author = self.create_author(data.display_name, data.user.profile_image_url)
+        repost = None
+        if data.retweeted_status:
+            repost = self.build_weibo_data(data.retweeted_status)
 
         return self.result(
-            title=weibo_data.title,
+            title=data.title,
+            text=data.text_content,
             author=author,
             contents=contents,
-            timestamp=weibo_data.timestamp,
-            url=weibo_data.url,
+            timestamp=data.timestamp,
+            url=data.url,
+            repost=repost,
         )
 
     def _base62_encode(self, number: int) -> str:
