@@ -87,24 +87,43 @@ class CommonRenderer(BaseRenderer):
         async for message in self.render_contents(result):
             yield message
 
-    async def draw_common_image(
-        self, result: ParseResult, bg_color: tuple[int, int, int] | None = None
-    ) -> bytes | None:
+    async def draw_common_image(self, result: ParseResult) -> bytes | None:
         """使用 PIL 绘制通用社交媒体帖子卡片
 
         Args:
             result: 解析结果
-            bg_color: 背景颜色，默认使用 BG_COLOR
 
         Returns:
             PNG 图片的字节数据，如果没有足够的内容则返回 None
         """
+        # 调用内部方法生成图片
+        image = await self._create_card_image(result)
+        if not image:
+            return None
 
+        # 将图片转换为字节
+        output = BytesIO()
+        image.save(output, format="PNG")
+        return output.getvalue()
+
+    async def _create_card_image(
+        self, result: ParseResult, bg_color: tuple[int, int, int] | None = None, apply_min_cover_size: bool = True
+    ) -> Image.Image | None:
+        """创建卡片图片（内部方法，用于递归调用）
+
+        Args:
+            result: 解析结果
+            bg_color: 背景颜色，默认使用 BG_COLOR
+            apply_min_cover_size: 是否对封面应用最小尺寸限制，转发内容不需要
+
+        Returns:
+            PIL Image 对象，如果没有足够的内容则返回 None
+        """
         # 使用预加载的字体
         fonts = self.FONTS
 
         # 加载并处理封面
-        cover_img = self._load_and_resize_cover(await result.cover_path)
+        cover_img = self._load_and_resize_cover(await result.cover_path, apply_min_size=apply_min_cover_size)
 
         # 计算卡片宽度
         if cover_img:
@@ -124,10 +143,7 @@ class CommonRenderer(BaseRenderer):
         image = Image.new("RGB", (card_width, card_height), background_color)
         self._draw_sections(image, heights, card_width, fonts)
 
-        # 将图片转换为字节
-        output = BytesIO()
-        image.save(output, format="PNG")
-        return output.getvalue()
+        return image
 
     def _load_and_resize_cover(self, cover_path: Path | None, apply_min_size: bool = True) -> Image.Image | None:
         """加载并调整封面尺寸
@@ -289,13 +305,10 @@ class CommonRenderer(BaseRenderer):
         if not repost:
             return None
 
-        # 递归调用绘制方法，生成转发内容的完整卡片（使用转发背景颜色）
-        repost_image_bytes = await self.draw_common_image(repost, bg_color=self.REPOST_BG_COLOR)
-        if not repost_image_bytes:
+        # 递归调用内部方法，生成转发内容的完整卡片（使用转发背景颜色，不强制放大封面）
+        repost_image = await self._create_card_image(repost, bg_color=self.REPOST_BG_COLOR, apply_min_cover_size=False)
+        if not repost_image:
             return None
-
-        # 将字节数据转换为 PIL Image
-        repost_image = Image.open(BytesIO(repost_image_bytes))
 
         # 缩放图片
         scaled_width = int(repost_image.width * self.REPOST_SCALE)
@@ -577,7 +590,7 @@ class CommonRenderer(BaseRenderer):
         # 计算转发区域位置
         repost_x = self.PADDING
         repost_y = y_pos
-        repost_width = card_width - 2 * self.PADDING
+        repost_width = repost_image.width + 2 * self.REPOST_PADDING  # 根据图片宽度计算框宽度
         repost_height = content["height"]
 
         # 绘制转发背景（圆角矩形）
