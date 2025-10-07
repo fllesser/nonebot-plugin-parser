@@ -56,7 +56,7 @@ async def test_merge_av_h264():
 
     try:
         logger.info("开始解析B站视频 av605821754 p41")
-        video_url, audio_url = await parser.parse_video_download_url(avid=605821754, page_index=41)
+        video_url, audio_url = await parser.get_download_urls(avid=605821754, page_index=41)
         logger.debug(f"video_url: {video_url}, audio_url: {audio_url}")
         logger.success("B站视频 av605821754 p41 解析成功")
     except Exception:
@@ -87,7 +87,7 @@ async def test_encode_h264_video():
     try:
         bvid = "BV1VLk9YDEzB"
         parser = BilibiliParser()
-        video_url, audio_url = await parser.parse_video_download_url(bvid=bvid)
+        video_url, audio_url = await parser.get_download_urls(bvid=bvid)
         assert video_url is not None
         assert audio_url is not None
         v_path, a_path = await asyncio.gather(
@@ -113,7 +113,7 @@ async def test_max_size_video():
     bvid = "BV1du4y1E7Nh"
     audio_url = None
     try:
-        _, audio_url = await parser.parse_video_download_url(bvid=bvid)
+        _, audio_url = await parser.get_download_urls(bvid=bvid)
     except DurationLimitException:
         pass
 
@@ -130,6 +130,6 @@ async def test_no_audio_video():
 
     bilibili_parser = BilibiliParser()
 
-    video_url, _ = await bilibili_parser.parse_video_download_url(bvid="BV1gRjMziELt")
+    video_url, _ = await bilibili_parser.get_download_urls(bvid="BV1gRjMziELt")
 
     logger.debug(f"video_url: {video_url}")
