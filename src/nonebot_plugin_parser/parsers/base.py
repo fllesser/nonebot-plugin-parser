@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from asyncio import Task
-from collections.abc import Sequence
 from pathlib import Path
 import re
 from typing import ClassVar
@@ -116,7 +115,7 @@ class BaseParser(ABC):
             video_task = url_or_task
         return VideoContent(video_task, cover_task, duration)
 
-    def create_image_contents(self, image_urls: Sequence[str]):
+    def create_image_contents(self, image_urls: list[str]):
         """创建图片内容列表"""
         from ..download import DOWNLOADER
         from .data import ImageContent
@@ -124,7 +123,7 @@ class BaseParser(ABC):
         img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in image_urls]
         return [ImageContent(task) for task in img_tasks]
 
-    def create_dynamic_contents(self, dynamic_urls: Sequence[str]):
+    def create_dynamic_contents(self, dynamic_urls: list[str]):
         """创建动态内容列表"""
         from ..download import DOWNLOADER
         from .data import DynamicContent
