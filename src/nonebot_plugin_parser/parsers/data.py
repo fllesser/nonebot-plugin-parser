@@ -27,13 +27,18 @@ class AudioContent(MediaContent):
 class VideoContent(MediaContent):
     """视频内容"""
 
-    cover: Task[Path] | None = None
+    cover: Path | Task[Path] | None = None
     """视频封面"""
     duration: float = 0.0
     """时长 单位: 秒"""
 
     async def get_cover_path(self) -> Path | None:
-        return await self.cover if self.cover else None
+        if self.cover is None:
+            return None
+        if isinstance(self.cover, Path):
+            return self.cover
+        self.cover = await self.cover
+        return self.cover
 
     @property
     def display_duration(self) -> str:
@@ -79,14 +84,18 @@ class Author:
 
     name: str
     """作者名称"""
-    avatar: Task[Path] | None = None
+    avatar: Path | Task[Path] | None = None
     """作者头像 URL 或本地路径"""
     description: str | None = None
     """作者个性签名等"""
 
-    @property
-    async def avatar_path(self) -> Path | None:
-        return await self.avatar if self.avatar else None
+    async def get_avatar_path(self) -> Path | None:
+        if self.avatar is None:
+            return None
+        if isinstance(self.avatar, Path):
+            return self.avatar
+        self.avatar = await self.avatar
+        return self.avatar
 
 
 @dataclass

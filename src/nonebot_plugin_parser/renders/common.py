@@ -257,7 +257,7 @@ class CommonRenderer(BaseRenderer):
             return None
 
         # 加载头像
-        avatar_img = self._load_and_process_avatar(await result.author.avatar_path)
+        avatar_img = self._load_and_process_avatar(await result.author.get_avatar_path())
 
         # 计算文字区域宽度（始终预留头像空间）
         text_area_width = content_width - (self.AVATAR_SIZE + self.AVATAR_TEXT_GAP)

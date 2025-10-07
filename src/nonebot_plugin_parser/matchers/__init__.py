@@ -91,6 +91,7 @@ async def _(
 
     # 5. 添加成功的消息响应
     await _message_reaction(event, "done")
+    logger.debug(f"解析结果: {result}")
 
 
 async def _message_reaction(event: Event, status: Literal["fail", "resolving", "done"]) -> None:
