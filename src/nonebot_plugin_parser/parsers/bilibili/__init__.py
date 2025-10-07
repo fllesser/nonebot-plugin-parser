@@ -66,24 +66,24 @@ class BilibiliParser(BaseParser):
         if "b23.tv" in url or "bili2233.cn" in url:
             url = await self.get_redirect_url(url, self.headers)
 
-        avid, bvid = None, None
-        # 链接中是否包含BV，av号
-        if video_id:
-            if video_id.isdigit():
-                avid = int(video_id)
-            else:
-                bvid = video_id
-        else:
+        if not video_id:
             if _matched := re.search(r"(BV[\dA-Za-z]{10})[^?]*?(?:\?[^#]*?p=(\d{1,3}))?", url):
-                bvid = _matched.group(1)
+                video_id = _matched.group(1)
                 page_num = _matched.group(2)
             elif _matched := re.search(r"av(\d{6,})[^?]*?(?:\?[^#]*?p=(\d{1,3}))?", url):
-                avid = int(_matched.group(1))
+                video_id = _matched.group(1)
                 page_num = _matched.group(2)
             else:
                 return await self.parse_others(url)
 
+        avid, bvid = None, None
         page_num = int(page_num) if page_num and page_num.isdigit() else 1
+
+        # 链接中是否包含BV，av号
+        if video_id.isdigit():
+            avid = int(video_id)
+        else:
+            bvid = video_id
 
         # 解析视频信息
         return await self.parse_video(bvid=bvid, avid=avid, page_num=page_num)
@@ -109,6 +109,12 @@ class BilibiliParser(BaseParser):
 
         # 转换为 msgspec struct
         video_info = msgspec.convert(await video.get_info(), VideoInfo)
+
+        # 获取简介
+        text = f"简介: {video_info.desc}" if video_info.desc else None
+
+        # up
+        author = self.create_author(video_info.owner.name, video_info.owner.face)
 
         # 处理分 p
         page_idx, title, duration, timestamp, cover_url = video_info.extract_info_with_page(page_num)
@@ -140,14 +146,15 @@ class BilibiliParser(BaseParser):
                 return await DOWNLOADER.streamd(v_url, file_name=output_path.name, ext_headers=self.headers)
 
         video_task = asyncio.create_task(download_video())
+        video_content = self.create_video_content(video_task, cover_url, duration)
 
         return self.result(
             url=url,
             title=title,
             timestamp=timestamp,
-            text=f"简介：{video_info.desc}",
-            author=self.create_author(video_info.owner.name, video_info.owner.face),
-            contents=[self.create_video_content(video_task, cover_url, duration)],
+            text=text,
+            author=author,
+            contents=[video_content],
             extra={"info": ai_summary},
         )
 

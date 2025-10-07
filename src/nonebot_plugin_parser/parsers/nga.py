@@ -10,8 +10,7 @@ from bs4 import BeautifulSoup, Tag
 import httpx
 
 from ..exception import ParseException
-from .base import BaseParser
-from .data import Author, ParseResult, Platform
+from .base import BaseParser, Platform
 
 
 class NGAParser(BaseParser):
@@ -45,14 +44,14 @@ class NGAParser(BaseParser):
         return f"https://nga.178.com/read.php?tid={tid}"
 
     @override
-    async def parse(self, matched: re.Match[str]) -> ParseResult:
+    async def parse(self, matched: re.Match[str]):
         """解析 URL 获取内容信息并下载资源
 
         Args:
             matched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果（已下载资源,包含 Path)
+            ParseResult: 解析结果
 
         Raises:
             ParseException: 解析失败时抛出
@@ -103,7 +102,7 @@ class NGAParser(BaseParser):
         soup = BeautifulSoup(html, "html.parser")
 
         # 提取 title - 从 postsubject0
-        title = ""
+        title = None
         title_tag = soup.find(id="postsubject0")
         if title_tag and isinstance(title_tag, Tag):
             title = title_tag.get_text(strip=True)
@@ -130,7 +129,7 @@ class NGAParser(BaseParser):
                     except (json.JSONDecodeError, KeyError):
                         # JSON 解析失败或数据结构不符合预期,保持 author 为 None
                         pass
-
+        author = self.create_author(author) if author else None
         # 提取时间 - 从第一个帖子的 postdate0
         timestamp = None
         time_tag = soup.find(id="postdate0")
@@ -139,7 +138,7 @@ class NGAParser(BaseParser):
             timestamp = int(time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M")))
 
         # 提取文本 - postcontent0
-        text = ""
+        text = None
         content_tag = soup.find(id="postcontent0")
         if content_tag and isinstance(content_tag, Tag):
             text = content_tag.get_text("\n", strip=True)
@@ -150,7 +149,7 @@ class NGAParser(BaseParser):
             title=title,
             text=text,
             url=url,
-            author=Author(name=author) if author else None,
+            author=author,
             timestamp=timestamp,
         )
 

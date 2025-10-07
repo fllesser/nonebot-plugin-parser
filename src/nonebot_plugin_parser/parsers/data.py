@@ -98,24 +98,24 @@ class Author:
         return self.avatar
 
 
-@dataclass
+@dataclass(repr=False)
 class ParseResult:
     """完整的解析结果"""
 
     platform: Platform
     """平台信息"""
-    title: str = ""
+    author: Author | None = None
+    """作者信息"""
+    title: str | None = None
     """标题"""
-    text: str = ""
+    text: str | None = None
     """文本内容"""
-    contents: list[MediaContent] = field(default_factory=list)
-    """内容列表，主体以外的内容"""
     timestamp: int | None = None
     """发布时间戳, 秒"""
     url: str | None = None
     """来源链接"""
-    author: Author | None = None
-    """作者信息"""
+    contents: list[MediaContent] = field(default_factory=list)
+    """媒体内容"""
     extra: dict[str, Any] = field(default_factory=dict)
     """额外信息"""
     repost: "ParseResult | None" = None
@@ -123,6 +123,7 @@ class ParseResult:
 
     @property
     def header(self) -> str:
+        """头信息 仅用于 default render"""
         header = self.platform.display_name
         if self.author:
             header += f" @{self.author.name}"
@@ -131,16 +132,16 @@ class ParseResult:
         return header
 
     @property
-    def display_url(self) -> str:
-        return f"链接: {self.url}" if self.url else ""
+    def display_url(self) -> str | None:
+        return f"链接: {self.url}" if self.url else None
 
     @property
-    def repost_display_url(self) -> str:
-        return f"原帖: {self.repost.url}" if self.repost and self.repost.url else ""
+    def repost_display_url(self) -> str | None:
+        return f"原帖: {self.repost.url}" if self.repost and self.repost.url else None
 
     @property
-    def extra_info(self) -> str:
-        return self.extra.get("info", "")
+    def extra_info(self) -> str | None:
+        return self.extra.get("info")
 
     @property
     def video_contents(self) -> list[VideoContent]:
@@ -164,16 +165,28 @@ class ParseResult:
 
     @property
     async def cover_path(self) -> Path | None:
+        """获取封面路径"""
         for cont in self.contents:
             if isinstance(cont, VideoContent):
                 return await cont.get_cover_path()
         return None
 
-    def formart_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
-        return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp else ""
+    @property
+    def formartted_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str | None:
+        """格式化时间戳"""
+        return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
 
-    def __str__(self) -> str:
-        return f"title: {self.title}\nplatform: {self.platform}\nauthor: {self.author}\ncontents: {self.contents}"
+    def __repr__(self) -> str:
+        return (
+            f"\ntitle: {self.title}\n"
+            f"platform: {self.platform}\n"
+            f"author: {self.author}\n"
+            f"contents: {self.contents}\n"
+            f"url: {self.url}\n"
+            f"timestamp: {self.timestamp}\n"
+            f"extra: {self.extra}\n"
+            f"repost: {self.repost}\n"
+        )
 
 
 from dataclasses import dataclass, field
@@ -181,8 +194,8 @@ from typing import Any, TypedDict
 
 
 class ParseResultKwargs(TypedDict, total=False):
-    title: str
-    text: str
+    title: str | None
+    text: str | None
     contents: list[MediaContent]
     timestamp: int | None
     url: str | None
