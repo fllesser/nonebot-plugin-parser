@@ -137,7 +137,6 @@ class CommonRenderer(BaseRenderer):
 
         # 计算总高度
         card_height = sum(h for _, h, _ in heights) + self.PADDING * 2 + self.SECTION_SPACING * (len(heights) - 1)
-
         # 创建画布并绘制（使用指定的背景颜色，或默认背景颜色）
         background_color = bg_color if bg_color is not None else self.BG_COLOR
         image = Image.new("RGB", (card_width, card_height), background_color)
@@ -534,7 +533,9 @@ class CommonRenderer(BaseRenderer):
 
     def _draw_cover(self, image: Image.Image, cover_img: Image.Image, y_pos: int, card_width: int) -> int:
         """绘制封面"""
-        x_pos = (card_width - cover_img.width) // 2
+        # 确保左右padding相同：从左边padding开始，居中放置
+        content_width = card_width - 2 * self.PADDING
+        x_pos = self.PADDING + (content_width - cover_img.width) // 2
         image.paste(cover_img, (x_pos, y_pos))
 
         # 添加视频播放标志
@@ -595,10 +596,11 @@ class CommonRenderer(BaseRenderer):
         # 获取缩放后的转发图片
         repost_image = content["scaled_image"]
 
-        # 计算转发区域位置
+        # 转发框占满整个内容区域，左右和边缘对齐
+        content_width = card_width - 2 * self.PADDING
         repost_x = self.PADDING
         repost_y = y_pos
-        repost_width = repost_image.width + 2 * self.REPOST_PADDING  # 根据图片宽度计算框宽度
+        repost_width = content_width  # 转发框宽度等于内容区域宽度
         repost_height = content["height"]
 
         # 绘制转发背景（圆角矩形）
@@ -618,8 +620,8 @@ class CommonRenderer(BaseRenderer):
             width=1,
         )
 
-        # 计算转发图片在转发容器中的位置
-        card_x = repost_x + self.REPOST_PADDING
+        # 转发图片在转发容器中居中
+        card_x = repost_x + (repost_width - repost_image.width) // 2
         card_y = repost_y + self.REPOST_PADDING
 
         # 将缩放后的转发图片贴到主画布上
