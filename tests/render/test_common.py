@@ -9,10 +9,10 @@ async def test_common_render():
 
     from nonebot_plugin_parser import pconfig
     from nonebot_plugin_parser.parsers import WeiBoParser
-    from nonebot_plugin_parser.renders.common import CommonRenderer
+    from nonebot_plugin_parser.renders import _COMMON_RENDERER
 
     parser = WeiBoParser()
-    renderer = CommonRenderer()
+    renderer = _COMMON_RENDERER
 
     url_dict = {
         "video_fid": "https://video.weibo.com/show?fid=1034:514561539984589",
@@ -56,3 +56,33 @@ async def test_common_render():
             logger.exception(f"{url} | 渲染失败")
             failed_count += 1
     logger.success(f"渲染完成，失败数量: {failed_count}")
+
+
+async def test_render_with_emoji():
+    """测试使用 BilibiliParser 解析链接并用 CommonRenderer 渲染"""
+    import aiofiles
+
+    from nonebot_plugin_parser import pconfig
+    from nonebot_plugin_parser.parsers import BilibiliParser
+    from nonebot_plugin_parser.renders import _COMMON_RENDERER
+
+    parser = BilibiliParser()
+    renderer = _COMMON_RENDERER
+
+    opus_url = "https://b23.tv/GwiHK6N"
+    matched = parser.search_url(opus_url)
+    assert matched, f"无法匹配 URL: {opus_url}"
+
+    logger.info(f"{opus_url} | 开始解析哔哩哔哩动态")
+    parse_result = await parser.parse(matched)
+    logger.debug(f"{opus_url} | 解析结果: \n{parse_result}")
+    logger.info(f"{opus_url} | 开始渲染")
+    image_raw = await renderer.draw_common_image(parse_result)
+    assert image_raw, "没有生成图片"
+    image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_opus.png"
+    # 创建文件
+    image_path.parent.mkdir(parents=True, exist_ok=True)
+    async with aiofiles.open(image_path, "wb+") as f:
+        await f.write(image_raw)
+    logger.success(f"{opus_url} | 渲染成功，图片已保存到 {image_path}")
+    assert image_raw, f"没有生成图片: {opus_url}"
