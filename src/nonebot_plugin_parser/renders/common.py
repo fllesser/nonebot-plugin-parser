@@ -74,8 +74,12 @@ class CommonRenderer(BaseRenderer):
 
     DEFAULT_FONT_PATH: ClassVar[Path] = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
 
+    def __init__(self, font_path: Path | None = None):
+        self.font_path: Path = self.DEFAULT_FONT_PATH
+
     def load_font(self, font_path: Path | None = None):
-        self.font_path: Path = font_path if font_path else self.DEFAULT_FONT_PATH
+        if font_path is not None and font_path.exists():
+            self.font_path = font_path
         self.fonts: dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont] = {
             name: ImageFont.truetype(self.font_path, size) for name, size in self.FONT_SIZES.items()
         }
@@ -716,11 +720,7 @@ class CommonRenderer(BaseRenderer):
         text = f"+{count}"
         # 使用更大的字体
         font_size = min(img_width, img_height) // 4
-        try:
-            font_path = self.font_path
-            font = ImageFont.truetype(font_path, font_size)
-        except Exception:
-            font = ImageFont.truetype(self.DEFAULT_FONT_PATH, font_size)
+        font = ImageFont.truetype(self.font_path, font_size)
 
         # 计算文字位置（居中）
         bbox = font.getbbox(text)
