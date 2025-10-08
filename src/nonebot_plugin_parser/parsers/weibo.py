@@ -257,7 +257,7 @@ class PagePic(Struct):
 
 
 class PageInfo(Struct):
-    title: str = ""
+    title: str | None = None
     urls: Urls | None = None
     page_pic: PagePic | None = None
 
