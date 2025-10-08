@@ -124,7 +124,7 @@ class ImageRenderer(BaseRenderer):
             result (ParseResult): 解析结果
 
         Returns:
-            Image: 图片 Segement
+            Image: 图片 Segment
         """
         if result.render_image is None:
             image_raw = await self.render_image(result)
