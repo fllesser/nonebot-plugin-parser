@@ -15,7 +15,7 @@ async def test_common_render():
     renderer = _COMMON_RENDERER
 
     url_dict = {
-        "video_fid": "https://video.weibo.com/show?fid=1034:514561539984589",
+        "video_fid": "https://video.weibo.com/show?fid=1034:5145615399845897",
         "video_weibo": "https://weibo.com/7207262816/O70aCbjnd",
         "video_mweibo": "http://m.weibo.cn/status/5112672433738061",
         "image_album": "https://weibo.com/7207262816/P5kWdcfDe",
