@@ -114,3 +114,45 @@ jobs:
         with:
           files: ./coverage2.xml
           use_oidc: true
+
+  test-render:
+    name: Test Render
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    concurrency:
+      group: test-render-${{ github.ref }}-3.12-ubuntu-latest
+      cancel-in-progress: true
+
+    env: 
+      UV_NO_SYNC: 1
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: 3.12
+          version: "latest"
+
+      - name: Install Dependencies for test group
+        run: uv sync --no-dev --locked
+
+      - name: Run Pytest Render
+        run: uv run poe test_render
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          files: ./junit3.xml
+          use_oidc: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage3.xml
+          use_oidc: true

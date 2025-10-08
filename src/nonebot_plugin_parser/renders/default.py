@@ -2,6 +2,7 @@
 
 from typing_extensions import override
 
+from ..helper import Segment, Text
 from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
 
 
@@ -19,20 +20,20 @@ class DefaultRenderer(BaseRenderer):
             Generator[UniMessage[Any], None, None]: 消息生成器
         """
 
-        texts: list[str] = [
+        texts = (
             result.header,
             result.text,
             result.extra_info,
             result.display_url,
             result.repost_display_url,
-        ]
+        )
         texts = [text for text in texts if text]
-        texts[:-1] = [seg + "\n" for seg in texts[:-1]]
+        texts[:-1] = [text + "\n" for text in texts[:-1]]
 
-        if cover_path := await result.cover_path:
-            segs = [texts[0], UniHelper.img_seg(cover_path), *texts[1:]]
-        else:
-            segs = texts
+        segs: list[Segment] = [Text(text) for text in texts]
+        cover_path = await result.cover_path
+        if cover_path is not None:
+            segs.insert(1, UniHelper.img_seg(cover_path))
         yield UniMessage(segs)
 
         async for message in self.render_contents(result):

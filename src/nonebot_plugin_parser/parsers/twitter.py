@@ -71,7 +71,7 @@ class TwitterParser(BaseParser):
         soup = BeautifulSoup(html_content, "html.parser")
 
         # 初始化数据
-        title = ""
+        title = None
         cover_url = None
         video_url = None
         images_urls = []

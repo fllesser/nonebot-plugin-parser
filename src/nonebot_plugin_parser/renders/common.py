@@ -6,10 +6,10 @@ from typing_extensions import override
 from nonebot import logger
 from PIL import Image, ImageDraw, ImageFont
 
-from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
+from .base import ImageRenderer, ParseResult
 
 
-class CommonRenderer(BaseRenderer):
+class CommonRenderer(ImageRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
     __slots__ = ("font_path", "fonts")
@@ -86,20 +86,7 @@ class CommonRenderer(BaseRenderer):
         logger.success(f"加载字体「{self.font_path.name}」成功")
 
     @override
-    async def render_messages(self, result: ParseResult):
-        # 生成图片卡片
-        if image_raw := await self.draw_common_image(result):
-            msg = UniMessage(UniHelper.img_seg(raw=image_raw))
-            if self.append_url:
-                urls = (result.display_url, result.repost_display_url)
-                msg += "\n".join(url for url in urls if url)
-            yield msg
-
-        # 媒体内容
-        async for message in self.render_contents(result):
-            yield message
-
-    async def draw_common_image(self, result: ParseResult) -> bytes | None:
+    async def render_image(self, result: ParseResult) -> bytes:
         """使用 PIL 绘制通用社交媒体帖子卡片
 
         Args:
@@ -110,8 +97,6 @@ class CommonRenderer(BaseRenderer):
         """
         # 调用内部方法生成图片
         image = await self._create_card_image(result)
-        if not image:
-            return None
 
         # 将图片转换为字节
         output = BytesIO()
@@ -120,7 +105,7 @@ class CommonRenderer(BaseRenderer):
 
     async def _create_card_image(
         self, result: ParseResult, bg_color: tuple[int, int, int] | None = None, apply_min_cover_size: bool = True
-    ) -> Image.Image | None:
+    ) -> Image.Image:
         """创建卡片图片（内部方法，用于递归调用）
 
         Args:
@@ -129,9 +114,8 @@ class CommonRenderer(BaseRenderer):
             apply_min_cover_size: 是否对封面应用最小尺寸限制，转发内容不需要
 
         Returns:
-            PIL Image 对象，如果没有足够的内容则返回 None
+            PIL Image 对象
         """
-        # 使用预加载的字体
 
         # 先确定固定的卡片宽度和内容区域宽度
         card_width = max(self.DEFAULT_CARD_WIDTH, self.MIN_CARD_WIDTH)

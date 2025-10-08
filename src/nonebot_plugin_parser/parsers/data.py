@@ -7,7 +7,7 @@ from typing import Any
 
 def repr_path_task(path_task: Path | Task[Path]) -> str:
     if isinstance(path_task, Path):
-        return f"path={path_task}"
+        return f"path={path_task.name}"
     else:
         return f"task={path_task.get_name()}, done={path_task.done()}"
 
@@ -56,6 +56,12 @@ class VideoContent(MediaContent):
         minutes = int(self.duration) // 60
         seconds = int(self.duration) % 60
         return f"时长: {minutes}:{seconds:02d}"
+
+    def __repr__(self) -> str:
+        repr = f"VideoContent(path={repr_path_task(self.path_task)}"
+        if self.cover is not None:
+            repr += f", cover={repr_path_task(self.cover)}"
+        return repr + ")"
 
 
 @dataclass(repr=False)
@@ -139,6 +145,8 @@ class ParseResult:
     """额外信息"""
     repost: "ParseResult | None" = None
     """转发的内容"""
+    render_image: Path | None = None
+    """渲染图片"""
 
     @property
     def header(self) -> str:
@@ -197,15 +205,16 @@ class ParseResult:
 
     def __repr__(self) -> str:
         return (
-            f"\nplatform: {self.platform}\n"
-            f"title: {self.title}\n"
-            f"timestamp: {self.timestamp}\n"
-            f"author: {self.author}\n"
-            f"text: {self.text}\n"
-            f"contents: {self.contents}\n"
-            f"url: {self.url}\n"
-            f"extra: {self.extra}\n"
-            f"repost: {self.repost}\n"
+            f"platform: {self.platform.display_name}, "
+            f"timestamp: {self.timestamp}, "
+            f"title: {self.title}, "
+            f"text: {self.text}, "
+            f"url: {self.url}, "
+            f"author: {self.author}, "
+            f"contents: {self.contents}, "
+            f"extra: {self.extra}, "
+            f"repost: <<<<<<<{self.repost}>>>>>>, "
+            f"render_image: {self.render_image.name if self.render_image else 'None'}"
         )
 
 
