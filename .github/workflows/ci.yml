@@ -116,7 +116,7 @@ jobs:
           use_oidc: true
 
   test-render:
-    name: Test Parsers
+    name: Test Render
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -125,7 +125,7 @@ jobs:
       group: test-render-${{ github.ref }}-3.12-ubuntu-latest
       cancel-in-progress: true
 
-    env:
+    env: 
       UV_NO_SYNC: 1
 
     steps:
