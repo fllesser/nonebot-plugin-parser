@@ -12,7 +12,7 @@ from .base import ImageRenderer, ParseResult
 class CommonRenderer(ImageRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
-    __slots__ = ("font_path", "fonts")
+    __slots__ = ("font_path", "fonts", "video_button_image")
 
     # 卡片配置常量
     PADDING = 25
@@ -73,17 +73,31 @@ class CommonRenderer(ImageRenderer):
     LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28}
 
     DEFAULT_FONT_PATH: ClassVar[Path] = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
+    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = Path(__file__).parent / "logos" / "default.png"
 
     def __init__(self, font_path: Path | None = None):
         self.font_path: Path = self.DEFAULT_FONT_PATH
 
-    def load_font(self, font_path: Path | None = None):
+    def load_resources(self, font_path: Path | None = None):
+        # 加载字体
         if font_path is not None and font_path.exists():
             self.font_path = font_path
         self.fonts: dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont] = {
             name: ImageFont.truetype(self.font_path, size) for name, size in self.FONT_SIZES.items()
         }
         logger.success(f"加载字体「{self.font_path.name}」成功")
+
+        # 加载视频按钮素材并设置透明度
+        self.video_button_image: Image.Image = Image.open(self.DEFAULT_VIDEO_BUTTON_PATH)
+
+        # 确保素材是 RGBA 模式以支持透明度
+        if self.video_button_image.mode != "RGBA":
+            self.video_button_image = self.video_button_image.convert("RGBA")
+
+        # 设置透明度为 50%
+        alpha = self.video_button_image.split()[-1]  # 获取 alpha 通道
+        alpha = alpha.point(lambda x: int(x * 0.3))  # 将透明度设置为 30%
+        self.video_button_image.putalpha(alpha)
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
@@ -541,42 +555,13 @@ class CommonRenderer(ImageRenderer):
         x_pos = self.PADDING
         image.paste(cover_img, (x_pos, y_pos))
 
-        # 添加视频播放标志
-        self._draw_video_play_button(image, x_pos, y_pos, cover_img.width, cover_img.height)
+        # 添加视频播放按钮（居中）
+        button_size = 128  # 固定使用 128x128 尺寸
+        button_x = x_pos + (cover_img.width - button_size) // 2
+        button_y = y_pos + (cover_img.height - button_size) // 2
+        image.paste(self.video_button_image, (button_x, button_y), self.video_button_image)
 
         return y_pos + cover_img.height + self.SECTION_SPACING
-
-    def _draw_video_play_button(self, image: Image.Image, x_pos: int, y_pos: int, width: int, height: int):
-        """在封面上绘制视频播放按钮"""
-        draw = ImageDraw.Draw(image)
-
-        # 计算播放按钮的位置和尺寸
-        button_size = int(min(width, height) * self.VIDEO_BUTTON_SIZE_RATIO)  # 按钮大小比例
-        button_x = x_pos + (width - button_size) // 2
-        button_y = y_pos + (height - button_size) // 2
-
-        # 绘制半透明圆形背景
-        overlay = Image.new("RGBA", (button_size, button_size), (0, 0, 0, 0))
-        overlay_draw = ImageDraw.Draw(overlay)
-        overlay_draw.ellipse((0, 0, button_size - 1, button_size - 1), fill=(0, 0, 0, self.VIDEO_BUTTON_ALPHA))
-
-        # 将半透明背景贴到主画布上
-        image.paste(overlay, (button_x, button_y), overlay)
-
-        # 绘制播放三角形
-        triangle_size = int(button_size * self.VIDEO_TRIANGLE_SIZE_RATIO)
-        triangle_x = button_x + (button_size - triangle_size) // 2
-        triangle_y = button_y + (button_size - triangle_size) // 2
-
-        # 计算三角形的三个顶点（向右的三角形）
-        triangle_points = [
-            (triangle_x, triangle_y),  # 左上
-            (triangle_x, triangle_y + triangle_size),  # 左下
-            (triangle_x + triangle_size, triangle_y + triangle_size // 2),  # 右中
-        ]
-
-        # 绘制浅色三角形
-        draw.polygon(triangle_points, fill=(255, 255, 255, 200))
 
     def _draw_text(self, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制文本内容"""
