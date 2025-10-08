@@ -286,8 +286,8 @@ class WeiboData(Struct):
     retweeted_status: "WeiboData | None" = None  # 转发微博
 
     @property
-    def title(self) -> str:
-        return self.page_info.title if self.page_info else ""
+    def title(self) -> str | None:
+        return self.page_info.title if self.page_info else None
 
     @property
     def display_name(self) -> str:
