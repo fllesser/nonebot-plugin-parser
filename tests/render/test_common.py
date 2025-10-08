@@ -5,6 +5,8 @@ import pytest
 @pytest.mark.asyncio
 async def test_common_render():
     """测试使用 WeiboParser 解析链接并用 CommonRenderer 渲染"""
+    import time
+
     import aiofiles
 
     from nonebot_plugin_parser import pconfig
@@ -20,14 +22,15 @@ async def test_common_render():
         "video_mweibo": "http://m.weibo.cn/status/5112672433738061",
         "image_album": "https://weibo.com/7207262816/P5kWdcfDe",
         "image_album_9": "https://weibo.com/7207262816/P2AFBk387",
-        "image_album_single": "https://weibo.com/7207262816/Q6YCbtAn8",
-        "image_album_single_repost": "https://weibo.com/7207262816/Q617WgOm4",
         "image_album_two": "https://weibo.com/7207262816/PsFzpzUX2",
         "image_album_three": "https://weibo.com/7207262816/P2rJE157H",
         "text": "https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html",
-        "repost": "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
+        "repost_single_horizontal_image": "https://weibo.com/7207262816/Q6YCbtAn8",
+        "repost_single_upright_image": "https://weibo.com/7207262816/Q617WgOm4",
+        "repost_double_image": "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
         "video_weibo_repost": "https://weibo.com/1694917363/Q0KtXh6z2",
     }
+    total_time: float = 0
 
     async def parse_and_render(url: str, name: str) -> None:
         """解析并渲染单个 URL"""
@@ -39,7 +42,15 @@ async def test_common_render():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
         logger.info(f"{url} | 开始渲染")
+        #  渲染图片，并计算耗时
+        start_time = time.time()
         image_raw = await renderer.render_image(parse_result)
+        end_time = time.time()
+        cost_time = end_time - start_time
+        nonlocal total_time
+        total_time += cost_time
+
+        logger.success(f"{url} | 渲染成功，耗时: {cost_time} 秒")
         assert image_raw, f"没有生成图片: {url}"
         image_path = pconfig.cache_dir / "aaaaaaa" / f"{name}.png"
         # 创建文件
@@ -51,11 +62,13 @@ async def test_common_render():
     failed_count = 0
     for name, url in url_dict.items():
         try:
-            await parse_and_render(url, name)
+            await parse_and_render(url, str(name))
         except Exception:
             logger.exception(f"{url} | 渲染失败")
             failed_count += 1
-    logger.success(f"渲染完成，失败数量: {failed_count}")
+    logger.success(
+        f"渲染完成，失败数量: {failed_count}, 总耗时: {total_time} 秒，平均耗时: {total_time / len(url_dict)} 秒"
+    )
 
 
 async def test_render_with_emoji():
