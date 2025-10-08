@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator
 from itertools import chain
 from pathlib import Path
 from typing import Any, ClassVar
+from typing_extensions import override
 import uuid
 
 from ..config import pconfig
@@ -81,11 +82,61 @@ class BaseRenderer(ABC):
     def append_url(self) -> bool:
         return pconfig.append_url
 
-    @property
-    def use_base64(self) -> bool:
-        return pconfig.use_base64
 
-    async def save_img(self, raw: bytes) -> Path:
+class ImageRenderer(BaseRenderer):
+    """图片渲染器"""
+
+    @abstractmethod
+    async def render_image(self, result: ParseResult) -> bytes:
+        """渲染图片
+
+        Args:
+            result (ParseResult): 解析结果
+
+        Returns:
+            bytes: 图片字节 png 格式
+        """
+        raise NotImplementedError
+
+    @override
+    async def render_messages(self, result: ParseResult):
+        """渲染消息
+
+        Args:
+            result (ParseResult): 解析结果
+        """
+        image_seg = await self.cache_or_render_image(result)
+
+        msg = UniMessage(image_seg)
+        if self.append_url:
+            urls = (result.display_url, result.repost_display_url)
+            msg += "\n".join(url for url in urls if url)
+        yield msg
+
+        # 媒体内容
+        async for message in self.render_contents(result):
+            yield message
+
+    async def cache_or_render_image(self, result: ParseResult):
+        """获取缓存图片
+
+        Args:
+            result (ParseResult): 解析结果
+
+        Returns:
+            Image: 图片 Segement
+        """
+        if result.render_image is None:
+            image_raw = await self.render_image(result)
+            image_path = await self.save_img(image_raw)
+            result.render_image = image_path
+            if pconfig.use_base64:
+                return UniHelper.img_seg(raw=image_raw)
+
+        return UniHelper.img_seg(result.render_image)
+
+    @classmethod
+    async def save_img(cls, raw: bytes) -> Path:
         """保存图片
 
         Args:
@@ -101,29 +152,3 @@ class BaseRenderer(ABC):
         async with aiofiles.open(image_path, "wb+") as f:
             await f.write(raw)
         return image_path
-
-    async def render_image(self, result: ParseResult) -> bytes:
-        """渲染图片
-
-        Args:
-            result (ParseResult): 解析结果
-
-        Returns:
-            Path: 图片路径
-        """
-        raise NotImplementedError
-
-    async def cache_or_render_image(self, result: ParseResult) -> Path:
-        """获取缓存图片
-
-        Args:
-            result (ParseResult): 解析结果
-
-        Returns:
-            Path: 图片路径
-        """
-        if result.render_image is None:
-            image_raw = await self.render_image(result)
-            image_path = await self.save_img(image_raw)
-            result.render_image = image_path
-        return result.render_image

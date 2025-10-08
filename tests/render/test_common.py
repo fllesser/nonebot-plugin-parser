@@ -39,7 +39,7 @@ async def test_common_render():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
         logger.info(f"{url} | 开始渲染")
-        image_raw = await renderer.draw_common_image(parse_result)
+        image_raw = await renderer.render_image(parse_result)
         assert image_raw, f"没有生成图片: {url}"
         image_path = pconfig.cache_dir / "aaaaaaa" / f"{name}.png"
         # 创建文件
@@ -77,7 +77,7 @@ async def test_render_with_emoji():
     parse_result = await parser.parse(matched)
     logger.debug(f"{opus_url} | 解析结果: \n{parse_result}")
     logger.info(f"{opus_url} | 开始渲染")
-    image_raw = await renderer.draw_common_image(parse_result)
+    image_raw = await renderer.render_image(parse_result)
     assert image_raw, "没有生成图片"
     image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_opus.png"
     # 创建文件

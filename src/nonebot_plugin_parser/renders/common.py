@@ -6,10 +6,10 @@ from typing_extensions import override
 from nonebot import logger
 from PIL import Image, ImageDraw, ImageFont
 
-from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
+from .base import ImageRenderer, ParseResult
 
 
-class CommonRenderer(BaseRenderer):
+class CommonRenderer(ImageRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
     __slots__ = ("font_path", "fonts")
@@ -84,20 +84,6 @@ class CommonRenderer(BaseRenderer):
             name: ImageFont.truetype(self.font_path, size) for name, size in self.FONT_SIZES.items()
         }
         logger.success(f"加载字体「{self.font_path.name}」成功")
-
-    @override
-    async def render_messages(self, result: ParseResult):
-        image_path = await self.cache_or_render_image(result)
-
-        msg = UniMessage(UniHelper.img_seg(image_path))
-        if self.append_url:
-            urls = (result.display_url, result.repost_display_url)
-            msg += "\n".join(url for url in urls if url)
-        yield msg
-
-        # 媒体内容
-        async for message in self.render_contents(result):
-            yield message
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
