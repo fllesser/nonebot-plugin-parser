@@ -30,7 +30,10 @@ async def test_common_render():
         "repost_double_image": "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
         "video_weibo_repost": "https://weibo.com/1694917363/Q0KtXh6z2",
     }
+    # 总耗时
     total_time: float = 0
+    # 各链接耗时
+    url_time_mapping: dict[str, float] = {}
 
     async def parse_and_render(url: str, name: str) -> None:
         """解析并渲染单个 URL"""
@@ -54,8 +57,10 @@ async def test_common_render():
         image_raw = await renderer.render_image(parse_result)
         end_time = time.time()
         cost_time = end_time - start_time
-        nonlocal total_time
+
+        nonlocal total_time, url_time_mapping
         total_time += cost_time
+        url_time_mapping[name] = cost_time
 
         logger.success(f"{url} | 渲染成功，耗时: {cost_time} 秒")
         assert image_raw, f"没有生成图片: {url}"
@@ -69,13 +74,14 @@ async def test_common_render():
     failed_count = 0
     for name, url in url_dict.items():
         try:
-            await parse_and_render(url, str(name))
+            await parse_and_render(url, name)
         except Exception:
             logger.exception(f"{url} | 渲染失败")
             failed_count += 1
     logger.success(
         f"渲染完成，失败数量: {failed_count}, 总耗时: {total_time} 秒，平均耗时: {total_time / len(url_dict)} 秒"
     )
+    logger.success(f"各链接耗时: {url_time_mapping}")
 
 
 async def test_render_with_emoji():

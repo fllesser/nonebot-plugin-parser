@@ -1,12 +1,76 @@
+from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import ClassVar
 from typing_extensions import override
 
 from nonebot import logger
 from PIL import Image, ImageDraw, ImageFont
 
 from .base import ImageRenderer, ParseResult
+
+
+@dataclass
+class SectionData:
+    """基础部分数据类"""
+
+    height: int
+
+
+@dataclass
+class HeaderSectionData(SectionData):
+    """Header 部分数据"""
+
+    avatar: Image.Image | None
+    name_lines: list[str]
+    time_lines: list[str]
+    text_height: int
+
+
+@dataclass
+class TitleSectionData(SectionData):
+    """标题部分数据"""
+
+    lines: list[str]
+
+
+@dataclass
+class CoverSectionData(SectionData):
+    """封面部分数据"""
+
+    cover_img: Image.Image
+
+
+@dataclass
+class TextSectionData(SectionData):
+    """文本部分数据"""
+
+    lines: list[str]
+
+
+@dataclass
+class ExtraSectionData(SectionData):
+    """额外信息部分数据"""
+
+    lines: list[str]
+
+
+@dataclass
+class RepostSectionData(SectionData):
+    """转发部分数据"""
+
+    scaled_image: Image.Image
+
+
+@dataclass
+class ImageGridSectionData(SectionData):
+    """图片网格部分数据"""
+
+    images: list[Image.Image]
+    cols: int
+    rows: int
+    has_more: bool
+    remaining_count: int
 
 
 class CommonRenderer(ImageRenderer):
@@ -16,14 +80,23 @@ class CommonRenderer(ImageRenderer):
 
     # 卡片配置常量
     PADDING = 25
+    """内边距"""
     AVATAR_SIZE = 80
-    AVATAR_TEXT_GAP = 15  # 头像和文字之间的间距
+    """头像大小"""
+    AVATAR_TEXT_GAP = 15
+    """头像和文字之间的间距"""
     MAX_COVER_WIDTH = 1000
+    """封面最大宽度"""
     MAX_COVER_HEIGHT = 800
+    """封面最大高度"""
     DEFAULT_CARD_WIDTH = 800
-    MIN_CARD_WIDTH = 400  # 最小卡片宽度，确保头像、名称、时间显示正常
+    """默认卡片宽度"""
+    MIN_CARD_WIDTH = 400
+    """最小卡片宽度"""
     SECTION_SPACING = 15
-    NAME_TIME_GAP = 5  # 名称和时间之间的间距
+    """部分间距"""
+    NAME_TIME_GAP = 5
+    """名称和时间之间的间距"""
 
     # 头像占位符配置
     AVATAR_PLACEHOLDER_BG_COLOR = (230, 230, 230, 255)
@@ -34,48 +107,61 @@ class CommonRenderer(ImageRenderer):
     AVATAR_SHOULDER_WIDTH_RATIO = 0.55  # 肩部宽度比例
     AVATAR_SHOULDER_HEIGHT_RATIO = 0.6  # 肩部高度比例
 
-    # 颜色配置
-    BG_COLOR = (255, 255, 255)
-    TEXT_COLOR = (51, 51, 51)
-    HEADER_COLOR = (0, 122, 255)
-    EXTRA_COLOR = (136, 136, 136)
-
-    # 转发内容配置
-    REPOST_BG_COLOR = (247, 247, 247)  # 转发背景色
-    REPOST_BORDER_COLOR = (230, 230, 230)  # 转发边框色
-    REPOST_PADDING = 12  # 转发内容内边距
-
-    # 图片处理配置
-    MIN_COVER_WIDTH = 300  # 最小封面宽度
-    MIN_COVER_HEIGHT = 200  # 最小封面高度
-    MAX_IMAGE_HEIGHT = 800  # 图片最大高度限制
-    MAX_IMAGE_GRID_SIZE = 300  # 图片网格最大尺寸
-    IMAGE_GRID_SPACING = 4  # 图片网格间距
-    MAX_IMAGES_DISPLAY = 9  # 最大显示图片数量
-    IMAGE_GRID_COLS = 3  # 图片网格列数
-    IMAGE_GRID_ROWS_SINGLE = 1  # 单张图片行数
-    IMAGE_GRID_COLS_SINGLE = 1  # 单张图片列数
-
-    # 视频播放按钮配置
-    VIDEO_BUTTON_SIZE_RATIO = 0.25  # 播放按钮大小比例（相对于封面）
-    VIDEO_BUTTON_ALPHA = 120  # 播放按钮透明度
-    VIDEO_TRIANGLE_SIZE_RATIO = 0.33  # 三角形大小比例（相对于按钮）
-
     # 头像处理配置
     AVATAR_UPSCALE_FACTOR = 2  # 头像超采样倍数
 
-    # 转发缩放配置
-    REPOST_SCALE = 0.88  # 转发内容缩放比例
+    # 颜色配置
+    BG_COLOR = (255, 255, 255)
+    """背景色"""
+    TEXT_COLOR = (51, 51, 51)
+    """文本色"""
+    HEADER_COLOR = (0, 122, 255)
+    """标题色"""
+    EXTRA_COLOR = (136, 136, 136)
+    """额外信息色"""
 
-    ITEM_NAMES = ("name", "title", "text", "extra")
+    # 转发内容配置
+    REPOST_BG_COLOR: ClassVar[tuple[int, int, int]] = (247, 247, 247)
+    """转发背景色"""
+    REPOST_BORDER_COLOR: ClassVar[tuple[int, int, int]] = (230, 230, 230)
+    """转发边框色"""
+    REPOST_PADDING = 12
+    """转发内容内边距"""
+    REPOST_SCALE = 0.88
+    """转发缩放比例"""
+
+    # 图片处理配置
+    MIN_COVER_WIDTH = 300
+    """最小封面宽度"""
+    MIN_COVER_HEIGHT = 200
+    """最小封面高度"""
+    MAX_IMAGE_HEIGHT = 800
+    """图片最大高度限制"""
+    MAX_IMAGE_GRID_SIZE = 300
+    """图片网格最大尺寸"""
+    IMAGE_GRID_SPACING = 4
+    """图片网格间距"""
+    MAX_IMAGES_DISPLAY = 9
+    """最大显示图片数量"""
+    IMAGE_GRID_COLS = 3
+    """图片网格列数"""
+    IMAGE_GRID_ROWS_SINGLE = 1
+    """单张图片行数"""
+    IMAGE_GRID_COLS_SINGLE = 1
+    """单张图片列数"""
 
     # 字体大小和行高
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24}
+    """字体大小"""
     LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28}
+    """行高"""
 
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
+    """资源目录"""
     DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW-1.ttf"
+    """默认字体路径"""
     DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "media_button.png"
+    """默认视频按钮路径"""
 
     def __init__(self, font_path: Path | None = None):
         self.font_path: Path = self.DEFAULT_FONT_PATH
@@ -192,14 +278,16 @@ class CommonRenderer(ImageRenderer):
         )
 
         # 计算各部分内容的高度
-        heights = await self._calculate_sections(result, cover_img, content_width)
+        sections = await self._calculate_sections(result, cover_img, content_width)
 
         # 计算总高度
-        card_height = sum(h for _, h, _ in heights) + self.PADDING * 2 + self.SECTION_SPACING * (len(heights) - 1)
+        card_height = (
+            sum(section.height for section in sections) + self.PADDING * 2 + self.SECTION_SPACING * (len(sections) - 1)
+        )
         # 创建画布并绘制（使用指定的背景颜色，或默认背景颜色）
         background_color = bg_color if bg_color is not None else self.BG_COLOR
         image = Image.new("RGB", (card_width, card_height), background_color)
-        self._draw_sections(image, heights, card_width, result)
+        self._draw_sections(image, sections, card_width, result)
 
         return image
 
@@ -295,52 +383,52 @@ class CommonRenderer(ImageRenderer):
 
     async def _calculate_sections(
         self, result: ParseResult, cover_img: Image.Image | None, content_width: int
-    ) -> list[tuple[str, int, Any]]:
+    ) -> list[SectionData]:
         """计算各部分内容的高度和数据"""
-        heights = []
+        sections = []
 
         # 1. Header 部分
         if result.author:
-            header_data = await self._calculate_header_section(result, content_width)
-            if header_data:
-                heights.append(("header", header_data["height"], header_data))
+            header_section = await self._calculate_header_section(result, content_width)
+            if header_section:
+                sections.append(header_section)
 
         # 2. 标题部分
         if result.title:
             title_lines = self._wrap_text(result.title, content_width, self.fonts["title"])
             title_height = len(title_lines) * self.LINE_HEIGHTS["title"]
-            heights.append(("title", title_height, title_lines))
+            sections.append(TitleSectionData(height=title_height, lines=title_lines))
 
         # 3. 封面部分
         if cover_img:
-            heights.append(("cover", cover_img.height, cover_img))
+            sections.append(CoverSectionData(height=cover_img.height, cover_img=cover_img))
         elif result.img_contents:
             # 如果没有封面但有图片，处理图片列表
-            img_grid_data = await self._calculate_image_grid_section(result, content_width)
-            if img_grid_data:
-                heights.append(("image_grid", img_grid_data["height"], img_grid_data))
+            img_grid_section = await self._calculate_image_grid_section(result, content_width)
+            if img_grid_section:
+                sections.append(img_grid_section)
 
         # 4. 文本内容
         if result.text:
             text_lines = self._wrap_text(result.text, content_width, self.fonts["text"])
             text_height = len(text_lines) * self.LINE_HEIGHTS["text"]
-            heights.append(("text", text_height, text_lines))
+            sections.append(TextSectionData(height=text_height, lines=text_lines))
 
         # 5. 额外信息
         if result.extra_info:
             extra_lines = self._wrap_text(result.extra_info, content_width, self.fonts["extra"])
             extra_height = len(extra_lines) * self.LINE_HEIGHTS["extra"]
-            heights.append(("extra", extra_height, extra_lines))
+            sections.append(ExtraSectionData(height=extra_height, lines=extra_lines))
 
         # 6. 转发内容
         if result.repost:
-            repost_data = await self._calculate_repost_section(result.repost, content_width)
-            if repost_data:
-                heights.append(("repost", repost_data["height"], repost_data))
+            repost_section = await self._calculate_repost_section(result.repost, content_width)
+            if repost_section:
+                sections.append(repost_section)
 
-        return heights
+        return sections
 
-    async def _calculate_header_section(self, result: ParseResult, content_width: int) -> dict | None:
+    async def _calculate_header_section(self, result: ParseResult, content_width: int) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
         if not result.author:
             return None
@@ -364,15 +452,15 @@ class CommonRenderer(ImageRenderer):
             text_height += self.NAME_TIME_GAP + len(time_lines) * self.LINE_HEIGHTS["extra"]
         header_height = max(self.AVATAR_SIZE, text_height)
 
-        return {
-            "height": header_height,
-            "avatar": avatar_img,
-            "name_lines": name_lines,
-            "time_lines": time_lines,
-            "text_height": text_height,
-        }
+        return HeaderSectionData(
+            height=header_height,
+            avatar=avatar_img,
+            name_lines=name_lines,
+            time_lines=time_lines,
+            text_height=text_height,
+        )
 
-    async def _calculate_repost_section(self, repost: ParseResult, content_width: int) -> dict | None:
+    async def _calculate_repost_section(self, repost: ParseResult, content_width: int) -> RepostSectionData | None:
         """计算转发内容的高度和内容（递归调用绘制方法）"""
         if not repost:
             return None
@@ -387,12 +475,14 @@ class CommonRenderer(ImageRenderer):
         scaled_height = int(repost_image.height * self.REPOST_SCALE)
         repost_image_scaled = repost_image.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
 
-        return {
-            "height": scaled_height + self.REPOST_PADDING * 2,  # 加上转发容器的内边距
-            "scaled_image": repost_image_scaled,
-        }
+        return RepostSectionData(
+            height=scaled_height + self.REPOST_PADDING * 2,  # 加上转发容器的内边距
+            scaled_image=repost_image_scaled,
+        )
 
-    async def _calculate_image_grid_section(self, result: ParseResult, content_width: int) -> dict | None:
+    async def _calculate_image_grid_section(
+        self, result: ParseResult, content_width: int
+    ) -> ImageGridSectionData | None:
         """计算图片网格部分的高度和内容"""
         if not result.img_contents:
             return None
@@ -468,14 +558,14 @@ class CommonRenderer(ImageRenderer):
             # 多张图片：上间距 + (图片 + 间距) * 行数
             grid_height = self.IMAGE_GRID_SPACING + rows * (max_img_height + self.IMAGE_GRID_SPACING)
 
-        return {
-            "height": grid_height,
-            "images": processed_images,
-            "cols": cols,
-            "rows": rows,
-            "has_more": has_more,
-            "remaining_count": remaining_count,
-        }
+        return ImageGridSectionData(
+            height=grid_height,
+            images=processed_images,
+            cols=cols,
+            rows=rows,
+            has_more=has_more,
+            remaining_count=remaining_count,
+        )
 
     def _crop_to_square(self, img: Image.Image) -> Image.Image:
         """将图片裁剪为方形（上下切割）"""
@@ -496,27 +586,28 @@ class CommonRenderer(ImageRenderer):
             return img.crop((0, top, width, bottom))
 
     def _draw_sections(
-        self, image: Image.Image, heights: list[tuple[str, int, Any]], card_width: int, result: ParseResult
+        self, image: Image.Image, sections: list[SectionData], card_width: int, result: ParseResult
     ) -> None:
         """绘制所有内容到画布上"""
         draw = ImageDraw.Draw(image)
         y_pos = self.PADDING
 
-        for section_type, height, content in heights:
-            if section_type == "header":
-                y_pos = self._draw_header(image, draw, content, y_pos, result)
-            elif section_type == "title":
-                y_pos = self._draw_title(draw, content, y_pos, self.fonts["title"])
-            elif section_type == "cover":
-                y_pos = self._draw_cover(image, content, y_pos, card_width)
-            elif section_type == "text":
-                y_pos = self._draw_text(draw, content, y_pos, self.fonts["text"])
-            elif section_type == "extra":
-                y_pos = self._draw_extra(draw, content, y_pos, self.fonts["extra"])
-            elif section_type == "repost":
-                y_pos = self._draw_repost(image, draw, content, y_pos, card_width)
-            elif section_type == "image_grid":
-                y_pos = self._draw_image_grid(image, content, y_pos, card_width)
+        for section in sections:
+            match section:
+                case HeaderSectionData() as header:
+                    y_pos = self._draw_header(image, draw, header, y_pos, result)
+                case TitleSectionData() as title:
+                    y_pos = self._draw_title(draw, title.lines, y_pos, self.fonts["title"])
+                case CoverSectionData() as cover:
+                    y_pos = self._draw_cover(image, cover.cover_img, y_pos, card_width)
+                case TextSectionData() as text:
+                    y_pos = self._draw_text(draw, text.lines, y_pos, self.fonts["text"])
+                case ExtraSectionData() as extra:
+                    y_pos = self._draw_extra(draw, extra.lines, y_pos, self.fonts["extra"])
+                case RepostSectionData() as repost:
+                    y_pos = self._draw_repost(image, draw, repost, y_pos, card_width)
+                case ImageGridSectionData() as image_grid:
+                    y_pos = self._draw_image_grid(image, image_grid, y_pos, card_width)
 
     def _create_avatar_placeholder(self) -> Image.Image:
         """创建默认头像占位符"""
@@ -566,13 +657,13 @@ class CommonRenderer(ImageRenderer):
         return placeholder
 
     def _draw_header(
-        self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, result: ParseResult
+        self, image: Image.Image, draw: ImageDraw.ImageDraw, section: HeaderSectionData, y_pos: int, result: ParseResult
     ) -> int:
         """绘制 header 部分"""
         x_pos = self.PADDING
 
         # 绘制头像或占位符
-        avatar = content["avatar"] if content["avatar"] else self._create_avatar_placeholder()
+        avatar = section.avatar if section.avatar else self._create_avatar_placeholder()
         image.paste(avatar, (x_pos, y_pos), avatar)
 
         # 文字始终从头像位置后面开始
@@ -580,18 +671,18 @@ class CommonRenderer(ImageRenderer):
 
         # 计算文字垂直居中位置（对齐头像中轴）
         avatar_center = y_pos + self.AVATAR_SIZE // 2
-        text_start_y = avatar_center - content["text_height"] // 2
+        text_start_y = avatar_center - section.text_height // 2
         text_y = text_start_y
 
         # 发布者名称（蓝色）
-        for line in content["name_lines"]:
+        for line in section.name_lines:
             draw.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=self.fonts["name"])
             text_y += self.LINE_HEIGHTS["name"]
 
         # 时间（灰色）
-        if content["time_lines"]:
+        if section.time_lines:
             text_y += self.NAME_TIME_GAP
-            for line in content["time_lines"]:
+            for line in section.time_lines:
                 draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fonts["extra"])
                 text_y += self.LINE_HEIGHTS["extra"]
 
@@ -605,7 +696,7 @@ class CommonRenderer(ImageRenderer):
             logo_y = y_pos + (self.AVATAR_SIZE - logo_img.height) // 2
             image.paste(logo_img, (logo_x, logo_y), logo_img)
 
-        return y_pos + content["height"] + self.SECTION_SPACING
+        return y_pos + section.height + self.SECTION_SPACING
 
     def _draw_title(self, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制标题"""
@@ -643,18 +734,18 @@ class CommonRenderer(ImageRenderer):
         return y_pos
 
     def _draw_repost(
-        self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, card_width: int
+        self, image: Image.Image, draw: ImageDraw.ImageDraw, section: RepostSectionData, y_pos: int, card_width: int
     ) -> int:
         """绘制转发内容"""
         # 获取缩放后的转发图片
-        repost_image = content["scaled_image"]
+        repost_image = section.scaled_image
 
         # 转发框占满整个内容区域，左右和边缘对齐
         content_width = card_width - 2 * self.PADDING
         repost_x = self.PADDING
         repost_y = y_pos
         repost_width = content_width  # 转发框宽度等于内容区域宽度
-        repost_height = content["height"]
+        repost_height = section.height
 
         # 绘制转发背景（圆角矩形）
         self._draw_rounded_rectangle(
@@ -682,13 +773,13 @@ class CommonRenderer(ImageRenderer):
 
         return y_pos + repost_height + self.SECTION_SPACING
 
-    def _draw_image_grid(self, image: Image.Image, content: dict, y_pos: int, card_width: int) -> int:
+    def _draw_image_grid(self, image: Image.Image, section: ImageGridSectionData, y_pos: int, card_width: int) -> int:
         """绘制图片网格"""
-        images = content["images"]
-        cols = content["cols"]
-        rows = content["rows"]
-        has_more = content.get("has_more", False)
-        remaining_count = content.get("remaining_count", 0)
+        images = section.images
+        cols = section.cols
+        rows = section.rows
+        has_more = section.has_more
+        remaining_count = section.remaining_count
 
         if not images:
             return y_pos
