@@ -193,7 +193,7 @@ class CommonRenderer(ImageRenderer):
     def _load_platform_logos(self):
         """预加载平台 logo"""
         self.platform_logos: dict[str, Image.Image] = {}
-        # platform 所有字面量
+        # 平台 logo 对应的高度
         platform_names_height: dict[str, int] = {
             "bilibili": 30,
             "douyin": 30,
@@ -217,10 +217,7 @@ class CommonRenderer(ImageRenderer):
                     # 确保是 RGBA 模式
                     if logo_img.mode != "RGBA":
                         logo_img = logo_img.convert("RGBA")
-                    # 透明度 60 %
-                    # logo_alpha = logo_img.split()[-1]
-                    # logo_alpha = logo_alpha.point(lambda x: int(x * 0.6))
-                    # logo_img.putalpha(logo_alpha)
+
                     self.platform_logos[platform_name] = logo_img
                 except Exception as e:
                     # 如果加载失败，跳过这个 logo
@@ -259,8 +256,8 @@ class CommonRenderer(ImageRenderer):
             PIL Image 对象
         """
 
-        # 先确定固定的卡片宽度和内容区域宽度
-        card_width = max(self.DEFAULT_CARD_WIDTH, self.MIN_CARD_WIDTH)
+        # 使用默认卡片宽度
+        card_width = self.DEFAULT_CARD_WIDTH
         content_width = card_width - 2 * self.PADDING
 
         # 加载并处理封面，传入内容区域宽度以确保封面不超过内容区域
@@ -269,7 +266,7 @@ class CommonRenderer(ImageRenderer):
         )
 
         # 计算各部分内容的高度
-        sections = await self._calculate_sections(result, cover_img, content_width, not_repost)
+        sections = await self._calculate_sections(result, cover_img, content_width)
 
         # 计算总高度
         card_height = (
@@ -318,19 +315,6 @@ class CommonRenderer(ImageRenderer):
                     new_height = self.MAX_COVER_HEIGHT
                     new_width = int(new_width * scale_ratio)
 
-                # 如果是主内容且高度太小，需要放大（但不超过最大高度）
-                if apply_min_size and new_height < self.MIN_COVER_HEIGHT:
-                    min_height = min(self.MIN_COVER_HEIGHT, self.MAX_COVER_HEIGHT)
-                    if new_height < min_height:
-                        scale_ratio = min_height / new_height
-                        new_height = min_height
-                        new_width = int(new_width * scale_ratio)
-                        # 再次确保宽度不超过内容区域
-                        if new_width > content_width:
-                            scale_ratio = content_width / new_width
-                            new_width = content_width
-                            new_height = int(new_height * scale_ratio)
-
                 cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
             return cover_img
@@ -373,14 +357,14 @@ class CommonRenderer(ImageRenderer):
             return None
 
     async def _calculate_sections(
-        self, result: ParseResult, cover_img: Image.Image | None, content_width: int, not_repost: bool = True
+        self, result: ParseResult, cover_img: Image.Image | None, content_width: int
     ) -> list[SectionData]:
         """计算各部分内容的高度和数据"""
         sections = []
 
         # 1. Header 部分
         if result.author:
-            header_section = await self._calculate_header_section(result, content_width, not_repost)
+            header_section = await self._calculate_header_section(result, content_width)
             if header_section:
                 sections.append(header_section)
 
@@ -413,15 +397,13 @@ class CommonRenderer(ImageRenderer):
 
         # 6. 转发内容
         if result.repost:
-            repost_section = await self._calculate_repost_section(result.repost, content_width)
+            repost_section = await self._calculate_repost_section(result.repost)
             if repost_section:
                 sections.append(repost_section)
 
         return sections
 
-    async def _calculate_header_section(
-        self, result: ParseResult, content_width: int, not_repost: bool = True
-    ) -> HeaderSectionData | None:
+    async def _calculate_header_section(self, result: ParseResult, content_width: int) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
         if not result.author:
             return None
@@ -453,7 +435,7 @@ class CommonRenderer(ImageRenderer):
             text_height=text_height,
         )
 
-    async def _calculate_repost_section(self, repost: ParseResult, content_width: int) -> RepostSectionData | None:
+    async def _calculate_repost_section(self, repost: ParseResult) -> RepostSectionData | None:
         """计算转发内容的高度和内容（递归调用绘制方法）"""
         if not repost:
             return None
