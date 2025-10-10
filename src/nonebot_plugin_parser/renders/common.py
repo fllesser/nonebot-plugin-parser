@@ -246,14 +246,14 @@ class CommonRenderer(ImageRenderer):
         return output.getvalue()
 
     async def _create_card_image(
-        self, result: ParseResult, bg_color: tuple[int, int, int] | None = None, apply_min_cover_size: bool = True
+        self, result: ParseResult, bg_color: tuple[int, int, int] | None = None, not_repost: bool = True
     ) -> Image.Image:
         """创建卡片图片（内部方法，用于递归调用）
 
         Args:
             result: 解析结果
             bg_color: 背景颜色，默认使用 BG_COLOR
-            apply_min_cover_size: 是否对封面应用最小尺寸限制，转发内容不需要
+            not_repost: 是否为非转发内容，转发内容为 False
 
         Returns:
             PIL Image 对象
@@ -265,11 +265,11 @@ class CommonRenderer(ImageRenderer):
 
         # 加载并处理封面，传入内容区域宽度以确保封面不超过内容区域
         cover_img = self._load_and_resize_cover(
-            await result.cover_path, content_width=content_width, apply_min_size=apply_min_cover_size
+            await result.cover_path, content_width=content_width, apply_min_size=not_repost
         )
 
         # 计算各部分内容的高度
-        sections = await self._calculate_sections(result, cover_img, content_width)
+        sections = await self._calculate_sections(result, cover_img, content_width, not_repost)
 
         # 计算总高度
         card_height = (
@@ -278,7 +278,7 @@ class CommonRenderer(ImageRenderer):
         # 创建画布并绘制（使用指定的背景颜色，或默认背景颜色）
         background_color = bg_color if bg_color is not None else self.BG_COLOR
         image = Image.new("RGB", (card_width, card_height), background_color)
-        self._draw_sections(image, sections, card_width, result)
+        self._draw_sections(image, sections, card_width, result, not_repost)
 
         return image
 
@@ -373,14 +373,14 @@ class CommonRenderer(ImageRenderer):
             return None
 
     async def _calculate_sections(
-        self, result: ParseResult, cover_img: Image.Image | None, content_width: int
+        self, result: ParseResult, cover_img: Image.Image | None, content_width: int, not_repost: bool = True
     ) -> list[SectionData]:
         """计算各部分内容的高度和数据"""
         sections = []
 
         # 1. Header 部分
         if result.author:
-            header_section = await self._calculate_header_section(result, content_width)
+            header_section = await self._calculate_header_section(result, content_width, not_repost)
             if header_section:
                 sections.append(header_section)
 
@@ -419,7 +419,9 @@ class CommonRenderer(ImageRenderer):
 
         return sections
 
-    async def _calculate_header_section(self, result: ParseResult, content_width: int) -> HeaderSectionData | None:
+    async def _calculate_header_section(
+        self, result: ParseResult, content_width: int, not_repost: bool = True
+    ) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
         if not result.author:
             return None
@@ -457,7 +459,7 @@ class CommonRenderer(ImageRenderer):
             return None
 
         # 递归调用内部方法，生成转发内容的完整卡片（使用转发背景颜色，不强制放大封面）
-        repost_image = await self._create_card_image(repost, bg_color=self.REPOST_BG_COLOR, apply_min_cover_size=False)
+        repost_image = await self._create_card_image(repost, bg_color=self.REPOST_BG_COLOR, not_repost=False)
         if not repost_image:
             return None
 
@@ -577,7 +579,12 @@ class CommonRenderer(ImageRenderer):
             return img.crop((0, top, width, bottom))
 
     def _draw_sections(
-        self, image: Image.Image, sections: list[SectionData], card_width: int, result: ParseResult
+        self,
+        image: Image.Image,
+        sections: list[SectionData],
+        card_width: int,
+        result: ParseResult,
+        not_repost: bool = True,
     ) -> None:
         """绘制所有内容到画布上"""
         draw = ImageDraw.Draw(image)
@@ -586,7 +593,7 @@ class CommonRenderer(ImageRenderer):
         for section in sections:
             match section:
                 case HeaderSectionData() as header:
-                    y_pos = self._draw_header(image, draw, header, y_pos, result)
+                    y_pos = self._draw_header(image, draw, header, y_pos, result, not_repost)
                 case TitleSectionData() as title:
                     y_pos = self._draw_title(draw, title.lines, y_pos, self.fonts["title"])
                 case CoverSectionData() as cover:
@@ -657,7 +664,13 @@ class CommonRenderer(ImageRenderer):
         return placeholder
 
     def _draw_header(
-        self, image: Image.Image, draw: ImageDraw.ImageDraw, section: HeaderSectionData, y_pos: int, result: ParseResult
+        self,
+        image: Image.Image,
+        draw: ImageDraw.ImageDraw,
+        section: HeaderSectionData,
+        y_pos: int,
+        result: ParseResult,
+        not_repost: bool = True,
     ) -> int:
         """绘制 header 部分"""
         x_pos = self.PADDING
@@ -686,15 +699,16 @@ class CommonRenderer(ImageRenderer):
                 draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fonts["extra"])
                 text_y += self.LINE_HEIGHTS["extra"]
 
-        # 在右侧绘制平台 logo
-        platform_name = result.platform.name
-        if platform_name in self.platform_logos:
-            logo_img = self.platform_logos[platform_name]
-            # 计算 logo 位置（右侧对齐）
-            logo_x = image.width - self.PADDING - logo_img.width
-            # 垂直居中对齐头像
-            logo_y = y_pos + (self.AVATAR_SIZE - logo_img.height) // 2
-            image.paste(logo_img, (logo_x, logo_y), logo_img)
+        # 在右侧绘制平台 logo（仅在非转发内容时绘制）
+        if not_repost:
+            platform_name = result.platform.name
+            if platform_name in self.platform_logos:
+                logo_img = self.platform_logos[platform_name]
+                # 计算 logo 位置（右侧对齐）
+                logo_x = image.width - self.PADDING - logo_img.width
+                # 垂直居中对齐头像
+                logo_y = y_pos + (self.AVATAR_SIZE - logo_img.height) // 2
+                image.paste(logo_img, (logo_x, logo_y), logo_img)
 
         return y_pos + section.height + self.SECTION_SPACING
 
