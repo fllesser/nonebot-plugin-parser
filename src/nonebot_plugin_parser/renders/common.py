@@ -10,14 +10,14 @@ from PIL import Image, ImageDraw, ImageFont
 from .base import ImageRenderer, ParseResult
 
 
-@dataclass
+@dataclass(eq=False)
 class SectionData:
     """基础部分数据类"""
 
     height: int
 
 
-@dataclass
+@dataclass(eq=False)
 class HeaderSectionData(SectionData):
     """Header 部分数据"""
 
@@ -27,42 +27,42 @@ class HeaderSectionData(SectionData):
     text_height: int
 
 
-@dataclass
+@dataclass(eq=False)
 class TitleSectionData(SectionData):
     """标题部分数据"""
 
     lines: list[str]
 
 
-@dataclass
+@dataclass(eq=False)
 class CoverSectionData(SectionData):
     """封面部分数据"""
 
     cover_img: Image.Image
 
 
-@dataclass
+@dataclass(eq=False)
 class TextSectionData(SectionData):
     """文本部分数据"""
 
     lines: list[str]
 
 
-@dataclass
+@dataclass(eq=False)
 class ExtraSectionData(SectionData):
     """额外信息部分数据"""
 
     lines: list[str]
 
 
-@dataclass
+@dataclass(eq=False)
 class RepostSectionData(SectionData):
     """转发部分数据"""
 
     scaled_image: Image.Image
 
 
-@dataclass
+@dataclass(eq=False)
 class ImageGridSectionData(SectionData):
     """图片网格部分数据"""
 
@@ -97,15 +97,6 @@ class CommonRenderer(ImageRenderer):
     """部分间距"""
     NAME_TIME_GAP = 5
     """名称和时间之间的间距"""
-
-    # 头像占位符配置
-    AVATAR_PLACEHOLDER_BG_COLOR = (230, 230, 230, 255)
-    AVATAR_PLACEHOLDER_FG_COLOR = (200, 200, 200, 255)
-    AVATAR_HEAD_RATIO = 0.35  # 头部位置比例
-    AVATAR_HEAD_RADIUS_RATIO = 1 / 6  # 头部半径比例
-    AVATAR_SHOULDER_Y_RATIO = 0.55  # 肩部 Y 位置比例
-    AVATAR_SHOULDER_WIDTH_RATIO = 0.55  # 肩部宽度比例
-    AVATAR_SHOULDER_HEIGHT_RATIO = 0.6  # 肩部高度比例
 
     # 头像处理配置
     AVATAR_UPSCALE_FACTOR = 2  # 头像超采样倍数
@@ -611,18 +602,27 @@ class CommonRenderer(ImageRenderer):
 
     def _create_avatar_placeholder(self) -> Image.Image:
         """创建默认头像占位符"""
+        # 头像占位符配置常量
+        placeholder_bg_color = (230, 230, 230, 255)
+        placeholder_fg_color = (200, 200, 200, 255)
+        head_ratio = 0.35  # 头部位置比例
+        head_radius_ratio = 1 / 6  # 头部半径比例
+        shoulder_y_ratio = 0.55  # 肩部 Y 位置比例
+        shoulder_width_ratio = 0.55  # 肩部宽度比例
+        shoulder_height_ratio = 0.6  # 肩部高度比例
+
         placeholder = Image.new("RGBA", (self.AVATAR_SIZE, self.AVATAR_SIZE), (0, 0, 0, 0))
         draw = ImageDraw.Draw(placeholder)
 
         # 绘制圆形背景
-        draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=self.AVATAR_PLACEHOLDER_BG_COLOR)
+        draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=placeholder_bg_color)
 
         # 绘制简单的用户图标（圆形头部 + 肩部）
         center_x = self.AVATAR_SIZE // 2
 
         # 头部圆形
-        head_radius = int(self.AVATAR_SIZE * self.AVATAR_HEAD_RADIUS_RATIO)
-        head_y = int(self.AVATAR_SIZE * self.AVATAR_HEAD_RATIO)
+        head_radius = int(self.AVATAR_SIZE * head_radius_ratio)
+        head_y = int(self.AVATAR_SIZE * head_ratio)
         draw.ellipse(
             (
                 center_x - head_radius,
@@ -630,13 +630,13 @@ class CommonRenderer(ImageRenderer):
                 center_x + head_radius,
                 head_y + head_radius,
             ),
-            fill=self.AVATAR_PLACEHOLDER_FG_COLOR,
+            fill=placeholder_fg_color,
         )
 
         # 肩部
-        shoulder_y = int(self.AVATAR_SIZE * self.AVATAR_SHOULDER_Y_RATIO)
-        shoulder_width = int(self.AVATAR_SIZE * self.AVATAR_SHOULDER_WIDTH_RATIO)
-        shoulder_height = int(self.AVATAR_SIZE * self.AVATAR_SHOULDER_HEIGHT_RATIO)
+        shoulder_y = int(self.AVATAR_SIZE * shoulder_y_ratio)
+        shoulder_width = int(self.AVATAR_SIZE * shoulder_width_ratio)
+        shoulder_height = int(self.AVATAR_SIZE * shoulder_height_ratio)
         draw.ellipse(
             (
                 center_x - shoulder_width // 2,
@@ -644,7 +644,7 @@ class CommonRenderer(ImageRenderer):
                 center_x + shoulder_width // 2,
                 shoulder_y + shoulder_height,
             ),
-            fill=self.AVATAR_PLACEHOLDER_FG_COLOR,
+            fill=placeholder_fg_color,
         )
 
         # 创建圆形遮罩确保不超出边界
