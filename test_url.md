@@ -58,8 +58,8 @@ douyin:
   - https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
 
 xiaohongshu:
-- http://xhslink.com/m/3RbKPhJlIB3  图文短链
-- http://xhslink.com/m/1nhWDzSpHXB  视频短链
+- http://xhslink.com/o/2XBEjXL2g7G  图文短链
+- http://xhslink.com/o/3Evyog2wr6i  视频短链
 
 weibo:
 - 视频

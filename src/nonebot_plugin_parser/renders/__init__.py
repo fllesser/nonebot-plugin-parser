@@ -39,4 +39,4 @@ from nonebot import get_driver
 
 @get_driver().on_startup
 async def load_font():
-    _COMMON_RENDERER.load_font(pconfig.custom_font)
+    _COMMON_RENDERER.load_resources()
