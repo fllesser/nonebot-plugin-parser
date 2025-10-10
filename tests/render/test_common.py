@@ -78,10 +78,11 @@ async def test_common_render():
         except Exception:
             logger.exception(f"{url} | 渲染失败")
             failed_count += 1
-    logger.success(
-        f"渲染完成，失败数量: {failed_count}, 总耗时: {total_time} 秒，平均耗时: {total_time / len(url_dict)} 秒"
-    )
-    logger.success(f"各链接耗时: {url_time_mapping}")
+    logger.success(f"渲染完成，失败数量: {failed_count}, 总耗时: {total_time} 秒")
+    logger.success(f"平均耗时: {total_time / len(url_dict)} 秒")
+    # 按时间排序
+    sorted_url_time_mapping = sorted(url_time_mapping.items(), key=lambda x: x[1])
+    logger.success(f"各链接耗时: {sorted_url_time_mapping}")
 
 
 async def test_render_with_emoji():
