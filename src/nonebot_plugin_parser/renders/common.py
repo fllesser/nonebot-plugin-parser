@@ -187,12 +187,18 @@ class CommonRenderer(ImageRenderer):
         alpha = alpha.point(lambda x: int(x * 0.3))  # 将透明度设置为 30%
         self.video_button_image.putalpha(alpha)
 
-        # 调整尺寸为 128x128
-        self.video_button_image = self.video_button_image.resize((128, 128), Image.Resampling.LANCZOS)
-
     def _load_platform_logos(self):
         """预加载平台 logo"""
         self.platform_logos: dict[str, Image.Image] = {}
+        platform_names = ["bilibili", "douyin", "youtube", "kuaishou", "twitter", "tiktok", "weibo", "xiaohongshu"]
+
+        for platform_name in platform_names:
+            logo_path = self.RESOURCES_DIR / f"{platform_name}.png"
+            if logo_path.exists():
+                self.platform_logos[platform_name] = Image.open(logo_path)
+
+    def __resize_platform_logos(self):
+        """调整平台 logo 尺寸, 用于调整 logo 大小(仅开发时使用)"""
         # 平台 logo 对应的高度
         platform_names_height: dict[str, int] = {
             "bilibili": 30,
@@ -214,14 +220,15 @@ class CommonRenderer(ImageRenderer):
                     new_width = int(logo_img.width * ratio)
                     new_height = target_height
                     logo_img = logo_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                    # 保存图片
+                    logo_img.save(logo_path)
                     # 确保是 RGBA 模式
                     if logo_img.mode != "RGBA":
                         logo_img = logo_img.convert("RGBA")
 
-                    self.platform_logos[platform_name] = logo_img
-                except Exception as e:
+                except Exception:
                     # 如果加载失败，跳过这个 logo
-                    logger.error(f"加载平台 logo 失败: {e}")
+                    logger.error(f"resize 平台 logo 失败: {platform_name}")
                     continue
 
     @override
