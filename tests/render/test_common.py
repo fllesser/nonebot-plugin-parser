@@ -41,6 +41,13 @@ async def test_common_render():
         parse_result = await parser.parse(matched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
+        # await 所有资源下载，利用计算渲染时间
+        assert parse_result.author, f"没有作者: {url}"
+        await parse_result.author.get_avatar_path()
+        await parse_result.cover_path
+        for content in parse_result.contents:
+            await content.get_path()
+
         logger.info(f"{url} | 开始渲染")
         #  渲染图片，并计算耗时
         start_time = time.time()
@@ -73,6 +80,7 @@ async def test_common_render():
 
 async def test_render_with_emoji():
     """测试使用 BilibiliParser 解析链接并用 CommonRenderer 渲染"""
+
     import aiofiles
 
     from nonebot_plugin_parser import pconfig
@@ -85,13 +93,15 @@ async def test_render_with_emoji():
     opus_url = "https://b23.tv/GwiHK6N"
     matched = parser.search_url(opus_url)
     assert matched, f"无法匹配 URL: {opus_url}"
-
     logger.info(f"{opus_url} | 开始解析哔哩哔哩动态")
     parse_result = await parser.parse(matched)
     logger.debug(f"{opus_url} | 解析结果: \n{parse_result}")
+
     logger.info(f"{opus_url} | 开始渲染")
     image_raw = await renderer.render_image(parse_result)
+
     assert image_raw, "没有生成图片"
+
     image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_opus.png"
     # 创建文件
     image_path.parent.mkdir(parents=True, exist_ok=True)

@@ -12,7 +12,7 @@ from .base import ImageRenderer, ParseResult
 class CommonRenderer(ImageRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
-    __slots__ = ("font_path", "fonts", "video_button_image")
+    __slots__ = ("font_path", "fonts", "platform_logos", "video_button_image")
 
     # 卡片配置常量
     PADDING = 25
@@ -68,18 +68,28 @@ class CommonRenderer(ImageRenderer):
     REPOST_SCALE = 0.88  # 转发内容缩放比例
 
     ITEM_NAMES = ("name", "title", "text", "extra")
+
     # 字体大小和行高
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24}
     LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28}
 
-    DEFAULT_FONT_PATH: ClassVar[Path] = Path(__file__).parent / "fonts" / "HYSongYunLangHeiW-1.ttf"
-    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = Path(__file__).parent / "logos" / "default.png"
+    RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
+    DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW-1.ttf"
+    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "media_button.png"
 
     def __init__(self, font_path: Path | None = None):
         self.font_path: Path = self.DEFAULT_FONT_PATH
 
-    def load_resources(self, font_path: Path | None = None):
-        # 加载字体
+    def load_resources(self):
+        self._load_fonts()
+        self._load_video_button()
+        self._load_platform_logos()
+
+    def _load_fonts(self):
+        """预加载自定义字体"""
+        from ..config import pconfig
+
+        font_path = pconfig.custom_font
         if font_path is not None and font_path.exists():
             self.font_path = font_path
         self.fonts: dict[str, ImageFont.FreeTypeFont | ImageFont.ImageFont] = {
@@ -87,17 +97,58 @@ class CommonRenderer(ImageRenderer):
         }
         logger.success(f"加载字体「{self.font_path.name}」成功")
 
-        # 加载视频按钮素材并设置透明度
+    def _load_video_button(self):
+        """预加载视频按钮"""
         self.video_button_image: Image.Image = Image.open(self.DEFAULT_VIDEO_BUTTON_PATH)
 
         # 确保素材是 RGBA 模式以支持透明度
         if self.video_button_image.mode != "RGBA":
             self.video_button_image = self.video_button_image.convert("RGBA")
 
-        # 设置透明度为 50%
+        # 设置透明度为 30%
         alpha = self.video_button_image.split()[-1]  # 获取 alpha 通道
         alpha = alpha.point(lambda x: int(x * 0.3))  # 将透明度设置为 30%
         self.video_button_image.putalpha(alpha)
+
+        # 调整尺寸为 128x128
+        self.video_button_image = self.video_button_image.resize((128, 128), Image.Resampling.LANCZOS)
+
+    def _load_platform_logos(self):
+        """预加载平台 logo"""
+        self.platform_logos: dict[str, Image.Image] = {}
+        # platform 所有字面量
+        platform_names_height: dict[str, int] = {
+            "bilibili": 30,
+            "douyin": 30,
+            "youtube": 24,
+            "kuaishou": 36,
+            "twitter": 30,
+            "tiktok": 30,
+            "weibo": 30,
+            "xiaohongshu": 24,
+        }
+        for platform_name, target_height in platform_names_height.items():
+            logo_path = self.RESOURCES_DIR / f"{platform_name}.png"
+            if logo_path.exists():
+                try:
+                    logo_img = Image.open(logo_path)
+                    # 调整 logo 尺寸, 只限制高度为30像素
+                    ratio = target_height / logo_img.height
+                    new_width = int(logo_img.width * ratio)
+                    new_height = target_height
+                    logo_img = logo_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                    # 确保是 RGBA 模式
+                    if logo_img.mode != "RGBA":
+                        logo_img = logo_img.convert("RGBA")
+                    # 透明度 60 %
+                    # logo_alpha = logo_img.split()[-1]
+                    # logo_alpha = logo_alpha.point(lambda x: int(x * 0.6))
+                    # logo_img.putalpha(logo_alpha)
+                    self.platform_logos[platform_name] = logo_img
+                except Exception as e:
+                    # 如果加载失败，跳过这个 logo
+                    logger.error(f"加载平台 logo 失败: {e}")
+                    continue
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
@@ -148,7 +199,7 @@ class CommonRenderer(ImageRenderer):
         # 创建画布并绘制（使用指定的背景颜色，或默认背景颜色）
         background_color = bg_color if bg_color is not None else self.BG_COLOR
         image = Image.new("RGB", (card_width, card_height), background_color)
-        self._draw_sections(image, heights, card_width)
+        self._draw_sections(image, heights, card_width, result)
 
         return image
 
@@ -444,14 +495,16 @@ class CommonRenderer(ImageRenderer):
             bottom = top + width
             return img.crop((0, top, width, bottom))
 
-    def _draw_sections(self, image: Image.Image, heights: list[tuple[str, int, Any]], card_width: int) -> None:
+    def _draw_sections(
+        self, image: Image.Image, heights: list[tuple[str, int, Any]], card_width: int, result: ParseResult
+    ) -> None:
         """绘制所有内容到画布上"""
         draw = ImageDraw.Draw(image)
         y_pos = self.PADDING
 
         for section_type, height, content in heights:
             if section_type == "header":
-                y_pos = self._draw_header(image, draw, content, y_pos)
+                y_pos = self._draw_header(image, draw, content, y_pos, result)
             elif section_type == "title":
                 y_pos = self._draw_title(draw, content, y_pos, self.fonts["title"])
             elif section_type == "cover":
@@ -512,7 +565,9 @@ class CommonRenderer(ImageRenderer):
         placeholder.putalpha(mask)
         return placeholder
 
-    def _draw_header(self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int) -> int:
+    def _draw_header(
+        self, image: Image.Image, draw: ImageDraw.ImageDraw, content: dict, y_pos: int, result: ParseResult
+    ) -> int:
         """绘制 header 部分"""
         x_pos = self.PADDING
 
@@ -539,6 +594,16 @@ class CommonRenderer(ImageRenderer):
             for line in content["time_lines"]:
                 draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fonts["extra"])
                 text_y += self.LINE_HEIGHTS["extra"]
+
+        # 在右侧绘制平台 logo
+        platform_name = result.platform.name
+        if platform_name in self.platform_logos:
+            logo_img = self.platform_logos[platform_name]
+            # 计算 logo 位置（右侧对齐）
+            logo_x = image.width - self.PADDING - logo_img.width
+            # 垂直居中对齐头像
+            logo_y = y_pos + (self.AVATAR_SIZE - logo_img.height) // 2
+            image.paste(logo_img, (logo_x, logo_y), logo_img)
 
         return y_pos + content["height"] + self.SECTION_SPACING
 
