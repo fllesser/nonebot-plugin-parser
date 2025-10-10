@@ -98,28 +98,8 @@ class CommonRenderer(ImageRenderer):
     NAME_TIME_GAP = 5
     """名称和时间之间的间距"""
 
-    # 头像处理配置
-    AVATAR_UPSCALE_FACTOR = 2  # 头像超采样倍数
-
-    # 颜色配置
-    BG_COLOR = (255, 255, 255)
-    """背景色"""
-    TEXT_COLOR = (51, 51, 51)
-    """文本色"""
-    HEADER_COLOR = (0, 122, 255)
-    """标题色"""
-    EXTRA_COLOR = (136, 136, 136)
-    """额外信息色"""
-
-    # 转发内容配置
-    REPOST_BG_COLOR: ClassVar[tuple[int, int, int]] = (247, 247, 247)
-    """转发背景色"""
-    REPOST_BORDER_COLOR: ClassVar[tuple[int, int, int]] = (230, 230, 230)
-    """转发边框色"""
-    REPOST_PADDING = 12
-    """转发内容内边距"""
-    REPOST_SCALE = 0.88
-    """转发缩放比例"""
+    AVATAR_UPSCALE_FACTOR = 2
+    """头像圆形框超采样倍数"""
 
     # 图片处理配置
     MIN_COVER_WIDTH = 300
@@ -140,6 +120,26 @@ class CommonRenderer(ImageRenderer):
     """单张图片行数"""
     IMAGE_GRID_COLS_SINGLE = 1
     """单张图片列数"""
+
+    # 颜色配置
+    BG_COLOR: ClassVar[tuple[int, int, int]] = (255, 255, 255)
+    """背景色"""
+    TEXT_COLOR: ClassVar[tuple[int, int, int]] = (51, 51, 51)
+    """文本色"""
+    HEADER_COLOR: ClassVar[tuple[int, int, int]] = (0, 122, 255)
+    """标题色"""
+    EXTRA_COLOR: ClassVar[tuple[int, int, int]] = (136, 136, 136)
+    """额外信息色"""
+
+    # 转发内容配置
+    REPOST_BG_COLOR: ClassVar[tuple[int, int, int]] = (247, 247, 247)
+    """转发背景色"""
+    REPOST_BORDER_COLOR: ClassVar[tuple[int, int, int]] = (230, 230, 230)
+    """转发边框色"""
+    REPOST_PADDING = 12
+    """转发内容内边距"""
+    REPOST_SCALE = 0.88
+    """转发缩放比例"""
 
     # 字体大小和行高
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24}
