@@ -7,7 +7,7 @@ require("nonebot_plugin_alconna")
 require("nonebot_plugin_uninfo")
 
 from .config import Config, pconfig
-from .matchers import parser_matcher  # noqa: F401
+from .matchers import clear_result_cache
 from .utils import safe_unlink
 
 __plugin_meta__ = PluginMetadata(
@@ -44,3 +44,6 @@ async def clean_plugin_cache():
         logger.success(f"Successfully cleaned {len(files)} cache files")
     except Exception:
         logger.exception("Error while cleaning cache files")
+
+    # 资源清理完毕后，清理 result 缓存
+    clear_result_cache()
