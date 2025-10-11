@@ -178,48 +178,26 @@ class BilibiliParser(BaseParser):
 
         # 2. 直播
         if "/live" in url:
-            match_result = re.search(r"/(\d+)", url)
-            if not match_result:
+            matched = re.search(r"/(\d+)", url)
+            if matched is None:
                 raise ParseException("无效的直播链接")
-            room_id = int(match_result.group(1))
-            title, cover, keyframe = await self.parse_live(room_id)
-
-            contents = []
-            # 下载封面
-            if cover:
-                cover_task = DOWNLOADER.download_img(cover, ext_headers=self.headers)
-                contents.append(ImageContent(cover_task))
-
-            # 下载关键帧
-            if keyframe:
-                keyframe_task = DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
-                contents.append(ImageContent(keyframe_task))
-
-            return self.result(title="直播 - " + title, contents=contents)
+            room_id = int(matched.group(1))
+            return await self.parse_live(room_id)
 
         # 3. 专栏
         if "/read" in url:
-            match_result = re.search(r"/cv(\d+)", url)
-            if not match_result:
+            matched = re.search(r"/cv(\d+)", url)
+            if matched is None:
                 raise ParseException("无效的专栏链接")
-            read_id = int(match_result.group(1))
-            texts, img_urls = await self.parse_read(read_id)
-            combined_text = "\n".join(texts)
-
-            # 下载图片
-            contents = []
-            if img_urls:
-                img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in img_urls]
-                contents.extend(ImageContent(task) for task in img_tasks)
-
-            return self.result(title=f"专栏 - {read_id}", text=combined_text, contents=contents)
+            read_id = int(matched.group(1))
+            return await self.parse_read(read_id)
 
         # 4. 收藏夹
         if "/favlist" in url:
-            match_result = re.search(r"fid=(\d+)", url)
-            if not match_result:
+            matched = re.search(r"fid=(\d+)", url)
+            if matched is None:
                 raise ParseException("无效的收藏夹链接")
-            fav_id = int(match_result.group(1))
+            fav_id = int(matched.group(1))
             return await self.parse_favlist(fav_id)
 
         raise ParseException("不支持的 Bilibili 链接")
@@ -299,27 +277,39 @@ class BilibiliParser(BaseParser):
         )
         return urls, orig_text
 
-    async def parse_live(self, room_id: int) -> tuple[str, str, str]:
+    async def parse_live(self, room_id: int):
         """解析直播信息
 
         Args:
             room_id (int): 直播 id
 
         Returns:
-            tuple[str, str, str]: 标题、封面、关键帧
+            ParseResult: 解析结果
         """
         from bilibili_api.live import LiveRoom
 
-        room = LiveRoom(room_display_id=room_id, credential=await self.credential)
-        room_info: dict[str, Any] = (await room.get_room_info())["room_info"]
-        title, cover, keyframe = (
-            room_info["title"],
-            room_info["cover"],
-            room_info["keyframe"],
-        )
-        return (title, cover, keyframe)
+        from .live import RoomData
 
-    async def parse_read(self, read_id: int) -> tuple[list[str], list[str]]:
+        room = LiveRoom(room_display_id=room_id, credential=await self.credential)
+        info_dict = await room.get_room_info()
+
+        room_data = msgspec.convert(info_dict, RoomData)
+        contents: list[MediaContent] = []
+        # 下载封面
+        if cover := room_data.cover:
+            cover_task = DOWNLOADER.download_img(cover, ext_headers=self.headers)
+            contents.append(ImageContent(cover_task))
+
+        # 下载关键帧
+        if keyframe := room_data.keyframe:
+            keyframe_task = DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
+            contents.append(ImageContent(keyframe_task))
+
+        author = self.create_author(room_data.name, room_data.avatar)
+
+        return self.result(title=room_data.title, text=room_data.detail, contents=contents, author=author)
+
+    async def parse_read(self, read_id: int):
         """专栏解析
 
         Args:
@@ -330,37 +320,34 @@ class BilibiliParser(BaseParser):
         """
         from bilibili_api.article import Article
 
+        from .article import ArticleInfo, ImageNode, TextNode
+
         ar = Article(read_id)
 
         # 加载内容
         await ar.fetch_content()
         data = ar.json()
+        article_info = msgspec.convert(data, ArticleInfo)
 
-        def accumulate_text(node: dict):
-            text = ""
-            if "children" in node:
-                for child in node["children"]:
-                    text += accumulate_text(child) + " "
-            if _text := node.get("text"):
-                text += _text if isinstance(_text, str) else str(_text) + node["url"]
-            return text
+        contents: list[MediaContent] = []
+        temp_text = None
+        for child in article_info.gen_text_img():
+            match child:
+                case ImageNode():
+                    contents.append(self.create_graphics_content(child.url, temp_text, child.alt))
+                    temp_text = None
+                case TextNode():
+                    if temp_text is None:
+                        temp_text = ""
+                    temp_text += child.text
 
-        urls: list[str] = []
-        texts: list[str] = []
-        for node in data.get("children", []):
-            node_type = node.get("type")
-            if node_type == "ImageNode":
-                if img_url := node.get("url", "").strip():
-                    urls.append(img_url)
-                    # 补空串占位符
-                    texts.append("")
-            elif node_type == "ParagraphNode":
-                if text := accumulate_text(node).strip():
-                    texts.append(text)
-            elif node_type == "TextNode":
-                if text := node.get("text", "").strip():
-                    texts.append(text)
-        return texts, urls
+        return self.result(
+            title=article_info.meta.title,
+            timestamp=article_info.meta.publish_time,
+            text=temp_text,
+            author=self.create_author(article_info.meta.author.name, article_info.meta.author.face),
+            contents=contents,
+        )
 
     async def parse_favlist(self, fav_id: int):
         """解析收藏夹信息

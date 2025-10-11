@@ -83,7 +83,17 @@ class GraphicsContent(MediaContent):
     """图文内容 渲染时文字在前 图片在后"""
 
     text: str | None = None
-    """文本内容"""
+    """图片前的文本内容"""
+    alt: str | None = None
+    """图片描述 渲染时居中显示"""
+
+    def __repr__(self) -> str:
+        repr = f"GraphicsContent(path={repr_path_task(self.path_task)}"
+        if self.text:
+            repr += f", text={self.text}"
+        if self.alt:
+            repr += f", alt={self.alt}"
+        return repr + ")"
 
 
 @dataclass

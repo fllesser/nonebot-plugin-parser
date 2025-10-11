@@ -1,5 +1,7 @@
 from msgspec import Struct
 
+from .common import Upper
+
 
 class FavItem(Struct):
     title: str
@@ -9,24 +11,18 @@ class FavItem(Struct):
 
     @property
     def url(self) -> str:
+        """完整链接"""
         return self.link.replace("bilibili://video/", "https://bilibili.com/video/av")
 
     @property
     def desc(self) -> str:
+        """描述"""
         return f"标题: {self.title}\n简介: {self.intro}\n链接: {self.url}"
 
     @property
     def avid(self) -> int:
+        """avid"""
         return int(self.link.split("/")[-1])
-
-
-class Upper(Struct):
-    # mid: int
-    name: str
-    face: str
-    # followed: bool
-    # vip_type: int
-    # vip_statue: int
 
 
 class FavInfo(Struct):

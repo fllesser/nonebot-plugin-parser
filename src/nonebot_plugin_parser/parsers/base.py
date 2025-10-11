@@ -140,10 +140,10 @@ class BaseParser(ABC):
 
         return AudioContent(url_or_task, duration)
 
-    def create_graphics_content(self, image_url: str, text: str | None = None):
+    def create_graphics_content(self, image_url: str, text: str | None = None, alt: str | None = None):
         """创建图文内容 图片不能为空 文字可空 渲染时文字在前 图片在后"""
         from ..download import DOWNLOADER
         from .data import GraphicsContent
 
         image_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
-        return GraphicsContent(image_task, text)
+        return GraphicsContent(image_task, text, alt)
