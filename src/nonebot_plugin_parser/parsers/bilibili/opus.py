@@ -28,20 +28,15 @@ class OpusAuthor(Struct):
     mid: int
     pub_time: str
     pub_ts: int
-    jump_url: str
-    following: bool = False
-    official: dict[str, Any] | None = None
-    vip: dict[str, Any] | None = None
-    pendant: dict[str, Any] | None = None
 
 
 class OpusImage(Struct):
     """图文动态图片信息"""
 
     url: str
-    width: int
-    height: int
-    size: float
+    # width: int
+    # height: int
+    # size: float
 
 
 class OpusPic(Struct):
@@ -63,8 +58,8 @@ class OpusParagraph(Struct):
     para_type: int
     text: OpusText | None = None
     pic: OpusPic | None = None
-    align: int = 0
-    format: dict[str, Any] | None = None
+    # align: int = 0
+    # format: dict[str, Any] | None = None
 
 
 class OpusContent(Struct):
@@ -89,7 +84,13 @@ class OpusModule(Struct):
     module_type: str
     module_author: OpusAuthor | None = None
     module_content: OpusContent | None = None
-    module_stat: OpusStat | None = None
+    # module_stat: OpusStat | None = None
+
+
+class Basic(Struct):
+    """图文动态基本信息"""
+
+    title: str
 
 
 class OpusInfo(Struct):
@@ -98,13 +99,17 @@ class OpusInfo(Struct):
     id_str: str
     type: int
     modules: list[OpusModule]
-    basic: dict[str, Any] | None = None
+    basic: Basic | None = None
 
 
 class OpusItem(Struct):
     """图文动态项目"""
 
     item: OpusInfo
+
+    @property
+    def title(self) -> str | None:
+        return self.item.basic.title if self.item.basic else None
 
     @property
     def name_avator(self) -> tuple[str, str]:

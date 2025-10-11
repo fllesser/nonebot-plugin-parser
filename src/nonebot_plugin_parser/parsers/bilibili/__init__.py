@@ -316,8 +316,9 @@ class BilibiliParser(BaseParser):
         text_content = temp_text
 
         return self.result(
-            timestamp=opus_data.timestamp,
+            title=opus_data.title,
             author=author,
+            timestamp=opus_data.timestamp,
             contents=contents,
             text=text_content,
         )
