@@ -73,6 +73,14 @@ class ImageGridSectionData(SectionData):
     remaining_count: int
 
 
+@dataclass(eq=False)
+class GraphicsSectionData(SectionData):
+    """图文内容部分数据"""
+
+    text_lines: list[str]
+    image: Image.Image
+
+
 class CommonRenderer(ImageRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
@@ -381,7 +389,7 @@ class CommonRenderer(ImageRenderer):
             title_height = len(title_lines) * self.LINE_HEIGHTS["title"]
             sections.append(TitleSectionData(height=title_height, lines=title_lines))
 
-        # 3. 封面部分
+        # 3. 封面，图集，图文内容
         if cover_img:
             sections.append(CoverSectionData(height=cover_img.height, cover_img=cover_img))
         elif result.img_contents:
@@ -389,14 +397,19 @@ class CommonRenderer(ImageRenderer):
             img_grid_section = await self._calculate_image_grid_section(result, content_width)
             if img_grid_section:
                 sections.append(img_grid_section)
+        elif result.graphics_contents:
+            for graphics_content in result.graphics_contents:
+                graphics_section = await self._calculate_graphics_section(graphics_content, content_width)
+                if graphics_section:
+                    sections.append(graphics_section)
 
-        # 4. 文本内容
+        # 5. 文本内容
         if result.text:
             text_lines = self._wrap_text(result.text, content_width, self.fonts["text"])
             text_height = len(text_lines) * self.LINE_HEIGHTS["text"]
             sections.append(TextSectionData(height=text_height, lines=text_lines))
 
-        # 5. 额外信息
+        # 6. 额外信息
         if result.extra_info:
             extra_lines = self._wrap_text(result.extra_info, content_width, self.fonts["extra"])
             extra_height = len(extra_lines) * self.LINE_HEIGHTS["extra"]
@@ -409,6 +422,37 @@ class CommonRenderer(ImageRenderer):
                 sections.append(repost_section)
 
         return sections
+
+    async def _calculate_graphics_section(self, graphics_content, content_width: int) -> GraphicsSectionData | None:
+        """计算图文内容部分的高度和内容"""
+        try:
+            # 加载图片
+            img_path = await graphics_content.get_path()
+            if not img_path or not img_path.exists():
+                return None
+
+            image = Image.open(img_path)
+
+            # 调整图片尺寸以适应内容宽度
+            if image.width > content_width:
+                ratio = content_width / image.width
+                new_height = int(image.height * ratio)
+                image = image.resize((content_width, new_height), Image.Resampling.LANCZOS)
+
+            # 处理文本内容
+            text_lines = []
+            if graphics_content.text:
+                text_lines = self._wrap_text(graphics_content.text, content_width, self.fonts["text"])
+
+            # 计算总高度：文本高度 + 图片高度 + 间距
+            text_height = len(text_lines) * self.LINE_HEIGHTS["text"] if text_lines else 0
+            total_height = text_height + image.height
+            if text_lines:
+                total_height += self.SECTION_SPACING  # 文本和图片之间的间距
+
+            return GraphicsSectionData(height=total_height, text_lines=text_lines, image=image)
+        except Exception:
+            return None
 
     async def _calculate_header_section(self, result: ParseResult, content_width: int) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
@@ -589,6 +633,8 @@ class CommonRenderer(ImageRenderer):
                     y_pos = self._draw_cover(image, cover.cover_img, y_pos, card_width)
                 case TextSectionData() as text:
                     y_pos = self._draw_text(draw, text.lines, y_pos, self.fonts["text"])
+                case GraphicsSectionData() as graphics:
+                    y_pos = self._draw_graphics(image, draw, graphics, y_pos, card_width)
                 case ExtraSectionData() as extra:
                     y_pos = self._draw_extra(draw, extra.lines, y_pos, self.fonts["extra"])
                 case RepostSectionData() as repost:
@@ -728,6 +774,23 @@ class CommonRenderer(ImageRenderer):
             draw.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
             y_pos += self.LINE_HEIGHTS["text"]
         return y_pos + self.SECTION_SPACING
+
+    def _draw_graphics(
+        self, image: Image.Image, draw: ImageDraw.ImageDraw, section: GraphicsSectionData, y_pos: int, card_width: int
+    ) -> int:
+        """绘制图文内容"""
+        # 绘制文本内容（如果有）
+        if section.text_lines:
+            for line in section.text_lines:
+                draw.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=self.fonts["text"])
+                y_pos += self.LINE_HEIGHTS["text"]
+            y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
+
+        # 绘制图片
+        x_pos = self.PADDING
+        image.paste(section.image, (x_pos, y_pos))
+
+        return y_pos + section.image.height + self.SECTION_SPACING
 
     def _draw_extra(self, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制额外信息"""
