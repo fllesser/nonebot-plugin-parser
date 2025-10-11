@@ -66,8 +66,11 @@ class BaseRenderer(ABC):
                     forwardable_segs.append(UniHelper.img_seg(path))
                 case DynamicContent():
                     forwardable_segs.append(UniHelper.video_seg(path))
-                case GraphicsContent(_, text):
-                    forwardable_segs.append(text + UniHelper.img_seg(path))
+                case GraphicsContent() as graphics:
+                    graphics_msg = UniHelper.img_seg(path)
+                    if graphics.text is not None:
+                        graphics_msg = graphics.text + graphics_msg
+                    forwardable_segs.append(graphics_msg)
 
         if forwardable_segs:
             forward_msg = UniHelper.construct_forward_message(forwardable_segs)

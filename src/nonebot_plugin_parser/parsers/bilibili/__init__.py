@@ -15,7 +15,6 @@ from ...exception import DownloadException, DurationLimitException, ParseExcepti
 from ..base import BaseParser
 from ..cookie import ck2dict
 from ..data import (
-    GraphicsContent,
     ImageContent,
     MediaContent,
     Platform,
@@ -221,15 +220,7 @@ class BilibiliParser(BaseParser):
             if not match_result:
                 raise ParseException("无效的收藏夹链接")
             fav_id = int(match_result.group(1))
-            titles, cover_urls = await self.parse_favlist(fav_id)
-
-            # 并发下载封面
-            cover_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in cover_urls]
-            contents = [GraphicsContent(task, title) for task, title in zip(cover_tasks, titles)]
-            return self.result(
-                title=f"收藏夹 - {fav_id}",
-                contents=contents,
-            )
+            return await self.parse_favlist(fav_id)
 
         raise ParseException("不支持的 Bilibili 链接")
 
@@ -371,35 +362,33 @@ class BilibiliParser(BaseParser):
                     texts.append(text)
         return texts, urls
 
-    async def parse_favlist(self, fav_id: int) -> tuple[list[str], list[str]]:
+    async def parse_favlist(self, fav_id: int):
         """解析收藏夹信息
 
         Args:
             fav_id (int): 收藏夹 id
 
         Returns:
-            tuple[list[str], list[str]]: 标题、封面、简介、链接
+            list[GraphicsContent]: 图文内容列表
         """
         from bilibili_api.favorite_list import get_video_favorite_list_content
 
-        fav_list: dict[str, Any] = await get_video_favorite_list_content(fav_id)
-        if fav_list["medias"] is None:
+        from .favlist import FavData
+
+        # 只会取一页，20 个
+        fav_dict = await get_video_favorite_list_content(fav_id)
+
+        if fav_dict["medias"] is None:
             raise ParseException("收藏夹内容为空, 或被风控")
-        # 取前 50 个
-        medias_50: list[dict[str, Any]] = fav_list["medias"][:50]
-        texts: list[str] = []
-        urls: list[str] = []
-        for fav in medias_50:
-            title, cover, intro, link = (
-                fav["title"],
-                fav["cover"],
-                fav["intro"],
-                fav["link"],
-            )
-            link: str = link.replace("bilibili://video/", "https://bilibili.com/video/av")
-            urls.append(cover)
-            texts.append(f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接: {link}")
-        return texts, urls
+
+        favdata = msgspec.convert(fav_dict, FavData)
+
+        return self.result(
+            title=favdata.title,
+            timestamp=favdata.timestamp,
+            author=self.create_author(favdata.info.upper.name, favdata.info.upper.face),
+            contents=[self.create_graphics_content(fav.cover, fav.desc) for fav in favdata.medias],
+        )
 
     async def _parse_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
         """解析视频信息

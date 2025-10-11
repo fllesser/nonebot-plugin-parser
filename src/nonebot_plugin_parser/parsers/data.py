@@ -80,9 +80,10 @@ class DynamicContent(MediaContent):
 
 @dataclass(repr=False)
 class GraphicsContent(MediaContent):
-    """图文内容"""
+    """图文内容 渲染时文字在前 图片在后"""
 
-    text: str
+    text: str | None = None
+    """文本内容"""
 
 
 @dataclass
