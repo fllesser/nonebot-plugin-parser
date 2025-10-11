@@ -1,7 +1,7 @@
 import asyncio
 import json
 import re
-from typing import Any, ClassVar
+from typing import ClassVar
 from typing_extensions import override
 
 from bilibili_api import HEADERS, Credential, request_settings, select_client
@@ -160,29 +160,17 @@ class BilibiliParser(BaseParser):
     async def parse_others(self, url: str):
         """解析其他类型链接"""
         # 判断链接类型并解析
-        # 1. 动态/图文 (opus)
-        if "t.bilibili.com" in url or "/opus" in url:
+        # 1. 动态
+        if "t.bilibili.com" in url:
+            return await self.parse_dynamic(url)
+
+        # 2.图文动态
+        if "/opus" in url:
             matched = re.search(r"/(\d+)", url)
             if not matched:
                 raise ParseException("无效的动态链接")
             opus_id = int(matched.group(1))
-            img_urls, text = await self.parse_opus(opus_id)
-
-            # 下载图片
-            contents: list[MediaContent] = []
-            if img_urls:
-                img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in img_urls]
-                contents.extend(ImageContent(task) for task in img_tasks)
-
-            return self.result(title=f"动态 - {opus_id}", text=text, contents=contents)
-
-        # 2. 直播
-        if "/live" in url:
-            matched = re.search(r"/(\d+)", url)
-            if matched is None:
-                raise ParseException("无效的直播链接")
-            room_id = int(matched.group(1))
-            return await self.parse_live(room_id)
+            return await self.parse_opus(opus_id)
 
         # 3. 专栏
         if "/read" in url:
@@ -192,7 +180,15 @@ class BilibiliParser(BaseParser):
             read_id = int(matched.group(1))
             return await self.parse_read(read_id)
 
-        # 4. 收藏夹
+        # 4. 直播
+        if "/live" in url:
+            matched = re.search(r"/(\d+)", url)
+            if matched is None:
+                raise ParseException("无效的直播链接")
+            room_id = int(matched.group(1))
+            return await self.parse_live(room_id)
+
+        # 5. 收藏夹
         if "/favlist" in url:
             matched = re.search(r"fid=(\d+)", url)
             if matched is None:
@@ -243,39 +239,88 @@ class BilibiliParser(BaseParser):
 
         return self._credential
 
-    async def parse_opus(self, opus_id: int) -> tuple[list[str], str]:
+    async def parse_dynamic(self, url: str):
         """解析动态信息
 
         Args:
-            opus_id (int): 动态 id
+            url (str): 动态链接
+        """
+        from bilibili_api.dynamic import Dynamic
+
+        from .dynamic import DynamicItem
+
+        matched = re.search(r"/(\d+)", url)
+        if matched is None:
+            raise ParseException("无效的动态链接")
+        dynamic_id = int(matched.group(1))
+        dynamic = Dynamic(dynamic_id, await self.credential)
+
+        # 转换为结构体
+        dynamic_data = msgspec.convert(await dynamic.get_info(), DynamicItem)
+        dynamic_info = dynamic_data.item
+        # 使用结构体属性提取信息
+        author = self.create_author(dynamic_info.name, dynamic_info.avatar)
+
+        # 下载图片
+        contents: list[MediaContent] = []
+        for image_url in dynamic_info.image_urls:
+            img_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
+            contents.append(ImageContent(img_task))
+
+        return self.result(
+            url=url,
+            title=dynamic_info.title,
+            text=dynamic_info.text,
+            timestamp=dynamic_info.timestamp,
+            author=author,
+            contents=contents,
+        )
+
+    async def parse_opus(self, opus_id: int):
+        """解析图文动态信息
+
+        Args:
+            opus_id (int): 图文动态 id
 
         Returns:
-            tuple[list[str], str]: 图片 url 列表和动态信息
+            ParseResult: 解析结果
         """
         from bilibili_api.opus import Opus
+
+        from .opus import OpusImageNode, OpusItem, OpusTextNode
 
         opus = Opus(opus_id, await self.credential)
         opus_info = await opus.get_info()
         if not isinstance(opus_info, dict):
-            raise ParseException("获取动态信息失败")
+            raise ParseException("获取图文动态信息失败")
+        # 转换为结构体
+        opus_data = msgspec.convert(opus_info, OpusItem)
 
-        # 获取图片信息
-        urls = await opus.get_images_raw_info()
-        urls = [url["url"] for url in urls]
+        author = self.create_author(*opus_data.name_avator)
 
-        dynamic = opus.turn_to_dynamic()
-        dynamic_info: dict[str, Any] = await dynamic.get_info()
-        orig_text = (
-            dynamic_info.get("item", {})
-            .get("modules", {})
-            .get("module_dynamic", {})
-            .get("major", {})
-            .get("opus", {})
-            .get("summary", {})
-            .get("rich_text_nodes", [{}])[0]
-            .get("orig_text", "")
+        # 按顺序处理图文内容（参考 parse_read 的逻辑）
+        contents: list[MediaContent] = []
+        temp_text = None
+
+        for node in opus_data.gen_text_img():
+            match node:
+                case OpusImageNode():
+                    contents.append(self.create_graphics_content(node.url, temp_text))
+                    temp_text = None
+                case OpusTextNode():
+                    if temp_text is None:
+                        temp_text = ""
+                    temp_text += node.text
+
+        # 处理最后的文本内容
+        text_content = temp_text
+
+        return self.result(
+            timestamp=opus_data.timestamp,
+            author=author,
+            contents=contents,
+            text=text_content,
         )
-        return urls, orig_text
 
     async def parse_live(self, room_id: int):
         """解析直播信息
