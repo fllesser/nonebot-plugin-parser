@@ -12,11 +12,11 @@ class AuthorInfo(Struct):
     mid: int
     pub_time: str
     pub_ts: int
-    jump_url: str
-    following: bool = False
-    official_verify: dict[str, Any] | None = None
-    vip: dict[str, Any] | None = None
-    pendant: dict[str, Any] | None = None
+    # jump_url: str
+    # following: bool = False
+    # official_verify: dict[str, Any] | None = None
+    # vip: dict[str, Any] | None = None
+    # pendant: dict[str, Any] | None = None
 
 
 class VideoArchive(Struct):
@@ -27,28 +27,28 @@ class VideoArchive(Struct):
     title: str
     desc: str
     cover: str
-    duration_text: str
-    jump_url: str
-    stat: dict[str, str]
-    badge: dict[str, Any] | None = None
+    # duration_text: str
+    # jump_url: str
+    # stat: dict[str, str]
+    # badge: dict[str, Any] | None = None
 
 
 class OpusImage(Struct):
     """图文动态图片信息"""
 
     url: str
-    width: int
-    height: int
-    size: float
-    aigc: dict[str, Any] | None = None
-    live_url: str | None = None
+    # width: int
+    # height: int
+    # size: float
+    # aigc: dict[str, Any] | None = None
+    # live_url: str | None = None
 
 
 class OpusSummary(Struct):
     """图文动态摘要"""
 
     text: str
-    rich_text_nodes: list[dict[str, Any]]
+    # rich_text_nodes: list[dict[str, Any]]
 
 
 class OpusContent(Struct):
@@ -58,7 +58,7 @@ class OpusContent(Struct):
     pics: list[OpusImage]
     summary: OpusSummary
     title: str | None = None
-    fold_action: list[str] | None = None
+    # fold_action: list[str] | None = None
 
 
 class DynamicMajor(Struct):
