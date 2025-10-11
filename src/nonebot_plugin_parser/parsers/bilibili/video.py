@@ -1,14 +1,9 @@
 from msgspec import Struct
 
-
-class Owner(Struct):
-    name: str
-    """作者名称"""
-    face: str
-    """作者头像"""
+from .common import Upper
 
 
-class Stat(Struct):
+class Stats(Struct):
     view: int
     """播放量"""
     danmaku: int
@@ -45,9 +40,9 @@ class VideoInfo(Struct):
     """简介"""
     duration: int
     """时长"""
-    owner: Owner
+    owner: Upper
     """作者信息"""
-    stat: Stat
+    stat: Stats
     """统计信息"""
     pubdate: int
     """公开时间戳"""

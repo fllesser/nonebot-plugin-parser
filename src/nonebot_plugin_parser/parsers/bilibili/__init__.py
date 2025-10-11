@@ -1,10 +1,11 @@
 import asyncio
 import json
 import re
-from typing import Any, ClassVar
+from typing import ClassVar
 from typing_extensions import override
 
 from bilibili_api import HEADERS, Credential, request_settings, select_client
+from bilibili_api.opus import Opus
 from bilibili_api.video import Video
 import msgspec
 from nonebot import logger
@@ -15,7 +16,6 @@ from ...exception import DownloadException, DurationLimitException, ParseExcepti
 from ..base import BaseParser
 from ..cookie import ck2dict
 from ..data import (
-    GraphicsContent,
     ImageContent,
     MediaContent,
     Platform,
@@ -161,75 +161,41 @@ class BilibiliParser(BaseParser):
     async def parse_others(self, url: str):
         """解析其他类型链接"""
         # 判断链接类型并解析
-        # 1. 动态/图文 (opus)
-        if "t.bilibili.com" in url or "/opus" in url:
+        # 1. 动态
+        if "t.bilibili.com" in url:
+            return await self.parse_dynamic(url)
+
+        # 2.图文动态
+        if "/opus" in url:
             matched = re.search(r"/(\d+)", url)
             if not matched:
                 raise ParseException("无效的动态链接")
             opus_id = int(matched.group(1))
-            img_urls, text = await self.parse_opus(opus_id)
-
-            # 下载图片
-            contents: list[MediaContent] = []
-            if img_urls:
-                img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in img_urls]
-                contents.extend(ImageContent(task) for task in img_tasks)
-
-            return self.result(title=f"动态 - {opus_id}", text=text, contents=contents)
-
-        # 2. 直播
-        if "/live" in url:
-            match_result = re.search(r"/(\d+)", url)
-            if not match_result:
-                raise ParseException("无效的直播链接")
-            room_id = int(match_result.group(1))
-            title, cover, keyframe = await self.parse_live(room_id)
-
-            contents = []
-            # 下载封面
-            if cover:
-                cover_task = DOWNLOADER.download_img(cover, ext_headers=self.headers)
-                contents.append(ImageContent(cover_task))
-
-            # 下载关键帧
-            if keyframe:
-                keyframe_task = DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
-                contents.append(ImageContent(keyframe_task))
-
-            return self.result(title="直播 - " + title, contents=contents)
+            return await self.parse_opus(opus_id)
 
         # 3. 专栏
         if "/read" in url:
-            match_result = re.search(r"/cv(\d+)", url)
-            if not match_result:
+            matched = re.search(r"/cv(\d+)", url)
+            if matched is None:
                 raise ParseException("无效的专栏链接")
-            read_id = int(match_result.group(1))
-            texts, img_urls = await self.parse_read(read_id)
-            combined_text = "\n".join(texts)
+            read_id = int(matched.group(1))
+            return await self.parse_read(read_id)
 
-            # 下载图片
-            contents = []
-            if img_urls:
-                img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in img_urls]
-                contents.extend(ImageContent(task) for task in img_tasks)
+        # 4. 直播
+        if "/live" in url:
+            matched = re.search(r"/(\d+)", url)
+            if matched is None:
+                raise ParseException("无效的直播链接")
+            room_id = int(matched.group(1))
+            return await self.parse_live(room_id)
 
-            return self.result(title=f"专栏 - {read_id}", text=combined_text, contents=contents)
-
-        # 4. 收藏夹
+        # 5. 收藏夹
         if "/favlist" in url:
-            match_result = re.search(r"fid=(\d+)", url)
-            if not match_result:
+            matched = re.search(r"fid=(\d+)", url)
+            if matched is None:
                 raise ParseException("无效的收藏夹链接")
-            fav_id = int(match_result.group(1))
-            titles, cover_urls = await self.parse_favlist(fav_id)
-
-            # 并发下载封面
-            cover_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in cover_urls]
-            contents = [GraphicsContent(task, title) for task, title in zip(cover_tasks, titles)]
-            return self.result(
-                title=f"收藏夹 - {fav_id}",
-                contents=contents,
-            )
+            fav_id = int(matched.group(1))
+            return await self.parse_favlist(fav_id)
 
         raise ParseException("不支持的 Bilibili 链接")
 
@@ -274,61 +240,141 @@ class BilibiliParser(BaseParser):
 
         return self._credential
 
-    async def parse_opus(self, opus_id: int) -> tuple[list[str], str]:
+    async def parse_dynamic(self, url: str):
         """解析动态信息
 
         Args:
-            opus_id (int): 动态 id
+            url (str): 动态链接
+        """
+        from bilibili_api.dynamic import Dynamic
+
+        from .dynamic import DynamicItem
+
+        matched = re.search(r"/(\d+)", url)
+        if matched is None:
+            raise ParseException("无效的动态链接")
+        dynamic_id = int(matched.group(1))
+        dynamic = Dynamic(dynamic_id, await self.credential)
+
+        # 转换为结构体
+        dynamic_data = msgspec.convert(await dynamic.get_info(), DynamicItem)
+        dynamic_info = dynamic_data.item
+        # 使用结构体属性提取信息
+        author = self.create_author(dynamic_info.name, dynamic_info.avatar)
+
+        # 下载图片
+        contents: list[MediaContent] = []
+        for image_url in dynamic_info.image_urls:
+            img_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
+            contents.append(ImageContent(img_task))
+
+        return self.result(
+            url=url,
+            title=dynamic_info.title,
+            text=dynamic_info.text,
+            timestamp=dynamic_info.timestamp,
+            author=author,
+            contents=contents,
+        )
+
+    async def parse_opus(self, opus_id: int):
+        """解析图文动态信息
+
+        Args:
+            opus_id (int): 图文动态 id
+        """
+        opus = Opus(opus_id, await self.credential)
+        return await self._parse_opus(opus)
+
+    async def parse_read(self, read_id: int):
+        """解析专栏信息
+
+        Args:
+            read_id (int): 专栏 id
+        """
+        from bilibili_api.article import Article
+
+        article = Article(read_id)
+        return await self._parse_opus(await article.turn_to_opus())
+
+    async def _parse_opus(self, bili_opus: Opus):
+        """解析图文动态信息
+
+        Args:
+            opus_id (int): 图文动态 id
 
         Returns:
-            tuple[list[str], str]: 图片 url 列表和动态信息
+            ParseResult: 解析结果
         """
-        from bilibili_api.opus import Opus
 
-        opus = Opus(opus_id, await self.credential)
-        opus_info = await opus.get_info()
+        from .opus import OpusImageNode, OpusItem, OpusTextNode
+
+        opus_info = await bili_opus.get_info()
         if not isinstance(opus_info, dict):
-            raise ParseException("获取动态信息失败")
+            raise ParseException("获取图文动态信息失败")
+        # 转换为结构体
+        opus_data = msgspec.convert(opus_info, OpusItem)
 
-        # 获取图片信息
-        urls = await opus.get_images_raw_info()
-        urls = [url["url"] for url in urls]
+        author = self.create_author(*opus_data.name_avatar)
 
-        dynamic = opus.turn_to_dynamic()
-        dynamic_info: dict[str, Any] = await dynamic.get_info()
-        orig_text = (
-            dynamic_info.get("item", {})
-            .get("modules", {})
-            .get("module_dynamic", {})
-            .get("major", {})
-            .get("opus", {})
-            .get("summary", {})
-            .get("rich_text_nodes", [{}])[0]
-            .get("orig_text", "")
+        # 按顺序处理图文内容（参考 parse_read 的逻辑）
+        contents: list[MediaContent] = []
+        temp_text = None
+
+        for node in opus_data.gen_text_img():
+            match node:
+                case OpusImageNode():
+                    contents.append(self.create_graphics_content(node.url, temp_text))
+                    temp_text = None
+                case OpusTextNode():
+                    if temp_text is None:
+                        temp_text = ""
+                    temp_text += node.text
+
+        # 处理最后的文本内容
+        text_content = temp_text
+
+        return self.result(
+            title=opus_data.title,
+            author=author,
+            timestamp=opus_data.timestamp,
+            contents=contents,
+            text=text_content,
         )
-        return urls, orig_text
 
-    async def parse_live(self, room_id: int) -> tuple[str, str, str]:
+    async def parse_live(self, room_id: int):
         """解析直播信息
 
         Args:
             room_id (int): 直播 id
 
         Returns:
-            tuple[str, str, str]: 标题、封面、关键帧
+            ParseResult: 解析结果
         """
         from bilibili_api.live import LiveRoom
 
-        room = LiveRoom(room_display_id=room_id, credential=await self.credential)
-        room_info: dict[str, Any] = (await room.get_room_info())["room_info"]
-        title, cover, keyframe = (
-            room_info["title"],
-            room_info["cover"],
-            room_info["keyframe"],
-        )
-        return (title, cover, keyframe)
+        from .live import RoomData
 
-    async def parse_read(self, read_id: int) -> tuple[list[str], list[str]]:
+        room = LiveRoom(room_display_id=room_id, credential=await self.credential)
+        info_dict = await room.get_room_info()
+
+        room_data = msgspec.convert(info_dict, RoomData)
+        contents: list[MediaContent] = []
+        # 下载封面
+        if cover := room_data.cover:
+            cover_task = DOWNLOADER.download_img(cover, ext_headers=self.headers)
+            contents.append(ImageContent(cover_task))
+
+        # 下载关键帧
+        if keyframe := room_data.keyframe:
+            keyframe_task = DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
+            contents.append(ImageContent(keyframe_task))
+
+        author = self.create_author(room_data.name, room_data.avatar)
+
+        return self.result(title=room_data.title, text=room_data.detail, contents=contents, author=author)
+
+    async def parse_read_old(self, read_id: int):
         """专栏解析
 
         Args:
@@ -339,67 +385,61 @@ class BilibiliParser(BaseParser):
         """
         from bilibili_api.article import Article
 
-        ar = Article(read_id)
+        from .article import ArticleInfo, ImageNode, TextNode
 
+        ar = Article(read_id)
         # 加载内容
         await ar.fetch_content()
         data = ar.json()
+        article_info = msgspec.convert(data, ArticleInfo)
+        logger.debug(f"article_info: {article_info}")
+        contents: list[MediaContent] = []
+        temp_text = None
+        for child in article_info.gen_text_img():
+            match child:
+                case ImageNode():
+                    contents.append(self.create_graphics_content(child.url, temp_text, child.alt))
+                    temp_text = None
+                case TextNode():
+                    if temp_text is None:
+                        temp_text = ""
+                    temp_text += child.text
 
-        def accumulate_text(node: dict):
-            text = ""
-            if "children" in node:
-                for child in node["children"]:
-                    text += accumulate_text(child) + " "
-            if _text := node.get("text"):
-                text += _text if isinstance(_text, str) else str(_text) + node["url"]
-            return text
+        return self.result(
+            title=article_info.meta.title,
+            timestamp=article_info.meta.publish_time,
+            text=temp_text,
+            author=self.create_author(article_info.meta.author.name, article_info.meta.author.face),
+            contents=contents,
+        )
 
-        urls: list[str] = []
-        texts: list[str] = []
-        for node in data.get("children", []):
-            node_type = node.get("type")
-            if node_type == "ImageNode":
-                if img_url := node.get("url", "").strip():
-                    urls.append(img_url)
-                    # 补空串占位符
-                    texts.append("")
-            elif node_type == "ParagraphNode":
-                if text := accumulate_text(node).strip():
-                    texts.append(text)
-            elif node_type == "TextNode":
-                if text := node.get("text", "").strip():
-                    texts.append(text)
-        return texts, urls
-
-    async def parse_favlist(self, fav_id: int) -> tuple[list[str], list[str]]:
+    async def parse_favlist(self, fav_id: int):
         """解析收藏夹信息
 
         Args:
             fav_id (int): 收藏夹 id
 
         Returns:
-            tuple[list[str], list[str]]: 标题、封面、简介、链接
+            list[GraphicsContent]: 图文内容列表
         """
         from bilibili_api.favorite_list import get_video_favorite_list_content
 
-        fav_list: dict[str, Any] = await get_video_favorite_list_content(fav_id)
-        if fav_list["medias"] is None:
+        from .favlist import FavData
+
+        # 只会取一页，20 个
+        fav_dict = await get_video_favorite_list_content(fav_id)
+
+        if fav_dict["medias"] is None:
             raise ParseException("收藏夹内容为空, 或被风控")
-        # 取前 50 个
-        medias_50: list[dict[str, Any]] = fav_list["medias"][:50]
-        texts: list[str] = []
-        urls: list[str] = []
-        for fav in medias_50:
-            title, cover, intro, link = (
-                fav["title"],
-                fav["cover"],
-                fav["intro"],
-                fav["link"],
-            )
-            link: str = link.replace("bilibili://video/", "https://bilibili.com/video/av")
-            urls.append(cover)
-            texts.append(f"🧉 标题：{title}\n📝 简介：{intro}\n🔗 链接: {link}")
-        return texts, urls
+
+        favdata = msgspec.convert(fav_dict, FavData)
+
+        return self.result(
+            title=favdata.title,
+            timestamp=favdata.timestamp,
+            author=self.create_author(favdata.info.upper.name, favdata.info.upper.face),
+            contents=[self.create_graphics_content(fav.cover, fav.desc) for fav in favdata.medias],
+        )
 
     async def _parse_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
         """解析视频信息

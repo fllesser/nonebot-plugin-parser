@@ -110,10 +110,9 @@ class BaseParser(ABC):
         if cover_url:
             cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
         if isinstance(url_or_task, str):
-            video_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
-        else:
-            video_task = url_or_task
-        return VideoContent(video_task, cover_task, duration)
+            url_or_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
+
+        return VideoContent(url_or_task, cover_task, duration)
 
     def create_image_contents(self, image_urls: list[str]):
         """创建图片内容列表"""
@@ -124,7 +123,7 @@ class BaseParser(ABC):
         return [ImageContent(task) for task in img_tasks]
 
     def create_dynamic_contents(self, dynamic_urls: list[str]):
-        """创建动态内容列表"""
+        """创建动态图片内容列表"""
         from ..download import DOWNLOADER
         from .data import DynamicContent
 
@@ -137,7 +136,14 @@ class BaseParser(ABC):
         from .data import AudioContent
 
         if isinstance(url_or_task, str):
-            audio_task = DOWNLOADER.download_audio(url_or_task, ext_headers=self.headers)
-        else:
-            audio_task = url_or_task
-        return AudioContent(audio_task, duration)
+            url_or_task = DOWNLOADER.download_audio(url_or_task, ext_headers=self.headers)
+
+        return AudioContent(url_or_task, duration)
+
+    def create_graphics_content(self, image_url: str, text: str | None = None, alt: str | None = None):
+        """创建图文内容 图片不能为空 文字可空 渲染时文字在前 图片在后"""
+        from ..download import DOWNLOADER
+        from .data import GraphicsContent
+
+        image_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
+        return GraphicsContent(image_task, text, alt)
