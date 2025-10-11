@@ -1,4 +1,4 @@
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from typing import Any
 
 from msgspec import Struct
@@ -40,27 +40,27 @@ class VideoCardNode(Struct, tag="VideoCardNode"):
     """视频ID"""
 
 
+class BoldNode(Struct, tag="BoldNode"):
+    children: list[TextNode] = []
+    """子节点"""
+
+
 class FontSizeNode(Struct, tag="FontSizeNode"):
     size: int
     """字体大小"""
-    children: list[Any] = []
+    children: list[TextNode | BoldNode | Any] = []
     """子节点"""
 
 
 class ColorNode(Struct, tag="ColorNode"):
     color: str
     """颜色值"""
-    children: list[Any] = []
-    """子节点"""
-
-
-class BoldNode(Struct, tag="BoldNode"):
-    children: list[Any] = []
+    children: list[TextNode] = []
     """子节点"""
 
 
 class ParagraphNode(Struct, tag="ParagraphNode"):
-    children: list[Any] = []
+    children: list[FontSizeNode | ColorNode | BoldNode] = []
     """子节点"""
 
 
@@ -109,11 +109,11 @@ class ArticleInfo(Struct):
         yield from self._gen_text_img(self.children)
 
     @classmethod
-    def _gen_text_img(cls, children: list[Child | FinalChild]) -> Generator[FinalChild, None, None]:
+    def _gen_text_img(cls, children: Sequence[Child | FinalChild]) -> Generator[FinalChild, None, None]:
         for child in children:
             if isinstance(child, ImageNode):
                 yield child
             elif isinstance(child, TextNode):
                 yield child
-            elif isinstance(child, Child):
+            elif isinstance(child, Child | ParagraphNode):
                 yield from cls._gen_text_img(child.children)

@@ -5,6 +5,7 @@ from typing import ClassVar
 from typing_extensions import override
 
 from bilibili_api import HEADERS, Credential, request_settings, select_client
+from bilibili_api.opus import Opus
 from bilibili_api.video import Video
 import msgspec
 from nonebot import logger
@@ -281,16 +282,34 @@ class BilibiliParser(BaseParser):
 
         Args:
             opus_id (int): 图文动态 id
+        """
+        opus = Opus(opus_id, await self.credential)
+        return await self._parse_opus(opus)
+
+    async def parse_read(self, read_id: int):
+        """解析专栏信息
+
+        Args:
+            read_id (int): 专栏 id
+        """
+        from bilibili_api.article import Article
+
+        article = Article(read_id)
+        return await self._parse_opus(await article.turn_to_opus())
+
+    async def _parse_opus(self, bili_opus: Opus):
+        """解析图文动态信息
+
+        Args:
+            opus_id (int): 图文动态 id
 
         Returns:
             ParseResult: 解析结果
         """
-        from bilibili_api.opus import Opus
 
         from .opus import OpusImageNode, OpusItem, OpusTextNode
 
-        opus = Opus(opus_id, await self.credential)
-        opus_info = await opus.get_info()
+        opus_info = await bili_opus.get_info()
         if not isinstance(opus_info, dict):
             raise ParseException("获取图文动态信息失败")
         # 转换为结构体
@@ -355,7 +374,7 @@ class BilibiliParser(BaseParser):
 
         return self.result(title=room_data.title, text=room_data.detail, contents=contents, author=author)
 
-    async def parse_read(self, read_id: int):
+    async def parse_read_old(self, read_id: int):
         """专栏解析
 
         Args:
@@ -369,12 +388,11 @@ class BilibiliParser(BaseParser):
         from .article import ArticleInfo, ImageNode, TextNode
 
         ar = Article(read_id)
-
         # 加载内容
         await ar.fetch_content()
         data = ar.json()
         article_info = msgspec.convert(data, ArticleInfo)
-
+        logger.debug(f"article_info: {article_info}")
         contents: list[MediaContent] = []
         temp_text = None
         for child in article_info.gen_text_img():

@@ -6,23 +6,26 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_favlist():
-    from nonebot_plugin_parser.download import DOWNLOADER
     from nonebot_plugin_parser.parsers import BilibiliParser
 
     logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
     # https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
     fav_id = 311147541
     bilibili_parser = BilibiliParser()
-    texts, urls = await bilibili_parser.parse_favlist(fav_id)
+    parse_result = await bilibili_parser.parse_favlist(fav_id)
 
-    assert texts
-    logger.debug(texts)
+    assert parse_result.title, "标题为空"
+    assert parse_result.author, "作者为空"
+    avatar_path = await parse_result.author.get_avatar_path()
+    assert avatar_path, "头像不存在"
+    assert avatar_path.exists(), "头像不存在"
 
-    assert urls
-    logger.debug(urls)
+    assert parse_result.contents, "内容为空"
+    for content in parse_result.graphics_contents:
+        path = await content.get_path()
+        assert path.exists(), "内容不存在"
+        assert content.text, "文本为空"
 
-    files = await DOWNLOADER.download_imgs_without_raise(urls)
-    assert len(files) == len(urls)
     logger.success("B站收藏夹解析成功")
 
 
