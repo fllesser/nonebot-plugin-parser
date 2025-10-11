@@ -46,7 +46,12 @@ def build_keyword_parsers_map():
 
 
 # 缓存结果
-RESULT_CACHE = LimitedSizeDict[str, ParseResult](max_size=50)
+_RESULT_CACHE = LimitedSizeDict[str, ParseResult](max_size=50)
+
+
+def clear_result_cache():
+    _RESULT_CACHE.clear()
+
 
 parser_matcher = on_keyword_regex(*_get_enabled_patterns())
 
@@ -63,7 +68,7 @@ async def _(
 
     cache_key = matched.group(0)
     # 1. 获取缓存结果
-    result = RESULT_CACHE.get(cache_key)
+    result = _RESULT_CACHE.get(cache_key)
     if result is None:
         # 2. 获取对应平台 parser
         parser = KEYWORD_PARSER_MAP[keyword]
@@ -88,7 +93,7 @@ async def _(
         raise
 
     # 4. 无 raise 再缓存解析结果
-    RESULT_CACHE[cache_key] = result
+    _RESULT_CACHE[cache_key] = result
 
     # 5. 添加成功的消息响应
     await _message_reaction(event, "done")
