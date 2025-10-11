@@ -112,7 +112,7 @@ class OpusItem(Struct):
         return self.item.basic.title if self.item.basic else None
 
     @property
-    def name_avator(self) -> tuple[str, str]:
+    def name_avatar(self) -> tuple[str, str]:
         author_module = next(module.module_author for module in self.item.modules if module.module_author)
         return author_module.name, author_module.face
 

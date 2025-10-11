@@ -315,7 +315,7 @@ class BilibiliParser(BaseParser):
         # 转换为结构体
         opus_data = msgspec.convert(opus_info, OpusItem)
 
-        author = self.create_author(*opus_data.name_avator)
+        author = self.create_author(*opus_data.name_avatar)
 
         # 按顺序处理图文内容（参考 parse_read 的逻辑）
         contents: list[MediaContent] = []
