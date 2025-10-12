@@ -200,37 +200,37 @@ class CommonRenderer(ImageRenderer):
             if logo_path.exists():
                 self.platform_logos[platform_name] = Image.open(logo_path)
 
-    def __resize_platform_logos(self):
-        """调整平台 logo 尺寸, 用于调整 logo 大小(仅开发时使用)"""
-        # 平台 logo 对应的高度
-        platform_names_height: dict[str, int] = {
-            "bilibili": 30,
-            "douyin": 30,
-            "youtube": 24,
-            "kuaishou": 36,
-            "twitter": 30,
-            "tiktok": 30,
-            "weibo": 30,
-            "xiaohongshu": 24,
-        }
-        for platform_name, target_height in platform_names_height.items():
-            logo_path = Path() / "resources" / "logos" / f"{platform_name}.png"
-            logger.info(f"logo_path: {logo_path}")
-            save_path = self.RESOURCES_DIR / f"{platform_name}.png"
-            if logo_path.exists():
-                try:
-                    logo_img = Image.open(logo_path).convert("RGBA")
-                    # 调整 logo 尺寸, 只限制高度为30像素
-                    ratio = target_height / logo_img.height
-                    new_width = int(logo_img.width * ratio)
-                    new_height = target_height
-                    logo_img = logo_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                    # 保存图片
-                    logo_img.save(save_path)
-                except Exception:
-                    # 如果加载失败，跳过这个 logo
-                    logger.error(f"resize 平台 logo 失败: {platform_name}")
-                    continue
+    # def __resize_platform_logos(self):
+    #     """调整平台 logo 尺寸, 用于调整 logo 大小(仅开发时使用)"""
+    #     # 平台 logo 对应的高度
+    #     platform_names_height: dict[str, int] = {
+    #         "bilibili": 30,
+    #         "douyin": 30,
+    #         "youtube": 24,
+    #         "kuaishou": 36,
+    #         "twitter": 30,
+    #         "tiktok": 30,
+    #         "weibo": 30,
+    #         "xiaohongshu": 24,
+    #     }
+    #     for platform_name, target_height in platform_names_height.items():
+    #         logo_path = Path() / "resources" / "logos" / f"{platform_name}.png"
+    #         logger.info(f"logo_path: {logo_path}")
+    #         save_path = self.RESOURCES_DIR / f"{platform_name}.png"
+    #         if logo_path.exists():
+    #             try:
+    #                 logo_img = Image.open(logo_path).convert("RGBA")
+    #                 # 调整 logo 尺寸, 只限制高度为30像素
+    #                 ratio = target_height / logo_img.height
+    #                 new_width = int(logo_img.width * ratio)
+    #                 new_height = target_height
+    #                 logo_img = logo_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    #                 # 保存图片
+    #                 logo_img.save(save_path)
+    #             except Exception:
+    #                 # 如果加载失败，跳过这个 logo
+    #                 logger.error(f"resize 平台 logo 失败: {platform_name}")
+    #                 continue
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:

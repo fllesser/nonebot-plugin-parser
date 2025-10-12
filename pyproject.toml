@@ -112,7 +112,6 @@ show_missing = true # 相当于 --cov-report=term-missing:cite[1]
 exclude_lines = [
   "raise NotImplementedError",
   "if TYPE_CHECKING:",
-  "def __resize_platform_logos(self):",
   "@overload",
   "except",
   "raise",
