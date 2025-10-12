@@ -1,3 +1,5 @@
+import time
+
 from nonebot import logger
 import pytest
 
@@ -5,7 +7,6 @@ import pytest
 @pytest.mark.asyncio
 async def test_common_render():
     """测试使用 WeiboParser 解析链接并用 CommonRenderer 渲染"""
-    import time
 
     import aiofiles
 
@@ -137,9 +138,18 @@ async def test_graphics_content():
     parse_result = await parser.parse(matched)
     logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
+    # await 所有资源下载，计算渲染时间
+    assert parse_result.author, "没有作者信息"
+    await parse_result.author.get_avatar_path()
+    for content in parse_result.contents:
+        await content.get_path()
+
     logger.info(f"{url} | 开始渲染")
+    start_time = time.time()
     image_raw = await renderer.render_image(parse_result)
-    assert image_raw, "没有生成图片"
+    end_time = time.time()
+    cost_time = end_time - start_time
+    logger.success(f"{url} | 渲染成功，耗时: {cost_time} 秒")
 
     image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_graphics_content.png"
     # 创建文件
@@ -168,9 +178,18 @@ async def test_read():
     parse_result = await parser.parse(matched)
     logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
+    # await 所有资源下载，计算渲染时间
+    assert parse_result.author, "没有作者信息"
+    await parse_result.author.get_avatar_path()
+    for content in parse_result.contents:
+        await content.get_path()
+
     logger.info(f"{url} | 开始渲染")
+    start_time = time.time()
     image_raw = await renderer.render_image(parse_result)
-    assert image_raw, "没有生成图片"
+    end_time = time.time()
+    cost_time = end_time - start_time
+    logger.success(f"{url} | 渲染成功，耗时: {cost_time} 秒")
 
     image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_read.png"
     # 创建文件
