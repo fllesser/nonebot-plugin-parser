@@ -73,6 +73,14 @@ class ImageGridSectionData(SectionData):
     remaining_count: int
 
 
+@dataclass(eq=False)
+class GraphicsSectionData(SectionData):
+    """图文内容部分数据"""
+
+    text_lines: list[str]
+    image: Image.Image
+
+
 class CommonRenderer(ImageRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
@@ -108,18 +116,16 @@ class CommonRenderer(ImageRenderer):
     """最小封面高度"""
     MAX_IMAGE_HEIGHT = 800
     """图片最大高度限制"""
-    MAX_IMAGE_GRID_SIZE = 300
-    """图片网格最大尺寸"""
+    IMAGE_3_GRID_SIZE = 300
+    """图片3列网格最大尺寸"""
+    IMAGE_2_GRID_SIZE = 400
+    """图片2列网格最大尺寸"""
     IMAGE_GRID_SPACING = 4
     """图片网格间距"""
     MAX_IMAGES_DISPLAY = 9
     """最大显示图片数量"""
     IMAGE_GRID_COLS = 3
     """图片网格列数"""
-    IMAGE_GRID_ROWS_SINGLE = 1
-    """单张图片行数"""
-    IMAGE_GRID_COLS_SINGLE = 1
-    """单张图片列数"""
 
     # 颜色配置
     BG_COLOR: ClassVar[tuple[int, int, int]] = (255, 255, 255)
@@ -158,6 +164,7 @@ class CommonRenderer(ImageRenderer):
         self.font_path: Path = self.DEFAULT_FONT_PATH
 
     def load_resources(self):
+        """加载资源"""
         self._load_fonts()
         self._load_video_button()
         self._load_platform_logos()
@@ -176,11 +183,7 @@ class CommonRenderer(ImageRenderer):
 
     def _load_video_button(self):
         """预加载视频按钮"""
-        self.video_button_image: Image.Image = Image.open(self.DEFAULT_VIDEO_BUTTON_PATH)
-
-        # 确保素材是 RGBA 模式以支持透明度
-        if self.video_button_image.mode != "RGBA":
-            self.video_button_image = self.video_button_image.convert("RGBA")
+        self.video_button_image: Image.Image = Image.open(self.DEFAULT_VIDEO_BUTTON_PATH).convert("RGBA")
 
         # 设置透明度为 30%
         alpha = self.video_button_image.split()[-1]  # 获取 alpha 通道
@@ -197,39 +200,37 @@ class CommonRenderer(ImageRenderer):
             if logo_path.exists():
                 self.platform_logos[platform_name] = Image.open(logo_path)
 
-    def __resize_platform_logos(self):
-        """调整平台 logo 尺寸, 用于调整 logo 大小(仅开发时使用)"""
-        # 平台 logo 对应的高度
-        platform_names_height: dict[str, int] = {
-            "bilibili": 30,
-            "douyin": 30,
-            "youtube": 24,
-            "kuaishou": 36,
-            "twitter": 30,
-            "tiktok": 30,
-            "weibo": 30,
-            "xiaohongshu": 24,
-        }
-        for platform_name, target_height in platform_names_height.items():
-            logo_path = self.RESOURCES_DIR / f"{platform_name}.png"
-            if logo_path.exists():
-                try:
-                    logo_img = Image.open(logo_path)
-                    # 调整 logo 尺寸, 只限制高度为30像素
-                    ratio = target_height / logo_img.height
-                    new_width = int(logo_img.width * ratio)
-                    new_height = target_height
-                    logo_img = logo_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                    # 保存图片
-                    logo_img.save(logo_path)
-                    # 确保是 RGBA 模式
-                    if logo_img.mode != "RGBA":
-                        logo_img = logo_img.convert("RGBA")
-
-                except Exception:
-                    # 如果加载失败，跳过这个 logo
-                    logger.error(f"resize 平台 logo 失败: {platform_name}")
-                    continue
+    # def __resize_platform_logos(self):
+    #     """调整平台 logo 尺寸, 用于调整 logo 大小(仅开发时使用)"""
+    #     # 平台 logo 对应的高度
+    #     platform_names_height: dict[str, int] = {
+    #         "bilibili": 30,
+    #         "douyin": 30,
+    #         "youtube": 24,
+    #         "kuaishou": 36,
+    #         "twitter": 30,
+    #         "tiktok": 30,
+    #         "weibo": 30,
+    #         "xiaohongshu": 24,
+    #     }
+    #     for platform_name, target_height in platform_names_height.items():
+    #         logo_path = Path() / "resources" / "logos" / f"{platform_name}.png"
+    #         logger.info(f"logo_path: {logo_path}")
+    #         save_path = self.RESOURCES_DIR / f"{platform_name}.png"
+    #         if logo_path.exists():
+    #             try:
+    #                 logo_img = Image.open(logo_path).convert("RGBA")
+    #                 # 调整 logo 尺寸, 只限制高度为30像素
+    #                 ratio = target_height / logo_img.height
+    #                 new_width = int(logo_img.width * ratio)
+    #                 new_height = target_height
+    #                 logo_img = logo_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    #                 # 保存图片
+    #                 logo_img.save(save_path)
+    #             except Exception:
+    #                 # 如果加载失败，跳过这个 logo
+    #                 logger.error(f"resize 平台 logo 失败: {platform_name}")
+    #                 continue
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
@@ -381,7 +382,7 @@ class CommonRenderer(ImageRenderer):
             title_height = len(title_lines) * self.LINE_HEIGHTS["title"]
             sections.append(TitleSectionData(height=title_height, lines=title_lines))
 
-        # 3. 封面部分
+        # 3. 封面，图集，图文内容
         if cover_img:
             sections.append(CoverSectionData(height=cover_img.height, cover_img=cover_img))
         elif result.img_contents:
@@ -389,14 +390,19 @@ class CommonRenderer(ImageRenderer):
             img_grid_section = await self._calculate_image_grid_section(result, content_width)
             if img_grid_section:
                 sections.append(img_grid_section)
+        elif result.graphics_contents:
+            for graphics_content in result.graphics_contents:
+                graphics_section = await self._calculate_graphics_section(graphics_content, content_width)
+                if graphics_section:
+                    sections.append(graphics_section)
 
-        # 4. 文本内容
+        # 5. 文本内容
         if result.text:
             text_lines = self._wrap_text(result.text, content_width, self.fonts["text"])
             text_height = len(text_lines) * self.LINE_HEIGHTS["text"]
             sections.append(TextSectionData(height=text_height, lines=text_lines))
 
-        # 5. 额外信息
+        # 6. 额外信息
         if result.extra_info:
             extra_lines = self._wrap_text(result.extra_info, content_width, self.fonts["extra"])
             extra_height = len(extra_lines) * self.LINE_HEIGHTS["extra"]
@@ -409,6 +415,37 @@ class CommonRenderer(ImageRenderer):
                 sections.append(repost_section)
 
         return sections
+
+    async def _calculate_graphics_section(self, graphics_content, content_width: int) -> GraphicsSectionData | None:
+        """计算图文内容部分的高度和内容"""
+        try:
+            # 加载图片
+            img_path = await graphics_content.get_path()
+            if not img_path or not img_path.exists():
+                return None
+
+            image = Image.open(img_path)
+
+            # 调整图片尺寸以适应内容宽度
+            if image.width > content_width:
+                ratio = content_width / image.width
+                new_height = int(image.height * ratio)
+                image = image.resize((content_width, new_height), Image.Resampling.LANCZOS)
+
+            # 处理文本内容
+            text_lines = []
+            if graphics_content.text:
+                text_lines = self._wrap_text(graphics_content.text, content_width, self.fonts["text"])
+
+            # 计算总高度：文本高度 + 图片高度 + 间距
+            text_height = len(text_lines) * self.LINE_HEIGHTS["text"] if text_lines else 0
+            total_height = text_height + image.height
+            if text_lines:
+                total_height += self.SECTION_SPACING  # 文本和图片之间的间距
+
+            return GraphicsSectionData(height=total_height, text_lines=text_lines, image=image)
+        except Exception:
+            return None
 
     async def _calculate_header_section(self, result: ParseResult, content_width: int) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
@@ -486,35 +523,45 @@ class CommonRenderer(ImageRenderer):
         for img_content in img_contents:
             try:
                 img_path = await img_content.get_path()
-                if img_path and img_path.exists():
-                    img = Image.open(img_path)
+                if not img_path or not img_path.exists():
+                    continue
 
-                    # 根据图片数量决定处理方式
-                    if len(img_contents) >= 2:
-                        # 2张及以上图片，统一为方形
-                        img = self._crop_to_square(img)
+                img = Image.open(img_path)
 
-                    # 调整图片尺寸
-                    if len(img_contents) == 1:
-                        # 单张图片，根据卡片宽度调整，与视频封面保持一致
-                        max_width = content_width
-                        max_height = min(self.MAX_IMAGE_HEIGHT, content_width)  # 限制最大高度
-                        if img.width > max_width or img.height > max_height:
-                            ratio = min(max_width / img.width, max_height / img.height)
-                            new_size = (int(img.width * ratio), int(img.height * ratio))
-                            img = img.resize(new_size, Image.Resampling.LANCZOS)
+                # 根据图片数量决定处理方式
+                if len(img_contents) >= 2:
+                    # 2张及以上图片，统一为方形
+                    img = self._crop_to_square(img)
+
+                # 计算图片尺寸
+                if len(img_contents) == 1:
+                    # 单张图片，根据卡片宽度调整，与视频封面保持一致
+                    max_width = content_width
+                    max_height = min(self.MAX_IMAGE_HEIGHT, content_width)  # 限制最大高度
+                    if img.width > max_width or img.height > max_height:
+                        ratio = min(max_width / img.width, max_height / img.height)
+                        new_size = (int(img.width * ratio), int(img.height * ratio))
+                        img = img.resize(new_size, Image.Resampling.LANCZOS)
+                else:
+                    # 多张图片，计算最大尺寸
+                    if len(img_contents) in (2, 4):
+                        # 2张或4张图片，使用2列布局
+                        num_gaps = 3  # 2列有3个间距
+                        max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // 2
+                        max_size = min(max_size, self.IMAGE_2_GRID_SIZE)
                     else:
-                        # 多张图片，使用网格布局
-                        # 计算图片尺寸，确保左右间距相同：间距 + (图片 + 间距) * 列数 = 总宽度
-                        num_gaps = self.IMAGE_GRID_COLS + 1  # 3列有4个间距
+                        # 多张图片，使用3列布局
+                        num_gaps = self.IMAGE_GRID_COLS + 1
                         max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // self.IMAGE_GRID_COLS
-                        max_size = min(max_size, self.MAX_IMAGE_GRID_SIZE)
-                        if img.width > max_size or img.height > max_size:
-                            ratio = min(max_size / img.width, max_size / img.height)
-                            new_size = (int(img.width * ratio), int(img.height * ratio))
-                            img = img.resize(new_size, Image.Resampling.LANCZOS)
+                        max_size = min(max_size, self.IMAGE_3_GRID_SIZE)
 
-                    processed_images.append(img)
+                    # 调整多张图片的尺寸
+                    if img.width > max_size or img.height > max_size:
+                        ratio = min(max_size / img.width, max_size / img.height)
+                        new_size = (int(img.width * ratio), int(img.height * ratio))
+                        img = img.resize(new_size, Image.Resampling.LANCZOS)
+
+                processed_images.append(img)
             except Exception:
                 continue
 
@@ -522,14 +569,18 @@ class CommonRenderer(ImageRenderer):
             return None
 
         # 计算网格布局
-        if len(processed_images) == 1:
-            # 单张图片，使用1列布局
-            cols = self.IMAGE_GRID_COLS_SINGLE
-            rows = self.IMAGE_GRID_ROWS_SINGLE
+        image_count = len(processed_images)
+
+        if image_count == 1:
+            # 单张图片
+            cols, rows = 1, 1
+        elif image_count in (2, 4):
+            # 2张或4张图片，使用2列布局
+            cols, rows = 2, (image_count + 1) // 2
         else:
-            # 多张图片，统一使用3列布局（九宫格）
+            # 多张图片，使用3列布局（九宫格）
             cols = self.IMAGE_GRID_COLS
-            rows = (len(processed_images) + cols - 1) // cols
+            rows = (image_count + cols - 1) // cols
 
         # 计算高度
         max_img_height = max(img.height for img in processed_images)
@@ -589,6 +640,8 @@ class CommonRenderer(ImageRenderer):
                     y_pos = self._draw_cover(image, cover.cover_img, y_pos, card_width)
                 case TextSectionData() as text:
                     y_pos = self._draw_text(draw, text.lines, y_pos, self.fonts["text"])
+                case GraphicsSectionData() as graphics:
+                    y_pos = self._draw_graphics(image, draw, graphics, y_pos, card_width)
                 case ExtraSectionData() as extra:
                     y_pos = self._draw_extra(draw, extra.lines, y_pos, self.fonts["extra"])
                 case RepostSectionData() as repost:
@@ -729,6 +782,23 @@ class CommonRenderer(ImageRenderer):
             y_pos += self.LINE_HEIGHTS["text"]
         return y_pos + self.SECTION_SPACING
 
+    def _draw_graphics(
+        self, image: Image.Image, draw: ImageDraw.ImageDraw, section: GraphicsSectionData, y_pos: int, card_width: int
+    ) -> int:
+        """绘制图文内容"""
+        # 绘制文本内容（如果有）
+        if section.text_lines:
+            for line in section.text_lines:
+                draw.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=self.fonts["text"])
+                y_pos += self.LINE_HEIGHTS["text"]
+            y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
+
+        # 绘制图片
+        x_pos = self.PADDING
+        image.paste(section.image, (x_pos, y_pos))
+
+        return y_pos + section.image.height + self.SECTION_SPACING
+
     def _draw_extra(self, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制额外信息"""
         for line in lines:
@@ -796,11 +866,11 @@ class CommonRenderer(ImageRenderer):
             # 单张图片，使用完整的可用宽度，与视频封面保持一致
             max_img_size = available_width
         else:
-            # 多张图片，统一使用3列布局（九宫格）
-            # 计算图片尺寸，确保所有间距相同
-            num_gaps = cols + 1  # 3列有4个间距
-            max_img_size = (available_width - img_spacing * num_gaps) // cols
-            max_img_size = min(max_img_size, self.MAX_IMAGE_GRID_SIZE)
+            # 多张图片，统一使用间距计算，确保所有间距相同
+            num_gaps = cols + 1  # 2列有3个间距，3列有4个间距
+            calculated_size = (available_width - img_spacing * num_gaps) // cols
+            max_img_size = self.IMAGE_2_GRID_SIZE if cols == 2 else self.IMAGE_3_GRID_SIZE
+            max_img_size = min(calculated_size, max_img_size)
 
         current_y = y_pos
 
@@ -814,8 +884,9 @@ class CommonRenderer(ImageRenderer):
 
             # 绘制这一行的图片
             for i, img in enumerate(row_images):
-                # 每张图片左侧都有间距：间距 + (间距 + 图片) * i
+                # 统一使用间距计算方式
                 img_x = self.PADDING + img_spacing + i * (max_img_size + img_spacing)
+
                 img_y = current_y + img_spacing  # 每行上方都有间距
 
                 # 居中放置图片
