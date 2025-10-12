@@ -166,6 +166,7 @@ class CommonRenderer(ImageRenderer):
         self.font_path: Path = self.DEFAULT_FONT_PATH
 
     def load_resources(self):
+        """加载资源"""
         self._load_fonts()
         self._load_video_button()
         self._load_platform_logos()
@@ -184,11 +185,7 @@ class CommonRenderer(ImageRenderer):
 
     def _load_video_button(self):
         """预加载视频按钮"""
-        self.video_button_image: Image.Image = Image.open(self.DEFAULT_VIDEO_BUTTON_PATH)
-
-        # 确保素材是 RGBA 模式以支持透明度
-        if self.video_button_image.mode != "RGBA":
-            self.video_button_image = self.video_button_image.convert("RGBA")
+        self.video_button_image: Image.Image = Image.open(self.DEFAULT_VIDEO_BUTTON_PATH).convert("RGBA")
 
         # 设置透明度为 30%
         alpha = self.video_button_image.split()[-1]  # 获取 alpha 通道
@@ -219,21 +216,19 @@ class CommonRenderer(ImageRenderer):
             "xiaohongshu": 24,
         }
         for platform_name, target_height in platform_names_height.items():
-            logo_path = self.RESOURCES_DIR / f"{platform_name}.png"
+            logo_path = Path() / "resources" / "logos" / f"{platform_name}.png"
+            logger.info(f"logo_path: {logo_path}")
+            save_path = self.RESOURCES_DIR / f"{platform_name}.png"
             if logo_path.exists():
                 try:
-                    logo_img = Image.open(logo_path)
+                    logo_img = Image.open(logo_path).convert("RGBA")
                     # 调整 logo 尺寸, 只限制高度为30像素
                     ratio = target_height / logo_img.height
                     new_width = int(logo_img.width * ratio)
                     new_height = target_height
                     logo_img = logo_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
                     # 保存图片
-                    logo_img.save(logo_path)
-                    # 确保是 RGBA 模式
-                    if logo_img.mode != "RGBA":
-                        logo_img = logo_img.convert("RGBA")
-
+                    logo_img.save(save_path)
                 except Exception:
                     # 如果加载失败，跳过这个 logo
                     logger.error(f"resize 平台 logo 失败: {platform_name}")
