@@ -70,6 +70,8 @@ class BaseRenderer(ABC):
                     graphics_msg = UniHelper.img_seg(path)
                     if graphics.text is not None:
                         graphics_msg = graphics.text + graphics_msg
+                    if graphics.alt is not None:
+                        graphics_msg = graphics_msg + graphics.alt
                     forwardable_segs.append(graphics_msg)
 
         if forwardable_segs:
