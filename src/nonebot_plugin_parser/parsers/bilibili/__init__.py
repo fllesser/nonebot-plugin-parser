@@ -179,7 +179,7 @@ class BilibiliParser(BaseParser):
             if matched is None:
                 raise ParseException("无效的专栏链接")
             read_id = int(matched.group(1))
-            return await self.parse_read_old(read_id)
+            return await self.parse_read(read_id)
 
         # 4. 直播
         if "/live" in url:
@@ -198,47 +198,6 @@ class BilibiliParser(BaseParser):
             return await self.parse_favlist(fav_id)
 
         raise ParseException("不支持的 Bilibili 链接")
-
-    async def _init_credential(self) -> Credential | None:
-        """初始化 bilibili api"""
-
-        if not pconfig.bili_ck:
-            logger.warning("未配置 r_bili_ck, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
-            return None
-
-        credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
-        if not await credential.check_valid() and self._cookies_file.exists():
-            logger.info(f"r_bili_ck 已过期, 尝试从 {self._cookies_file} 加载")
-            credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
-        else:
-            logger.info(f"r_bili_ck 有效, 保存到 {self._cookies_file}")
-            self._cookies_file.write_text(json.dumps(credential.get_cookies()))
-
-        return credential
-
-    @property
-    async def credential(self) -> Credential | None:
-        """获取哔哩哔哩登录凭证"""
-
-        if self._credential is None:
-            self._credential = await self._init_credential()
-            if self._credential is None:
-                return None
-
-        if not await self._credential.check_valid():
-            logger.warning("哔哩哔哩 cookies 已过期, 请重新配置 r_bili_ck")
-            return self._credential
-
-        if await self._credential.check_refresh():
-            logger.info("哔哩哔哩 cookies 需要刷新")
-            if self._credential.has_ac_time_value() and self._credential.has_bili_jct():
-                await self._credential.refresh()
-                logger.info(f"哔哩哔哩 cookies 刷新成功, 保存到 {self._cookies_file}")
-                self._cookies_file.write_text(json.dumps(self._credential.get_cookies()))
-            else:
-                logger.warning("哔哩哔哩 cookies 刷新需要包含 SESSDATA, ac_time_value, bili_jct")
-
-        return self._credential
 
     async def parse_dynamic(self, url: str):
         """解析动态信息
@@ -286,8 +245,8 @@ class BilibiliParser(BaseParser):
         opus = Opus(opus_id, await self.credential)
         return await self._parse_opus(opus)
 
-    async def parse_read(self, read_id: int):
-        """解析专栏信息
+    async def parse_read_old(self, read_id: int):
+        """解析专栏信息, 已废弃
 
         Args:
             read_id (int): 专栏 id
@@ -324,8 +283,13 @@ class BilibiliParser(BaseParser):
         for node in opus_data.gen_text_img():
             match node:
                 case OpusImageNode():
-                    cont = self.create_graphics_content(node.url, temp_text, node.alt)
-                    contents.append(cont)
+                    contents.append(
+                        self.create_graphics_content(
+                            node.url,
+                            temp_text,
+                            node.alt,
+                        )
+                    )
                     temp_text = None
                 case OpusTextNode():
                     if temp_text is None:
@@ -375,7 +339,7 @@ class BilibiliParser(BaseParser):
 
         return self.result(title=room_data.title, text=room_data.detail, contents=contents, author=author)
 
-    async def parse_read_old(self, read_id: int):
+    async def parse_read(self, read_id: int):
         """专栏解析
 
         Args:
@@ -400,7 +364,13 @@ class BilibiliParser(BaseParser):
         for child in article_info.gen_text_img():
             match child:
                 case ImageNode():
-                    contents.append(self.create_graphics_content(child.url, temp_text, child.alt))
+                    contents.append(
+                        self.create_graphics_content(
+                            child.url,
+                            temp_text,
+                            child.alt,
+                        )
+                    )
                     temp_text = None
                 case TextNode():
                     if temp_text is None:
@@ -502,3 +472,44 @@ class BilibiliParser(BaseParser):
             return video_stream.url, None
         logger.debug(f"音频流质量: {audio_stream.audio_quality.name}")
         return video_stream.url, audio_stream.url
+
+    async def _init_credential(self) -> Credential | None:
+        """初始化 bilibili api"""
+
+        if not pconfig.bili_ck:
+            logger.warning("未配置 r_bili_ck, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
+            return None
+
+        credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
+        if not await credential.check_valid() and self._cookies_file.exists():
+            logger.info(f"r_bili_ck 已过期, 尝试从 {self._cookies_file} 加载")
+            credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
+        else:
+            logger.info(f"r_bili_ck 有效, 保存到 {self._cookies_file}")
+            self._cookies_file.write_text(json.dumps(credential.get_cookies()))
+
+        return credential
+
+    @property
+    async def credential(self) -> Credential | None:
+        """获取哔哩哔哩登录凭证"""
+
+        if self._credential is None:
+            self._credential = await self._init_credential()
+            if self._credential is None:
+                return None
+
+        if not await self._credential.check_valid():
+            logger.warning("哔哩哔哩 cookies 已过期, 请重新配置 r_bili_ck")
+            return self._credential
+
+        if await self._credential.check_refresh():
+            logger.info("哔哩哔哩 cookies 需要刷新")
+            if self._credential.has_ac_time_value() and self._credential.has_bili_jct():
+                await self._credential.refresh()
+                logger.info(f"哔哩哔哩 cookies 刷新成功, 保存到 {self._cookies_file}")
+                self._cookies_file.write_text(json.dumps(self._credential.get_cookies()))
+            else:
+                logger.warning("哔哩哔哩 cookies 刷新需要包含 SESSDATA, ac_time_value, bili_jct")
+
+        return self._credential

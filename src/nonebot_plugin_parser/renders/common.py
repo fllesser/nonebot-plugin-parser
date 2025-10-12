@@ -79,6 +79,7 @@ class GraphicsSectionData(SectionData):
 
     text_lines: list[str]
     image: Image.Image
+    alt_text: str | None = None
 
 
 class CommonRenderer(ImageRenderer):
@@ -437,13 +438,18 @@ class CommonRenderer(ImageRenderer):
             if graphics_content.text:
                 text_lines = self._wrap_text(graphics_content.text, content_width, self.fonts["text"])
 
-            # 计算总高度：文本高度 + 图片高度 + 间距
+            # 计算总高度：文本高度 + 图片高度 + alt文本高度 + 间距
             text_height = len(text_lines) * self.LINE_HEIGHTS["text"] if text_lines else 0
-            total_height = text_height + image.height
+            alt_height = self.LINE_HEIGHTS["extra"] if graphics_content.alt else 0
+            total_height = text_height + image.height + alt_height
             if text_lines:
                 total_height += self.SECTION_SPACING  # 文本和图片之间的间距
+            if graphics_content.alt:
+                total_height += self.SECTION_SPACING  # 图片和alt文本之间的间距
 
-            return GraphicsSectionData(height=total_height, text_lines=text_lines, image=image)
+            return GraphicsSectionData(
+                height=total_height, text_lines=text_lines, image=image, alt_text=graphics_content.alt
+            )
         except Exception:
             return None
 
@@ -797,8 +803,19 @@ class CommonRenderer(ImageRenderer):
         content_width = card_width - 2 * self.PADDING
         x_pos = self.PADDING + (content_width - section.image.width) // 2
         image.paste(section.image, (x_pos, y_pos))
+        y_pos += section.image.height
 
-        return y_pos + section.image.height + self.SECTION_SPACING
+        # 绘制 alt 文本（如果有，居中显示）
+        if section.alt_text:
+            y_pos += self.SECTION_SPACING  # 图片和alt文本之间的间距
+            # 计算文本居中位置
+            bbox = self.fonts["extra"].getbbox(section.alt_text)
+            text_width = bbox[2] - bbox[0]
+            text_x = self.PADDING + (content_width - text_width) // 2
+            draw.text((text_x, y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=self.fonts["extra"])
+            y_pos += self.LINE_HEIGHTS["extra"]
+
+        return y_pos + self.SECTION_SPACING
 
     def _draw_extra(self, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制额外信息"""
