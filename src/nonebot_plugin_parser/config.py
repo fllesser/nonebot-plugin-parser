@@ -53,6 +53,8 @@ class Config(BaseModel):
     """Renderer 类型"""
     parser_custom_font: str | None = None
     """自定义字体"""
+    parser_need_forward_contents: bool = True
+    """是否需要转发媒体内容"""
 
     @property
     def nickname(self) -> str:
@@ -133,6 +135,11 @@ class Config(BaseModel):
     def custom_font(self) -> Path | None:
         """自定义字体"""
         return (self.data_dir / self.parser_custom_font) if self.parser_custom_font else None
+
+    @property
+    def need_forward_contents(self) -> bool:
+        """是否需要转发媒体内容"""
+        return self.parser_need_forward_contents
 
 
 pconfig: Config = get_plugin_config(Config)
