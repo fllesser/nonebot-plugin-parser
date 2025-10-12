@@ -392,7 +392,8 @@ class BilibiliParser(BaseParser):
         # 加载内容
         await ar.fetch_content()
         data = ar.json()
-        article_info = ArticleInfo(**data)
+        article_info = msgspec.convert(data, ArticleInfo)
+        logger.debug(f"article_info: {article_info}")
 
         contents: list[MediaContent] = []
         temp_text = None
@@ -405,12 +406,13 @@ class BilibiliParser(BaseParser):
                     if temp_text is None:
                         temp_text = ""
                     temp_text += child.text
+        author = self.create_author(*article_info.author_info)
 
         return self.result(
-            title=article_info.meta.title,
-            timestamp=article_info.meta.publish_time,
+            title=article_info.title,
+            timestamp=article_info.timestamp,
             text=temp_text,
-            author=self.create_author(article_info.meta.author.name, article_info.meta.author.face),
+            author=author,
             contents=contents,
         )
 
