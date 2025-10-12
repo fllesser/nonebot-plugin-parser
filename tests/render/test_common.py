@@ -148,3 +148,34 @@ async def test_graphics_content():
         await f.write(image_raw)
     logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
     assert image_raw, f"没有生成图片: {url}"
+
+
+async def test_read():
+    """测试使用 BilibiliParser 解析链接并用 CommonRenderer 渲染"""
+    import aiofiles
+
+    from nonebot_plugin_parser import pconfig
+    from nonebot_plugin_parser.parsers import BilibiliParser
+    from nonebot_plugin_parser.renders import _COMMON_RENDERER
+
+    parser = BilibiliParser()
+    renderer = _COMMON_RENDERER
+
+    url = "https://www.bilibili.com/read/cv523868"
+    matched = parser.search_url(url)
+    assert matched, f"无法匹配 URL: {url}"
+    logger.info(f"{url} | 开始解析哔哩哔哩图文")
+    parse_result = await parser.parse(matched)
+    logger.debug(f"{url} | 解析结果: \n{parse_result}")
+
+    logger.info(f"{url} | 开始渲染")
+    image_raw = await renderer.render_image(parse_result)
+    assert image_raw, "没有生成图片"
+
+    image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_read.png"
+    # 创建文件
+    image_path.parent.mkdir(parents=True, exist_ok=True)
+    async with aiofiles.open(image_path, "wb+") as f:
+        await f.write(image_raw)
+    logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
+    assert image_raw, f"没有生成图片: {url}"

@@ -179,7 +179,7 @@ class BilibiliParser(BaseParser):
             if matched is None:
                 raise ParseException("无效的专栏链接")
             read_id = int(matched.group(1))
-            return await self.parse_read(read_id)
+            return await self.parse_read_old(read_id)
 
         # 4. 直播
         if "/live" in url:
@@ -324,7 +324,8 @@ class BilibiliParser(BaseParser):
         for node in opus_data.gen_text_img():
             match node:
                 case OpusImageNode():
-                    contents.append(self.create_graphics_content(node.url, temp_text))
+                    cont = self.create_graphics_content(node.url, temp_text, node.alt)
+                    contents.append(cont)
                     temp_text = None
                 case OpusTextNode():
                     if temp_text is None:
@@ -391,8 +392,8 @@ class BilibiliParser(BaseParser):
         # 加载内容
         await ar.fetch_content()
         data = ar.json()
-        article_info = msgspec.convert(data, ArticleInfo)
-        logger.debug(f"article_info: {article_info}")
+        article_info = ArticleInfo(**data)
+
         contents: list[MediaContent] = []
         temp_text = None
         for child in article_info.gen_text_img():

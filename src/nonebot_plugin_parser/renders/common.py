@@ -793,8 +793,9 @@ class CommonRenderer(ImageRenderer):
                 y_pos += self.LINE_HEIGHTS["text"]
             y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
 
-        # 绘制图片
-        x_pos = self.PADDING
+        # 绘制图片（居中）
+        content_width = card_width - 2 * self.PADDING
+        x_pos = self.PADDING + (content_width - section.image.width) // 2
         image.paste(section.image, (x_pos, y_pos))
 
         return y_pos + section.image.height + self.SECTION_SPACING
