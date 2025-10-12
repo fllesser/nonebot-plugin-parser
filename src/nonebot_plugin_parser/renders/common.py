@@ -124,10 +124,6 @@ class CommonRenderer(ImageRenderer):
     """最大显示图片数量"""
     IMAGE_GRID_COLS = 3
     """图片网格列数"""
-    IMAGE_GRID_ROWS_SINGLE = 1
-    """单张图片行数"""
-    IMAGE_GRID_COLS_SINGLE = 1
-    """单张图片列数"""
 
     # 颜色配置
     BG_COLOR: ClassVar[tuple[int, int, int]] = (255, 255, 255)
@@ -525,35 +521,45 @@ class CommonRenderer(ImageRenderer):
         for img_content in img_contents:
             try:
                 img_path = await img_content.get_path()
-                if img_path and img_path.exists():
-                    img = Image.open(img_path)
+                if not img_path or not img_path.exists():
+                    continue
 
-                    # 根据图片数量决定处理方式
-                    if len(img_contents) >= 2:
-                        # 2张及以上图片，统一为方形
-                        img = self._crop_to_square(img)
+                img = Image.open(img_path)
 
-                    # 调整图片尺寸
-                    if len(img_contents) == 1:
-                        # 单张图片，根据卡片宽度调整，与视频封面保持一致
-                        max_width = content_width
-                        max_height = min(self.MAX_IMAGE_HEIGHT, content_width)  # 限制最大高度
-                        if img.width > max_width or img.height > max_height:
-                            ratio = min(max_width / img.width, max_height / img.height)
-                            new_size = (int(img.width * ratio), int(img.height * ratio))
-                            img = img.resize(new_size, Image.Resampling.LANCZOS)
+                # 根据图片数量决定处理方式
+                if len(img_contents) >= 2:
+                    # 2张及以上图片，统一为方形
+                    img = self._crop_to_square(img)
+
+                # 计算图片尺寸
+                if len(img_contents) == 1:
+                    # 单张图片，根据卡片宽度调整，与视频封面保持一致
+                    max_width = content_width
+                    max_height = min(self.MAX_IMAGE_HEIGHT, content_width)  # 限制最大高度
+                    if img.width > max_width or img.height > max_height:
+                        ratio = min(max_width / img.width, max_height / img.height)
+                        new_size = (int(img.width * ratio), int(img.height * ratio))
+                        img = img.resize(new_size, Image.Resampling.LANCZOS)
+                else:
+                    # 多张图片，计算最大尺寸
+                    if len(img_contents) in (2, 4):
+                        # 2张或4张图片，使用2列布局
+                        num_gaps = 3  # 2列有3个间距
+                        max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // 2
+                        max_size = min(max_size, 400)
                     else:
-                        # 多张图片，使用网格布局
-                        # 计算图片尺寸，确保左右间距相同：间距 + (图片 + 间距) * 列数 = 总宽度
-                        num_gaps = self.IMAGE_GRID_COLS + 1  # 3列有4个间距
+                        # 多张图片，使用3列布局
+                        num_gaps = self.IMAGE_GRID_COLS + 1
                         max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // self.IMAGE_GRID_COLS
                         max_size = min(max_size, self.MAX_IMAGE_GRID_SIZE)
-                        if img.width > max_size or img.height > max_size:
-                            ratio = min(max_size / img.width, max_size / img.height)
-                            new_size = (int(img.width * ratio), int(img.height * ratio))
-                            img = img.resize(new_size, Image.Resampling.LANCZOS)
 
-                    processed_images.append(img)
+                    # 调整多张图片的尺寸
+                    if img.width > max_size or img.height > max_size:
+                        ratio = min(max_size / img.width, max_size / img.height)
+                        new_size = (int(img.width * ratio), int(img.height * ratio))
+                        img = img.resize(new_size, Image.Resampling.LANCZOS)
+
+                processed_images.append(img)
             except Exception:
                 continue
 
@@ -561,14 +567,18 @@ class CommonRenderer(ImageRenderer):
             return None
 
         # 计算网格布局
-        if len(processed_images) == 1:
-            # 单张图片，使用1列布局
-            cols = self.IMAGE_GRID_COLS_SINGLE
-            rows = self.IMAGE_GRID_ROWS_SINGLE
+        image_count = len(processed_images)
+
+        if image_count == 1:
+            # 单张图片
+            cols, rows = 1, 1
+        elif image_count in (2, 4):
+            # 2张或4张图片，使用2列布局
+            cols, rows = 2, (image_count + 1) // 2
         else:
-            # 多张图片，统一使用3列布局（九宫格）
+            # 多张图片，使用3列布局（九宫格）
             cols = self.IMAGE_GRID_COLS
-            rows = (len(processed_images) + cols - 1) // cols
+            rows = (image_count + cols - 1) // cols
 
         # 计算高度
         max_img_height = max(img.height for img in processed_images)
@@ -854,11 +864,10 @@ class CommonRenderer(ImageRenderer):
             # 单张图片，使用完整的可用宽度，与视频封面保持一致
             max_img_size = available_width
         else:
-            # 多张图片，统一使用3列布局（九宫格）
-            # 计算图片尺寸，确保所有间距相同
-            num_gaps = cols + 1  # 3列有4个间距
-            max_img_size = (available_width - img_spacing * num_gaps) // cols
-            max_img_size = min(max_img_size, self.MAX_IMAGE_GRID_SIZE)
+            # 多张图片，统一使用间距计算，确保所有间距相同
+            num_gaps = cols + 1  # 2列有3个间距，3列有4个间距
+            calculated_size = (available_width - img_spacing * num_gaps) // cols
+            max_img_size = min(calculated_size, self.MAX_IMAGE_GRID_SIZE)
 
         current_y = y_pos
 
@@ -872,8 +881,17 @@ class CommonRenderer(ImageRenderer):
 
             # 绘制这一行的图片
             for i, img in enumerate(row_images):
-                # 每张图片左侧都有间距：间距 + (间距 + 图片) * i
-                img_x = self.PADDING + img_spacing + i * (max_img_size + img_spacing)
+                # 计算每张图片的位置
+                # 使用实际图片尺寸来计算位置，确保间距正确
+                if cols == 2:
+                    # 2列布局：计算总宽度，然后均匀分布
+                    total_width = sum(img.width for img in row_images) + img_spacing * (len(row_images) - 1)
+                    start_x = self.PADDING + (available_width - total_width) // 2
+                    img_x = start_x + sum(img.width + img_spacing for img in row_images[:i])
+                else:
+                    # 3列布局：使用原来的计算方式
+                    img_x = self.PADDING + img_spacing + i * (max_img_size + img_spacing)
+
                 img_y = current_y + img_spacing  # 每行上方都有间距
 
                 # 居中放置图片
