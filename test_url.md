@@ -12,6 +12,7 @@ kuaishou:
 bilibili:
 - https://www.bilibili.com/opus/998440765151510535
 - https://www.bilibili.com/opus/1040093151889457152
+- https://www.bilibili.com/opus/1122430505331982343
 - https://www.bilibili.com/read/cv523868
 - https://t.bilibili.com/1120105154190770281 dynamic video
 - https://t.bilibili.com/1121388026537181241 dynamic opus
