@@ -147,12 +147,25 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 | 开启解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  | 开启解析 |
 | 关闭解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  | 关闭解析 |
 
+
+## 🔧 高级配置
+### 推荐的字体
+- [LXGW ZhenKai / 霞鹜臻楷](https://github.com/lxgw/LxgwZhenKai) 效果图使用字体
+- [LXGW Neo XiHei / 霞鹜新晰黑](https://github.com/lxgw/LxgwNeoXiHei)
+- [LXGW Neo ZhiSong / 霞鹜新致宋 / 霞鶩新緻宋](https://github.com/lxgw/LxgwNeoZhiSong)
+
 ## 🎨 效果图
+
+<div align="center">
+
 ![4_pic](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/4_pic.png)
 ![9_pic](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/9_pic.png)
 ![video](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/video.png)
+
 ![repost_video](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/repost_video.png)
 ![repost_2_pic](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/repost_2_pic.png)
+
+</div>
 
 ## 致谢
 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
