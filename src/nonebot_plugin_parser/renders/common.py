@@ -116,8 +116,10 @@ class CommonRenderer(ImageRenderer):
     """最小封面高度"""
     MAX_IMAGE_HEIGHT = 800
     """图片最大高度限制"""
-    MAX_IMAGE_GRID_SIZE = 300
-    """图片网格最大尺寸"""
+    IMAGE_3_GRID_SIZE = 300
+    """图片3列网格最大尺寸"""
+    IMAGE_2_GRID_SIZE = 400
+    """图片2列网格最大尺寸"""
     IMAGE_GRID_SPACING = 4
     """图片网格间距"""
     MAX_IMAGES_DISPLAY = 9
@@ -546,12 +548,12 @@ class CommonRenderer(ImageRenderer):
                         # 2张或4张图片，使用2列布局
                         num_gaps = 3  # 2列有3个间距
                         max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // 2
-                        max_size = min(max_size, 400)
+                        max_size = min(max_size, self.IMAGE_2_GRID_SIZE)
                     else:
                         # 多张图片，使用3列布局
                         num_gaps = self.IMAGE_GRID_COLS + 1
                         max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // self.IMAGE_GRID_COLS
-                        max_size = min(max_size, self.MAX_IMAGE_GRID_SIZE)
+                        max_size = min(max_size, self.IMAGE_3_GRID_SIZE)
 
                     # 调整多张图片的尺寸
                     if img.width > max_size or img.height > max_size:
@@ -867,7 +869,8 @@ class CommonRenderer(ImageRenderer):
             # 多张图片，统一使用间距计算，确保所有间距相同
             num_gaps = cols + 1  # 2列有3个间距，3列有4个间距
             calculated_size = (available_width - img_spacing * num_gaps) // cols
-            max_img_size = min(calculated_size, self.MAX_IMAGE_GRID_SIZE)
+            max_img_size = self.IMAGE_2_GRID_SIZE if cols == 2 else self.IMAGE_3_GRID_SIZE
+            max_img_size = min(calculated_size, max_img_size)
 
         current_y = y_pos
 
@@ -881,16 +884,8 @@ class CommonRenderer(ImageRenderer):
 
             # 绘制这一行的图片
             for i, img in enumerate(row_images):
-                # 计算每张图片的位置
-                # 使用实际图片尺寸来计算位置，确保间距正确
-                if cols == 2:
-                    # 2列布局：计算总宽度，然后均匀分布
-                    total_width = sum(img.width for img in row_images) + img_spacing * (len(row_images) - 1)
-                    start_x = self.PADDING + (available_width - total_width) // 2
-                    img_x = start_x + sum(img.width + img_spacing for img in row_images[:i])
-                else:
-                    # 3列布局：使用原来的计算方式
-                    img_x = self.PADDING + img_spacing + i * (max_img_size + img_spacing)
+                # 统一使用间距计算方式
+                img_x = self.PADDING + img_spacing + i * (max_img_size + img_spacing)
 
                 img_y = current_y + img_spacing  # 每行上方都有间距
 
