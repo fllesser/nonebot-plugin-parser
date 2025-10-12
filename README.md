@@ -139,13 +139,20 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 |      parser_render_type      |  否   |         "common"         |                                                                                        渲染器类型，可选 "default"(无图片渲染), "common"(PIL 通用图片渲染), "htmlkit"(htmlkit, 暂不可用)                                                                                         |
 |      parser_append_url       |  否   |          False           |                                                                                                                           是否在解析结果中附加原始URL                                                                                                                           |
 |      parser_custom_font      |  否   |           None           |                                                                            自定义渲染字体，配置字体文件名，并将字体文件放置于 localstore 生成的插件 data 目录下（如 ./data/nonebot_plugin_parser/）                                                                             |
-| parser_need_forward_contents |  否   |           True           |                                                                                                                              是否需要转发媒体内容(超过 4 项时始终使用合并转发)                                                                                                                             |
+| parser_need_forward_contents |  否   |           True           |                                                                                                                是否需要转发媒体内容(超过 4 项时始终使用合并转发)                                                                                                                |
 ## 🎉 使用
 ### 指令表
 |   指令   |         权限          | 需要@ | 范围  |   说明   |
 | :------: | :-------------------: | :---: | :---: | :------: |
 | 开启解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  | 开启解析 |
 | 关闭解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  | 关闭解析 |
+
+## 🎨 效果图
+![4_pic](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/4_pic.png)
+![9_pic](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/9_pic.png)
+![video](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/video.png)
+![repost_video](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/repost_video.png)
+![repost_2_pic](https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/repost_2_pic.png)
 
 ## 致谢
 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
