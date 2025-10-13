@@ -67,14 +67,14 @@ class BilibiliParser(BaseParser):
 
         if not video_id:
             # https://www.bilibili.com/video/BV1584y167sD?a=20&p=40
-            if id_matched := re.search(r"(?:(BV[\dA-Za-z]{10})|av(\d{6,}))", url):
-                video_id = id_matched.group(1) or id_matched.group(2)
+            if _matched := re.search(r"(?:(BV[\dA-Za-z]{10})|av(\d{6,}))", url):
+                video_id = _matched.group(1) or _matched.group(2)
             else:
                 return await self.parse_others(url)
 
             # 匹配页码参数
-            if p_match := re.search(r"(?:&|\?)p=(\d{1,3})", url):
-                page_num = p_match.group(1)
+            if _matched := re.search(r"(?:&|\?)p=(\d{1,3})", url):
+                page_num = _matched.group(1)
             else:
                 page_num = None
 
@@ -120,7 +120,7 @@ class BilibiliParser(BaseParser):
 
         # 处理分 p
         page_idx, title, duration, timestamp, cover_url = video_info.extract_info_with_page(page_num)
-        logger.debug(f"page_num: {page_num}, page_idx: {page_idx}")
+
         # 获取 AI 总结
         if self._credential:
             cid = await video.get_cid(page_idx)
@@ -284,18 +284,11 @@ class BilibiliParser(BaseParser):
         current_text = ""
 
         for node in opus_data.gen_text_img():
-            match node:
-                case ImageNode():
-                    contents.append(
-                        self.create_graphics_content(
-                            node.url,
-                            current_text.strip(),
-                            node.alt,
-                        )
-                    )
-                    current_text = ""
-                case TextNode():
-                    current_text += node.text
+            if isinstance(node, ImageNode):
+                contents.append(self.create_graphics_content(node.url, current_text.strip(), node.alt))
+                current_text = ""
+            elif isinstance(node, TextNode):
+                current_text += node.text
 
         return self.result(
             title=opus_data.title,
@@ -360,18 +353,11 @@ class BilibiliParser(BaseParser):
         contents: list[MediaContent] = []
         current_text = ""
         for child in article_info.gen_text_img():
-            match child:
-                case ImageNode():
-                    contents.append(
-                        self.create_graphics_content(
-                            child.url,
-                            current_text.strip(),
-                            child.alt,
-                        )
-                    )
-                    current_text = ""
-                case TextNode():
-                    current_text += child.text
+            if isinstance(child, ImageNode):
+                contents.append(self.create_graphics_content(child.url, current_text.strip(), child.alt))
+                current_text = ""
+            elif isinstance(child, TextNode):
+                current_text += child.text
 
         author = self.create_author(*article_info.author_info)
 
