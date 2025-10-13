@@ -131,8 +131,8 @@ async def test_graphics_content():
     parser = BilibiliParser()
     renderer = _COMMON_RENDERER
 
-    url = "https://www.bilibili.com/opus/1122430505331982343"
-    # url = "https://www.bilibili.com/opus/1040093151889457152"
+    # url = "https://www.bilibili.com/opus/1122430505331982343"
+    url = "https://www.bilibili.com/opus/1040093151889457152"
     matched = parser.search_url(url)
     assert matched, f"无法匹配 URL: {url}"
     logger.info(f"{url} | 开始解析哔哩哔哩视频")
@@ -152,7 +152,7 @@ async def test_graphics_content():
     cost_time = end_time - start_time
     logger.success(f"{url} | 渲染成功，耗时: {cost_time} 秒")
 
-    image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_graphics_content.png"
+    image_path = pconfig.cache_dir / "aaaaaaa" / f"blibili_opus_{url.split('/')[-1]}.png"
     # 创建文件
     image_path.parent.mkdir(parents=True, exist_ok=True)
     async with aiofiles.open(image_path, "wb+") as f:

@@ -278,7 +278,7 @@ class BilibiliParser(BaseParser):
 
         # 按顺序处理图文内容（参考 parse_read 的逻辑）
         contents: list[MediaContent] = []
-        temp_text = None
+        current_text = ""
 
         for node in opus_data.gen_text_img():
             match node:
@@ -286,18 +286,16 @@ class BilibiliParser(BaseParser):
                     contents.append(
                         self.create_graphics_content(
                             node.url,
-                            temp_text,
+                            current_text.strip(),
                             node.alt,
                         )
                     )
-                    temp_text = None
+                    current_text = ""
                 case TextNode():
-                    if temp_text is None:
-                        temp_text = ""
-                    temp_text += node.text
+                    current_text += node.text
 
         # 处理最后的文本内容
-        text_content = temp_text
+        text_content = current_text
 
         return self.result(
             title=opus_data.title,
@@ -360,28 +358,26 @@ class BilibiliParser(BaseParser):
         logger.debug(f"article_info: {article_info}")
 
         contents: list[MediaContent] = []
-        temp_text = None
+        current_text = ""
         for child in article_info.gen_text_img():
             match child:
                 case ImageNode():
                     contents.append(
                         self.create_graphics_content(
                             child.url,
-                            temp_text,
+                            current_text.strip(),
                             child.alt,
                         )
                     )
-                    temp_text = None
+                    current_text = ""
                 case TextNode():
-                    if temp_text is None:
-                        temp_text = ""
-                    temp_text += child.text
+                    current_text += child.text
         author = self.create_author(*article_info.author_info)
 
         return self.result(
             title=article_info.title,
             timestamp=article_info.timestamp,
-            text=temp_text,
+            text=current_text,
             author=author,
             contents=contents,
         )

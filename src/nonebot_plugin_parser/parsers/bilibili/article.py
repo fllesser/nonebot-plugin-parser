@@ -66,14 +66,15 @@ class ArticleInfo(Struct):
             if child.get("type") == "ParagraphNode":
                 # 处理段落节点，提取所有文本内容
                 text_content = self._extract_text_from_children(child.get("children", []))
-                if text_content.strip():
-                    yield TextNode(text=text_content.strip())
+                text_content = text_content.strip()
+                if text_content:
+                    yield TextNode(text="\n\n" + text_content)
             elif child.get("type") == "ImageNode":
                 # 处理图片节点
                 yield ImageNode(url=child.get("url", ""), alt=child.get("alt"))
             elif child.get("type") == "VideoCardNode":
                 # 处理视频卡片节点（转换为文本描述）
-                yield TextNode(text=f"[视频卡片: {child.get('aid', 0)}]")
+                yield TextNode(text=f"\n                         [视频卡片: {child.get('aid', 0)}]")
 
     def _extract_text_from_children(self, children: list[dict[str, Any]]) -> str:
         """从子节点列表中提取文本内容"""
