@@ -111,7 +111,7 @@ async def test_render_with_emoji():
 
     assert image_raw, "没有生成图片"
 
-    image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_opus.png"
+    image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_opus_emoji.png"
     # 创建文件
     image_path.parent.mkdir(parents=True, exist_ok=True)
     async with aiofiles.open(image_path, "wb+") as f:

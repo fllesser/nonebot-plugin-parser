@@ -161,6 +161,7 @@ class BilibiliParser(BaseParser):
     async def parse_others(self, url: str):
         """解析其他类型链接"""
         # 判断链接类型并解析
+        logger.debug(f"解析其他类型链接: {url}")
         # 1. 动态
         if "t.bilibili.com" in url:
             return await self.parse_dynamic(url)
@@ -294,15 +295,12 @@ class BilibiliParser(BaseParser):
                 case TextNode():
                     current_text += node.text
 
-        # 处理最后的文本内容
-        text_content = current_text
-
         return self.result(
             title=opus_data.title,
             author=author,
             timestamp=opus_data.timestamp,
             contents=contents,
-            text=text_content,
+            text=current_text.strip(),
         )
 
     async def parse_live(self, room_id: int):
@@ -372,12 +370,13 @@ class BilibiliParser(BaseParser):
                     current_text = ""
                 case TextNode():
                     current_text += child.text
+
         author = self.create_author(*article_info.author_info)
 
         return self.result(
             title=article_info.title,
             timestamp=article_info.timestamp,
-            text=current_text,
+            text=current_text.strip(),
             author=author,
             contents=contents,
         )
