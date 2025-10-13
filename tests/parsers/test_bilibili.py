@@ -43,6 +43,7 @@ async def test_read():
     read_id = 523868
     bilibili_parser = BilibiliParser()
     result = await bilibili_parser.parse_read(read_id)
+    logger.debug(f"result: {result}")
     assert result.title, "标题为空"
     assert result.author, "作者为空"
     avatar_path = await result.author.get_avatar_path()
