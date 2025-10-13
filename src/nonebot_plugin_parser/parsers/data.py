@@ -12,7 +12,7 @@ def repr_path_task(path_task: Path | Task[Path]) -> str:
         return f"task={path_task.get_name()}, done={path_task.done()}"
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, slots=True)
 class MediaContent:
     path_task: Path | Task[Path]
 
@@ -27,14 +27,14 @@ class MediaContent:
         return f"{prefix}({repr_path_task(self.path_task)})"
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, slots=True)
 class AudioContent(MediaContent):
     """音频内容"""
 
     duration: float = 0.0
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, slots=True)
 class VideoContent(MediaContent):
     """视频内容"""
 
@@ -64,21 +64,21 @@ class VideoContent(MediaContent):
         return repr + ")"
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, slots=True)
 class ImageContent(MediaContent):
     """图片内容"""
 
     pass
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, slots=True)
 class DynamicContent(MediaContent):
     """动态内容 视频格式 后续转 gif"""
 
     gif_path: Path | None = None
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, slots=True)
 class GraphicsContent(MediaContent):
     """图文内容 渲染时文字在前 图片在后"""
 
@@ -96,7 +96,7 @@ class GraphicsContent(MediaContent):
         return repr + ")"
 
 
-@dataclass
+@dataclass(slots=True)
 class Platform:
     """平台信息"""
 
@@ -106,7 +106,7 @@ class Platform:
     """ 平台显示名称 """
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, slots=True)
 class Author:
     """作者信息"""
 
@@ -134,7 +134,7 @@ class Author:
         return repr + ")"
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, slots=True)
 class ParseResult:
     """完整的解析结果"""
 
