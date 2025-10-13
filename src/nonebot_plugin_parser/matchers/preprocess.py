@@ -13,9 +13,9 @@ from nonebot_plugin_alconna.uniseg import Hyper, UniMsg
 
 from .filter import is_not_in_disabled_groups
 
-R_KEYWORD_KEY: Literal["_r_keyword"] = "_r_keyword"
-R_EXTRACT_KEY: Literal["_r_extract"] = "_r_extract"
-R_KEY_REGEX_MATCHED_KEY: Literal["_r_key_regex_matched"] = "_r_key_regex_matched"
+PSR_KWD_KEY: Literal["_psr_kwd"] = "_psr_kwd"
+PSR_EXTRACT_KEY: Literal["_psr_extract"] = "_psr_extract"
+PSR_KWD_MATCHED_KEY: Literal["_psr_kwd_matched"] = "_psr_kwd_matched"
 
 
 def ExtractText() -> str:
@@ -23,7 +23,7 @@ def ExtractText() -> str:
 
 
 def _extract_text(state: T_State) -> str | None:
-    return state.get(R_EXTRACT_KEY)
+    return state.get(PSR_EXTRACT_KEY)
 
 
 def Keyword() -> str:
@@ -31,15 +31,15 @@ def Keyword() -> str:
 
 
 def _keyword(state: T_State) -> str | None:
-    return state.get(R_KEYWORD_KEY)
+    return state.get(PSR_KWD_KEY)
 
 
-def KeyPatternMatched() -> re.Match[str]:
-    return Depends(_key_pattern_matched)
+def KwdRegexMatched() -> re.Match[str]:
+    return Depends(_kwd_regex_matched)
 
 
-def _key_pattern_matched(state: T_State) -> re.Match[str] | None:
-    return state.get(R_KEY_REGEX_MATCHED_KEY)
+def _kwd_regex_matched(state: T_State) -> re.Match[str] | None:
+    return state.get(PSR_KWD_MATCHED_KEY)
 
 
 URL_KEY_MAPPING = {
@@ -104,12 +104,12 @@ def extract_msg_text(message: UniMsg, state: T_State) -> None:
     text: str | None = None
 
     if hyper := message.get(Hyper, 1):
-        state[R_EXTRACT_KEY] = _extract_json_url(hyper.pop())
+        state[PSR_EXTRACT_KEY] = _extract_json_url(hyper.pop())
         return
 
     # 提取纯文本
     if text := message.extract_plain_text().strip():
-        state[R_EXTRACT_KEY] = text
+        state[PSR_EXTRACT_KEY] = text
 
 
 class KeyPatternList(list[tuple[str, re.Pattern[str]]]):
@@ -145,8 +145,8 @@ class KeywordRegexRule:
             if keyword not in text:
                 continue
             if matched := pattern.search(text):
-                state[R_KEYWORD_KEY] = keyword
-                state[R_KEY_REGEX_MATCHED_KEY] = matched
+                state[PSR_KWD_KEY] = keyword
+                state[PSR_KWD_MATCHED_KEY] = matched
                 return True
             logger.debug(f"keyword '{keyword}' is in '{text}', but not matched")
         return False

@@ -12,7 +12,7 @@ from ..config import pconfig
 from ..parsers import BaseParser, ParseResult
 from ..renders import get_renderer
 from ..utils import LimitedSizeDict
-from .preprocess import KeyPatternMatched, Keyword, on_keyword_regex
+from .preprocess import Keyword, KwdRegexMatched, on_keyword_regex
 
 
 def _get_enabled_parser_classes() -> list[type[BaseParser]]:
@@ -60,7 +60,7 @@ parser_matcher = on_keyword_regex(*_get_enabled_patterns())
 async def _(
     event: Event,
     keyword: str = Keyword(),
-    matched: re.Match[str] = KeyPatternMatched(),
+    matched: re.Match[str] = KwdRegexMatched(),
 ):
     """统一的解析处理器"""
     # 响应用户处理中
