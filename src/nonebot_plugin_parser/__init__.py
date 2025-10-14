@@ -11,8 +11,8 @@ from .matchers import clear_result_cache
 from .utils import safe_unlink
 
 __plugin_meta__ = PluginMetadata(
-    name="链接分享自动解析",
-    description="BV号/链接/小程序/卡片 | B站/抖音/快手/微博/小红书/youtube/tiktok/twitter/acfun",
+    name="链接分享解析 Alconna 版",
+    description="全新通用媒体卡片渲染(PIL 实现), 支持 B站/抖音/快手/微博/小红书/youtube/tiktok/twitter/acfun/nga",
     usage="发送支持平台的(BV号/链接/小程序/卡片)即可",
     type="application",
     homepage="https://github.com/fllesser/nonebot-plugin-parser",
