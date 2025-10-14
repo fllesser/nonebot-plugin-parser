@@ -20,6 +20,10 @@ class FontInfo:
     cjk_width: int
     ascii_width: int
 
+    def __hash__(self) -> int:
+        """实现哈希方法以支持 @lru_cache"""
+        return hash((self.line_height, self.cjk_width, self.ascii_width))
+
     @lru_cache(maxsize=100)
     def get_char_width(self, char: str) -> int:
         """获取字符宽度，使用缓存优化"""
@@ -72,7 +76,7 @@ class FontSet:
     title_font: FontInfo
     text_font: FontInfo
     extra_font: FontInfo
-    size80_font: FontInfo
+    indicator_font: FontInfo
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -214,9 +218,9 @@ class CommonRenderer(ImageRenderer):
     """转发缩放比例"""
 
     # 字体大小和行高
-    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24, "size80": 80}
+    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24, "indicator": 40}
     """字体大小"""
-    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28, "size80": 88}
+    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28, "indicator": 48}
     """行高"""
 
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
@@ -273,7 +277,7 @@ class CommonRenderer(ImageRenderer):
             title_font=font_infos["title"],
             text_font=font_infos["text"],
             extra_font=font_infos["extra"],
-            size80_font=font_infos["size80"],
+            indicator_font=font_infos["indicator"],
         )
 
         logger.success(f"加载字体「{self.font_path.name}」成功")
@@ -1031,7 +1035,7 @@ class CommonRenderer(ImageRenderer):
 
         # 绘制+N文字
         text = f"+{count}"
-        font_info = self.fontset.size80_font
+        font_info = self.fontset.indicator_font
         # 计算文字位置（居中）
         text_width = font_info.get_text_width(text)
         text_x = img_x + (img_width - text_width) // 2
