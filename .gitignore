@@ -152,3 +152,6 @@ config
 .DS_Store
 junit*.xml
 coverage*.xml
+
+.env*
+!.env.test
