@@ -1,4 +1,5 @@
 from enum import Enum
+from functools import cached_property
 from pathlib import Path
 from typing import Literal
 
@@ -56,22 +57,22 @@ class Config(BaseModel):
     parser_need_forward_contents: bool = True
     """是否需要转发媒体内容"""
 
-    @property
+    @cached_property
     def nickname(self) -> str:
         """全局名称"""
         return _nickname
 
-    @property
+    @cached_property
     def cache_dir(self) -> Path:
         """插件缓存目录"""
         return _cache_dir
 
-    @property
+    @cached_property
     def config_dir(self) -> Path:
         """插件配置目录"""
         return _config_dir
 
-    @property
+    @cached_property
     def data_dir(self) -> Path:
         """插件数据目录"""
         return _data_dir
@@ -131,7 +132,7 @@ class Config(BaseModel):
         """是否在解析结果中附加原始URL"""
         return self.parser_append_url
 
-    @property
+    @cached_property
     def custom_font(self) -> Path | None:
         """自定义字体"""
         return (self.data_dir / self.parser_custom_font) if self.parser_custom_font else None
