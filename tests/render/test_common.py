@@ -127,7 +127,7 @@ async def test_common_render():
     parser = WeiBoParser()
     renderer = _COMMON_RENDERER
 
-    async def downlaod_all_media(parse_result: ParseResult):
+    async def download_all_media(parse_result: ParseResult):
         """下载所有媒体资源"""
         assert parse_result.author, f"没有作者: {parse_result.url}"
         await parse_result.author.get_avatar_path()
@@ -135,7 +135,7 @@ async def test_common_render():
         for content in parse_result.contents:
             await content.get_path()
         if parse_result.repost:
-            await downlaod_all_media(parse_result.repost)
+            await download_all_media(parse_result.repost)
 
     url_dict = {
         "video_fid": "https://video.weibo.com/show?fid=1034:5145615399845897",
@@ -166,7 +166,7 @@ async def test_common_render():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
         # await 所有资源下载，利用计算渲染时间
-        await downlaod_all_media(parse_result)
+        await download_all_media(parse_result)
 
         logger.info(f"{url} | 开始渲染")
         #  渲染图片，并计算耗时
