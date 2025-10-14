@@ -161,6 +161,8 @@ async def test_common_render():
         await parse_result.cover_path
         for content in parse_result.contents:
             await content.get_path()
+        if parse_result.repost and parse_result.repost.author:
+            await parse_result.repost.author.get_avatar_path()
 
         logger.info(f"{url} | 开始渲染")
         #  渲染图片，并计算耗时
