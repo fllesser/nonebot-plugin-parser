@@ -1042,7 +1042,7 @@ class CommonRenderer(ImageRenderer):
         text_y = img_y + (img_height - font_info.line_height) // 2
 
         # 绘制50%透明白色文字
-        draw.text((text_x, text_y), text, fill=(255, 255, 255, 128), font=font_info.font)
+        draw.text((text_x, text_y), text, fill=(255, 255, 255), font=font_info.font)
 
     def _draw_rounded_rectangle(
         self, image: Image.Image, bbox: tuple[int, int, int, int], fill_color: tuple[int, int, int], radius: int = 8
@@ -1130,6 +1130,13 @@ class CommonRenderer(ImageRenderer):
                     remaining_text = remaining_text[1:]
                     continue
 
+                # 如果是标点符号，直接添加到当前行（标点符号不应该单独成行）
+                if is_punctuation(next_char):
+                    current_line += next_char
+                    current_line_width += char_width
+                    remaining_text = remaining_text[1:]
+                    continue
+
                 # 测试添加下一个字符后的宽度
                 test_width = current_line_width + char_width
 
@@ -1144,15 +1151,6 @@ class CommonRenderer(ImageRenderer):
                     current_line = next_char
                     current_line_width = char_width
                     remaining_text = remaining_text[1:]
-
-                    # 如果新行以标点符号开头，将其移到上一行
-                    if current_line and is_punctuation(current_line[0]):
-                        lines[-1] += current_line[0]
-                        current_line = current_line[1:]
-                        # 重新计算当前行宽度
-                        current_line_width = 0
-                        for char in current_line:
-                            current_line_width += font_info.get_char_width_fast(char)
 
             # 保存最后一行
             if current_line:
