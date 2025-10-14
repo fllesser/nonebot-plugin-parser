@@ -1078,17 +1078,13 @@ class CommonRenderer(ImageRenderer):
             return ord(char) < 128
 
         def is_punctuation(char: str) -> bool:
-            """判断是否为标点符号"""
+            """判断是否为不能为行首的标点符号"""
             # 中文标点符号
-            chinese_punctuation = "，。！？；：、''（）【】《》〈〉「」『』〔〕〖〗〘〙〚〛…—·"
+            chinese_punctuation = "，。！？；：、）】》〉」』〕〗〙〛…—·"
             # 英文标点符号
-            english_punctuation = ",.;:!?()[]{}'\"-"
-            # Unicode 标点符号类别
-            import unicodedata
+            english_punctuation = ",.;:!?)]}"
 
-            return (
-                char in chinese_punctuation or char in english_punctuation or unicodedata.category(char).startswith("P")
-            )
+            return char in chinese_punctuation or char in english_punctuation
 
         def get_text_width_fast(text: str) -> int:
             """快速计算文本宽度"""
@@ -1104,33 +1100,6 @@ class CommonRenderer(ImageRenderer):
                 else:
                     total_width += get_char_width(char)
             return total_width
-
-        def find_break_point(text: str) -> int:
-            """找到合适的断点位置，避免标点符号在行首"""
-            if not text:
-                return 0
-
-            # 从后往前找断点
-            for i in range(len(text) - 1, 0, -1):
-                char = text[i]
-
-                # 优先在空格处断行
-                if char == " ":
-                    return i
-
-                # 对于中文，可以在任意字符处断行
-                if is_cjk_char(char):
-                    return i
-
-                # 对于标点符号，不能在行首，需要跳过
-                if is_punctuation(char):
-                    continue
-
-                # 其他字符可以作为断点
-                return i
-
-            # 如果找不到合适的断点，在中间位置断行
-            return max(1, len(text) // 2)
 
         for paragraph in paragraphs:
             if not paragraph:
@@ -1157,32 +1126,14 @@ class CommonRenderer(ImageRenderer):
                     remaining_text = remaining_text[1:]
                 else:
                     # 宽度超限，需要断行
-                    if len(current_line) == 1:
-                        # 单个字符就超宽，强制添加
-                        lines.append(current_line)
-                        current_line = remaining_text[0]
-                        remaining_text = remaining_text[1:]
-                    else:
-                        # 尝试找到合适的断点
-                        break_point = find_break_point(current_line)
+                    lines.append(current_line)
+                    current_line = remaining_text[0]
+                    remaining_text = remaining_text[1:]
 
-                        # 保存当前行
-                        lines.append(current_line[:break_point].rstrip())
-
-                        # 开始新行，跳过行首的标点符号
-                        current_line = current_line[break_point:].lstrip()
-
-                        # 如果新行以标点符号开头，将其移到上一行
-                        while current_line and is_punctuation(current_line[0]):
-                            if lines:
-                                lines[-1] += current_line[0]
-                                current_line = current_line[1:]
-                            else:
-                                break
-
-                        if not current_line:
-                            current_line = remaining_text[0]
-                            remaining_text = remaining_text[1:]
+                    # 如果新行以标点符号开头，将其移到上一行
+                    if current_line and is_punctuation(current_line[0]):
+                        lines[-1] += current_line[0]
+                        current_line = current_line[1:]
 
             # 保存最后一行
             if current_line:

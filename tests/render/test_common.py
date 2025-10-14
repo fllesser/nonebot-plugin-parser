@@ -121,11 +121,21 @@ async def test_common_render():
     """测试使用 WeiboParser 解析链接并用 CommonRenderer 渲染"""
 
     from nonebot_plugin_parser import pconfig
-    from nonebot_plugin_parser.parsers import WeiBoParser
+    from nonebot_plugin_parser.parsers import ParseResult, WeiBoParser
     from nonebot_plugin_parser.renders import _COMMON_RENDERER
 
     parser = WeiBoParser()
     renderer = _COMMON_RENDERER
+
+    async def download_all_media(parse_result: ParseResult):
+        """下载所有媒体资源"""
+        assert parse_result.author, f"没有作者: {parse_result.url}"
+        await parse_result.author.get_avatar_path()
+        await parse_result.cover_path
+        for content in parse_result.contents:
+            await content.get_path()
+        if parse_result.repost:
+            await download_all_media(parse_result.repost)
 
     url_dict = {
         "video_fid": "https://video.weibo.com/show?fid=1034:5145615399845897",
@@ -156,11 +166,7 @@ async def test_common_render():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
         # await 所有资源下载，利用计算渲染时间
-        assert parse_result.author, f"没有作者: {url}"
-        await parse_result.author.get_avatar_path()
-        await parse_result.cover_path
-        for content in parse_result.contents:
-            await content.get_path()
+        await download_all_media(parse_result)
 
         logger.info(f"{url} | 开始渲染")
         #  渲染图片，并计算耗时
