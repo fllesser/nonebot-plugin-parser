@@ -22,8 +22,6 @@
 
 ## 📖 介绍
 
-[nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) 重制版
-
 | 平台    | 触发的消息形态                        | 视频 | 图集 | 音频 |
 | ------- | ------------------------------------- | ---- | ---- | ---- |
 | B站     | BV号/链接(包含短链,BV,av)/卡片/小程序 | ✅​   | ✅​   | ✅​   |
@@ -39,7 +37,7 @@
 支持的链接，可参考 [测试链接](https://github.com/fllesser/nonebot-plugin-parser/blob/master/test_url.md)
 
 ## 🎨 效果图
-
+插件默认启用 PIL 实现的通用媒体卡片渲染，效果图如下
 <div align="center">
 
 <img src="https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/video.png" width="160" />
@@ -52,7 +50,7 @@
 
 ## 💿 安装
 > [!Warning]
-> **如果你已经在使用 nonebot-plugin-resolver，请在安装此插件前卸载**
+> **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
     
 <details open>
 <summary>使用 nb-cli 安装/更新</summary>
