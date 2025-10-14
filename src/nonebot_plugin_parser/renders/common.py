@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 from typing import ClassVar
@@ -19,6 +20,53 @@ class FontInfo:
     cjk_width: int
     ascii_width: int
 
+    def __hash__(self) -> int:
+        """实现哈希方法以支持 @lru_cache"""
+        return hash((self.line_height, self.cjk_width, self.ascii_width))
+
+    @lru_cache(maxsize=100)
+    def get_char_width(self, char: str) -> int:
+        """获取字符宽度，使用缓存优化"""
+        bbox = self.font.getbbox(char)
+        width = int(bbox[2] - bbox[0])
+        return width
+
+    def get_char_width_fast(self, char: str) -> int:
+        """快速获取单个字符宽度"""
+        if self._is_cjk_char(char):
+            return self.cjk_width
+        elif self._is_ascii_char(char):
+            return self.ascii_width
+        else:
+            return self.get_char_width(char)
+
+    def get_text_width(self, text: str) -> int:
+        """计算文本宽度，使用预计算的字符宽度优化性能
+
+        Args:
+            text: 要计算宽度的文本
+
+        Returns:
+            文本宽度（像素）
+        """
+        if not text:
+            return 0
+
+        total_width = 0
+        for char in text:
+            total_width += self.get_char_width_fast(char)
+        return total_width
+
+    @staticmethod
+    def _is_cjk_char(char: str) -> bool:
+        """判断是否为中日韩字符"""
+        return "\u4e00" <= char <= "\u9fff"
+
+    @staticmethod
+    def _is_ascii_char(char: str) -> bool:
+        """判断是否为ASCII字符"""
+        return ord(char) < 128
+
 
 @dataclass(eq=False, frozen=True, slots=True)
 class FontSet:
@@ -28,6 +76,7 @@ class FontSet:
     title_font: FontInfo
     text_font: FontInfo
     extra_font: FontInfo
+    indicator_font: FontInfo
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -169,9 +218,9 @@ class CommonRenderer(ImageRenderer):
     """转发缩放比例"""
 
     # 字体大小和行高
-    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24}
+    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24, "indicator": 60}
     """字体大小"""
-    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28}
+    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28, "indicator": 68}
     """行高"""
 
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
@@ -228,6 +277,7 @@ class CommonRenderer(ImageRenderer):
             title_font=font_infos["title"],
             text_font=font_infos["text"],
             extra_font=font_infos["extra"],
+            indicator_font=font_infos["indicator"],
         )
 
         logger.success(f"加载字体「{self.font_path.name}」成功")
@@ -859,11 +909,11 @@ class CommonRenderer(ImageRenderer):
         if section.alt_text:
             y_pos += self.SECTION_SPACING  # 图片和alt文本之间的间距
             # 计算文本居中位置
-            bbox = self.fontset.extra_font.font.getbbox(section.alt_text)
-            text_width = bbox[2] - bbox[0]
+            extra_font_info = self.fontset.extra_font
+            text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (content_width - text_width) // 2
-            draw.text((text_x, y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font)
-            y_pos += self.fontset.extra_font.line_height
+            draw.text((text_x, y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=extra_font_info.font)
+            y_pos += extra_font_info.line_height
 
         return y_pos + self.SECTION_SPACING
 
@@ -985,19 +1035,14 @@ class CommonRenderer(ImageRenderer):
 
         # 绘制+N文字
         text = f"+{count}"
-        # 使用更大的字体
-        font_size = min(img_width, img_height) // 4
-        font = ImageFont.truetype(self.font_path, font_size)
-
+        font_info = self.fontset.indicator_font
         # 计算文字位置（居中）
-        bbox = font.getbbox(text)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
+        text_width = font_info.get_text_width(text)
         text_x = img_x + (img_width - text_width) // 2
-        text_y = img_y + (img_height - text_height) // 2
+        text_y = img_y + (img_height - font_info.line_height) // 2
 
-        # 绘制白色文字
-        draw.text((text_x, text_y), text, fill=(255, 255, 255, 255), font=font)
+        # 绘制50%透明白色文字
+        draw.text((text_x, text_y), text, fill=(255, 255, 255), font=font_info.font)
 
     def _draw_rounded_rectangle(
         self, image: Image.Image, bbox: tuple[int, int, int, int], fill_color: tuple[int, int, int], radius: int = 8
@@ -1056,27 +1101,6 @@ class CommonRenderer(ImageRenderer):
         lines = []
         paragraphs = text.split("\n")
 
-        # 字符宽度缓存
-        char_width_cache = {}
-
-        def get_char_width(char: str) -> int:
-            """获取字符宽度，使用缓存优化"""
-            if char in char_width_cache:
-                return char_width_cache[char]
-
-            bbox = font_info.font.getbbox(char)
-            width = int(bbox[2] - bbox[0])
-            char_width_cache[char] = width
-            return width
-
-        def is_cjk_char(char: str) -> bool:
-            """判断是否为中日韩字符"""
-            return "\u4e00" <= char <= "\u9fff"
-
-        def is_ascii_char(char: str) -> bool:
-            """判断是否为ASCII字符"""
-            return ord(char) < 128
-
         def is_punctuation(char: str) -> bool:
             """判断是否为不能为行首的标点符号"""
             # 中文标点符号
@@ -1086,54 +1110,47 @@ class CommonRenderer(ImageRenderer):
 
             return char in chinese_punctuation or char in english_punctuation
 
-        def get_text_width_fast(text: str) -> int:
-            """快速计算文本宽度"""
-            if not text:
-                return 0
-
-            total_width = 0
-            for char in text:
-                if is_cjk_char(char):
-                    total_width += font_info.cjk_width
-                elif is_ascii_char(char):
-                    total_width += font_info.ascii_width
-                else:
-                    total_width += get_char_width(char)
-            return total_width
-
         for paragraph in paragraphs:
             if not paragraph:
                 lines.append("")
                 continue
 
             current_line = ""
+            current_line_width = 0
             remaining_text = paragraph
 
             while remaining_text:
+                next_char = remaining_text[0]
+                char_width = font_info.get_char_width_fast(next_char)
+
                 # 如果当前行为空，直接添加字符
                 if not current_line:
-                    current_line = remaining_text[0]
+                    current_line = next_char
+                    current_line_width = char_width
                     remaining_text = remaining_text[1:]
                     continue
 
-                # 测试添加下一个字符
-                test_line = current_line + remaining_text[0]
-                test_width = get_text_width_fast(test_line)
+                # 如果是标点符号，直接添加到当前行（标点符号不应该单独成行）
+                if is_punctuation(next_char):
+                    current_line += next_char
+                    current_line_width += char_width
+                    remaining_text = remaining_text[1:]
+                    continue
+
+                # 测试添加下一个字符后的宽度
+                test_width = current_line_width + char_width
 
                 if test_width <= max_width:
                     # 宽度合适，继续添加
-                    current_line = test_line
+                    current_line += next_char
+                    current_line_width = test_width
                     remaining_text = remaining_text[1:]
                 else:
                     # 宽度超限，需要断行
                     lines.append(current_line)
-                    current_line = remaining_text[0]
+                    current_line = next_char
+                    current_line_width = char_width
                     remaining_text = remaining_text[1:]
-
-                    # 如果新行以标点符号开头，将其移到上一行
-                    if current_line and is_punctuation(current_line[0]):
-                        lines[-1] += current_line[0]
-                        current_line = current_line[1:]
 
             # 保存最后一行
             if current_line:
