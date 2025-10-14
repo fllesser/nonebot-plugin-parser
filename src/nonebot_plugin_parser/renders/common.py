@@ -218,9 +218,9 @@ class CommonRenderer(ImageRenderer):
     """转发缩放比例"""
 
     # 字体大小和行高
-    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24, "indicator": 40}
+    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24, "indicator": 60}
     """字体大小"""
-    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28, "indicator": 48}
+    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28, "indicator": 68}
     """行高"""
 
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
@@ -1041,8 +1041,8 @@ class CommonRenderer(ImageRenderer):
         text_x = img_x + (img_width - text_width) // 2
         text_y = img_y + (img_height - font_info.line_height) // 2
 
-        # 绘制白色文字
-        draw.text((text_x, text_y), text, fill=(255, 255, 255, 255), font=font_info.font)
+        # 绘制50%透明白色文字
+        draw.text((text_x, text_y), text, fill=(255, 255, 255, 128), font=font_info.font)
 
     def _draw_rounded_rectangle(
         self, image: Image.Image, bbox: tuple[int, int, int, int], fill_color: tuple[int, int, int], radius: int = 8
