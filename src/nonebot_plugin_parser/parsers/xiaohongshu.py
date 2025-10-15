@@ -26,8 +26,8 @@ class XiaoHongShuParser(BaseParser):
     def __init__(self):
         super().__init__()
         explore_headers = {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,"
-            "application/signed-exchange;v=b3;q=0.9",
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,"
+            "image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         }
         self.headers.update(explore_headers)
         discovery_headers = {
@@ -146,6 +146,7 @@ class XiaoHongShuParser(BaseParser):
             headers=self.ios_headers,
             timeout=self.timeout,
             follow_redirects=True,
+            cookies=httpx.Cookies(),
             trust_env=False,
         ) as client:
             response = await client.get(url)
