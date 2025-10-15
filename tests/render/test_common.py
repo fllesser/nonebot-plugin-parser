@@ -138,13 +138,16 @@ async def test_common_render():
             await download_all_media(parse_result.repost)
 
     url_dict = {
-        "微博视频": "https://video.weibo.com/show?fid=1034:5145615399845897",
-        "微博手机版视频": "http://m.weibo.cn/status/5112672433738061",
-        "微博图集(超过9张)": "https://weibo.com/7207262816/P5kWdcfDe",
-        "微博图集(9张)": "https://weibo.com/7207262816/P2AFBk387",
-        "微博图集(2张)": "https://weibo.com/7207262816/PsFzpzUX2",
-        "微博图集(3张)": "https://weibo.com/7207262816/P2rJE157H",
+        "微博视频": "https://weibo.com/3800478724/Q9ectF6yO",
+        "微博视频2": "https://weibo.com/3800478724/Q9dXDkrul",
+        "微博图集(超过9张)": "https://weibo.com/7793636592/Q96aMs3dG",
+        "微博图集(9张)": "https://weibo.com/6458148211/Q7iZTtgCE",
+        "微博图集(2张)": "https://weibo.com/7983081104/Q98U3sDmH",
+        "微博图集(3张)": "https://weibo.com/7299853661/Q8LXh1X74",
+        "微博图集(4张)": "https://weibo.com/6458148211/Q3Cdb5vgP",
         "微博纯文": "https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html",
+        "微博纯文2": "https://weibo.com/5647310207/Q9c0ZwW2X",
+        "微博转发纯文": "https://weibo.com/2385967842/Q9epfFLvQ",
         "微博转发(横图)": "https://weibo.com/7207262816/Q6YCbtAn8",
         "微博转发(竖图)": "https://weibo.com/7207262816/Q617WgOm4",
         "微博转发(两张)": "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
