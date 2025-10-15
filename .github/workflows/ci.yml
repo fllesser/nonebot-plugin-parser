@@ -159,6 +159,7 @@ jobs:
           use_oidc: true
 
       - name: Find or Create Comment
+        if: ${{ github.event.pull_request.number }}
         uses: peter-evans/find-comment@v3
         id: fc
         with:
@@ -166,6 +167,7 @@ jobs:
           comment-author: "github-actions[bot]"
 
       - name: Update Comment
+        if: ${{ github.event.pull_request.number }}
         uses: peter-evans/create-or-update-comment@v5
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
