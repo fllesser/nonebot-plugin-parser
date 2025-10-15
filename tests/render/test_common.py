@@ -130,12 +130,23 @@ async def test_common_render():
     async def download_all_media(parse_result: ParseResult):
         """下载所有媒体资源"""
         assert parse_result.author, f"没有作者: {parse_result.url}"
-        await parse_result.author.get_avatar_path()
-        await parse_result.cover_path
+        avatar_path = await parse_result.author.get_avatar_path()
+        cover_path = await parse_result.cover_path
         for content in parse_result.contents:
             await content.get_path()
         if parse_result.repost:
             await download_all_media(parse_result.repost)
+
+        # 计算用于绘制的图片总大小 MB
+        total_size = 0
+        if avatar_path:
+            total_size += avatar_path.stat().st_size / 1024 / 1024
+        if cover_path:
+            total_size += cover_path.stat().st_size / 1024 / 1024
+        # content 取前9项
+        for content in parse_result.contents[:9]:
+            total_size += (await content.get_path()).stat().st_size / 1024 / 1024
+        return total_size
 
     url_dict = {
         "微博视频": "https://weibo.com/3800478724/Q9ectF6yO",
@@ -156,7 +167,7 @@ async def test_common_render():
     # 总耗时
     total_time: float = 0
     # 各链接耗时
-    name_cost_dict: dict[str, float] = {}
+    name_cost_dict: dict[str, tuple[str, float, float]] = {}
 
     async def parse_and_render(url: str, name: str) -> None:
         """解析并渲染单个 URL"""
@@ -168,7 +179,7 @@ async def test_common_render():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
         # await 所有资源下载，利用计算渲染时间
-        await download_all_media(parse_result)
+        total_size = await download_all_media(parse_result)
 
         logger.info(f"{url} | 开始渲染")
         #  渲染图片，并计算耗时
@@ -179,7 +190,7 @@ async def test_common_render():
 
         nonlocal total_time, name_cost_dict
         total_time += cost_time
-        name_cost_dict[name] = cost_time
+        name_cost_dict[name] = (url, cost_time, total_size)
 
         logger.success(f"{url} | 渲染成功，耗时: {cost_time} 秒")
         assert image_raw, f"没有生成图片: {url}"
@@ -201,13 +212,13 @@ async def test_common_render():
         f"渲染完成，失败数量: {failed_count}, 总耗时: {total_time} 秒\n平均耗时: {total_time / len(url_dict)} 秒\n"
     )
     # 按时间排序
-    sorted_url_time_mapping = sorted(name_cost_dict.items(), key=lambda x: x[1])
+    sorted_url_time_mapping = sorted(name_cost_dict.items(), key=lambda x: x[1][1])
 
-    # 生成表格，使用 markdown 表格格式 name | cost 链接使用 markdown 格式
-    render_result += "| type | cost |\n"
-    render_result += "| --- | --- |\n"
-    for name, cost in sorted_url_time_mapping:
-        render_result += f"| [{name}]({url_dict[name]}) | {cost:.5f} 秒 | \n"
+    # 生成表格，使用 markdown 表格格式 name | cost | 资源总大小
+    render_result += "| 类型 | 耗时 | 渲染所用图片总大小(MB)\n"
+    render_result += "| --- | --- | --- |\n"
+    for name, (url, cost, total_size) in sorted_url_time_mapping:
+        render_result += f"| [{name}]({url}) | {cost:.5f} 秒 | {total_size:.5f} MB |\n"
     logger.success(f"渲染结果: \n{render_result}")
 
     async with aiofiles.open("render_result.md", "w+") as f:
