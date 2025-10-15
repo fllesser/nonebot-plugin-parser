@@ -120,6 +120,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      pull-requests: write
       contents: read
     concurrency:
       group: test-render-${{ github.ref }}-3.12-ubuntu-latest
