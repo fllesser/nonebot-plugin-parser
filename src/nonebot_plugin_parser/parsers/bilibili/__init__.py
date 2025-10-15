@@ -460,15 +460,15 @@ class BilibiliParser(BaseParser):
         """初始化 bilibili api"""
 
         if not pconfig.bili_ck:
-            logger.warning("未配置 r_bili_ck, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
+            logger.warning("未配置 parser_bili_ck, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
             return None
 
         credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
         if not await credential.check_valid() and self._cookies_file.exists():
-            logger.info(f"r_bili_ck 已过期, 尝试从 {self._cookies_file} 加载")
+            logger.info(f"parser_bili_ck 已过期, 尝试从 {self._cookies_file} 加载")
             credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
         else:
-            logger.info(f"r_bili_ck 有效, 保存到 {self._cookies_file}")
+            logger.info(f"parser_bili_ck 有效, 保存到 {self._cookies_file}")
             self._cookies_file.write_text(json.dumps(credential.get_cookies()))
 
         return credential
@@ -483,7 +483,7 @@ class BilibiliParser(BaseParser):
                 return None
 
         if not await self._credential.check_valid():
-            logger.warning("哔哩哔哩 cookies 已过期, 请重新配置 r_bili_ck")
+            logger.warning("哔哩哔哩 cookies 已过期, 请重新配置 parser_bili_ck")
             return self._credential
 
         if await self._credential.check_refresh():
