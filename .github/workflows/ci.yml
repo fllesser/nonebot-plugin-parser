@@ -158,10 +158,18 @@ jobs:
           files: ./coverage3.xml
           use_oidc: true
 
-      - name: Comment on PR
-        if: ${{ github.event.pull_request.number }}
+      - name: Find or Create Comment
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: Build output
+
+      - name: Update Comment
         uses: peter-evans/create-or-update-comment@v5
         with:
-          issue-number: ${{ github.event.number }}
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
           body-path: render_result.md
           edit-mode: replace
