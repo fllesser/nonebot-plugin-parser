@@ -195,9 +195,14 @@ async def test_common_render():
         except Exception:
             logger.exception(f"{url} | 渲染失败")
             failed_count += 1
-    logger.success(f"渲染完成，失败数量: {failed_count}, 总耗时: {total_time} 秒")
-    logger.success(f"平均耗时: {total_time / len(url_dict)} 秒")
+    render_result = (
+        f"渲染完成，失败数量: {failed_count}, 总耗时: {total_time} 秒\n平均耗时: {total_time / len(url_dict)} 秒\n"
+    )
     # 按时间排序
     sorted_url_time_mapping = sorted(name_cost_dict.items(), key=lambda x: x[1])
     for name, cost in sorted_url_time_mapping:
-        logger.success(f"耗时: {cost:.5f} 秒 | {name}")
+        render_result += f"耗时: {cost:.5f} 秒 | {name}\n"
+    logger.success(f"渲染结果: \n{render_result}")
+
+    async with aiofiles.open("render_result.txt", "w+") as f:
+        await f.write(render_result)

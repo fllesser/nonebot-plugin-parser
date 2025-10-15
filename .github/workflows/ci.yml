@@ -125,7 +125,7 @@ jobs:
       group: test-render-${{ github.ref }}-3.12-ubuntu-latest
       cancel-in-progress: true
 
-    env: 
+    env:
       UV_NO_SYNC: 1
 
     steps:
@@ -142,7 +142,10 @@ jobs:
         run: uv sync --no-dev --locked
 
       - name: Run Pytest Render
-        run: uv run poe test_render
+        id: test_render
+        run: |
+          uv run poe test_render
+          echo "RENDER_RESULT=$(cat render_result.txt)" >> $GITHUB_OUTPUT
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
@@ -156,3 +159,11 @@ jobs:
         with:
           files: ./coverage3.xml
           use_oidc: true
+
+      - name: Comment on PR
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.number }}
+          body: |
+            渲染测试结果：
+            ${{ steps.test_render.outputs.RENDER_RESULT }}
