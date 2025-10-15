@@ -142,10 +142,7 @@ jobs:
         run: uv sync --no-dev --locked
 
       - name: Run Pytest Render
-        id: test_render
-        run: |
-          uv run poe test_render
-          echo "RENDER_RESULT=$(cat render_result.txt)" >> $GITHUB_OUTPUT
+        run: uv run poe test_render
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
@@ -164,6 +161,5 @@ jobs:
         uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.number }}
-          body: |
-            渲染测试结果：
-            ${{ steps.test_render.outputs.RENDER_RESULT }}
+          body-path: render_result.txt
+          edit-mode: replace
