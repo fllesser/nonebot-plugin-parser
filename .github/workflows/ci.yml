@@ -120,12 +120,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      pull-requests: write
       contents: read
     concurrency:
       group: test-render-${{ github.ref }}-3.12-ubuntu-latest
       cancel-in-progress: true
 
-    env: 
+    env:
       UV_NO_SYNC: 1
 
     steps:
@@ -156,3 +157,18 @@ jobs:
         with:
           files: ./coverage3.xml
           use_oidc: true
+
+      - name: Find or Create Comment
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+
+      - name: Update Comment
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: render_result.md
+          edit-mode: replace
