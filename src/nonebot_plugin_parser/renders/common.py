@@ -32,7 +32,7 @@ class FontInfo:
 
     def get_char_width_fast(self, char: str) -> int:
         """快速获取单个字符宽度"""
-        if self._is_cjk_char(char):
+        if "\u4e00" <= char <= "\u9fff":
             return self.cjk_width
         else:
             return self.get_char_width(char)
@@ -54,17 +54,11 @@ class FontInfo:
             total_width += self.get_char_width_fast(char)
         return total_width
 
-    @staticmethod
-    def _is_cjk_char(char: str) -> bool:
-        """判断是否为中日韩字符"""
-        return "\u4e00" <= char <= "\u9fff"
-
 
 @dataclass(eq=False, frozen=True, slots=True)
 class FontSet:
     """字体集数据类"""
 
-    # 字体大小和行高
     FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24, "indicator": 60}
     """字体大小"""
 
@@ -73,6 +67,14 @@ class FontSet:
     text_font: FontInfo
     extra_font: FontInfo
     indicator_font: FontInfo
+
+    @classmethod
+    def new(cls, font_path: Path):
+        font_infos: dict[str, FontInfo] = {}
+        for name, size in cls.FONT_SIZES.items():
+            font = ImageFont.truetype(font_path, size)
+            font_infos[f"{name}_font"] = FontInfo(font=font, line_height=size + 4, cjk_width=size)
+        return FontSet(**font_infos)
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -235,28 +237,8 @@ class CommonRenderer(ImageRenderer):
         font_path = pconfig.custom_font
         if font_path is not None and font_path.exists():
             self.font_path = font_path
-        # 创建字体信息字典
-        font_infos: dict[str, FontInfo] = {}
-
-        for name, size in FontSet.FONT_SIZES.items():
-            font = ImageFont.truetype(self.font_path, size)
-
-            # 计算中文字符宽度
-            cjk_bbox = font.getbbox("中")
-            cjk_width = int(cjk_bbox[2] - cjk_bbox[0])
-
-            # 创建字体信息对象
-            font_infos[name] = FontInfo(font=font, line_height=size + 4, cjk_width=cjk_width)
-
         # 创建 FontSet 对象
-        self.fontset = FontSet(
-            name_font=font_infos["name"],
-            title_font=font_infos["title"],
-            text_font=font_infos["text"],
-            extra_font=font_infos["extra"],
-            indicator_font=font_infos["indicator"],
-        )
-
+        self.fontset = FontSet.new(self.font_path)
         logger.success(f"加载字体「{self.font_path.name}」成功")
 
     def _load_video_button(self):
