@@ -54,11 +54,10 @@ class XiaoHongShuParser(BaseParser):
         """
         # 从匹配对象中获取原始URL
         url = matched.group(0)
-        logger.debug(f"matched url: {url}")
         # 处理 xhslink 短链
         if "xhslink" in url:
             url = await self.get_redirect_url(url, self.ios_headers)
-            logger.debug(f"redirect url: {url}")
+            logger.debug(f"xhslink redirect url: {url}")
 
         urlpath = urlparse(url).path
 
@@ -72,6 +71,7 @@ class XiaoHongShuParser(BaseParser):
 
     async def _parse_explore(self, url: str, xhs_id: str):
         async with httpx.AsyncClient(
+            headers=self.headers,
             timeout=self.timeout,
         ) as client:
             response = await client.get(url)
@@ -80,12 +80,47 @@ class XiaoHongShuParser(BaseParser):
 
         json_obj = self._extract_initial_state_json(html)
 
-        note_data = json_obj["note"]["noteDetailMap"][xhs_id]["note"]
+        # ["note"]["noteDetailMap"][xhs_id]["note"]
+        note_data = json_obj.get("note", {}).get("noteDetailMap", {}).get(xhs_id, {}).get("note", {})
+        if not note_data:
+            raise ParseException("can't find note detail in json_obj")
+
+        class Image(Struct):
+            urlDefault: str
+
+        class User(Struct):
+            nickname: str
+            avatar: str
+
+        class NoteDetail(Struct):
+            type: str
+            title: str
+            desc: str
+            user: User
+            imageList: list[Image] = field(default_factory=list)
+            video: Video | None = None
+
+            @property
+            def nickname(self) -> str:
+                return self.user.nickname
+
+            @property
+            def avatar_url(self) -> str:
+                return self.user.avatar
+
+            @property
+            def image_urls(self) -> list[str]:
+                return [item.urlDefault for item in self.imageList]
+
+            @property
+            def video_url(self) -> str | None:
+                if self.type != "video" or not self.video:
+                    return None
+                return self.video.video_url
+
         note_detail = msgspec.convert(note_data, type=NoteDetail)
 
-        # 使用新的简洁构建方式
         contents = []
-
         # 添加视频内容
         if video_url := note_detail.video_url:
             # 使用第一张图片作为封面
@@ -111,7 +146,6 @@ class XiaoHongShuParser(BaseParser):
             headers=self.ios_headers,
             timeout=self.timeout,
             follow_redirects=True,
-            cookies=httpx.Cookies(),
             trust_env=False,
         ) as client:
             response = await client.get(url)
@@ -126,7 +160,7 @@ class XiaoHongShuParser(BaseParser):
         if not note_data:
             raise ParseException("can't find noteData in noteData.data")
 
-        class Img(Struct):
+        class Image(Struct):
             url: str
             urlSizeLarge: str | None = None
 
@@ -141,7 +175,7 @@ class XiaoHongShuParser(BaseParser):
             user: User
             time: int
             lastUpdateTime: int
-            imageList: list[Img] = []  # 有水印
+            imageList: list[Image] = []  # 有水印
             video: Video | None = None
 
             @property
@@ -157,7 +191,7 @@ class XiaoHongShuParser(BaseParser):
         class NormalNotePreloadData(Struct):
             title: str
             desc: str
-            imagesList: list[Img] = []  # 无水印, 但只有一只，用于视频封面
+            imagesList: list[Image] = []  # 无水印, 但只有一只，用于视频封面
 
             @property
             def image_urls(self) -> list[str]:
@@ -194,10 +228,6 @@ class XiaoHongShuParser(BaseParser):
         return json.loads(json_str)
 
 
-class Image(Struct):
-    urlDefault: str
-
-
 class Stream(Struct):
     h264: list[dict[str, Any]] | None = None
     h265: list[dict[str, Any]] | None = None
@@ -226,35 +256,3 @@ class Video(Struct):
         elif stream.h266:
             return stream.h266[0]["masterUrl"]
         return None
-
-
-class User(Struct):
-    nickname: str
-    avatar: str
-
-
-class NoteDetail(Struct):
-    type: str
-    title: str
-    desc: str
-    user: User
-    imageList: list[Image] = field(default_factory=list)
-    video: Video | None = None
-
-    @property
-    def nickname(self) -> str:
-        return self.user.nickname
-
-    @property
-    def avatar_url(self) -> str:
-        return self.user.avatar
-
-    @property
-    def image_urls(self) -> list[str]:
-        return [item.urlDefault for item in self.imageList]
-
-    @property
-    def video_url(self) -> str | None:
-        if self.type != "video" or not self.video:
-            return None
-        return self.video.video_url
