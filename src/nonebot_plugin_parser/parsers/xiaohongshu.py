@@ -2,7 +2,7 @@ import json
 import re
 from typing import Any, ClassVar
 from typing_extensions import override
-from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 import httpx
 import msgspec
@@ -57,28 +57,18 @@ class XiaoHongShuParser(BaseParser):
         logger.debug(f"matched url: {url}")
         # 处理 xhslink 短链
         if "xhslink" in url:
-            url = await self.get_redirect_url(url, self.headers)
+            url = await self.get_redirect_url(url, self.ios_headers)
             logger.debug(f"redirect url: {url}")
-        # ?: 非捕获组
-        pattern = r"(/explore/|/discovery/item/|source=note&noteId=)([a-zA-Z0-9]+)"
-        searched = re.search(pattern, url)
-        if not searched:
-            raise ParseException("小红书分享链接不完整")
 
-        route, xhs_id = searched.group(1), searched.group(2)
-        if route == "/explore/":
+        urlpath = urlparse(url).path
+
+        if urlpath.startswith("/explore/"):
+            xhs_id = urlpath.split("/")[-1]
             return await self._parse_explore(url, xhs_id)
-        elif route == "/discovery/item/":
+        elif urlpath.startswith("/discovery/item/"):
             return await self._parse_discovery(url)
         else:
-            params = parse_qs(url)
-            # 提取 xsec_source 和 xsec_token
-            xsec_source = params.get("xsec_source", [None])[0] or "pc_feed"
-            xsec_token = params.get("xsec_token", [None])[0]
-            discovery_url = (
-                f"https://www.xiaohongshu.com/discovery/item/{xhs_id}?xsec_source={xsec_source}&xsec_token={xsec_token}"
-            )
-            return await self._parse_discovery(discovery_url)
+            raise ParseException(f"不支持的小红书链接: {url}, urlpath: {urlpath}")
 
     async def _parse_explore(self, url: str, xhs_id: str):
         async with httpx.AsyncClient(
@@ -128,13 +118,17 @@ class XiaoHongShuParser(BaseParser):
             html = response.text
 
         json_obj = self._extract_initial_state_json(html)
-
-        note_data = json_obj.get("noteData", {}).get("data", {}).get("noteData", {})
+        note_data = json_obj.get("noteData")
         if not note_data:
-            raise ParseException("小红书分享链接失效或内容已删除")
+            raise ParseException("can't find noteData in json_obj")
+        preload_data = note_data.get("normalNotePreloadData", {})
+        note_data = note_data.get("data", {}).get("noteData", {})
+        if not note_data:
+            raise ParseException("can't find noteData in noteData.data")
 
         class Img(Struct):
             url: str
+            urlSizeLarge: str | None = None
 
         class User(Struct):
             nickName: str
@@ -147,7 +141,7 @@ class XiaoHongShuParser(BaseParser):
             user: User
             time: int
             lastUpdateTime: int
-            imageList: list[Img] = []
+            imageList: list[Img] = []  # 有水印
             video: Video | None = None
 
             @property
@@ -160,11 +154,25 @@ class XiaoHongShuParser(BaseParser):
                     return None
                 return self.video.video_url
 
+        class NormalNotePreloadData(Struct):
+            title: str
+            desc: str
+            imagesList: list[Img] = []  # 无水印, 但只有一只，用于视频封面
+
+            @property
+            def image_urls(self) -> list[str]:
+                return [item.urlSizeLarge or item.url for item in self.imagesList]
+
         note_data = msgspec.convert(note_data, type=NoteData)
 
         contents = []
         if video_url := note_data.video_url:
-            contents.append(self.create_video_content(video_url, note_data.image_urls[0]))
+            if preload_data:
+                preload_data = msgspec.convert(preload_data, type=NormalNotePreloadData)
+                img_urls = preload_data.image_urls
+            else:
+                img_urls = note_data.image_urls
+            contents.append(self.create_video_content(video_url, img_urls[0]))
         elif img_urls := note_data.image_urls:
             contents.extend(self.create_image_contents(img_urls))
 
@@ -208,10 +216,11 @@ class Video(Struct):
     def video_url(self) -> str | None:
         stream = self.media.stream
 
-        if stream.h264:
-            return stream.h264[0]["masterUrl"]
-        elif stream.h265:
+        # h264 有水印，h265 无水印
+        if stream.h265:
             return stream.h265[0]["masterUrl"]
+        elif stream.h264:
+            return stream.h264[0]["masterUrl"]
         elif stream.av1:
             return stream.av1[0]["masterUrl"]
         elif stream.h266:
