@@ -159,6 +159,7 @@ jobs:
           use_oidc: true
 
       - name: Comment on PR
+        if: ${{ github.event.pull_request.number }}
         uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.number }}
