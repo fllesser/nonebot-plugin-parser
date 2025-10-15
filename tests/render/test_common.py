@@ -141,7 +141,7 @@ async def test_common_render():
         "微博视频": "https://weibo.com/3800478724/Q9ectF6yO",
         "微博视频2": "https://weibo.com/3800478724/Q9dXDkrul",
         "微博图集(超过9张)": "https://weibo.com/7793636592/Q96aMs3dG",
-        "微博图集(9张)": "https://weibo.com/6458148211/Q7iZTtgCE",
+        "微博图集(9张)": "https://weibo.com/6989461668/Q3bmxf778",
         "微博图集(2张)": "https://weibo.com/7983081104/Q98U3sDmH",
         "微博图集(3张)": "https://weibo.com/7299853661/Q8LXh1X74",
         "微博图集(4张)": "https://weibo.com/6458148211/Q3Cdb5vgP",
