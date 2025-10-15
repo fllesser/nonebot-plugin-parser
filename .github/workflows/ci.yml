@@ -163,5 +163,5 @@ jobs:
         uses: peter-evans/create-or-update-comment@v5
         with:
           issue-number: ${{ github.event.number }}
-          body-path: render_result.txt
+          body-path: render_result.md
           edit-mode: replace

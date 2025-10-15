@@ -200,6 +200,7 @@ async def test_common_render():
     )
     # 按时间排序
     sorted_url_time_mapping = sorted(name_cost_dict.items(), key=lambda x: x[1])
+
     # 生成表格，使用 markdown 表格格式 name | cost 链接使用 markdown 格式
     render_result += "| type | cost |\n"
     render_result += "| --- | --- |\n"
@@ -207,5 +208,5 @@ async def test_common_render():
         render_result += f"| [{name}]({url_dict[name]}) | {cost:.5f} 秒 | \n"
     logger.success(f"渲染结果: \n{render_result}")
 
-    async with aiofiles.open("render_result.txt", "w+") as f:
+    async with aiofiles.open("render_result.md", "w+") as f:
         await f.write(render_result)
