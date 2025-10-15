@@ -208,18 +208,15 @@ async def test_common_render():
         except Exception:
             logger.exception(f"{url} | 渲染失败")
             failed_count += 1
-    render_result = (
-        f"渲染完成，失败数量: {failed_count}, 总耗时: {total_time} 秒\n平均耗时: {total_time / len(url_dict)} 秒\n"
-    )
+
+    result_markdown = "### 渲染结果\n"
+    result_markdown += f"失败数量: {failed_count}\n"
+    result_markdown += f"总耗时: {total_time} 秒\n"
+    result_markdown += f"平均耗时: {total_time / len(url_dict)} 秒\n"
+    result_markdown += "### 详细结果\n"
     # 按时间排序
     sorted_url_time_mapping = sorted(data_collection.items(), key=lambda x: x[1][1])
-
-    # 生成表格，使用 markdown 表格格式 name | cost | 资源总大小
-    render_result += "| 类型 | 耗时 | 渲染所用图片总大小(MB) | 导出图片大小(MB)\n"
-    render_result += "| --- | --- | --- | --- |\n"
+    result_markdown += "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB)\n"
+    result_markdown += "| --- | --- | --- | --- |\n"
     for name, (url, cost, total_size, image_size) in sorted_url_time_mapping:
-        render_result += f"| [{name}]({url}) | {cost:.5f} 秒 | {total_size:.5f} MB | {image_size:.5f} MB |\n"
-    logger.success(f"渲染结果: \n{render_result}")
-
-    async with aiofiles.open("render_result.md", "w+") as f:
-        await f.write(render_result)
+        result_markdown += f"| [{name}]({url}) | {cost:.5f} | {total_size:.5f} | {image_size:.5f} |\n"
