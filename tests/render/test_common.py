@@ -167,7 +167,7 @@ async def test_common_render():
     # 总耗时
     total_time: float = 0
     # 各链接耗时
-    name_cost_dict: dict[str, tuple[str, float, float]] = {}
+    data_collection: dict[str, tuple[str, float, float, float]] = {}
 
     async def parse_and_render(url: str, name: str) -> None:
         """解析并渲染单个 URL"""
@@ -188,9 +188,8 @@ async def test_common_render():
         end_time = time.time()
         cost_time = end_time - start_time
 
-        nonlocal total_time, name_cost_dict
+        nonlocal total_time, data_collection
         total_time += cost_time
-        name_cost_dict[name] = (url, cost_time, total_size)
 
         logger.success(f"{url} | 渲染成功，耗时: {cost_time} 秒")
         assert image_raw, f"没有生成图片: {url}"
@@ -199,6 +198,7 @@ async def test_common_render():
         image_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(image_path, "wb+") as f:
             await f.write(image_raw)
+        data_collection[name] = (url, cost_time, total_size, image_path.stat().st_size / 1024 / 1024)
         logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
 
     failed_count = 0
@@ -212,13 +212,13 @@ async def test_common_render():
         f"渲染完成，失败数量: {failed_count}, 总耗时: {total_time} 秒\n平均耗时: {total_time / len(url_dict)} 秒\n"
     )
     # 按时间排序
-    sorted_url_time_mapping = sorted(name_cost_dict.items(), key=lambda x: x[1][1])
+    sorted_url_time_mapping = sorted(data_collection.items(), key=lambda x: x[1][1])
 
     # 生成表格，使用 markdown 表格格式 name | cost | 资源总大小
-    render_result += "| 类型 | 耗时 | 渲染所用图片总大小(MB)\n"
-    render_result += "| --- | --- | --- |\n"
-    for name, (url, cost, total_size) in sorted_url_time_mapping:
-        render_result += f"| [{name}]({url}) | {cost:.5f} 秒 | {total_size:.5f} MB |\n"
+    render_result += "| 类型 | 耗时 | 渲染所用图片总大小(MB) | 导出图片大小(MB)\n"
+    render_result += "| --- | --- | --- | --- |\n"
+    for name, (url, cost, total_size, image_size) in sorted_url_time_mapping:
+        render_result += f"| [{name}]({url}) | {cost:.5f} 秒 | {total_size:.5f} MB | {image_size:.5f} MB |\n"
     logger.success(f"渲染结果: \n{render_result}")
 
     async with aiofiles.open("render_result.md", "w+") as f:
