@@ -1,7 +1,48 @@
+from dataclasses import dataclass
 import time
+from typing import Any
 
 import aiofiles
 from nonebot import logger
+
+
+@dataclass
+class RenderDataItem:
+    url: str
+    url_type: str
+    cost: float
+    media_size: float
+    render_size: float
+
+
+DATA_COLLECTION: list[RenderDataItem] = []
+
+
+async def download_all_media(result: Any):
+    """下载所有媒体资源"""
+    from nonebot_plugin_parser.parsers import ParseResult
+
+    assert isinstance(result, ParseResult), "result 类型错误"
+
+    total_size = 0
+    assert result.author, f"没有作者: {result.url}"
+    avatar_path = await result.author.get_avatar_path()
+    cover_path = await result.cover_path
+    for content in result.contents:
+        await content.get_path()
+    if result.repost:
+        repost_size = await download_all_media(result.repost)
+        total_size += repost_size
+
+    if avatar_path:
+        total_size += avatar_path.stat().st_size / 1024 / 1024
+    if cover_path:
+        total_size += cover_path.stat().st_size / 1024 / 1024
+    # content 取前9项
+    for content in result.contents[:9]:
+        total_size += (await content.get_path()).stat().st_size / 1024 / 1024
+
+    return total_size
 
 
 async def test_render_with_emoji():
@@ -21,18 +62,22 @@ async def test_render_with_emoji():
     parse_result = await parser.parse(matched)
     logger.debug(f"{opus_url} | 解析结果: \n{parse_result}")
 
-    logger.info(f"{opus_url} | 开始渲染")
-    image_raw = await renderer.render_image(parse_result)
+    total_size = await download_all_media(parse_result)
 
-    assert image_raw, "没有生成图片"
+    logger.info(f"{opus_url} | 开始渲染")
+    start_time = time.time()
+    image_raw = await renderer.render_image(parse_result)
+    end_time = time.time()
+    cost_time = end_time - start_time
 
     image_path = pconfig.cache_dir / "aaaaaaa" / "bilibili_opus_emoji.png"
     # 创建文件
     image_path.parent.mkdir(parents=True, exist_ok=True)
     async with aiofiles.open(image_path, "wb+") as f:
         await f.write(image_raw)
+    render_size = image_path.stat().st_size / 1024 / 1024
     logger.success(f"{opus_url} | 渲染成功，图片已保存到 {image_path}")
-    assert image_raw, f"没有生成图片: {opus_url}"
+    DATA_COLLECTION.append(RenderDataItem(opus_url, "哔哩哔哩动态", cost_time, total_size, render_size))
 
 
 async def test_graphics_content():
@@ -51,15 +96,12 @@ async def test_graphics_content():
     url = "https://www.bilibili.com/opus/658174132913963042"
     matched = parser.search_url(url)
     assert matched, f"无法匹配 URL: {url}"
-    logger.info(f"{url} | 开始解析哔哩哔哩视频")
+    logger.info(f"{url} | 开始解析哔哩哔哩 opus")
     parse_result = await parser.parse(matched)
     logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
     # await 所有资源下载，计算渲染时间
-    assert parse_result.author, "没有作者信息"
-    await parse_result.author.get_avatar_path()
-    for content in parse_result.contents:
-        await content.get_path()
+    total_size = await download_all_media(parse_result)
 
     logger.info(f"{url} | 开始渲染")
     start_time = time.time()
@@ -73,8 +115,9 @@ async def test_graphics_content():
     image_path.parent.mkdir(parents=True, exist_ok=True)
     async with aiofiles.open(image_path, "wb+") as f:
         await f.write(image_raw)
+    render_size = image_path.stat().st_size / 1024 / 1024
+    DATA_COLLECTION.append(RenderDataItem(url, "bilibili-opus", cost_time, total_size, render_size))
     logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
-    assert image_raw, f"没有生成图片: {url}"
 
 
 async def test_read():
@@ -96,10 +139,7 @@ async def test_read():
     logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
     # await 所有资源下载，计算渲染时间
-    assert parse_result.author, "没有作者信息"
-    await parse_result.author.get_avatar_path()
-    for content in parse_result.contents:
-        await content.get_path()
+    total_size = await download_all_media(parse_result)
 
     logger.info(f"{url} | 开始渲染")
     start_time = time.time()
@@ -113,45 +153,24 @@ async def test_read():
     image_path.parent.mkdir(parents=True, exist_ok=True)
     async with aiofiles.open(image_path, "wb+") as f:
         await f.write(image_raw)
+
+    render_size = image_path.stat().st_size / 1024 / 1024
+    DATA_COLLECTION.append(RenderDataItem(url, "bilibili-read", cost_time, total_size, render_size))
+
     logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
-    assert image_raw, f"没有生成图片: {url}"
 
 
 async def test_common_render():
     """测试使用 WeiboParser 解析链接并用 CommonRenderer 渲染"""
 
     from nonebot_plugin_parser import pconfig
-    from nonebot_plugin_parser.parsers import ParseResult, WeiBoParser
+    from nonebot_plugin_parser.parsers import WeiBoParser
     from nonebot_plugin_parser.renders import _COMMON_RENDERER
 
     parser = WeiBoParser()
     renderer = _COMMON_RENDERER
 
-    async def download_all_media(parse_result: ParseResult):
-        """下载所有媒体资源"""
-        total_size = 0
-        assert parse_result.author, f"没有作者: {parse_result.url}"
-        avatar_path = await parse_result.author.get_avatar_path()
-        cover_path = await parse_result.cover_path
-        for content in parse_result.contents:
-            await content.get_path()
-        if parse_result.repost:
-            repost_size = await download_all_media(parse_result.repost)
-            total_size += repost_size
-
-        # 计算用于绘制的图片总大小 MB
-
-        if avatar_path:
-            total_size += avatar_path.stat().st_size / 1024 / 1024
-        if cover_path:
-            total_size += cover_path.stat().st_size / 1024 / 1024
-        # content 取前9项
-        for content in parse_result.contents[:9]:
-            total_size += (await content.get_path()).stat().st_size / 1024 / 1024
-
-        return total_size
-
-    url_dict = {
+    urls = {
         "微博视频": "https://weibo.com/3800478724/Q9ectF6yO",
         "微博视频2": "https://weibo.com/3800478724/Q9dXDkrul",
         "微博图集(超过9张)": "https://weibo.com/7793636592/Q96aMs3dG",
@@ -167,12 +186,8 @@ async def test_common_render():
         "微博转发(两张)": "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
         "微博转发(视频)": "https://weibo.com/1694917363/Q0KtXh6z2",
     }
-    # 总耗时
-    total_time: float = 0
-    # 各链接耗时
-    data_collection: dict[str, tuple[str, float, float, float]] = {}
 
-    async def parse_and_render(url: str, name: str) -> None:
+    async def parse_and_render(url_type: str, url: str) -> None:
         """解析并渲染单个 URL"""
         matched = parser.search_url(url)
         assert matched, f"无法匹配 URL: {url}"
@@ -191,38 +206,32 @@ async def test_common_render():
         end_time = time.time()
         cost_time = end_time - start_time
 
-        nonlocal total_time, data_collection
-        total_time += cost_time
-
         logger.success(f"{url} | 渲染成功，耗时: {cost_time} 秒")
-        assert image_raw, f"没有生成图片: {url}"
-        image_path = pconfig.cache_dir / "aaaaaaa" / f"{name}.png"
+        image_path = pconfig.cache_dir / "aaaaaaa" / f"{url_type}.png"
         # 创建文件
         image_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(image_path, "wb+") as f:
             await f.write(image_raw)
-        data_collection[name] = (url, cost_time, total_size, image_path.stat().st_size / 1024 / 1024)
-        logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
 
-    failed_count = 0
-    for name, url in url_dict.items():
+        render_size = image_path.stat().st_size / 1024 / 1024
+        DATA_COLLECTION.append(RenderDataItem(url, url_type, cost_time, total_size, render_size))
+
+    for url_type, url in urls.items():
         try:
-            await parse_and_render(url, name)
+            await parse_and_render(url_type, url)
         except Exception:
             logger.exception(f"{url} | 渲染失败")
-            failed_count += 1
 
-    result = "### 渲染结果\n"
-    result += f"失败数量: {failed_count}\n"
-    result += f"总耗时: {total_time} 秒\n"
-    result += f"平均耗时: {total_time / len(url_dict)} 秒\n"
-    result += "### 渲染详情\n"
+
+def test_write_result():
     # 按时间排序
-    sorted_url_time_mapping = sorted(data_collection.items(), key=lambda x: x[1][1])
-    result += "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB)\n"
+    sorted_data_collection = sorted(DATA_COLLECTION, key=lambda x: x.cost)
+    result = "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB)\n"
     result += "| --- | --- | --- | --- |\n"
-    for name, (url, cost, total_size, image_size) in sorted_url_time_mapping:
-        result += f"| [{name}]({url}) | {cost:.5f} | {total_size:.5f} | {image_size:.5f} |\n"
+    for item in sorted_data_collection:
+        result += (
+            f"| [{item.url_type}]({item.url}) | {item.cost:.5f} | {item.media_size:.5f} | {item.render_size:.5f} |\n"
+        )
 
-    async with aiofiles.open("render_result.md", "w+") as f:
-        await f.write(result)
+    with open("render_result.md", "w+") as f:
+        f.write(result)
