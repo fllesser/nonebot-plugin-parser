@@ -129,16 +129,18 @@ async def test_common_render():
 
     async def download_all_media(parse_result: ParseResult):
         """下载所有媒体资源"""
+        total_size = 0
         assert parse_result.author, f"没有作者: {parse_result.url}"
         avatar_path = await parse_result.author.get_avatar_path()
         cover_path = await parse_result.cover_path
         for content in parse_result.contents:
             await content.get_path()
         if parse_result.repost:
-            await download_all_media(parse_result.repost)
+            repost_size = await download_all_media(parse_result.repost)
+            total_size += repost_size
 
         # 计算用于绘制的图片总大小 MB
-        total_size = 0
+
         if avatar_path:
             total_size += avatar_path.stat().st_size / 1024 / 1024
         if cover_path:
@@ -146,6 +148,7 @@ async def test_common_render():
         # content 取前9项
         for content in parse_result.contents[:9]:
             total_size += (await content.get_path()).stat().st_size / 1024 / 1024
+
         return total_size
 
     url_dict = {
@@ -209,14 +212,17 @@ async def test_common_render():
             logger.exception(f"{url} | 渲染失败")
             failed_count += 1
 
-    result_markdown = "### 渲染结果\n"
-    result_markdown += f"失败数量: {failed_count}\n"
-    result_markdown += f"总耗时: {total_time} 秒\n"
-    result_markdown += f"平均耗时: {total_time / len(url_dict)} 秒\n"
-    result_markdown += "### 详细结果\n"
+    result = "### 渲染结果\n"
+    result += f"失败数量: {failed_count}\n"
+    result += f"总耗时: {total_time} 秒\n"
+    result += f"平均耗时: {total_time / len(url_dict)} 秒\n"
+    result += "### 渲染详情\n"
     # 按时间排序
     sorted_url_time_mapping = sorted(data_collection.items(), key=lambda x: x[1][1])
-    result_markdown += "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB)\n"
-    result_markdown += "| --- | --- | --- | --- |\n"
+    result += "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB)\n"
+    result += "| --- | --- | --- | --- |\n"
     for name, (url, cost, total_size, image_size) in sorted_url_time_mapping:
-        result_markdown += f"| [{name}]({url}) | {cost:.5f} | {total_size:.5f} | {image_size:.5f} |\n"
+        result += f"| [{name}]({url}) | {cost:.5f} | {total_size:.5f} | {image_size:.5f} |\n"
+
+    async with aiofiles.open("render_result.md", "w+") as f:
+        await f.write(result)
