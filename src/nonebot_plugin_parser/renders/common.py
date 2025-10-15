@@ -18,13 +18,12 @@ class FontInfo:
     font: ImageFont.FreeTypeFont | ImageFont.ImageFont
     line_height: int
     cjk_width: int
-    ascii_width: int
 
     def __hash__(self) -> int:
         """实现哈希方法以支持 @lru_cache"""
-        return hash((self.line_height, self.cjk_width, self.ascii_width))
+        return hash((id(self.font), self.line_height, self.cjk_width))
 
-    @lru_cache(maxsize=100)
+    @lru_cache(maxsize=400)
     def get_char_width(self, char: str) -> int:
         """获取字符宽度，使用缓存优化"""
         bbox = self.font.getbbox(char)
@@ -33,10 +32,8 @@ class FontInfo:
 
     def get_char_width_fast(self, char: str) -> int:
         """快速获取单个字符宽度"""
-        if self._is_cjk_char(char):
+        if "\u4e00" <= char <= "\u9fff":
             return self.cjk_width
-        elif self._is_ascii_char(char):
-            return self.ascii_width
         else:
             return self.get_char_width(char)
 
@@ -57,26 +54,27 @@ class FontInfo:
             total_width += self.get_char_width_fast(char)
         return total_width
 
-    @staticmethod
-    def _is_cjk_char(char: str) -> bool:
-        """判断是否为中日韩字符"""
-        return "\u4e00" <= char <= "\u9fff"
-
-    @staticmethod
-    def _is_ascii_char(char: str) -> bool:
-        """判断是否为ASCII字符"""
-        return ord(char) < 128
-
 
 @dataclass(eq=False, frozen=True, slots=True)
 class FontSet:
     """字体集数据类"""
+
+    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24, "indicator": 60}
+    """字体大小"""
 
     name_font: FontInfo
     title_font: FontInfo
     text_font: FontInfo
     extra_font: FontInfo
     indicator_font: FontInfo
+
+    @classmethod
+    def new(cls, font_path: Path):
+        font_infos: dict[str, FontInfo] = {}
+        for name, size in cls.FONT_SIZES.items():
+            font = ImageFont.truetype(font_path, size)
+            font_infos[f"{name}_font"] = FontInfo(font=font, line_height=size + 4, cjk_width=size)
+        return FontSet(**font_infos)
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -175,7 +173,6 @@ class CommonRenderer(ImageRenderer):
     """部分间距"""
     NAME_TIME_GAP = 5
     """名称和时间之间的间距"""
-
     AVATAR_UPSCALE_FACTOR = 2
     """头像圆形框超采样倍数"""
 
@@ -217,12 +214,6 @@ class CommonRenderer(ImageRenderer):
     REPOST_SCALE = 0.88
     """转发缩放比例"""
 
-    # 字体大小和行高
-    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24, "indicator": 60}
-    """字体大小"""
-    LINE_HEIGHTS: ClassVar[dict[str, int]] = {"name": 32, "title": 36, "text": 28, "extra": 28, "indicator": 68}
-    """行高"""
-
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
     """资源目录"""
     DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW-1.ttf"
@@ -246,40 +237,8 @@ class CommonRenderer(ImageRenderer):
         font_path = pconfig.custom_font
         if font_path is not None and font_path.exists():
             self.font_path = font_path
-        # 创建字体信息字典
-        font_infos: dict[str, FontInfo] = {}
-
-        for name, size in self.FONT_SIZES.items():
-            font = ImageFont.truetype(self.font_path, size)
-
-            # 计算中文字符宽度
-            cjk_bbox = font.getbbox("中")
-            cjk_width = int(cjk_bbox[2] - cjk_bbox[0])
-
-            # 计算英文字符宽度
-            ascii_bbox = font.getbbox("A")
-            ascii_width = int(ascii_bbox[2] - ascii_bbox[0])
-
-            # 获取行高
-            line_height = self.LINE_HEIGHTS[name]
-
-            # 创建字体信息对象
-            font_infos[name] = FontInfo(
-                font=font,
-                line_height=line_height,
-                cjk_width=cjk_width,
-                ascii_width=ascii_width,
-            )
-
         # 创建 FontSet 对象
-        self.fontset = FontSet(
-            name_font=font_infos["name"],
-            title_font=font_infos["title"],
-            text_font=font_infos["text"],
-            extra_font=font_infos["extra"],
-            indicator_font=font_infos["indicator"],
-        )
-
+        self.fontset = FontSet.new(self.font_path)
         logger.success(f"加载字体「{self.font_path.name}」成功")
 
     def _load_video_button(self):
