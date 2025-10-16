@@ -1,6 +1,6 @@
 import re
 from typing import ClassVar
-from typing_extensions import override
+from typing_extensions import deprecated, override
 
 import httpx
 import msgspec
@@ -18,10 +18,7 @@ class DouyinParser(BaseParser):
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
         ("v.douyin", r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
-        (
-            "douyin",
-            r"https://www\.(?:douyin|iesdouyin)\.com/(?:video|note|share/(?:video|note|slides))/[0-9]+",
-        ),
+        ("douyin", r"https://www\.(?:douyin|iesdouyin)\.com/[a-zA-Z0-9_\-/]+"),
     ]
 
     def _build_iesdouyin_url(self, _type: str, video_id: str) -> str:
@@ -30,6 +27,7 @@ class DouyinParser(BaseParser):
     def _build_m_douyin_url(self, _type: str, video_id: str) -> str:
         return f"https://m.douyin.com/share/{_type}/{video_id}"
 
+    @deprecated("use parse instead after 2.0.12, will be removed in the future")
     async def parse_share_url(self, share_url: str):
         if matched := re.match(r"(video|note)/([0-9]+)", share_url):
             # https://www.douyin.com/video/xxxxxx
@@ -152,5 +150,26 @@ class DouyinParser(BaseParser):
             ParseException: 解析失败时抛出
         """
         # 从匹配对象中获取原始URL
-        url = matched.group(0)
-        return await self.parse_share_url(url)
+        share_url = matched.group(0)
+        # return await self.parse_share_url(url)
+        if "v.douyin" in share_url:
+            share_url = await self.get_redirect_url(share_url)
+
+        searched = re.search(r"(slides|video|note)/(\d+)", share_url)
+        if not searched:
+            raise ParseException(f"无法从 {share_url} 中解析出 ID")
+        _type, video_id = searched.group(1), searched.group(2)
+        if _type == "slides":
+            return await self.parse_slides(video_id)
+
+        for url in (
+            self._build_m_douyin_url(_type, video_id),
+            self._build_iesdouyin_url(_type, video_id),
+            share_url,
+        ):
+            try:
+                return await self.parse_video(url)
+            except ParseException as e:
+                logger.warning(f"failed to parse {url[:60]}, error: {e}")
+                continue
+        raise ParseException("分享已删除或资源直链获取失败, 请稍后再试")

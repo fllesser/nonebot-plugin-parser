@@ -18,14 +18,19 @@ async def test_common_video():
 
     async def test_parse_share_url(url: str) -> None:
         logger.info(f"{url} | 开始解析抖音视频")
-        parse_result = await parser.parse_share_url(url)
-        logger.debug(f"{url} | 解析结果: \n{parse_result}")
-        assert parse_result.title
-        assert parse_result.author
-        assert await parse_result.cover_path
-        assert parse_result.video_contents
-        video_path = await parse_result.video_contents[0].get_path()
-        assert video_path.exists()
+        matched = parser.search_url(url)
+        assert matched, "无法匹配 URL"
+
+        result = await parser.parse(matched)
+        logger.debug(f"{url} | 解析结果: \n{result}")
+
+        assert result.title, "标题为空"
+        assert result.author, "作者为空"
+        assert await result.cover_path, "封面为空"
+        assert result.video_contents, "视频内容为空"
+
+        video_path = await result.video_contents[0].get_path()
+        assert video_path.exists(), "视频不存在"
         logger.success(f"{url} | 抖音视频解析成功")
 
     await asyncio.gather(*[test_parse_share_url(url) for url in common_urls])
@@ -67,14 +72,17 @@ async def test_note():
 
     async def test_parse_share_url(url: str) -> None:
         logger.info(f"{url} | 开始解析抖音图文")
-        parse_result = await parser.parse_share_url(url)
-        logger.debug(f"{url} | 解析结果: \n{parse_result}")
-        assert parse_result.title
-        assert parse_result.author
-        if img_contents := parse_result.img_contents:
+        matched = parser.search_url(url)
+        assert matched, "无法匹配 URL"
+
+        result = await parser.parse(matched)
+        logger.debug(f"{url} | 解析结果: \n{result}")
+        assert result.title, "标题为空"
+        assert result.author, "作者为空"
+        if img_contents := result.img_contents:
             for img_content in img_contents:
                 path = await img_content.get_path()
-                assert path.exists()
+                assert path.exists(), "图片不存在"
         logger.success(f"{url} | 抖音图文解析成功")
 
     await asyncio.gather(*[test_parse_share_url(url) for url in note_urls])
@@ -89,29 +97,33 @@ async def test_slides():
     """
     from nonebot_plugin_parser.parsers import DouyinParser
 
-    douyin_parser = DouyinParser()
+    parser = DouyinParser()
 
     dynamic_image_url = "https://v.douyin.com/CeiJfqyWs"
     static_image_url = "https://www.douyin.com/note/7450744229229235491"
 
     logger.info(f"开始解析抖音图集(含视频解析出视频) {dynamic_image_url}")
-    parse_result = await douyin_parser.parse_share_url(dynamic_image_url)
-    logger.debug(f"{dynamic_image_url} | 解析结果: \n{parse_result}")
-    assert parse_result.title
-    dynamic_contents = parse_result.dynamic_contents
-    assert dynamic_contents
+    matched = parser.search_url(dynamic_image_url)
+    assert matched, "无法匹配 URL"
+    result = await parser.parse(matched)
+    logger.debug(f"{dynamic_image_url} | 解析结果: \n{result}")
+    assert result.title, "标题为空"
+    dynamic_contents = result.dynamic_contents
+    assert dynamic_contents, "动态内容为空"
     for dynamic_content in dynamic_contents:
         path = await dynamic_content.get_path()
-        assert path.exists()
+        assert path.exists(), "动态内容不存在"
     logger.success(f"抖音图集(含视频解析出视频)解析成功 {dynamic_image_url}")
 
     logger.info(f"开始解析抖音图集(含视频解析出静态图片) {static_image_url}")
-    parse_result = await douyin_parser.parse_share_url(static_image_url)
-    logger.debug(f"{static_image_url} | 解析结果: \n{parse_result}")
-    assert parse_result.title
-    img_contents = parse_result.img_contents
-    assert img_contents
+    matched = parser.search_url(static_image_url)
+    assert matched, "无法匹配 URL"
+    result = await parser.parse(matched)
+    logger.debug(f"{static_image_url} | 解析结果: \n{result}")
+    assert result.title, "标题为空"
+    img_contents = result.img_contents
+    assert img_contents, "图片内容为空"
     for img_content in img_contents:
         path = await img_content.get_path()
-        assert path.exists()
+        assert path.exists(), "图片内容不存在"
     logger.success(f"抖音图集(含视频解析出静态图片)解析成功 {static_image_url}")
