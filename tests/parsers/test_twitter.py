@@ -1,5 +1,4 @@
 import asyncio
-import re
 
 from nonebot import logger
 
@@ -14,7 +13,7 @@ async def test_video():
     ]
 
     async def parse_video(url: str):
-        matched = next(re.search(pattern, url) for _, pattern in parser.patterns)
+        matched = parser.search_url(url)
         assert matched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析推特视频")
         result = await parser.parse(matched)
@@ -42,7 +41,7 @@ async def test_img():
     ]
 
     async def parse_img(url: str):
-        matched = next(re.search(pattern, url) for _, pattern in parser.patterns)
+        matched = parser.search_url(url)
         assert matched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析推特图片")
         result = await parser.parse(matched)
@@ -66,7 +65,7 @@ async def test_gif():
     ]
 
     async def parse_gif(url: str):
-        matched = next(re.search(pattern, url) for _, pattern in parser.patterns)
+        matched = parser.search_url(url)
         assert matched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析推特 GIF")
         result = await parser.parse(matched)

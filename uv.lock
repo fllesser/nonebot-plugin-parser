@@ -1,6 +1,11 @@
 version = 1
 revision = 3
 requires-python = ">=3.10"
+conflicts = [[
+    { package = "nonebot-plugin-parser", group = "pydantic-v1" },
+    { package = "nonebot-plugin-parser", group = "pydantic-v2" },
+    { package = "nonebot-plugin-parser", group = "telegram" },
+]]
 
 [[package]]
 name = "aiofiles"
@@ -25,10 +30,10 @@ name = "anyio"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
+    { name = "exceptiongroup", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
     { name = "idna" },
     { name = "sniffio" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/95/7d/4c1bd541d4dffa1b52bd83fb8527089e097a106fc90b467a7313b105f840/anyio-4.9.0.tar.gz", hash = "sha256:673c0c244e15788651a4ff38710fea9675823028a6f08a5eda409e0c9840a028", size = 190949, upload-time = "2025-03-17T00:02:54.77Z" }
 wheels = [
@@ -92,7 +97,7 @@ name = "asgiref"
 version = "3.9.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/90/61/0aa957eec22ff70b830b22ff91f825e70e1ef732c06666a805730f28b36b/asgiref-3.9.1.tar.gz", hash = "sha256:a5ab6582236218e5ef1648f242fd9f10626cfd4de8dc377db215d5d5098e3142", size = 36870, upload-time = "2025-07-08T09:07:43.344Z" }
 wheels = [
@@ -167,15 +172,6 @@ wheels = [
 ]
 
 [[package]]
-name = "bracex"
-version = "2.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/63/9a/fec38644694abfaaeca2798b58e276a8e61de49e2e37494ace423395febc/bracex-2.6.tar.gz", hash = "sha256:98f1347cd77e22ee8d967a30ad4e310b233f7754dbf31ff3fceb76145ba47dc7", size = 26642, upload-time = "2025-06-22T19:12:31.254Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/2a/9186535ce58db529927f6cf5990a849aa9e052eea3e2cfefe20b9e1802da/bracex-2.6-py3-none-any.whl", hash = "sha256:0b0049264e7340b3ec782b5cb99beb325f36c3782a32e36e876452fd49a09952", size = 11508, upload-time = "2025-06-22T19:12:29.781Z" },
-]
-
-[[package]]
 name = "brotli"
 version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -246,26 +242,6 @@ wheels = [
 ]
 
 [[package]]
-name = "bump-my-version"
-version = "1.2.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "click" },
-    { name = "httpx" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "questionary" },
-    { name = "rich" },
-    { name = "rich-click" },
-    { name = "tomlkit" },
-    { name = "wcmatch" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a0/fa/3ade689370780989831e574e82024d301ffa5ef75b3d169a7074c9419ce4/bump_my_version-1.2.4.tar.gz", hash = "sha256:998abb4f3774cf96137a77034a5a12a722b109b26a3afa044ec14622a0180fa3", size = 1157991, upload-time = "2025-10-04T14:13:31.658Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/21/bb/893bcf542addd07f3ec92ca20ce028a0f254481f57039dc5b933a074d767/bump_my_version-1.2.4-py3-none-any.whl", hash = "sha256:b60ac52c8972c5a7e1e478d0334015a993ba5c27fad1b04bde558d25c667b0f5", size = 59732, upload-time = "2025-10-04T14:13:29.992Z" },
-]
-
-[[package]]
 name = "cashews"
 version = "7.4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -288,7 +264,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser", marker = "implementation_name != 'PyPy'" },
+    { name = "pycparser", marker = "implementation_name != 'PyPy' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -449,7 +425,7 @@ name = "click"
 version = "8.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/60/6c/8ca2efa64cf75a977a0d7fac081354553ebe483345c734fb6b6515d96bbc/click-8.2.1.tar.gz", hash = "sha256:27c491cc05d968d271d5a1db13e3b5a184636d9d930f148c50b038f0d0646202", size = 286342, upload-time = "2025-05-20T23:19:49.832Z" }
 wheels = [
@@ -571,7 +547,7 @@ wheels = [
 
 [package.optional-dependencies]
 toml = [
-    { name = "tomli", marker = "python_full_version <= '3.11'" },
+    { name = "tomli", marker = "python_full_version <= '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 
 [[package]]
@@ -609,7 +585,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
@@ -630,7 +606,8 @@ name = "fastapi"
 version = "0.116.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pydantic" },
+    { name = "pydantic", version = "1.10.24", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v1' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+    { name = "pydantic", version = "2.11.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
     { name = "starlette" },
     { name = "typing-extensions" },
 ]
@@ -723,11 +700,11 @@ wheels = [
 
 [[package]]
 name = "identify"
-version = "2.6.13"
+version = "2.6.15"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/82/ca/ffbabe3635bb839aa36b3a893c91a9b0d368cb4d8073e03a12896970af82/identify-2.6.13.tar.gz", hash = "sha256:da8d6c828e773620e13bfa86ea601c5a5310ba4bcd65edf378198b56a1f9fb32", size = 99243, upload-time = "2025-08-09T19:35:00.6Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/e7/685de97986c916a6d93b3876139e00eef26ad5bbbd61925d670ae8013449/identify-2.6.15.tar.gz", hash = "sha256:e4f4864b96c6557ef2a1e1c951771838f4edc9df3a72ec7118b338801b11c7bf", size = 99311, upload-time = "2025-10-02T17:43:40.631Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/ce/461b60a3ee109518c055953729bf9ed089a04db895d47e95444071dcdef2/identify-2.6.13-py2.py3-none-any.whl", hash = "sha256:60381139b3ae39447482ecc406944190f690d4a2997f2584062089848361b33b", size = 99153, upload-time = "2025-08-09T19:34:59.1Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/1c/e5fd8f973d4f375adb21565739498e2e9a1e54c858a97b9a8ccfdc81da9b/identify-2.6.15-py2.py3-none-any.whl", hash = "sha256:1181ef7608e00704db228516541eb83a88a9f94433a8c80bb9b5bd54b1d81757", size = 99183, upload-time = "2025-10-02T17:43:39.137Z" },
 ]
 
 [[package]]
@@ -777,8 +754,8 @@ name = "loguru"
 version = "0.7.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "win32-setctime", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+    { name = "win32-setctime", marker = "sys_platform == 'win32' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3a/05/a1dae3dffd1116099471c643b8924f5aa6524411dc6c63fdae648c4f1aca/loguru-0.7.3.tar.gz", hash = "sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6", size = 63559, upload-time = "2024-12-06T11:20:56.608Z" }
 wheels = [
@@ -1071,7 +1048,7 @@ name = "multidict"
 version = "6.6.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3d/2c/5dad12e82fbdf7470f29bff2171484bf07cb3b16ada60a6589af8f376440/multidict-6.6.3.tar.gz", hash = "sha256:798a9eb12dab0a6c2e29c1de6f3468af5cb2da6053a20dfa3344907eed0937cc", size = 101006, upload-time = "2025-06-30T15:53:46.929Z" }
 wheels = [
@@ -1180,7 +1157,8 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "noneprompt" },
-    { name = "pydantic" },
+    { name = "pydantic", version = "1.10.24", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v1' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+    { name = "pydantic", version = "2.11.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
     { name = "pyfiglet" },
     { name = "tomlkit" },
     { name = "typing-extensions" },
@@ -1222,7 +1200,8 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "msgpack" },
     { name = "nonebot2" },
-    { name = "pydantic" },
+    { name = "pydantic", version = "1.10.24", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v1' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+    { name = "pydantic", version = "2.11.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/11/97/504e898471c2ba18a5c0f8db99ed81e755f6b3cbf647ce804485d8b8f77e/nonebot_adapter_onebot-2.4.6.tar.gz", hash = "sha256:e33c93649ad11b320d8e9ff213635f29b23b4d0413c9158bd031c513c2f8f701", size = 40107, upload-time = "2024-10-24T07:34:57.623Z" }
@@ -1237,7 +1216,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
     { name = "nonebot2" },
-    { name = "pydantic" },
+    { name = "pydantic", version = "2.11.7", source = { registry = "https://pypi.org/simple" } },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/89/18/28944035c60d6cbf9beceefe800cc68e797595effbb439ff253b58fd55ee/nonebot-adapter-telegram-0.1.0b20.tar.gz", hash = "sha256:fc17df61cbdb3162f29dbada1e5712b26f37c185da87602b613694bca32c9ada", size = 29594, upload-time = "2024-11-24T09:01:06.882Z" }
 wheels = [
@@ -1269,7 +1248,8 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "apscheduler" },
     { name = "nonebot2" },
-    { name = "pydantic" },
+    { name = "pydantic", version = "1.10.24", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v1' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+    { name = "pydantic", version = "2.11.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d6/53/019bfea58c506c0166d8ef77959fd8676019469d0d3d8e135ae8f1a4b772/nonebot_plugin_apscheduler-0.5.0.tar.gz", hash = "sha256:6c0230e99765f275dc83d6639ff33bd6f71203fa10cd1b8a204b0f95530cda86", size = 3816, upload-time = "2024-06-28T13:17:10.57Z" }
 wheels = [
@@ -1303,7 +1283,8 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nonebot2" },
     { name = "nonestorage" },
-    { name = "pydantic" },
+    { name = "pydantic", version = "1.10.24", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v1' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+    { name = "pydantic", version = "2.11.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/63/22/67ec1e604c0385729bf2d71db406c032de9015363588785617113dfb76ac/nonebot_plugin_localstore-0.7.4.tar.gz", hash = "sha256:85ddc13814bfcd484ab311306823651390020bf44f4fb4733b343a58e72723ce", size = 5535, upload-time = "2025-03-01T12:54:04.077Z" }
@@ -1334,22 +1315,27 @@ dependencies = [
 
 [package.optional-dependencies]
 htmlkit = [
-    { name = "jinja2" },
     { name = "nonebot-plugin-htmlkit" },
 ]
 
 [package.dev-dependencies]
 all-extras = [
-    { name = "jinja2" },
     { name = "nonebot-plugin-htmlkit" },
 ]
 dev = [
-    { name = "bump-my-version" },
     { name = "nb-cli" },
-    { name = "nonebot-adapter-telegram" },
     { name = "nonebot2", extra = ["fastapi"] },
     { name = "pre-commit" },
     { name = "ruff" },
+]
+pydantic-v1 = [
+    { name = "pydantic", version = "1.10.24", source = { registry = "https://pypi.org/simple" } },
+]
+pydantic-v2 = [
+    { name = "pydantic", version = "2.11.7", source = { registry = "https://pypi.org/simple" } },
+]
+telegram = [
+    { name = "nonebot-adapter-telegram" },
 ]
 test = [
     { name = "nonebot-adapter-onebot" },
@@ -1369,7 +1355,6 @@ requires-dist = [
     { name = "bilibili-api-python", specifier = ">=17.3.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
-    { name = "jinja2", marker = "extra == 'htmlkit'", specifier = ">=3.1.6" },
     { name = "msgspec", specifier = ">=0.19.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4" },
     { name = "nonebot-plugin-apscheduler", specifier = ">=0.5.0,<1.0.0" },
@@ -1384,18 +1369,16 @@ requires-dist = [
 provides-extras = ["htmlkit"]
 
 [package.metadata.requires-dev]
-all-extras = [
-    { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc1" },
-]
+all-extras = [{ name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc3" }]
 dev = [
-    { name = "bump-my-version", specifier = ">=1.2.4" },
     { name = "nb-cli", specifier = ">=1.4.2" },
-    { name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "ruff", specifier = ">=0.14.0,<1.0.0" },
 ]
+pydantic-v1 = [{ name = "pydantic", specifier = "<2.0.0" }]
+pydantic-v2 = [{ name = "pydantic", specifier = ">=2.0.0" }]
+telegram = [{ name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" }]
 test = [
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
@@ -1440,10 +1423,11 @@ dependencies = [
     { name = "anyio" },
     { name = "exceptiongroup" },
     { name = "loguru" },
-    { name = "pydantic" },
+    { name = "pydantic", version = "1.10.24", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v1' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+    { name = "pydantic", version = "2.11.7", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
     { name = "pygtrie" },
     { name = "python-dotenv" },
-    { name = "tomli", marker = "python_full_version < '3.11'" },
+    { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
     { name = "typing-extensions" },
     { name = "yarl" },
 ]
@@ -1615,7 +1599,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pastel" },
     { name = "pyyaml" },
-    { name = "tomli", marker = "python_full_version < '3.11'" },
+    { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a5/f2/273fe54a78dc5c6c8dd63db71f5a6ceb95e4648516b5aeaeff4bde804e44/poethepoet-0.37.0.tar.gz", hash = "sha256:73edf458707c674a079baa46802e21455bda3a7f82a408e58c31b9f4fe8e933d", size = 68570, upload-time = "2025-08-11T18:00:29.103Z" }
 wheels = [
@@ -1785,6 +1769,46 @@ wheels = [
 
 [[package]]
 name = "pydantic"
+version = "1.10.24"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v1' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ae/8d/7b346ed940c3e0f9eee7db9be37915a6dac0d9535d736e2ca47a81a066f3/pydantic-1.10.24.tar.gz", hash = "sha256:7e6d1af1bd3d2312079f28c9baf2aafb4a452a06b50717526e5ac562e37baa53", size = 357314, upload-time = "2025-09-25T01:36:33.065Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f9/6e/71eb0c860bf888e73243fbc22be79c47e68180b65b33036efb5a1f1085de/pydantic-1.10.24-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:eef07ea2fba12f9188cfa2c50cb3eaa6516b56c33e2a8cc3cd288b4190ee6c0c", size = 2494239, upload-time = "2025-09-25T01:35:02.451Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/1f/a2c09049c2ec33b88b111aa99e4bbfe9e821914dcf2ce662e00fa1423fa8/pydantic-1.10.24-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:5a42033fac69b9f1f867ecc3a2159f0e94dceb1abfc509ad57e9e88d49774683", size = 2302370, upload-time = "2025-09-25T01:35:05.386Z" },
+    { url = "https://files.pythonhosted.org/packages/70/73/fde9af3a76cc5714880828eee50c0f7f1b263d2c77a74c65ba19325b4706/pydantic-1.10.24-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c626596c1b95dc6d45f7129f10b6743fbb50f29d942d25a22b2ceead670c067d", size = 2960499, upload-time = "2025-09-25T01:35:07.243Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/d5/9fd98afa478020e9bad54a9ec6e42ba71f8a1a7f6df4d12ce5be76b0a96a/pydantic-1.10.24-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8057172868b0d98f95e6fcddcc5f75d01570e85c6308702dd2c50ea673bc197b", size = 3031125, upload-time = "2025-09-25T01:35:09.048Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/99/2fc6df8644c096dc6e3347e1793868a758df874eaf5ba52ca8b5a80e42d8/pydantic-1.10.24-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:82f951210ebcdb778b1d93075af43adcd04e9ebfd4f44b1baa8eeb21fbd71e36", size = 3099888, upload-time = "2025-09-25T01:35:10.894Z" },
+    { url = "https://files.pythonhosted.org/packages/71/71/2f4c115951140f525136089da491b0bb4b7d24de8d697913afedde3f326c/pydantic-1.10.24-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:b66e4892d8ae005f436a5c5f1519ecf837574d8414b1c93860fb3c13943d9b37", size = 3038385, upload-time = "2025-09-25T01:35:12.744Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/6d/d3893a9b8479a0ea9357ba4a1eb84a5776a80705b5409bda4ad9e7ca0804/pydantic-1.10.24-cp310-cp310-win_amd64.whl", hash = "sha256:50d9f8a207c07f347d4b34806dc576872000d9a60fd481ed9eb78ea8512e0666", size = 2093504, upload-time = "2025-09-25T01:35:14.439Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/b5/1b49b94e99ae4cad5f034c4b33e9ab481e53238fb55b59ffed5c6e6ee4cf/pydantic-1.10.24-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:70152291488f8d2bbcf2027b5c28c27724c78a7949c91b466d28ad75d6d12702", size = 2526778, upload-time = "2025-09-25T01:35:16.448Z" },
+    { url = "https://files.pythonhosted.org/packages/87/d8/63fb1850ca93511b324d709f1c5bd31131039f9b93d0bc2ae210285db6d1/pydantic-1.10.24-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:956b30638272c51c85caaff76851b60db4b339022c0ee6eca677c41e3646255b", size = 2307760, upload-time = "2025-09-25T01:35:18.234Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/b8/428453ce573b8898afaf39a5ce32f7dbacf54f8aad9ce9c0abf19a1cdb2c/pydantic-1.10.24-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bed9d6eea5fabbc6978c42e947190c7bd628ddaff3b56fc963fe696c3710ccd6", size = 2902586, upload-time = "2025-09-25T01:35:20.118Z" },
+    { url = "https://files.pythonhosted.org/packages/96/e0/68b5eb3c26b5e7136a8946f00f6d2eb8ef2fde530fcf6b491c66e3989d0d/pydantic-1.10.24-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:af8e2b3648128b8cadb1a71e2f8092a6f42d4ca123fad7a8d7ce6db8938b1db3", size = 2976378, upload-time = "2025-09-25T01:35:22.077Z" },
+    { url = "https://files.pythonhosted.org/packages/93/8c/2c6c46b7bc265ba35bad019c63f77d9ef44fabc026353768d7e6ea16dd51/pydantic-1.10.24-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:076fff9da02ca716e4c8299c68512fdfbeac32fdefc9c160e6f80bdadca0993d", size = 3063515, upload-time = "2025-09-25T01:35:24.048Z" },
+    { url = "https://files.pythonhosted.org/packages/84/be/a051e26eff43b6af69f968c1085cdf9069628a7c3614a9836d3ce71327e4/pydantic-1.10.24-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:8f2447ca88a7e14fd4d268857521fb37535c53a367b594fa2d7c2551af905993", size = 2988590, upload-time = "2025-09-25T01:35:25.794Z" },
+    { url = "https://files.pythonhosted.org/packages/da/d8/f1aca10d538a0f18d2c99f7e84d3bb5c4abb6bd499272d6c4fc21f39af30/pydantic-1.10.24-cp311-cp311-win_amd64.whl", hash = "sha256:58d42a7c344882c00e3bb7c6c8c6f62db2e3aafa671f307271c45ad96e8ccf7a", size = 2096524, upload-time = "2025-09-25T01:35:27.367Z" },
+    { url = "https://files.pythonhosted.org/packages/79/4b/73b59168d0babc14fb40b56795bde269d15709ef33de888e12e4f0add5ea/pydantic-1.10.24-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:17e7610119483f03954569c18d4de16f4e92f1585f20975414033ac2d4a96624", size = 2533707, upload-time = "2025-09-25T01:35:28.953Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/36/18e6f421a23ddceecfc5d3800d0e86af05e85574aa9e88cc9e29222db066/pydantic-1.10.24-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:e24435a9970dcb2b35648f2cf57505d4bd414fcca1a404c82e28d948183fe0a6", size = 2322935, upload-time = "2025-09-25T01:35:30.838Z" },
+    { url = "https://files.pythonhosted.org/packages/05/14/4d3fc4bea30add2f2f3c287e931b276f7e304bcb322fe5b2c05a76ccdee7/pydantic-1.10.24-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4a9e92b9c78d7f3cfa085c21c110e7000894446e24a836d006aabfc6ae3f1813", size = 2779568, upload-time = "2025-09-25T01:35:32.309Z" },
+    { url = "https://files.pythonhosted.org/packages/15/32/5349a7b6675d4384f07f9d461d8230de877b2b913529aa20e659c84bab07/pydantic-1.10.24-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ef14dfa7c98b314a3e449e92df6f1479cafe74c626952f353ff0176b075070de", size = 2829163, upload-time = "2025-09-25T01:35:34.294Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/00/4d93755e279e8975f7f33adc0af0e9d9aa0db58bcd9c807227d65b396311/pydantic-1.10.24-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:52219b4e70c1db185cfd103a804e416384e1c8950168a2d4f385664c7c35d21a", size = 2912003, upload-time = "2025-09-25T01:35:35.935Z" },
+    { url = "https://files.pythonhosted.org/packages/db/0c/c839c2a9cf14185c7b5dcc0959d3c3d4a00da400fe02565abf04a7dff6e0/pydantic-1.10.24-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:5ce0986799248082e9a5a026c9b5d2f9fa2e24d2afb9b0eace9104334a58fdc1", size = 2859825, upload-time = "2025-09-25T01:35:37.657Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/0c/f0b8e35033322c176574d6f431455c8d6e3f63811a2c5a00c96b2b97a393/pydantic-1.10.24-cp312-cp312-win_amd64.whl", hash = "sha256:874a78e4ed821258295a472e325eee7de3d91ba7a61d0639ce1b0367a3c63d4c", size = 1969911, upload-time = "2025-09-25T01:35:39.479Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/56/9168c282af2bb8bdb102981a9ff0ed41ab4d3735a52b732b2d2ad0e14018/pydantic-1.10.24-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:265788a1120285c4955f8b3d52b3ea6a52c7a74db097c4c13a4d3567f0c6df3c", size = 2589497, upload-time = "2025-09-25T01:35:41.141Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/eb/eb4b0e2988a2889a1905c3196f859509e62c208830889d2382928b92fdd2/pydantic-1.10.24-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:d255bebd927e5f1e026b32605684f7b6fc36a13e62b07cb97b29027b91657def", size = 2351231, upload-time = "2025-09-25T01:35:43.221Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/be/7451b633ffdc2d28de582a339af2275c3ffcca789dda97d8ac9133f0c616/pydantic-1.10.24-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d6e45dbc79a44e34c2c83ef1fcb56ff663040474dcf4dfc452db24a1de0f7574", size = 2762972, upload-time = "2025-09-25T01:35:45.304Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/fb/5de3cfde0b808f2fa0538ec1f1c186f44d905ecbcc96ba22e2cac1f30b23/pydantic-1.10.24-cp313-cp313-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:af31565b12a7db5bfa5fe8c3a4f8fda4d32f5c2929998b1b241f1c22e9ab6e69", size = 2801015, upload-time = "2025-09-25T01:35:46.774Z" },
+    { url = "https://files.pythonhosted.org/packages/2f/6a/9b6b51d19d1af57e8864caff08ce5e8554388b91dc41987ce49315bce3e1/pydantic-1.10.24-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:9c377fc30d9ca40dbff5fd79c5a5e1f0d6fff040fa47a18851bb6b0bd040a5d8", size = 2890844, upload-time = "2025-09-25T01:35:48.724Z" },
+    { url = "https://files.pythonhosted.org/packages/27/ca/1ab6b16bd792c8a1fb54949d8b5eef8032d672932ca4afc3048e4febfcdc/pydantic-1.10.24-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:b644d6f14b2ce617d6def21622f9ba73961a16b7dffdba7f6692e2f66fa05d00", size = 2850844, upload-time = "2025-09-25T01:35:50.279Z" },
+    { url = "https://files.pythonhosted.org/packages/86/5f/fcc5635818113858a6b37099fed6b860a15b27bb1d0fb270ceb50d0a91b6/pydantic-1.10.24-cp313-cp313-win_amd64.whl", hash = "sha256:0cbbf306124ae41cc153fdc2559b37faa1bec9a23ef7b082c1756d1315ceffe6", size = 1971713, upload-time = "2025-09-25T01:35:52.027Z" },
+    { url = "https://files.pythonhosted.org/packages/46/7f/a168d7077f85f85128aa5636abf13c804c06235c786f1881e659703899a4/pydantic-1.10.24-py3-none-any.whl", hash = "sha256:093768eba26db55a88b12f3073017e3fdee319ef60d3aef5c6c04a4e484db193", size = 166727, upload-time = "2025-09-25T01:36:31.732Z" },
+]
+
+[[package]]
+name = "pydantic"
 version = "2.11.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
@@ -1886,20 +1910,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pydantic-settings"
-version = "2.10.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pydantic" },
-    { name = "python-dotenv" },
-    { name = "typing-inspection" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/68/85/1ea668bbab3c50071ca613c6ab30047fb36ab0da1b92fa8f17bbc38fd36c/pydantic_settings-2.10.1.tar.gz", hash = "sha256:06f0062169818d0f5524420a360d632d5857b83cffd4d42fe29597807a1614ee", size = 172583, upload-time = "2025-06-24T13:26:46.841Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/f0/427018098906416f580e3cf1366d3b1abfb408a0652e9f31600c24a1903c/pydantic_settings-2.10.1-py3-none-any.whl", hash = "sha256:a60952460b99cf661dc25c29c0ef171721f98bfcb52ef8d9ea4c943d7c8cc796", size = 45235, upload-time = "2025-06-24T13:26:45.485Z" },
-]
-
-[[package]]
 name = "pyfiglet"
 version = "1.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1953,13 +1963,13 @@ name = "pytest"
 version = "8.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+    { name = "exceptiongroup", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
     { name = "pygments" },
-    { name = "tomli", marker = "python_full_version < '3.11'" },
+    { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/08/ba/45911d754e8eba3d5a841a5ce61a65a685ff1798421ac054f85aa8747dfb/pytest-8.4.1.tar.gz", hash = "sha256:7c67fd69174877359ed9371ec3af8a3d2b04741818c51e5e99cc1742251fa93c", size = 1517714, upload-time = "2025-06-18T05:48:06.109Z" }
 wheels = [
@@ -1971,9 +1981,9 @@ name = "pytest-asyncio"
 version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "backports-asyncio-runner", marker = "python_full_version < '3.11'" },
+    { name = "backports-asyncio-runner", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
     { name = "pytest" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/86/9e3c5f48f7b7b638b216e4b9e645f54d199d7abbbab7a64a13b4e12ba10f/pytest_asyncio-1.2.0.tar.gz", hash = "sha256:c609a64a2a8768462d0c99811ddb8bd2583c33fd33cf7f21af1c142e824ffb57", size = 50119, upload-time = "2025-09-12T07:33:53.816Z" }
 wheels = [
@@ -2089,7 +2099,7 @@ name = "qrcode"
 version = "8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8f/b2/7fc2931bfae0af02d5f53b174e9cf701adbb35f39d69c2af63d4a39f81a9/qrcode-8.2.tar.gz", hash = "sha256:35c3f2a4172b33136ab9f6b3ef1c00260dd2f66f858f24d88418a015f446506c", size = 43317, upload-time = "2025-05-01T15:44:24.726Z" }
 wheels = [
@@ -2105,18 +2115,6 @@ dependencies = [
     { name = "qrcode" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/96/62/2422c088b7219db9f78c912418254db9896d1b20ab15e83aae2821419a65/qrcode-terminal-0.8.tar.gz", hash = "sha256:1e2b69e662b9346e98dd95983033e9d43cff0643d8afda12605f515428e666c0", size = 1666, upload-time = "2017-12-05T03:52:10.236Z" }
-
-[[package]]
-name = "questionary"
-version = "2.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "prompt-toolkit" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a8/b8/d16eb579277f3de9e56e5ad25280fab52fc5774117fb70362e8c2e016559/questionary-2.1.0.tar.gz", hash = "sha256:6302cdd645b19667d8f6e6634774e9538bfcd1aad9be287e743d96cacaf95587", size = 26775, upload-time = "2024-12-29T11:49:17.802Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/3f/11dd4cd4f39e05128bfd20138faea57bec56f9ffba6185d276e3107ba5b2/questionary-2.1.0-py3-none-any.whl", hash = "sha256:44174d237b68bc828e4878c763a9ad6790ee61990e0ae72927694ead57bab8ec", size = 36747, upload-time = "2024-12-29T11:49:16.734Z" },
-]
 
 [[package]]
 name = "requests"
@@ -2156,20 +2154,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fe/75/af448d8e52bf1d8fa6a9d089ca6c07ff4453d86c65c145d0a300bb073b9b/rich-14.1.0.tar.gz", hash = "sha256:e497a48b844b0320d45007cdebfeaeed8db2a4f4bcf49f15e455cfc4af11eaa8", size = 224441, upload-time = "2025-07-25T07:32:58.125Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e3/30/3c4d035596d3cf444529e0b2953ad0466f6049528a879d27534700580395/rich-14.1.0-py3-none-any.whl", hash = "sha256:536f5f1785986d6dbdea3c75205c473f970777b4a0d6c6dd1b696aa05a3fa04f", size = 243368, upload-time = "2025-07-25T07:32:56.73Z" },
-]
-
-[[package]]
-name = "rich-click"
-version = "1.8.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "click" },
-    { name = "rich" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/a8/dcc0a8ec9e91d76ecad9413a84b6d3a3310c6111cfe012d75ed385c78d96/rich_click-1.8.9.tar.gz", hash = "sha256:fd98c0ab9ddc1cf9c0b7463f68daf28b4d0033a74214ceb02f761b3ff2af3136", size = 39378, upload-time = "2025-05-19T21:33:05.569Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b6/c2/9fce4c8a9587c4e90500114d742fe8ef0fd92d7bad29d136bb9941add271/rich_click-1.8.9-py3-none-any.whl", hash = "sha256:c3fa81ed8a671a10de65a9e20abf642cfdac6fdb882db1ef465ee33919fbcfe2", size = 36082, upload-time = "2025-05-19T21:33:04.195Z" },
 ]
 
 [[package]]
@@ -2231,7 +2215,7 @@ version = "0.47.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/04/57/d062573f391d062710d4088fa1369428c38d51460ab6fedff920efef932e/starlette-0.47.2.tar.gz", hash = "sha256:6ae9aa5db235e4846decc1e7b79c4f346adf41e9777aebeb49dfd09bbd7023d8", size = 2583948, upload-time = "2025-07-20T17:31:58.522Z" }
 wheels = [
@@ -2372,7 +2356,7 @@ name = "tqdm"
 version = "4.67.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2", size = 169737, upload-time = "2024-11-24T20:12:22.481Z" }
 wheels = [
@@ -2423,7 +2407,7 @@ name = "tzlocal"
 version = "5.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "tzdata", marker = "sys_platform == 'win32'" },
+    { name = "tzdata", marker = "sys_platform == 'win32' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8b/2e/c14812d3d4d9cd1773c6be938f89e5735a1f11a9f184ac3639b93cef35d5/tzlocal-5.3.1.tar.gz", hash = "sha256:cceffc7edecefea1f595541dbd6e990cb1ea3d19bf01b2809f362a03dd7921fd", size = 30761, upload-time = "2025-03-05T21:17:41.549Z" }
 wheels = [
@@ -2446,7 +2430,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "h11" },
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/5e/42/e0e305207bb88c6b8d3061399c6a961ffe5fbb7e2aa63c9234df7259e9cd/uvicorn-0.35.0.tar.gz", hash = "sha256:bc662f087f7cf2ce11a1d7fd70b90c9f98ef2e2831556dd078d131b96cc94a01", size = 78473, upload-time = "2025-06-28T16:15:46.058Z" }
 wheels = [
@@ -2455,11 +2439,11 @@ wheels = [
 
 [package.optional-dependencies]
 standard = [
-    { name = "colorama", marker = "sys_platform == 'win32'" },
+    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
     { name = "httptools" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
-    { name = "uvloop", marker = "platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'" },
+    { name = "uvloop", marker = "(platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32') or (platform_python_implementation == 'PyPy' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (platform_python_implementation == 'PyPy' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (platform_python_implementation == 'PyPy' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram') or (sys_platform == 'cygwin' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (sys_platform == 'cygwin' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (sys_platform == 'cygwin' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram') or (sys_platform == 'win32' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (sys_platform == 'win32' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (sys_platform == 'win32' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
     { name = "watchfiles" },
     { name = "websockets" },
 ]
@@ -2504,7 +2488,7 @@ dependencies = [
     { name = "distlib" },
     { name = "filelock" },
     { name = "platformdirs" },
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/14/37fcdba2808a6c615681cd216fecae00413c9dab44fb2e57805ecf3eaee3/virtualenv-20.34.0.tar.gz", hash = "sha256:44815b2c9dee7ed86e387b842a84f20b93f7f417f95886ca1996a72a4138eb1a", size = 6003808, upload-time = "2025-08-13T14:24:07.464Z" }
 wheels = [
@@ -2574,18 +2558,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ee/fd/d9e020d687ccf90fe95efc513fbb39a8049cf5a3ff51f53c59fcf4c47a5d/watchfiles-0.24.0-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:a2a9891723a735d3e2540651184be6fd5b96880c08ffe1a98bae5017e65b544b", size = 369445, upload-time = "2024-08-28T16:21:28.157Z" },
     { url = "https://files.pythonhosted.org/packages/43/cb/c0279b35053555d10ef03559c5aebfcb0c703d9c70a7b4e532df74b9b0e8/watchfiles-0.24.0-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4a7fa2bc0efef3e209a8199fd111b8969fe9db9c711acc46636686331eda7dd4", size = 439383, upload-time = "2024-08-28T16:21:29.515Z" },
     { url = "https://files.pythonhosted.org/packages/8b/c4/08b3c2cda45db5169148a981c2100c744a4a222fa7ae7644937c0c002069/watchfiles-0.24.0-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:01550ccf1d0aed6ea375ef259706af76ad009ef5b0203a3a4cce0f6024f9b68a", size = 426804, upload-time = "2024-08-28T16:21:30.687Z" },
-]
-
-[[package]]
-name = "wcmatch"
-version = "10.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "bracex" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/79/3e/c0bdc27cf06f4e47680bd5803a07cb3dfd17de84cde92dd217dcb9e05253/wcmatch-10.1.tar.gz", hash = "sha256:f11f94208c8c8484a16f4f48638a85d771d9513f4ab3f37595978801cb9465af", size = 117421, upload-time = "2025-06-22T19:14:02.49Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/d8/0d1d2e9d3fabcf5d6840362adcf05f8cf3cd06a73358140c3a97189238ae/wcmatch-10.1-py3-none-any.whl", hash = "sha256:5848ace7dbb0476e5e55ab63c6bbd529745089343427caa5537f230cc01beb8a", size = 39854, upload-time = "2025-06-22T19:14:00.978Z" },
 ]
 
 [[package]]
