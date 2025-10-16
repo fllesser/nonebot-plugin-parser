@@ -41,7 +41,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc3", "jinja2>=3.1.6"]
+htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc3"]
 
 [project.urls]
 Repository = "https://github.com/fllesser/nonebot-plugin-parser"
@@ -52,10 +52,8 @@ Release = "https://github.com/fllesser/nonebot-plugin-parser/releases"
 dev = [
   "nb-cli>=1.4.2",
   "nonebot2[fastapi]>=2.4.3,<3.0.0",
-  "nonebot-adapter-telegram>=0.1.0b20",
   "pre-commit>=4.3.0",
   "ruff>=0.14.0,<1.0.0",
-  "bump-my-version>=1.2.4",
 ]
 
 test = [
@@ -69,16 +67,27 @@ test = [
   "respx>=0.22.0",
 ]
 
-all_extras = ["nonebot-plugin-htmlkit>=0.1.0rc1", "jinja2>=3.1.6"]
+telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
+pydantic_v1 = ["pydantic<2.0.0"]
+pydantic_v2 = ["pydantic>=2.0.0"]
+
+all_extras = ["nonebot-plugin-htmlkit>=0.1.0rc3"]
 
 [tool.uv]
 required-version = ">=0.9.2"
 default-groups = ["test", "dev", "all_extras"]
+conflicts = [
+  [
+    { group = "pydantic_v1" },
+    { group = "pydantic_v2" },
+    { group = "telegram" },
+  ],
+]
 
 [tool.nonebot]
 adapters = [
   { "name" = "Onebot V11", module_name = "nonebot.adapters.onebot.v11" },
-  { name = "Telegram", module_name = "nonebot.adapters.telegram" },
+  # { name = "Telegram", module_name = "nonebot.adapters.telegram" },
 ]
 plugins = ["nonebot_plugin_parser"]
 

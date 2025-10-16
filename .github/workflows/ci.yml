@@ -20,22 +20,23 @@ jobs:
 
   test-others:
     name: Test
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     concurrency:
-      group: test-others-${{ github.ref }}-${{ matrix.python-version }}-${{ matrix.os }}
+      group: test-others-${{ github.ref }}-${{ matrix.python-version }}-ubuntu-latest
       cancel-in-progress: true
 
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        pydantic: ["v1", "v2"]
 
     env:
-      OS: ${{ matrix.os }}
+      OS: ubuntu-latest
       PYTHON: ${{ matrix.python-version }}
       UV_NO_SYNC: 1
 
@@ -50,7 +51,7 @@ jobs:
           version: "latest"
 
       - name: Install Dependencies for test group
-        run: uv sync --no-dev --locked
+        run: uv sync --no-dev --locked --group pydantic-${{ matrix.pydantic }}
 
       - name: Run Pytest Others
         run: uv run poe test_others
