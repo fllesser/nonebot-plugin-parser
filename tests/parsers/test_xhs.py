@@ -1,5 +1,4 @@
 import asyncio
-import re
 
 from nonebot import logger
 import pytest
@@ -11,7 +10,7 @@ async def test_parse():
     # 需要 ck 才能解析， 暂时不测试
     from nonebot_plugin_parser.parsers import XiaoHongShuParser
 
-    xhs_parser = XiaoHongShuParser()
+    parser = XiaoHongShuParser()
     urls = [
         # "http://xhslink.com/o/9e33TIg4gc4",  # 图文短链
         # "http://xhslink.com/o/9IteTIwy6WE",  # 视频短链
@@ -22,13 +21,9 @@ async def test_parse():
     async def parse(url: str) -> None:
         logger.info(f"{url} | 开始解析小红书")
         # 使用 patterns 匹配 URL
-        matched = None
-        for _, pattern in xhs_parser.patterns:
-            matched = re.search(pattern, url)
-            if matched:
-                break
+        matched = parser.search_url(url)
         assert matched, f"无法匹配 URL: {url}"
-        parse_result = await xhs_parser.parse(matched)
+        parse_result = await parser.parse(matched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         for content in parse_result.contents:
             path = await content.get_path()

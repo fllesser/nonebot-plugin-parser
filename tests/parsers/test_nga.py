@@ -13,16 +13,9 @@ async def test_nga_parse():
     parser = NGAParser()
 
     # 测试URL匹配
-    matched = None
-    for _, pattern in parser.patterns:
-        import re
+    matched = parser.search_url(url)
 
-        match = re.search(pattern, url)
-        if match:
-            matched = match
-            break
-
-    assert matched is not None, "URL应该能被NGA解析器匹配"
+    assert matched, "URL应该能被NGA解析器匹配"
 
     # 测试解析
     result = await parser.parse(matched)
