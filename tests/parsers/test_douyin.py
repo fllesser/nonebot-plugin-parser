@@ -1,5 +1,3 @@
-import asyncio
-
 from nonebot import logger
 import pytest
 
@@ -16,7 +14,7 @@ async def test_common_video():
         "https://www.douyin.com/video/7521023890996514083",
     ]
 
-    async def test_parse_share_url(url: str) -> None:
+    async def test_parse(url: str) -> None:
         logger.info(f"{url} | 开始解析抖音视频")
         matched = parser.search_url(url)
         assert matched, "无法匹配 URL"
@@ -33,7 +31,8 @@ async def test_common_video():
         assert video_path.exists(), "视频不存在"
         logger.success(f"{url} | 抖音视频解析成功")
 
-    await asyncio.gather(*[test_parse_share_url(url) for url in common_urls])
+    for url in common_urls:
+        await test_parse(url)
 
 
 @pytest.mark.asyncio
@@ -70,7 +69,7 @@ async def test_note():
         "https://v.douyin.com/iP6Uu1Kh",
     ]
 
-    async def test_parse_share_url(url: str) -> None:
+    async def test_parse(url: str) -> None:
         logger.info(f"{url} | 开始解析抖音图文")
         matched = parser.search_url(url)
         assert matched, "无法匹配 URL"
@@ -85,7 +84,8 @@ async def test_note():
                 assert path.exists(), "图片不存在"
         logger.success(f"{url} | 抖音图文解析成功")
 
-    await asyncio.gather(*[test_parse_share_url(url) for url in note_urls])
+    for url in note_urls:
+        await test_parse(url)
 
 
 @pytest.mark.asyncio
@@ -100,7 +100,6 @@ async def test_slides():
     parser = DouyinParser()
 
     dynamic_image_url = "https://v.douyin.com/CeiJfqyWs"
-    static_image_url = "https://www.douyin.com/note/7450744229229235491"
 
     logger.info(f"开始解析抖音图集(含视频解析出视频) {dynamic_image_url}")
     matched = parser.search_url(dynamic_image_url)
@@ -115,6 +114,7 @@ async def test_slides():
         assert path.exists(), "动态内容不存在"
     logger.success(f"抖音图集(含视频解析出视频)解析成功 {dynamic_image_url}")
 
+    static_image_url = "https://www.douyin.com/note/7450744229229235491"
     logger.info(f"开始解析抖音图集(含视频解析出静态图片) {static_image_url}")
     matched = parser.search_url(static_image_url)
     assert matched, "无法匹配 URL"
