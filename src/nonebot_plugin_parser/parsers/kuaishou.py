@@ -1,4 +1,4 @@
-import random
+from random import choice
 import re
 from typing import ClassVar
 
@@ -106,7 +106,7 @@ class Atlas(Struct):
     def img_urls(self):
         if len(self.cdn_list) == 0 or len(self.img_route_list) == 0:
             return []
-        cdn = random.choice(self.cdn_list).cdn
+        cdn = choice(self.cdn_list).cdn
         return [f"https://{cdn}/{url}" for url in self.img_route_list]
 
 
@@ -131,11 +131,11 @@ class Photo(Struct):
 
     @property
     def cover_url(self):
-        return random.choice(self.cover_urls).url if len(self.cover_urls) != 0 else None
+        return choice(self.cover_urls).url if len(self.cover_urls) != 0 else None
 
     @property
     def video_url(self):
-        return random.choice(self.main_mv_urls).url if len(self.main_mv_urls) != 0 else None
+        return choice(self.main_mv_urls).url if len(self.main_mv_urls) != 0 else None
 
     @property
     def img_urls(self):

@@ -1,3 +1,4 @@
+from random import choice
 from typing import Any
 
 from msgspec import Struct, field
@@ -43,22 +44,22 @@ class VideoData(Struct):
 
     @property
     def image_urls(self) -> list[str]:
-        return [image.url_list[0] for image in self.images] if self.images else []
+        return [choice(image.url_list) for image in self.images] if self.images else []
 
     @property
     def video_url(self) -> str | None:
-        return self.video.play_addr.url_list[0].replace("playwm", "play") if self.video else None
+        return choice(self.video.play_addr.url_list).replace("playwm", "play") if self.video else None
 
     @property
     def cover_url(self) -> str | None:
-        return self.video.cover.url_list[0] if self.video else None
+        return choice(self.video.cover.url_list) if self.video else None
 
     @property
     def avatar_url(self) -> str | None:
         if avatar := self.author.avatar_thumb:
-            return avatar.url_list[0]
+            return choice(avatar.url_list)
         elif avatar := self.author.avatar_medium:
-            return avatar.url_list[0]
+            return choice(avatar.url_list)
         return None
 
 
@@ -69,7 +70,7 @@ class VideoInfoRes(Struct):
     def video_data(self) -> VideoData:
         if len(self.item_list) == 0:
             raise ParseException("can't find data in videoInfoRes")
-        return self.item_list[0]
+        return choice(self.item_list)
 
 
 class VideoOrNotePage(Struct):

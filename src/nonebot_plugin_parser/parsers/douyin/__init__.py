@@ -81,7 +81,6 @@ class DouyinParser(BaseParser):
         from .video import RouterData
 
         video_data = msgspec.json.decode(matched.group(1).strip(), type=RouterData).video_data
-
         # 使用新的简洁构建方式
         contents = []
 
