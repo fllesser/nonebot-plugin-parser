@@ -1,3 +1,5 @@
+from random import choice
+
 from msgspec import Struct, field
 
 
@@ -26,7 +28,8 @@ class Avatar(Struct):
 
 class Author(Struct):
     nickname: str
-    avatar_larger: Avatar
+    # avatar_larger: Avatar
+    avatar_thumb: Avatar
 
 
 class SlidesData(Struct):
@@ -41,17 +44,15 @@ class SlidesData(Struct):
 
     @property
     def avatar_url(self) -> str:
-        from random import choice
-
-        return choice(self.author.avatar_larger.url_list)
+        return choice(self.author.avatar_thumb.url_list)
 
     @property
     def image_urls(self) -> list[str]:
-        return [image.url_list[0] for image in self.images]
+        return [choice(image.url_list) for image in self.images]
 
     @property
     def dynamic_urls(self) -> list[str]:
-        return [image.video.play_addr.url_list[0] for image in self.images if image.video]
+        return [choice(image.video.play_addr.url_list) for image in self.images if image.video]
 
 
 class SlidesInfo(Struct):

@@ -67,9 +67,11 @@ async def test_gif():
     async def parse_gif(url: str):
         matched = parser.search_url(url)
         assert matched, "无法匹配 URL"
+
         logger.info(f"{url} | 开始解析推特 GIF")
         result = await parser.parse(matched)
         logger.debug(f"{url} | 解析结果: \n{result}")
+
         gif_contents = result.dynamic_contents
         assert gif_contents, "GIF 内容为空"
         for gif_content in gif_contents:
