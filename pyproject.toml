@@ -68,7 +68,7 @@ test = [
 ]
 
 telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
-pydantic_v1 = ["pydantic<2.0.0"]
+pydantic_v1 = ["pydantic<2.12.3"]
 pydantic_v2 = ["pydantic>=2.0.0"]
 
 all_extras = ["nonebot-plugin-htmlkit>=0.1.0rc3"]
