@@ -25,7 +25,7 @@ jobs:
       id-token: write
       contents: read
     concurrency:
-      group: test-others-ubuntu-latest-${{ github.ref }}-${{ matrix.python-version }}-${{ matrix.pydantic }}
+      group: test-others-${{ github.ref }}-${{ matrix.python-version }}-${{ matrix.pydantic }}
       cancel-in-progress: true
 
     strategy:
@@ -78,7 +78,7 @@ jobs:
       id-token: write
       contents: read
     concurrency:
-      group: test-parsers-${{ github.ref }}-3.12-ubuntu-latest
+      group: test-parsers-${{ github.ref }}
       cancel-in-progress: true
 
     env:
@@ -124,7 +124,7 @@ jobs:
       pull-requests: write
       contents: read
     concurrency:
-      group: test-render-${{ github.ref }}-3.12-ubuntu-latest
+      group: test-render-${{ github.ref }}
       cancel-in-progress: true
 
     env:
