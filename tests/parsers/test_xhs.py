@@ -13,8 +13,8 @@ async def test_parse():
 
     xhs_parser = XiaoHongShuParser()
     urls = [
-        "http://xhslink.com/o/9e33TIg4gc4",  # 图文短链
-        "http://xhslink.com/o/9IteTIwy6WE",  # 视频短链
+        # "http://xhslink.com/o/9e33TIg4gc4",  # 图文短链
+        # "http://xhslink.com/o/9IteTIwy6WE",  # 视频短链
         # "https://www.xiaohongshu.com/explore/68949dfb000000002303595f?xsec_token=AB6pSzFZLKoM2TeirLL1hPUjNbBnkpj_B4HhBfpWr47vg=&xsec_source=",
         "https://www.xiaohongshu.com/discovery/item/68b6bc8a000000001c0311c4?app_platform=android&ignoreEngage=true&app_version=8.96.0&share_from_user_hidden=true&xsec_source=app_share&type=video&xsec_token=CBLD_3-DfBKy1ucXzJzbe4qMP4sNfBTFWJBrWaP_7iWpw%3D&author_share=1&xhsshare=QQ&shareRedId=ODs3RUk5ND42NzUyOTgwNjY3OTo8S0tK&apptime=1756856490&share_id=bdb1925c5c07432598852e7e44150820&share_channel=qq",
     ]
