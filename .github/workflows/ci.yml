@@ -25,7 +25,7 @@ jobs:
       id-token: write
       contents: read
     concurrency:
-      group: test-others-${{ github.ref }}-${{ matrix.python-version }}-ubuntu-latest
+      group: test-others-ubuntu-latest-${{ github.ref }}-${{ matrix.python-version }}-${{ matrix.pydantic }}
       cancel-in-progress: true
 
     strategy:
@@ -33,7 +33,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
         # os: [ubuntu-latest, windows-latest, macos-latest]
-        pydantic: ["v1", "v2"]
+        pydantic: ["pydantic-v1", "pydantic-v2"]
 
     env:
       OS: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
           version: "latest"
 
       - name: Install Dependencies for test group
-        run: uv sync --no-dev --locked --group pydantic-${{ matrix.pydantic }}
+        run: uv sync --no-dev --locked --group ${{ matrix.pydantic }}
 
       - name: Run Pytest Others
         run: uv run poe test_others
