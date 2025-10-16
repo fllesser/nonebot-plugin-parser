@@ -45,6 +45,7 @@ class DouyinParser(BaseParser):
             _type, video_id = matched.group(1), matched.group(2)
             if _type == "slides":
                 return await self.parse_slides(video_id)
+
         for url in [
             self._build_m_douyin_url(_type, video_id),
             share_url,

@@ -74,7 +74,7 @@ class VideoInfoRes(Struct):
 
 
 class VideoOrNotePage(Struct):
-    videoInfoRes: VideoInfoRes
+    video_info_res: VideoInfoRes = field(name="videoInfoRes", default_factory=VideoInfoRes)
 
 
 class LoaderData(Struct):
@@ -83,13 +83,13 @@ class LoaderData(Struct):
 
 
 class RouterData(Struct):
-    loaderData: LoaderData
+    loader_data: LoaderData = field(name="loaderData", default_factory=LoaderData)
     errors: dict[str, Any] | None = None
 
     @property
     def video_data(self) -> VideoData:
-        if page := self.loaderData.video_page:
-            return page.videoInfoRes.video_data
-        elif page := self.loaderData.note_page:
-            return page.videoInfoRes.video_data
+        if page := self.loader_data.video_page:
+            return page.video_info_res.video_data
+        elif page := self.loader_data.note_page:
+            return page.video_info_res.video_data
         raise ParseException("can't find video_(id)/page or note_(id)/page in router data")
