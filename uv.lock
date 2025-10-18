@@ -9,11 +9,11 @@ conflicts = [[
 
 [[package]]
 name = "aiofiles"
-version = "24.1.0"
+version = "25.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0b/03/a88171e277e8caa88a4c77808c20ebb04ba74cc4681bf1e9416c862de237/aiofiles-24.1.0.tar.gz", hash = "sha256:22a075c9e5a3810f0c2e48f3008c94d68c65d763b9b03857924c99e57355166c", size = 30247, upload-time = "2024-06-24T11:02:03.584Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/c3/534eac40372d8ee36ef40df62ec129bee4fdb5ad9706e58a29be53b2c970/aiofiles-25.1.0.tar.gz", hash = "sha256:a8d728f0a29de45dc521f18f07297428d56992a742f0cd2701ba86e44d23d5b2", size = 46354, upload-time = "2025-10-09T20:51:04.358Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/45/30bb92d442636f570cb5651bc661f52b610e2eec3f891a5dc3a4c3667db0/aiofiles-24.1.0-py3-none-any.whl", hash = "sha256:b4ec55f4195e3eb5d7abd1bf7e061763e864dd4954231fb8539a0ef8bb8260e5", size = 15896, upload-time = "2024-06-24T11:02:01.529Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/8a/340a1555ae33d7354dbca4faa54948d76d89a27ceef032c8c3bc661d003e/aiofiles-25.1.0-py3-none-any.whl", hash = "sha256:abe311e527c862958650f9438e859c1fa7568a141b22abcd015e120e86a85695", size = 14668, upload-time = "2025-10-09T20:51:03.174Z" },
 ]
 
 [[package]]
@@ -138,7 +138,7 @@ wheels = [
 
 [[package]]
 name = "bilibili-api-python"
-version = "17.3.0"
+version = "17.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "apscheduler" },
@@ -154,9 +154,9 @@ dependencies = [
     { name = "qrcode-terminal" },
     { name = "yarl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/28/59/f4f238a7e3a73583b13f1de54f158cc75241a6a612be2e6cf8ee12c92813/bilibili_api_python-17.3.0.tar.gz", hash = "sha256:4659f3df0b34db7c79322c1a6c6478800447d1b75482e7288b120c46a8fe67ae", size = 1411556, upload-time = "2025-06-30T13:21:17.397Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/b3/ca6c715311d80604ad37437bc1422c4bec7159db6ab49a311478f38e45ed/bilibili_api_python-17.4.0.tar.gz", hash = "sha256:396310c1820fd931a46a10c6115233be250e8db315a266eea608c0f625cdf1ef", size = 1417870, upload-time = "2025-10-08T05:26:35.474Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/52/957fc90a5cd6bfb3564ec5f068f960e8674fb8bd596426af73554ed676de/bilibili_api_python-17.3.0-py3-none-any.whl", hash = "sha256:8a7af3883cf5ce53825a236a49719858331054ee35cd788538df2bde712feccc", size = 379456, upload-time = "2025-06-30T13:21:16.226Z" },
+    { url = "https://files.pythonhosted.org/packages/79/1d/71e2a56f25effbc4e2618a49e55015928748a1c47dda3271d9274cf1f206/bilibili_api_python-17.4.0-py3-none-any.whl", hash = "sha256:79881aa011c23d74c0562765aee707d5fc410a02649091ec6aecf83f990fbdc5", size = 385523, upload-time = "2025-10-08T05:26:33.753Z" },
 ]
 
 [[package]]
@@ -1319,14 +1319,14 @@ htmlkit = [
 ]
 
 [package.dev-dependencies]
-all-extras = [
-    { name = "nonebot-plugin-htmlkit" },
-]
 dev = [
     { name = "nb-cli" },
     { name = "nonebot2", extra = ["fastapi"] },
     { name = "pre-commit" },
     { name = "ruff" },
+]
+extras = [
+    { name = "nonebot-plugin-htmlkit" },
 ]
 pydantic-v1 = [
     { name = "pydantic", version = "1.10.24", source = { registry = "https://pypi.org/simple" } },
@@ -1350,9 +1350,9 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiofiles", specifier = ">=24.1.0" },
+    { name = "aiofiles", specifier = ">=25.1.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
-    { name = "bilibili-api-python", specifier = ">=17.3.0,<18.0.0" },
+    { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.19.0,<1.0.0" },
@@ -1364,18 +1364,18 @@ requires-dist = [
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
-    { name = "yt-dlp", specifier = ">=2025.9.26" },
+    { name = "yt-dlp", specifier = ">=2025.10.14" },
 ]
 provides-extras = ["htmlkit"]
 
 [package.metadata.requires-dev]
-all-extras = [{ name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc3" }]
 dev = [
     { name = "nb-cli", specifier = ">=1.4.2" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "ruff", specifier = ">=0.14.0,<1.0.0" },
 ]
+extras = [{ name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc3" }]
 pydantic-v1 = [{ name = "pydantic", specifier = "<2.0.0" }]
 pydantic-v2 = [{ name = "pydantic", specifier = ">=2.0.0" }]
 telegram = [{ name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" }]
@@ -2738,11 +2738,11 @@ wheels = [
 
 [[package]]
 name = "yt-dlp"
-version = "2025.9.26"
+version = "2025.10.14"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/58/8f/0daea0feec1ab85e7df85b98ec7cc8c85d706362e80efc5375c7007dc3dc/yt_dlp-2025.9.26.tar.gz", hash = "sha256:c148ae8233ac4ce6c5fbf6f70fcc390f13a00f59da3776d373cf88c5370bda86", size = 3037475, upload-time = "2025-09-26T22:23:42.882Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/03/b7/dab729345e22891e79294273bc59c5213a1ec87331f49cb82ccea2b1bc9f/yt_dlp-2025.10.14.tar.gz", hash = "sha256:b18436aa9bb6f04354fd78d31ad9eeaae8c81b6a859f07072b25c18cd6c25844", size = 3045272, upload-time = "2025-10-14T23:39:52.688Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/35/94/18210c5e6a9d7e622a3b3f4a73dde205f7adf0c46b42b27d0da8c6e5c872/yt_dlp-2025.9.26-py3-none-any.whl", hash = "sha256:36f5fbc153600f759abd48d257231f0e0a547a115ac7ffb05d5b64e5c7fdf8a2", size = 3241906, upload-time = "2025-09-26T22:23:39.976Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/19/399c85d29bd7b366b31ede82698f7963374e5a3842ae9de0cde6514506b0/yt_dlp-2025.10.14-py3-none-any.whl", hash = "sha256:0b9da17eda1bbf48e2315130043d7993fd4ca1c5a35571f8231da1a910c9c115", size = 3248664, upload-time = "2025-10-14T23:39:49.95Z" },
 ]
 
 [[package]]
