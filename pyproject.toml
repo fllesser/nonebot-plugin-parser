@@ -68,8 +68,8 @@ test = [
 ]
 
 telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
-pydantic_v1 = ["pydantic<2.0.0"]                  # renovate:ignore
-pydantic_v2 = ["pydantic>=2.0.0"]
+pydantic-v1 = ["pydantic<2.0.0"]                  # renovate:ignore
+pydantic-v2 = ["pydantic>=2.0.0"]
 
 extras = ["nonebot-plugin-htmlkit>=0.1.0rc3"]
 
@@ -78,8 +78,8 @@ required-version = ">=0.9.2"
 default-groups = ["test", "dev", "extras"]
 conflicts = [
   [
-    { group = "pydantic_v1" },
-    { group = "pydantic_v2" },
+    { group = "pydantic-v1" },
+    { group = "pydantic-v2" },
     { group = "telegram" },
   ],
 ]
