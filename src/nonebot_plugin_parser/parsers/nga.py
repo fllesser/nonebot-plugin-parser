@@ -38,6 +38,7 @@ class NGAParser(BaseParser):
             "Upgrade-Insecure-Requests": "1",
         }
         self.headers.update(extra_headers)
+        self.base_img_url = "https://img.nga.178.com/attachments"
 
     @staticmethod
     def nga_url(tid: str | int) -> str:
@@ -140,9 +141,13 @@ class NGAParser(BaseParser):
         # 提取文本 - postcontent0
         text = None
         content_tag = soup.find(id="postcontent0")
+        contents = []
         if content_tag and isinstance(content_tag, Tag):
             text = content_tag.get_text("\n", strip=True)
             # 清理 BBCode 标签并限制长度
+            img_urls: list[str] = re.findall(r"\[img\](.*?)\[/img\]", text)
+            img_urls = [self.base_img_url + url[1:] for url in img_urls]
+            contents.extend(self.create_image_contents(img_urls))
             text = self.clean_nga_text(text)
 
         return self.result(
@@ -150,6 +155,7 @@ class NGAParser(BaseParser):
             text=text,
             url=url,
             author=author,
+            contents=contents,
             timestamp=timestamp,
         )
 
@@ -157,17 +163,17 @@ class NGAParser(BaseParser):
     def clean_nga_text(text: str, max_length: int = 500) -> str:
         rules: list[tuple[str, str, int]] = [
             # 移除图片标签（完整和不完整的）
-            (r"\[img\][^\[\]]*\[/img\]", "", 0),
-            (r"\[img\][^\[\]]*", "", 0),
+            # (r"\[img\][^\[\]]*\[/img\]", "", 0),
+            # (r"\[img\][^\[\]]*", "", 0),
             # 处理URL标签，保留链接文本
-            (r"\[url=[^\]]*\]([^\[]*?)\[/url\]", r"\1", 0),
-            (r"\[url\]([^\[]*?)\[/url\]", r"\1", 0),
-            # 移除引用标签
-            (r"\[quote\].*?\[/quote\]", "", re.DOTALL),
-            # 处理格式标签，保留文本内容（b, i, u）
-            (r"\[(b|i|u)\](.*?)\[/\1\]", r"\2", re.DOTALL),
-            # 处理带属性的格式标签（color, size）
-            (r"\[(color|size)=[^\]]*\](.*?)\[/\1\]", r"\2", re.DOTALL),
+            # (r"\[url=[^\]]*\]([^\[]*?)\[/url\]", r"\1", 0),
+            # (r"\[url\]([^\[]*?)\[/url\]", r"\1", 0),
+            # # 移除引用标签
+            # (r"\[quote\].*?\[/quote\]", "", re.DOTALL),
+            # # 处理格式标签，保留文本内容（b, i, u）
+            # (r"\[(b|i|u)\](.*?)\[/\1\]", r"\2", re.DOTALL),
+            # # 处理带属性的格式标签（color, size）
+            # (r"\[(color|size)=[^\]]*\](.*?)\[/\1\]", r"\2", re.DOTALL),
             # 移除其他未配对的标签
             (r"\[[^]]+\]", "", 0),
             # 清理空白字符

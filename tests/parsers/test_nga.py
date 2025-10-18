@@ -28,6 +28,16 @@ async def test_nga_parse():
     logger.debug(f"标题: {result.title}")
     logger.debug(f"作者: {result.author.name if result.author else 'N/A'}")
     logger.debug(f"时间: {result.timestamp}")
+    logger.debug(f"内容: {result.contents}")
+    assert result.contents is not None, "应该能提取内容信息"
+    assert len(result.contents) > 0, "应该能提取内容信息"
+    img_contents = result.img_contents
+    assert img_contents is not None, "应该能提取图片内容"
+    for img_content in img_contents:
+        img_path = await img_content.get_path()
+        assert img_path.exists(), "图片不存在"
+        logger.debug(f"图片: {img_path}")
+    logger.success("NGA帖子解析成功")
 
 
 if __name__ == "__main__":
