@@ -1,4 +1,4 @@
-url = "https://www.tiktok.com/@xwc1897/video/7436010419002608928?is_from_webapp=1&sender_device=pc"
+url = "https://www.tiktok.com/@maligoshik/video/7472584144510373125"
 
 
 async def test_extract_video_info():

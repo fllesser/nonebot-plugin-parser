@@ -35,8 +35,8 @@ bilibili:
 - bm BV1584y167sD 40
 
 tiktok:
-- https://www.tiktok.com/@xwc1897/video/7436010419002608928
-- https://www.tiktok.com/@mdominikagorecka/video/7555616821018414339
+- https://www.tiktok.com/@maligoshik/video/7472584144510373125
+- https://www.tiktok.com/@arentyoubeth/video/7562414808973315383
 
 acfun:
 - https://www.acfun.cn/v/ac46593564
