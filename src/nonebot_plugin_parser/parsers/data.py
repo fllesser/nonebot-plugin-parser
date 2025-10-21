@@ -160,7 +160,7 @@ class ParseResult:
     """渲染图片"""
 
     @property
-    def header(self) -> str:
+    def header(self) -> str | None:
         """头信息 仅用于 default render"""
         header = self.platform.display_name
         if self.author:

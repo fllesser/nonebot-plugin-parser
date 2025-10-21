@@ -20,20 +20,22 @@ class DefaultRenderer(BaseRenderer):
             Generator[UniMessage[Any], None, None]: 消息生成器
         """
 
-        texts = (
+        texts = [
             result.header,
             result.text,
             result.extra_info,
-            result.display_url,
-            result.repost_display_url,
-        )
+        ]
+
+        if self.append_url:
+            texts.extend((result.display_url, result.repost_display_url))
+
         texts = [text for text in texts if text]
         texts[:-1] = [text + "\n" for text in texts[:-1]]
-
         segs: list[Segment] = [Text(text) for text in texts]
-        cover_path = await result.cover_path
-        if cover_path is not None:
+
+        if cover_path := await result.cover_path:
             segs.insert(1, UniHelper.img_seg(cover_path))
+
         yield UniMessage(segs)
 
         async for message in self.render_contents(result):
