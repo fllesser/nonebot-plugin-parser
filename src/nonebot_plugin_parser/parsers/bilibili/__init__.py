@@ -165,7 +165,7 @@ class BilibiliParser(BaseParser):
         # 判断链接类型并解析
         logger.debug(f"解析其他类型链接: {url}")
         # 1. 动态
-        if "t.bilibili.com" in url:
+        if "t.bili" in url or "m.bili" in url:
             return await self.parse_dynamic(url)
 
         # 2.图文动态
