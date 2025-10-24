@@ -58,7 +58,7 @@ def _escape_raw(raw: str) -> str:
     return raw
 
 
-def _extract_json_url(hyper: Hyper) -> str | None:
+def _extract_url(hyper: Hyper) -> str | None:
     """处理 JSON 类型的消息段，提取 URL
 
     Args:
@@ -92,15 +92,16 @@ def _extract_json_url(hyper: Hyper) -> str | None:
     return None
 
 
+# 纪念我写了一个存在了一年没人发现的 bug ()
 # @event_preprocessor
-def extract_msg_text(message: UniMsg, state: T_State):
-    if hyper := next(iter(message.get(Hyper, 1)), None):
-        state[PSR_EXTRACT_KEY] = _extract_json_url(hyper)
-        return
+# async def extract_msg_text(message: UniMsg, state: T_State):
+#     if hyper := next(iter(message.get(Hyper, 1)), None):
+#         state[PSR_EXTRACT_KEY] = _extract_url(hyper)
+#         return
 
-    # 提取纯文本
-    if text := message.extract_plain_text().strip():
-        state[PSR_EXTRACT_KEY] = text
+#     # 提取纯文本
+#     if text := message.extract_plain_text().strip():
+#         state[PSR_EXTRACT_KEY] = text
 
 
 class KeyPatternList(list[tuple[str, re.Pattern[str]]]):
@@ -132,18 +133,20 @@ class KeywordRegexRule:
     async def __call__(self, message: UniMsg, state: T_State) -> bool:
         text: str | None = None
         if hyper := next(iter(message.get(Hyper, 1)), None):
-            text = _extract_json_url(hyper)
-            state[PSR_EXTRACT_KEY] = text
-        elif text := message.extract_plain_text().strip():
-            state[PSR_EXTRACT_KEY] = text
+            text = _extract_url(hyper)
+
+        elif plain_text := message.extract_plain_text().strip():
+            text = plain_text
 
         if not text:
             return False
+
         for keyword, pattern in self.key_pattern_list:
             if keyword not in text:
                 continue
             if matched := pattern.search(text):
                 state[PSR_KWD_KEY] = keyword
+                state[PSR_EXTRACT_KEY] = text
                 state[PSR_KWD_MATCHED_KEY] = matched
                 return True
             logger.debug(f"keyword '{keyword}' is in '{text}', but not matched")
