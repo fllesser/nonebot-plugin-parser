@@ -4,7 +4,8 @@ from typing import Any, Literal
 
 from nonebot import logger
 from nonebot.matcher import Matcher
-from nonebot.message import event_preprocessor
+
+# from nonebot.message import event_preprocessor
 from nonebot.params import Depends
 from nonebot.plugin.on import get_matcher_source
 from nonebot.rule import Rule
@@ -91,7 +92,7 @@ def _extract_json_url(hyper: Hyper) -> str | None:
     return None
 
 
-@event_preprocessor
+# @event_preprocessor
 def extract_msg_text(message: UniMsg, state: T_State):
     if hyper := next(iter(message.get(Hyper, 1)), None):
         state[PSR_EXTRACT_KEY] = _extract_json_url(hyper)
@@ -128,7 +129,14 @@ class KeywordRegexRule:
     def __hash__(self) -> int:
         return hash(frozenset(self.key_pattern_list))
 
-    async def __call__(self, state: T_State, text: str = ExtractText()) -> bool:
+    async def __call__(self, message: UniMsg, state: T_State) -> bool:
+        text: str | None = None
+        if hyper := next(iter(message.get(Hyper, 1)), None):
+            text = _extract_json_url(hyper)
+            state[PSR_EXTRACT_KEY] = text
+        elif text := message.extract_plain_text().strip():
+            state[PSR_EXTRACT_KEY] = text
+
         if not text:
             return False
         for keyword, pattern in self.key_pattern_list:
