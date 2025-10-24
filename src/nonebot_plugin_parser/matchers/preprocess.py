@@ -100,11 +100,9 @@ def _extract_json_url(hyper: Hyper) -> str | None:
 
 
 @event_preprocessor
-def extract_msg_text(message: UniMsg, state: T_State) -> None:
-    text: str | None = None
-
+def extract_msg_text(message: UniMsg, state: T_State):
     if hyper := message.get(Hyper, 1):
-        state[PSR_EXTRACT_KEY] = _extract_json_url(hyper.pop())
+        state[PSR_EXTRACT_KEY] = _extract_json_url(hyper[0])
         return
 
     # 提取纯文本
