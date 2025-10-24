@@ -42,27 +42,19 @@ def _kwd_regex_matched(state: T_State) -> re.Match[str] | None:
     return state.get(PSR_KWD_MATCHED_KEY)
 
 
-URL_KEY_MAPPING = {
-    "detail_1": "qqdocurl",
-    "news": "jumpUrl",
-    "music": "jumpUrl",
-}
-
-CHAR_REPLACEMENTS = {"&#44;": ",", "\\": "", "&amp;": "&"}
-
-
-def _clean_url(url: str) -> str:
-    """清理 URL 中的特殊字符
-
+def _escape_raw(raw: str) -> str:
+    """
+    转义原始字符串中的特殊字符
     Args:
-        url: 原始 URL
+        raw: 原始字符串
 
     Returns:
-        str: 清理后的 URL
+        str: 转义后的字符串
     """
-    for old, new in CHAR_REPLACEMENTS.items():
-        url = url.replace(old, new)
-    return url
+    replacements = [("&#44;", ","), ("\\", ""), ("&amp;", "&")]
+    for old, new in replacements:
+        raw = raw.replace(old, new)
+    return raw
 
 
 def _extract_json_url(hyper: Hyper) -> str | None:
@@ -75,12 +67,12 @@ def _extract_json_url(hyper: Hyper) -> str | None:
         Optional[str]: 提取的 URL, 如果提取失败则返回 None
     """
     data = hyper.data
-    raw_str = data.get("raw")
+    raw_str: str | None = data.get("raw")
 
     if raw_str is None:
         return None
-    # 处理转义字符
-    raw_str = raw_str.replace("&#44;", ",")
+
+    raw_str = _escape_raw(raw_str)
 
     try:
         raw: dict[str, Any] = json.loads(raw_str)
@@ -92,10 +84,10 @@ def _extract_json_url(hyper: Hyper) -> str | None:
     if not meta:
         return None
 
-    for key1, key2 in URL_KEY_MAPPING.items():
-        if item := meta.get(key1):
-            if url := item.get(key2):
-                return _clean_url(url)
+    for key1, key2 in [("detail_1", "qqdocurl"), ("news", "jumpUrl"), ("music", "jumpUrl")]:
+        if url := meta.get(key1, {}).get(key2):
+            logger.debug(f"extract url from raw:{key1}:{key2}: {url}")
+            return url
     return None
 
 
