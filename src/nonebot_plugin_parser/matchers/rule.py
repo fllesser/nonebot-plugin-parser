@@ -4,43 +4,37 @@ from typing import Any, Literal
 
 from nonebot import logger
 from nonebot.matcher import Matcher
-
-# from nonebot.message import event_preprocessor
 from nonebot.params import Depends
 from nonebot.plugin.on import get_matcher_source
 from nonebot.rule import Rule
 from nonebot.typing import T_State
 from nonebot_plugin_alconna.uniseg import Hyper, UniMsg
 
-from .filter import is_not_in_disabled_groups
+from .filter import is_enabled
 
-PSR_KWD_KEY: Literal["_psr_kwd"] = "_psr_kwd"
-PSR_EXTRACT_KEY: Literal["_psr_extract"] = "_psr_extract"
-PSR_KWD_MATCHED_KEY: Literal["_psr_kwd_matched"] = "_psr_kwd_matched"
-
-
-def ExtractText() -> str:
-    return Depends(_extract_text)
+# 统一的状态键
+PSR_SEARCHED_KEY: Literal["psr-searched"] = "psr-searched"
 
 
-def _extract_text(state: T_State) -> str | None:
-    return state.get(PSR_EXTRACT_KEY)
+class SearchResult:
+    """匹配结果"""
+
+    __slots__ = ("keyword", "searched", "text")
+
+    def __init__(self, text: str, keyword: str, searched: re.Match[str]):
+        self.text: str = text
+        self.keyword: str = keyword
+        self.searched: re.Match[str] = searched
 
 
-def Keyword() -> str:
-    return Depends(_keyword)
+def Searched() -> SearchResult:
+    """依赖注入，返回 SearchResult"""
+    return Depends(_searched)
 
 
-def _keyword(state: T_State) -> str | None:
-    return state.get(PSR_KWD_KEY)
-
-
-def KwdRegexMatched() -> re.Match[str]:
-    return Depends(_kwd_regex_matched)
-
-
-def _kwd_regex_matched(state: T_State) -> re.Match[str] | None:
-    return state.get(PSR_KWD_MATCHED_KEY)
+def _searched(state: T_State) -> SearchResult | None:
+    """从 state 中提取匹配结果"""
+    return state.get(PSR_SEARCHED_KEY)
 
 
 def _escape_raw(raw: str) -> str:
@@ -52,7 +46,11 @@ def _escape_raw(raw: str) -> str:
     Returns:
         str: 转义后的字符串
     """
-    replacements = [("&#44;", ","), ("\\", ""), ("&amp;", "&")]
+    replacements = [
+        ("&#44;", ","),
+        ("\\", ""),
+        ("&amp;", "&"),
+    ]
     for old, new in replacements:
         raw = raw.replace(old, new)
     return raw
@@ -85,23 +83,24 @@ def _extract_url(hyper: Hyper) -> str | None:
     if not meta:
         return None
 
-    for key1, key2 in [("detail_1", "qqdocurl"), ("news", "jumpUrl"), ("music", "jumpUrl")]:
+    for key1, key2 in (
+        ("detail_1", "qqdocurl"),
+        ("news", "jumpUrl"),
+        ("music", "jumpUrl"),
+    ):
         if url := meta.get(key1, {}).get(key2):
             logger.debug(f"extract url from raw:{key1}:{key2}: {url}")
             return url
     return None
 
 
-# 纪念我写了一个存在了一年没人发现的 bug ()
-# @event_preprocessor
-# async def extract_msg_text(message: UniMsg, state: T_State):
-#     if hyper := next(iter(message.get(Hyper, 1)), None):
-#         state[PSR_EXTRACT_KEY] = _extract_url(hyper)
-#         return
-
-#     # 提取纯文本
-#     if text := message.extract_plain_text().strip():
-#         state[PSR_EXTRACT_KEY] = text
+def _extract_text(message: UniMsg) -> str | None:
+    """从消息中提取文本"""
+    if hyper := next(iter(message.get(Hyper, 1)), None):
+        return _extract_url(hyper)
+    elif plain_text := message.extract_plain_text().strip():
+        return plain_text
+    return None
 
 
 class KeyPatternList(list[tuple[str, re.Pattern[str]]]):
@@ -131,23 +130,15 @@ class KeywordRegexRule:
         return hash(frozenset(self.key_pattern_list))
 
     async def __call__(self, message: UniMsg, state: T_State) -> bool:
-        text: str | None = None
-        if hyper := next(iter(message.get(Hyper, 1)), None):
-            text = _extract_url(hyper)
-
-        elif plain_text := message.extract_plain_text().strip():
-            text = plain_text
-
+        text = _extract_text(message)
         if not text:
             return False
 
         for keyword, pattern in self.key_pattern_list:
             if keyword not in text:
                 continue
-            if matched := pattern.search(text):
-                state[PSR_KWD_KEY] = keyword
-                state[PSR_EXTRACT_KEY] = text
-                state[PSR_KWD_MATCHED_KEY] = matched
+            if searched := pattern.search(text):
+                state[PSR_SEARCHED_KEY] = SearchResult(text=text, keyword=keyword, searched=searched)
                 return True
             logger.debug(f"keyword '{keyword}' is in '{text}', but not matched")
         return False
@@ -160,7 +151,7 @@ def keyword_regex(*args: tuple[str, str | re.Pattern[str]]) -> Rule:
 def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5) -> type[Matcher]:
     matcher = Matcher.new(
         "message",
-        is_not_in_disabled_groups & keyword_regex(*args),
+        is_enabled & keyword_regex(*args),
         priority=priority,
         block=True,
         source=get_matcher_source(1),

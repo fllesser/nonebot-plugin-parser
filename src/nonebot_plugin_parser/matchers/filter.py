@@ -38,7 +38,7 @@ def get_group_key(session: Session) -> str:
 
 
 # Rule
-def is_not_in_disabled_groups(session: Session = UniSession()) -> bool:
+def is_enabled(session: Session = UniSession()) -> bool:
     """判断当前会话是否在关闭解析的名单中"""
     if session.scene.is_private:
         return True

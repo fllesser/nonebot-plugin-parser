@@ -8,6 +8,7 @@ from typing import ClassVar
 from typing_extensions import Unpack
 
 from ..constants import ANDROID_HEADER, COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
+from ..download import DOWNLOADER
 from .data import ParseResult, ParseResultKwargs, Platform
 
 
@@ -80,20 +81,32 @@ class BaseParser(ABC):
         return ParseResult(platform=cls.platform, **kwargs)
 
     @staticmethod
-    async def get_redirect_url(url: str, headers: dict[str, str] | None = None) -> str:
+    async def get_redirect_url(
+        url: str,
+        headers: dict[str, str] | None = None,
+    ) -> str:
         """获取重定向后的URL"""
         from httpx import AsyncClient
 
         headers = headers or COMMON_HEADER.copy()
-        async with AsyncClient(headers=headers, verify=False, follow_redirects=False, timeout=COMMON_TIMEOUT) as client:
+        async with AsyncClient(
+            headers=headers,
+            verify=False,
+            follow_redirects=False,
+            timeout=COMMON_TIMEOUT,
+        ) as client:
             response = await client.get(url)
             if response.status_code >= 400:
                 response.raise_for_status()
             return response.headers.get("Location", url)
 
-    def create_author(self, name: str, avatar_url: str | None = None, description: str | None = None):
+    def create_author(
+        self,
+        name: str,
+        avatar_url: str | None = None,
+        description: str | None = None,
+    ):
         """创建作者对象"""
-        from ..download import DOWNLOADER
         from .data import Author
 
         avatar_task = None
@@ -101,9 +114,13 @@ class BaseParser(ABC):
             avatar_task = DOWNLOADER.download_img(avatar_url, ext_headers=self.headers)
         return Author(name=name, avatar=avatar_task, description=description)
 
-    def create_video_content(self, url_or_task: str | Task[Path], cover_url: str | None = None, duration: float = 0.0):
+    def create_video_content(
+        self,
+        url_or_task: str | Task[Path],
+        cover_url: str | None = None,
+        duration: float = 0.0,
+    ):
         """创建视频内容"""
-        from ..download import DOWNLOADER
         from .data import VideoContent
 
         cover_task = None
@@ -114,25 +131,32 @@ class BaseParser(ABC):
 
         return VideoContent(url_or_task, cover_task, duration)
 
-    def create_image_contents(self, image_urls: list[str]):
+    def create_image_contents(
+        self,
+        image_urls: list[str],
+    ):
         """创建图片内容列表"""
-        from ..download import DOWNLOADER
         from .data import ImageContent
 
         img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in image_urls]
         return [ImageContent(task) for task in img_tasks]
 
-    def create_dynamic_contents(self, dynamic_urls: list[str]):
+    def create_dynamic_contents(
+        self,
+        dynamic_urls: list[str],
+    ):
         """创建动态图片内容列表"""
-        from ..download import DOWNLOADER
         from .data import DynamicContent
 
         dynamic_tasks = [DOWNLOADER.download_video(url, ext_headers=self.headers) for url in dynamic_urls]
         return [DynamicContent(task) for task in dynamic_tasks]
 
-    def create_audio_content(self, url_or_task: str | Task[Path], duration: float = 0.0):
+    def create_audio_content(
+        self,
+        url_or_task: str | Task[Path],
+        duration: float = 0.0,
+    ):
         """创建音频内容"""
-        from ..download import DOWNLOADER
         from .data import AudioContent
 
         if isinstance(url_or_task, str):
@@ -140,9 +164,13 @@ class BaseParser(ABC):
 
         return AudioContent(url_or_task, duration)
 
-    def create_graphics_content(self, image_url: str, text: str | None = None, alt: str | None = None):
+    def create_graphics_content(
+        self,
+        image_url: str,
+        text: str | None = None,
+        alt: str | None = None,
+    ):
         """创建图文内容 图片不能为空 文字可空 渲染时文字在前 图片在后"""
-        from ..download import DOWNLOADER
         from .data import GraphicsContent
 
         image_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
