@@ -257,9 +257,8 @@ class CommonRenderer(ImageRenderer):
 
         for platform_name in PlatformEnum:
             logo_path = self.RESOURCES_DIR / f"{platform_name}.png"
-            logger.debug(f"logo_path: {logo_path}")
             if logo_path.exists():
-                self.platform_logos[platform_name] = Image.open(logo_path)
+                self.platform_logos[str(platform_name)] = Image.open(logo_path)
 
     # def __resize_platform_logos(self):
     #     """调整平台 logo 尺寸, 用于调整 logo 大小(仅开发时使用)"""

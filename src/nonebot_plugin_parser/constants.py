@@ -34,3 +34,6 @@ class PlatformEnum(str, Enum):
     weibo = "weibo"
     xiaohongshu = "xiaohongshu"
     nga = "nga"
+
+    def __str__(self) -> str:
+        return self.value
