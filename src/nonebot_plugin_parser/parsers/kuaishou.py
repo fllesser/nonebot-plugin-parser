@@ -13,7 +13,7 @@ class KuaiShouParser(BaseParser):
     """快手解析器"""
 
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name=PlatformEnum.kuaishou, display_name="快手")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.KUAISHOU, display_name="快手")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [

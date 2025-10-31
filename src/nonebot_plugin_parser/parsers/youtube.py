@@ -12,7 +12,7 @@ from .cookie import save_cookies_with_netscape
 
 class YouTubeParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name=PlatformEnum.youtube, display_name="油管")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.YOUTUBE, display_name="油管")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [

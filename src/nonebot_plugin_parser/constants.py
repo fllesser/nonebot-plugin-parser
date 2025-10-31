@@ -24,16 +24,16 @@ DOWNLOAD_TIMEOUT: Final[Timeout] = Timeout(connect=15.0, read=240.0, write=10.0,
 
 
 class PlatformEnum(str, Enum):
-    bilibili = "bilibili"
-    acfun = "acfun"
-    douyin = "douyin"
-    youtube = "youtube"
-    kuaishou = "kuaishou"
-    twitter = "twitter"
-    tiktok = "tiktok"
-    weibo = "weibo"
-    xiaohongshu = "xiaohongshu"
-    nga = "nga"
+    ACFUN = "acfun"
+    BILIBILI = "bilibili"
+    DOUYIN = "douyin"
+    KUAISHOU = "kuaishou"
+    NGA = "nga"
+    TIKTOK = "tiktok"
+    TWITTER = "twitter"
+    WEIBO = "weibo"
+    XIAOHONGSHU = "xiaohongshu"
+    YOUTUBE = "youtube"
 
     def __str__(self) -> str:
         return self.value

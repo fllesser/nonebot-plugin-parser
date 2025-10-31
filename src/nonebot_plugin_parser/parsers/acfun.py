@@ -18,7 +18,7 @@ from .base import DOWNLOADER, BaseParser, Platform, PlatformEnum, pconfig
 
 class AcfunParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name=PlatformEnum.acfun, display_name="猴山")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.ACFUN, display_name="猴山")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [

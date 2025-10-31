@@ -15,7 +15,7 @@ from .base import BaseParser, Platform, PlatformEnum
 
 class NGAParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name=PlatformEnum.nga, display_name="NGA")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.NGA, display_name="NGA")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [

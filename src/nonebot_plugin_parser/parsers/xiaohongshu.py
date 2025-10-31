@@ -13,7 +13,7 @@ from .base import BaseParser, ParseException, Platform, PlatformEnum
 
 class XiaoHongShuParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name=PlatformEnum.xiaohongshu, display_name="小红书")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.XIAOHONGSHU, display_name="小红书")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
