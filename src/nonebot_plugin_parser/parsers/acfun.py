@@ -10,12 +10,10 @@ import aiofiles
 from httpx import AsyncClient, HTTPError
 from nonebot import logger
 
-from ..config import pconfig
 from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
-from ..download import DOWNLOADER
 from ..exception import DownloadException, ParseException
 from ..utils import safe_unlink
-from .base import BaseParser, Platform
+from .base import DOWNLOADER, BaseParser, Platform, pconfig
 
 
 class AcfunParser(BaseParser):
@@ -136,20 +134,8 @@ class AcfunParser(BaseParser):
         return m3u8_full_urls
 
     @override
-    async def parse(self, matched: re.Match[str]):
-        """解析 URL 获取内容信息并下载资源
-
-        Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
-        # 从匹配结果中提取 acid
-        acid = int(matched.group(1))
+    async def parse(self, keyword: str, searched: re.Match[str]):
+        acid = int(searched.group(1))
         url = f"https://www.acfun.cn/v/ac{acid}"
 
         m3u8_url, title, description, author, upload_time = await self.parse_video_info(url)

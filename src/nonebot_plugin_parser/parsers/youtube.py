@@ -2,12 +2,11 @@ import re
 from typing import ClassVar
 from typing_extensions import override
 
-import httpx
+from httpx import AsyncClient
 import msgspec
 
-from ..config import pconfig
 from ..download import YTDLP_DOWNLOADER
-from .base import BaseParser, Platform
+from .base import BaseParser, Platform, pconfig
 from .cookie import save_cookies_with_netscape
 
 
@@ -28,11 +27,12 @@ class YouTubeParser(BaseParser):
             save_cookies_with_netscape(pconfig.ytb_ck, self.cookies_file, "youtube.com")
 
     @override
-    async def parse(self, matched: re.Match[str]):
+    async def parse(self, keyword: str, searched: re.Match[str]):
         """解析 URL 获取内容信息并下载资源
 
         Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
+            keyword: 关键词
+            searched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
             ParseResult: 解析结果（已下载资源，包含 Path）
@@ -41,7 +41,7 @@ class YouTubeParser(BaseParser):
             ParseException: 解析失败时抛出
         """
         # 从匹配对象中获取原始URL
-        url = matched.group(0)
+        url = searched.group(0)
 
         video_info = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
         author = await self._fetch_author_info(video_info.channel_id)
@@ -105,7 +105,7 @@ class YouTubeParser(BaseParser):
             },
             "browseId": channel_id,
         }
-        async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+        async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
             response = await client.post(url, json=payload)
             response.raise_for_status()
 

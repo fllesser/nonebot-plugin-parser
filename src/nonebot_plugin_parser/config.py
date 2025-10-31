@@ -1,10 +1,11 @@
 from enum import Enum
 from pathlib import Path
-from typing import Literal
 
 from bilibili_api.video import VideoCodecs
 from nonebot import get_driver, get_plugin_config, require
 from pydantic import BaseModel
+
+from .constants import PlatformEnum
 
 _nickname: str = next(iter(get_driver().config.nickname), "")
 """全局名称"""
@@ -15,11 +16,6 @@ import nonebot_plugin_localstore as _store
 _cache_dir: Path = _store.get_plugin_cache_dir()
 _config_dir: Path = _store.get_plugin_config_dir()
 _data_dir: Path = _store.get_plugin_data_dir()
-
-
-PlatformNames = Literal[
-    "bilibili", "acfun", "douyin", "youtube", "kuaishou", "twitter", "tiktok", "weibo", "xiaohongshu", "nga"
-]
 
 
 class RenderType(str, Enum):
@@ -45,7 +41,7 @@ class Config(BaseModel):
     """视频/音频最大时长"""
     parser_append_url: bool = False
     """是否在解析结果中附加原始URL"""
-    parser_disabled_platforms: list[PlatformNames] = []
+    parser_disabled_platforms: list[PlatformEnum] = []
     """禁止的解析器"""
     parser_bili_video_codes: list[VideoCodecs] = [VideoCodecs.AVC, VideoCodecs.AV1, VideoCodecs.HEV]
     """B站视频编码"""
@@ -87,7 +83,7 @@ class Config(BaseModel):
         return self.parser_duration_maximum
 
     @property
-    def disabled_platforms(self) -> list[PlatformNames]:
+    def disabled_platforms(self) -> list[PlatformEnum]:
         """禁止的解析器"""
         return self.parser_disabled_platforms
 

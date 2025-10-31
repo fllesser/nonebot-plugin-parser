@@ -49,22 +49,22 @@ def clear_result_cache():
 
 async def parser_handler(
     event: Event,
-    search_result: SearchResult = Searched(),
+    sr: SearchResult = Searched(),
 ):
     """统一的解析处理器"""
     # 响应用户处理中
     await _message_reaction(event, "resolving")
 
     # 1. 获取缓存结果
-    cache_key = search_result.searched.group(0)
+    cache_key = sr.searched.group(0)
     result = _RESULT_CACHE.get(cache_key)
 
     if result is None:
         # 2. 获取对应平台 parser
-        parser = KEYWORD_PARSER_MAP[search_result.keyword]
+        parser = KEYWORD_PARSER_MAP[sr.keyword]
 
         try:
-            result = await parser.parse(search_result.searched)
+            result = await parser.parse(sr.keyword, sr.searched)
         except Exception:
             # await UniMessage(str(e)).send()
             await _message_reaction(event, "fail")

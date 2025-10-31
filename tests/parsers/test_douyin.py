@@ -16,10 +16,10 @@ async def test_common_video():
 
     async def test_parse(url: str) -> None:
         logger.info(f"{url} | 开始解析抖音视频")
-        matched = parser.search_url(url)
-        assert matched, "无法匹配 URL"
+        keyword, searched = parser.search_url(url)
+        assert searched, "无法匹配 URL"
 
-        result = await parser.parse(matched)
+        result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
 
         assert result.title, "标题为空"
@@ -71,10 +71,10 @@ async def test_note():
 
     async def test_parse(url: str) -> None:
         logger.info(f"{url} | 开始解析抖音图文")
-        matched = parser.search_url(url)
-        assert matched, "无法匹配 URL"
+        keyword, searched = parser.search_url(url)
+        assert searched, "无法匹配 URL"
 
-        result = await parser.parse(matched)
+        result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
         assert result.title, "标题为空"
         assert result.author, "作者为空"
@@ -102,9 +102,9 @@ async def test_slides():
     dynamic_image_url = "https://v.douyin.com/CeiJfqyWs"
 
     logger.info(f"开始解析抖音图集(含视频解析出视频) {dynamic_image_url}")
-    matched = parser.search_url(dynamic_image_url)
-    assert matched, "无法匹配 URL"
-    result = await parser.parse(matched)
+    keyword, searched = parser.search_url(dynamic_image_url)
+    assert searched, "无法匹配 URL"
+    result = await parser.parse(keyword, searched)
     logger.debug(f"{dynamic_image_url} | 解析结果: \n{result}")
     assert result.title, "标题为空"
     dynamic_contents = result.dynamic_contents
@@ -116,9 +116,9 @@ async def test_slides():
 
     static_image_url = "https://www.douyin.com/note/7450744229229235491"
     logger.info(f"开始解析抖音图集(含视频解析出静态图片) {static_image_url}")
-    matched = parser.search_url(static_image_url)
-    assert matched, "无法匹配 URL"
-    result = await parser.parse(matched)
+    keyword, searched = parser.search_url(static_image_url)
+    assert searched, "无法匹配 URL"
+    result = await parser.parse(keyword, searched)
     logger.debug(f"{static_image_url} | 解析结果: \n{result}")
     assert result.title, "标题为空"
     img_contents = result.img_contents

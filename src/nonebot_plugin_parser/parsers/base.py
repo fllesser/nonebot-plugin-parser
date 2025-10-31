@@ -7,8 +7,15 @@ import re
 from typing import ClassVar
 from typing_extensions import Unpack
 
+from ..config import pconfig as pconfig
 from ..constants import ANDROID_HEADER, COMMON_HEADER, COMMON_TIMEOUT, IOS_HEADER
-from ..download import DOWNLOADER
+from ..constants import PlatformEnum as PlatformEnum
+from ..download import DOWNLOADER as DOWNLOADER
+from ..exception import DownloadException as DownloadException
+from ..exception import DurationLimitException as DurationLimitException
+from ..exception import ParseException as ParseException
+from ..exception import SizeLimitException as SizeLimitException
+from ..exception import ZeroSizeException as ZeroSizeException
 from .data import ParseResult, ParseResultKwargs, Platform
 
 
@@ -48,14 +55,15 @@ class BaseParser(ABC):
         return cls._registry
 
     @abstractmethod
-    async def parse(self, matched: re.Match[str]) -> ParseResult:
+    async def parse(self, keyword: str, searched: re.Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
         Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
+            keyword: 关键词
+            searched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path）
+            ParseResult: 解析结果（已下载资源，包含 Path)
 
         Raises:
             ParseException: 解析失败时抛出
@@ -63,7 +71,7 @@ class BaseParser(ABC):
         raise NotImplementedError
 
     @classmethod
-    def search_url(cls, url: str) -> re.Match[str]:
+    def search_url(cls, url: str) -> tuple[str, re.Match[str]]:
         from nonebot import logger
 
         """搜索 URL 匹配模式"""
@@ -71,7 +79,7 @@ class BaseParser(ABC):
             if keyword not in url:
                 continue
             if searched := re.search(pattern, url):
-                return searched
+                return keyword, searched
             logger.debug(f"keyword '{keyword}' is in '{url}', but not matched")
         raise ValueError(f"无法匹配 {url}")
 

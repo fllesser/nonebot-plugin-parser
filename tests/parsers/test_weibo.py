@@ -17,10 +17,10 @@ async def test_graphics():
     ]
 
     async def parse_graphics(url: str) -> None:
-        searched = parser.search_url(url)
+        keyword, searched = parser.search_url(url)
         assert searched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博")
-        parse_result = await parser.parse(searched)
+        parse_result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         if img_contents := parse_result.img_contents:
             for img_content in img_contents:
@@ -42,10 +42,10 @@ async def test_repost():
     ]
 
     async def parse_repost(url) -> None:
-        matched = parser.search_url(url)
-        assert matched, "无法匹配 URL"
+        keyword, searched = parser.search_url(url)
+        assert searched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博转发")
-        parse_result = await parser.parse(matched)
+        parse_result = await parser.parse(keyword, searched)
         repost = parse_result.repost
         assert repost
         logger.debug(f"{url} | 转发内容: \n{repost}")
@@ -78,10 +78,10 @@ async def test_video():
     ]
 
     async def parse_video(url: str) -> None:
-        searched = parser.search_url(url)
+        keyword, searched = parser.search_url(url)
         assert searched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博")
-        parse_result = await parser.parse(searched)
+        parse_result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: {parse_result}")
         video_paths = parse_result.video_contents
         for video_path in video_paths:
@@ -107,10 +107,10 @@ async def test_text():
     ]
 
     async def parse_text(url: str) -> None:
-        matched = parser.search_url(url)
-        assert matched, "无法匹配 URL"
+        keyword, searched = parser.search_url(url)
+        assert searched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析微博")
-        parse_result = await parser.parse(matched)
+        parse_result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.text
         logger.success(f"{url} | 微博纯文本解析成功")

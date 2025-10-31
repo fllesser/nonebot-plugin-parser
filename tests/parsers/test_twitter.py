@@ -13,10 +13,10 @@ async def test_video():
     ]
 
     async def parse_video(url: str):
-        matched = parser.search_url(url)
-        assert matched, "无法匹配 URL"
+        keyword, searched = parser.search_url(url)
+        assert searched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析推特视频")
-        result = await parser.parse(matched)
+        result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
         assert result.title, "标题为空"
         video_contents = result.video_contents
@@ -41,10 +41,10 @@ async def test_img():
     ]
 
     async def parse_img(url: str):
-        matched = parser.search_url(url)
-        assert matched, "无法匹配 URL"
+        keyword, searched = parser.search_url(url)
+        assert searched, "无法匹配 URL"
         logger.info(f"{url} | 开始解析推特图片")
-        result = await parser.parse(matched)
+        result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
         img_contents = result.img_contents
         assert img_contents, "图片内容为空"
@@ -65,11 +65,11 @@ async def test_gif():
     ]
 
     async def parse_gif(url: str):
-        matched = parser.search_url(url)
-        assert matched, "无法匹配 URL"
+        keyword, searched = parser.search_url(url)
+        assert searched, "无法匹配 URL"
 
         logger.info(f"{url} | 开始解析推特 GIF")
-        result = await parser.parse(matched)
+        result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
 
         gif_contents = result.dynamic_contents

@@ -13,12 +13,12 @@ async def test_nga_parse():
     parser = NGAParser()
 
     # 测试URL匹配
-    matched = parser.search_url(url)
+    keyword, searched = parser.search_url(url)
 
-    assert matched, "URL应该能被NGA解析器匹配"
+    assert searched, "URL应该能被NGA解析器匹配"
 
     # 测试解析
-    result = await parser.parse(matched)
+    result = await parser.parse(keyword, searched)
 
     # 验证结果
     assert result.title, "应该能提取标题"
