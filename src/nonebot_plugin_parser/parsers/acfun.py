@@ -13,12 +13,12 @@ from nonebot import logger
 from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException, ParseException
 from ..utils import safe_unlink
-from .base import DOWNLOADER, BaseParser, Platform, pconfig
+from .base import DOWNLOADER, BaseParser, Platform, PlatformEnum, pconfig
 
 
 class AcfunParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="acfun", display_name="猴山")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.acfun, display_name="猴山")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [

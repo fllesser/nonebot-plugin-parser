@@ -5,7 +5,7 @@ from typing import ClassVar
 from httpx import AsyncClient
 import msgspec
 
-from .base import BaseParser, ParseException
+from .base import BaseParser, ParseException, PlatformEnum
 from .data import ParseResult, Platform
 
 
@@ -13,7 +13,7 @@ class KuaiShouParser(BaseParser):
     """快手解析器"""
 
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="kuaishou", display_name="快手")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.kuaishou, display_name="快手")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [

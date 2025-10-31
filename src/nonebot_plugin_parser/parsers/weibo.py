@@ -5,12 +5,12 @@ from typing import ClassVar
 from httpx import AsyncClient, Cookies
 import msgspec
 
-from .base import BaseParser, ParseException, Platform
+from .base import BaseParser, ParseException, Platform, PlatformEnum
 
 
 class WeiBoParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="weibo", display_name="微博")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.weibo, display_name="微博")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [

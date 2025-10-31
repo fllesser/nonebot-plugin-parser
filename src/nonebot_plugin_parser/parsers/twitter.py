@@ -5,13 +5,13 @@ from typing import Any, ClassVar
 from httpx import AsyncClient
 
 from ..exception import ParseException
-from .base import BaseParser
+from .base import BaseParser, PlatformEnum
 from .data import ParseResult, Platform
 
 
 class TwitterParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="twitter", display_name="小蓝鸟")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.twitter, display_name="小蓝鸟")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [

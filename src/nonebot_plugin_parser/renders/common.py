@@ -253,10 +253,11 @@ class CommonRenderer(ImageRenderer):
     def _load_platform_logos(self):
         """预加载平台 logo"""
         self.platform_logos: dict[str, Image.Image] = {}
-        platform_names = ["bilibili", "douyin", "youtube", "kuaishou", "twitter", "tiktok", "weibo", "xiaohongshu"]
+        from ..constants import PlatformEnum
 
-        for platform_name in platform_names:
+        for platform_name in PlatformEnum:
             logo_path = self.RESOURCES_DIR / f"{platform_name}.png"
+            logger.debug(f"logo_path: {logo_path}")
             if logo_path.exists():
                 self.platform_logos[platform_name] = Image.open(logo_path)
 

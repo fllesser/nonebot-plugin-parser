@@ -6,12 +6,12 @@ import httpx
 import msgspec
 from nonebot import logger
 
-from ..base import COMMON_TIMEOUT, BaseParser, ParseException, Platform
+from ..base import COMMON_TIMEOUT, BaseParser, ParseException, Platform, PlatformEnum
 
 
 class DouyinParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="douyin", display_name="抖音")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.douyin, display_name="抖音")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
