@@ -27,11 +27,9 @@ dependencies = [
   "aiofiles>=25.1.0",
   "pillow>=11.0.0",
 
-  # 后续改为可选依赖
-  "curl_cffi>=0.13.0,<1.0.0",
   "bilibili-api-python>=17.4.0,<18.0.0",
+  "curl_cffi>=0.13.0,<1.0.0",
   "beautifulsoup4>=4.12.0,<5.0.0",
-  "yt-dlp>=2025.10.14",
 
   "nonebot2>=2.4.3,<3.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
@@ -42,6 +40,12 @@ dependencies = [
 
 [project.optional-dependencies]
 htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc3"]
+ytdlp = ["yt-dlp>=2025.10.14"]
+all = [
+  "nonebot-plugin-htmlkit>=0.1.0rc3",
+  "yt-dlp>=2025.10.14",
+]
+
 
 [project.urls]
 Repository = "https://github.com/fllesser/nonebot-plugin-parser"
@@ -71,7 +75,7 @@ telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
 pydantic-v1 = ["pydantic<2.0.0"]                  # renovate:ignore
 pydantic-v2 = ["pydantic>=2.0.0"]
 
-extras = ["nonebot-plugin-htmlkit>=0.1.0rc3"]
+extras = ["nonebot-plugin-htmlkit>=0.1.0rc3", "yt-dlp>=2025.10.14"]
 
 [tool.uv]
 required-version = ">=0.9.2"

@@ -1310,12 +1310,18 @@ dependencies = [
     { name = "nonebot2" },
     { name = "pillow" },
     { name = "tqdm" },
-    { name = "yt-dlp" },
 ]
 
 [package.optional-dependencies]
+all = [
+    { name = "nonebot-plugin-htmlkit" },
+    { name = "yt-dlp" },
+]
 htmlkit = [
     { name = "nonebot-plugin-htmlkit" },
+]
+ytdlp = [
+    { name = "yt-dlp" },
 ]
 
 [package.dev-dependencies]
@@ -1327,6 +1333,7 @@ dev = [
 ]
 extras = [
     { name = "nonebot-plugin-htmlkit" },
+    { name = "yt-dlp" },
 ]
 pydantic-v1 = [
     { name = "pydantic", version = "1.10.24", source = { registry = "https://pypi.org/simple" } },
@@ -1358,15 +1365,17 @@ requires-dist = [
     { name = "msgspec", specifier = ">=0.19.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4" },
     { name = "nonebot-plugin-apscheduler", specifier = ">=0.5.0,<1.0.0" },
+    { name = "nonebot-plugin-htmlkit", marker = "extra == 'all'", specifier = ">=0.1.0rc3" },
     { name = "nonebot-plugin-htmlkit", marker = "extra == 'htmlkit'", specifier = ">=0.1.0rc3" },
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
     { name = "nonebot-plugin-uninfo", specifier = ">=0.9.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
-    { name = "yt-dlp", specifier = ">=2025.10.14" },
+    { name = "yt-dlp", marker = "extra == 'all'", specifier = ">=2025.10.14" },
+    { name = "yt-dlp", marker = "extra == 'ytdlp'", specifier = ">=2025.10.14" },
 ]
-provides-extras = ["htmlkit"]
+provides-extras = ["htmlkit", "ytdlp", "all"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1375,7 +1384,10 @@ dev = [
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "ruff", specifier = ">=0.14.0,<1.0.0" },
 ]
-extras = [{ name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc3" }]
+extras = [
+    { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc3" },
+    { name = "yt-dlp", specifier = ">=2025.10.14" },
+]
 pydantic-v1 = [{ name = "pydantic", specifier = "<2.0.0" }]
 pydantic-v2 = [{ name = "pydantic", specifier = ">=2.0.0" }]
 telegram = [{ name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" }]
