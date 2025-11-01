@@ -13,9 +13,9 @@ async def test_parse():
     async def parse_acfun_url(url: str) -> None:
         logger.info(f"{url} | 开始解析 Acfun 视频")
         # 使用 patterns 匹配 URL
-        matched = parser.search_url(url)
-        assert matched, f"无法匹配 URL: {url}"
-        parse_result = await parser.parse(matched)
+        keyword, searched = parser.search_url(url)
+        assert searched, f"无法匹配 URL: {url}"
+        parse_result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
         assert parse_result.title, "视频标题为空"

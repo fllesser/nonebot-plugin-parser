@@ -4,18 +4,16 @@ from typing import Any, ClassVar
 from typing_extensions import override
 from urllib.parse import urlparse
 
-import httpx
-import msgspec
-from msgspec import Struct, field
+from httpx import AsyncClient, Cookies
+from msgspec import Struct, convert, field
 from nonebot import logger
 
-from ..exception import ParseException
-from .base import BaseParser, Platform
+from .base import BaseParser, ParseException, Platform, PlatformEnum
 
 
 class XiaoHongShuParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="xiaohongshu", display_name="小红书")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.XIAOHONGSHU, display_name="小红书")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -40,20 +38,9 @@ class XiaoHongShuParser(BaseParser):
         self.ios_headers.update(discovery_headers)
 
     @override
-    async def parse(self, matched: re.Match[str]):
-        """解析 URL 获取内容信息并下载资源
-
-        Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
+    async def parse(self, keyword: str, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
-        url = matched.group(0)
+        url = searched.group(0)
         # 处理 xhslink 短链
         if "xhslink" in url:
             url = await self.get_redirect_url(url, self.ios_headers)
@@ -70,7 +57,7 @@ class XiaoHongShuParser(BaseParser):
             raise ParseException(f"不支持的小红书链接: {url}, urlpath: {urlpath}")
 
     async def _parse_explore(self, url: str, xhs_id: str):
-        async with httpx.AsyncClient(
+        async with AsyncClient(
             headers=self.headers,
             timeout=self.timeout,
         ) as client:
@@ -118,7 +105,7 @@ class XiaoHongShuParser(BaseParser):
                     return None
                 return self.video.video_url
 
-        note_detail = msgspec.convert(note_data, type=NoteDetail)
+        note_detail = convert(note_data, type=NoteDetail)
 
         contents = []
         # 添加视频内容
@@ -142,11 +129,11 @@ class XiaoHongShuParser(BaseParser):
         )
 
     async def _parse_discovery(self, url: str):
-        async with httpx.AsyncClient(
+        async with AsyncClient(
             headers=self.ios_headers,
             timeout=self.timeout,
             follow_redirects=True,
-            cookies=httpx.Cookies(),
+            cookies=Cookies(),
             trust_env=False,
         ) as client:
             response = await client.get(url)
@@ -198,12 +185,12 @@ class XiaoHongShuParser(BaseParser):
             def image_urls(self) -> list[str]:
                 return [item.urlSizeLarge or item.url for item in self.imagesList]
 
-        note_data = msgspec.convert(note_data, type=NoteData)
+        note_data = convert(note_data, type=NoteData)
 
         contents = []
         if video_url := note_data.video_url:
             if preload_data:
-                preload_data = msgspec.convert(preload_data, type=NormalNotePreloadData)
+                preload_data = convert(preload_data, type=NormalNotePreloadData)
                 img_urls = preload_data.image_urls
             else:
                 img_urls = note_data.image_urls

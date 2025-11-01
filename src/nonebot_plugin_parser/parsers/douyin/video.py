@@ -3,7 +3,7 @@ from typing import Any
 
 from msgspec import Struct, field
 
-from ...exception import ParseException
+from ..base import ParseException
 
 
 class Avatar(Struct):

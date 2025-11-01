@@ -253,12 +253,12 @@ class CommonRenderer(ImageRenderer):
     def _load_platform_logos(self):
         """预加载平台 logo"""
         self.platform_logos: dict[str, Image.Image] = {}
-        platform_names = ["bilibili", "douyin", "youtube", "kuaishou", "twitter", "tiktok", "weibo", "xiaohongshu"]
+        from ..constants import PlatformEnum
 
-        for platform_name in platform_names:
+        for platform_name in PlatformEnum:
             logo_path = self.RESOURCES_DIR / f"{platform_name}.png"
             if logo_path.exists():
-                self.platform_logos[platform_name] = Image.open(logo_path)
+                self.platform_logos[str(platform_name)] = Image.open(logo_path)
 
     # def __resize_platform_logos(self):
     #     """调整平台 logo 尺寸, 用于调整 logo 大小(仅开发时使用)"""

@@ -22,11 +22,11 @@ async def test_parse():
 
     async def parse(url: str) -> None:
         logger.info(f"{url} | 开始解析快手视频")
-        matched = parser.search_url(url)
-        assert matched, f"无法匹配 URL: {url}"
+        keyword, searched = parser.search_url(url)
+        assert searched, f"无法匹配 URL: {url}"
 
         try:
-            parse_result = await parser.parse(matched)
+            parse_result = await parser.parse(keyword, searched)
         except httpx.ConnectTimeout:
             pytest.skip(f"解析超时(action 网络问题) ({url})")
 

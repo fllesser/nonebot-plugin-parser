@@ -21,9 +21,9 @@ async def test_parse():
     async def parse(url: str) -> None:
         logger.info(f"{url} | 开始解析小红书")
         # 使用 patterns 匹配 URL
-        matched = parser.search_url(url)
-        assert matched, f"无法匹配 URL: {url}"
-        parse_result = await parser.parse(matched)
+        keyword, searched = parser.search_url(url)
+        assert searched, f"无法匹配 URL: {url}"
+        parse_result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         for content in parse_result.contents:
             path = await content.get_path()

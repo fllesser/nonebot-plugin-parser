@@ -56,10 +56,10 @@ async def test_render_with_emoji():
     renderer = _COMMON_RENDERER
 
     opus_url = "https://b23.tv/GwiHK6N"
-    matched = parser.search_url(opus_url)
-    assert matched, f"无法匹配 URL: {opus_url}"
+    keyword, searched = parser.search_url(opus_url)
+    assert searched, f"无法匹配 URL: {opus_url}"
     logger.info(f"{opus_url} | 开始解析哔哩哔哩动态")
-    parse_result = await parser.parse(matched)
+    parse_result = await parser.parse(keyword, searched)
     logger.debug(f"{opus_url} | 解析结果: \n{parse_result}")
 
     total_size = await download_all_media(parse_result)
@@ -94,10 +94,10 @@ async def test_graphics_content():
     # url = "https://www.bilibili.com/opus/1122430505331982343"
     # url = "https://www.bilibili.com/opus/1040093151889457152"
     url = "https://www.bilibili.com/opus/658174132913963042"
-    matched = parser.search_url(url)
-    assert matched, f"无法匹配 URL: {url}"
+    keyword, searched = parser.search_url(url)
+    assert searched, f"无法匹配 URL: {url}"
     logger.info(f"{url} | 开始解析哔哩哔哩 opus")
-    parse_result = await parser.parse(matched)
+    parse_result = await parser.parse(keyword, searched)
     logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
     # await 所有资源下载，计算渲染时间
@@ -132,10 +132,10 @@ async def test_read():
     renderer = _COMMON_RENDERER
 
     url = "https://www.bilibili.com/read/cv523868"
-    matched = parser.search_url(url)
-    assert matched, f"无法匹配 URL: {url}"
+    keyword, searched = parser.search_url(url)
+    assert searched, f"无法匹配 URL: {url}"
     logger.info(f"{url} | 开始解析哔哩哔哩图文")
-    parse_result = await parser.parse(matched)
+    parse_result = await parser.parse(keyword, searched)
     logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
     # await 所有资源下载，计算渲染时间
@@ -189,11 +189,11 @@ async def test_common_render():
 
     async def parse_and_render(url_type: str, url: str) -> None:
         """解析并渲染单个 URL"""
-        matched = parser.search_url(url)
-        assert matched, f"无法匹配 URL: {url}"
+        keyword, searched = parser.search_url(url)
+        assert searched, f"无法匹配 URL: {url}"
 
         logger.info(f"{url} | 开始解析微博")
-        parse_result = await parser.parse(matched)
+        parse_result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
 
         # await 所有资源下载，利用计算渲染时间

@@ -2,16 +2,16 @@ from itertools import chain
 import re
 from typing import Any, ClassVar
 
-import httpx
+from httpx import AsyncClient
 
 from ..exception import ParseException
-from .base import BaseParser
+from .base import BaseParser, PlatformEnum
 from .data import ParseResult, Platform
 
 
 class TwitterParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="twitter", display_name="小蓝鸟")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.TWITTER, display_name="小蓝鸟")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -27,25 +27,14 @@ class TwitterParser(BaseParser):
             **self.headers,
         }
         data = {"q": url, "lang": "zh-cn"}
-        async with httpx.AsyncClient(headers=headers, timeout=self.timeout) as client:
+        async with AsyncClient(headers=headers, timeout=self.timeout) as client:
             url = "https://xdown.app/api/ajaxSearch"
             response = await client.post(url, data=data)
             return response.json()
 
-    async def parse(self, matched: re.Match[str]) -> ParseResult:
-        """解析 URL 获取内容信息并下载资源
-
-        Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path)
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
+    async def parse(self, keyword: str, searched: re.Match[str]) -> ParseResult:
         # 从匹配对象中获取原始URL
-        url = matched.group(0)
+        url = searched.group(0)
         resp = await self._req_xdown_api(url)
         if resp.get("status") != "ok":
             raise ParseException("解析失败")

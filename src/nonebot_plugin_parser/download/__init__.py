@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 
 import aiofiles
-import httpx
+from httpx import AsyncClient, HTTPError
 from nonebot import logger
 from tqdm.asyncio import tqdm
 
@@ -20,10 +20,7 @@ class StreamDownloader:
     def __init__(self):
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
-        self.client: httpx.AsyncClient = httpx.AsyncClient(
-            timeout=DOWNLOAD_TIMEOUT,
-            verify=False,
-        )
+        self.client: AsyncClient = AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
 
     @auto_task
     async def streamd(
@@ -76,7 +73,7 @@ class StreamDownloader:
                             await file.write(chunk)
                             bar.update(len(chunk))
 
-        except httpx.HTTPError:
+        except HTTPError:
             await safe_unlink(file_path)
             logger.exception(f"下载失败 | url: {url}, file_path: {file_path}")
             raise DownloadException("媒体下载失败")

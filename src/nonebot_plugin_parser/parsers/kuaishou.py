@@ -2,11 +2,10 @@ from random import choice
 import re
 from typing import ClassVar
 
-import httpx
+from httpx import AsyncClient
 import msgspec
 
-from ..exception import ParseException
-from .base import BaseParser
+from .base import BaseParser, ParseException, PlatformEnum
 from .data import ParseResult, Platform
 
 
@@ -14,7 +13,7 @@ class KuaiShouParser(BaseParser):
     """快手解析器"""
 
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="kuaishou", display_name="快手")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.KUAISHOU, display_name="快手")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -27,20 +26,9 @@ class KuaiShouParser(BaseParser):
         super().__init__()
         self.ios_headers["Referer"] = "https://v.kuaishou.com/"
 
-    async def parse(self, matched: re.Match[str]) -> ParseResult:
-        """解析 URL 获取内容信息并下载资源
-
-        Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path）
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
+    async def parse(self, keyword: str, searched: re.Match[str]) -> ParseResult:
         # 从匹配对象中获取原始URL
-        url = matched.group(0)
+        url = searched.group(0)
         location_url = await self.get_redirect_url(url, headers=self.ios_headers)
 
         if len(location_url) <= 0:
@@ -49,18 +37,18 @@ class KuaiShouParser(BaseParser):
         # /fw/long-video/ 返回结果不一样, 统一替换为 /fw/photo/ 请求
         location_url = location_url.replace("/fw/long-video/", "/fw/photo/")
 
-        async with httpx.AsyncClient(headers=self.ios_headers, timeout=self.timeout) as client:
+        async with AsyncClient(headers=self.ios_headers, timeout=self.timeout) as client:
             response = await client.get(location_url)
             response.raise_for_status()
             response_text = response.text
 
         pattern = r"window\.INIT_STATE\s*=\s*(.*?)</script>"
-        searched = re.search(pattern, response_text)
+        matched = re.search(pattern, response_text)
 
-        if not searched:
+        if not matched:
             raise ParseException("failed to parse video JSON info from HTML")
 
-        json_str = searched.group(1).strip()
+        json_str = matched.group(1).strip()
         init_state = msgspec.json.decode(json_str, type=KuaishouInitState)
         photo = next((d.photo for d in init_state.values() if d.photo is not None), None)
         if photo is None:

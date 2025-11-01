@@ -3,8 +3,8 @@ from collections.abc import Callable, Coroutine
 from functools import wraps
 from typing import Any, ParamSpec, TypeVar
 
-P = ParamSpec("P")  # 保留参数类型
-T = TypeVar("T")  # 保留返回类型
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 def auto_task(func: Callable[P, Coroutine[Any, Any, T]]) -> Callable[P, Task[T]]:

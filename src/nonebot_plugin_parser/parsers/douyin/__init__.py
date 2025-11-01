@@ -6,14 +6,12 @@ import httpx
 import msgspec
 from nonebot import logger
 
-from ...constants import COMMON_TIMEOUT
-from ...exception import ParseException
-from ..base import BaseParser, Platform
+from ..base import COMMON_TIMEOUT, BaseParser, ParseException, Platform, PlatformEnum
 
 
 class DouyinParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="douyin", display_name="抖音")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.DOUYIN, display_name="抖音")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -37,10 +35,10 @@ class DouyinParser(BaseParser):
             # https://v.douyin.com/xxxxxx
             iesdouyin_url = await self.get_redirect_url(share_url)
             # https://www.iesdouyin.com/share/video/7468908569061100857/?region=CN&mid=0&u_
-            matched = re.search(r"(slides|video|note)/(\d+)", iesdouyin_url)
-            if not matched:
+            match = re.search(r"(slides|video|note)/(\d+)", iesdouyin_url)
+            if not match:
                 raise ParseException(f"无法从 {share_url} 中解析出 ID")
-            _type, video_id = matched.group(1), matched.group(2)
+            _type, video_id = match.group(1), match.group(2)
             if _type == "slides":
                 return await self.parse_slides(video_id)
 
@@ -137,11 +135,12 @@ class DouyinParser(BaseParser):
         )
 
     @override
-    async def parse(self, matched: re.Match[str]):
+    async def parse(self, keyword: str, searched: re.Match[str]):
         """解析 URL 获取内容信息并下载资源
 
         Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
+            keyword: 关键词
+            searched: 正则表达式匹配对象，由平台对应的模式匹配得到
 
         Returns:
             ParseResult: 解析结果（已下载资源，包含 Path)
@@ -150,15 +149,15 @@ class DouyinParser(BaseParser):
             ParseException: 解析失败时抛出
         """
         # 从匹配对象中获取原始URL
-        share_url = matched.group(0)
+        share_url = searched.group(0)
         # return await self.parse_share_url(url)
         if "v.douyin" in share_url:
             share_url = await self.get_redirect_url(share_url)
 
-        searched = re.search(r"(slides|video|note)/(\d+)", share_url)
-        if not searched:
+        match = re.search(r"(slides|video|note)/(\d+)", share_url)
+        if not match:
             raise ParseException(f"无法从 {share_url} 中解析出 ID")
-        _type, video_id = searched.group(1), searched.group(2)
+        _type, video_id = match.group(1), match.group(2)
         if _type == "slides":
             return await self.parse_slides(video_id)
 

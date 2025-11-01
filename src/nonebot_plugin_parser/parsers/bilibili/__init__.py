@@ -7,24 +7,25 @@ from typing_extensions import override
 from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.opus import Opus
 from bilibili_api.video import Video
-import msgspec
+from msgspec import convert
 from nonebot import logger
 
-from ...config import pconfig
-from ...download import DOWNLOADER
-from ...exception import DownloadException, DurationLimitException, ParseException
-from ..base import BaseParser
-from ..cookie import ck2dict
-from ..data import (
-    ImageContent,
-    MediaContent,
-    Platform,
+from ..base import (
+    DOWNLOADER,
+    BaseParser,
+    DownloadException,
+    DurationLimitException,
+    ParseException,
+    PlatformEnum,
+    pconfig,
 )
+from ..cookie import ck2dict
+from ..data import ImageContent, MediaContent, Platform
 
 
 class BilibiliParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="bilibili", display_name="哔哩哔哩")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -47,22 +48,11 @@ class BilibiliParser(BaseParser):
         # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
 
     @override
-    async def parse(self, matched: re.Match[str]):
-        """解析 URL 获取内容信息并下载资源
-
-        Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path）
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
+    async def parse(self, keyword: str, searched: re.Match[str]):
         # 从匹配对象中获取原始URL, 视频ID, 页码
-        url, video_id, page_num = str(matched.group(0)), str(matched.group(1)), matched.group(2)
+        url, video_id, page_num = str(searched.group(0)), str(searched.group(1)), searched.group(2)
         # 处理短链
-        if "b23.tv" in url or "bili2233.cn" in url:
+        if keyword in ("b23", "bili2233"):
             url = await self.get_redirect_url(url, self.headers)
 
         if not video_id:
@@ -110,7 +100,7 @@ class BilibiliParser(BaseParser):
         video = await self._parse_video(bvid=bvid, avid=avid)
 
         # 转换为 msgspec struct
-        video_info = msgspec.convert(await video.get_info(), VideoInfo)
+        video_info = convert(await video.get_info(), VideoInfo)
 
         # 获取简介
         text = f"简介: {video_info.desc}" if video_info.desc else None
@@ -125,7 +115,7 @@ class BilibiliParser(BaseParser):
         if self._credential:
             cid = await video.get_cid(page_idx)
             ai_conclusion = await video.get_ai_conclusion(cid)
-            ai_conclusion = msgspec.convert(ai_conclusion, AIConclusion)
+            ai_conclusion = convert(ai_conclusion, AIConclusion)
             ai_summary = ai_conclusion.summary
         else:
             ai_summary: str = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
@@ -219,7 +209,7 @@ class BilibiliParser(BaseParser):
         dynamic = Dynamic(dynamic_id, await self.credential)
 
         # 转换为结构体
-        dynamic_data = msgspec.convert(await dynamic.get_info(), DynamicItem)
+        dynamic_data = convert(await dynamic.get_info(), DynamicItem)
         dynamic_info = dynamic_data.item
         # 使用结构体属性提取信息
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
@@ -275,7 +265,7 @@ class BilibiliParser(BaseParser):
         if not isinstance(opus_info, dict):
             raise ParseException("获取图文动态信息失败")
         # 转换为结构体
-        opus_data = msgspec.convert(opus_info, OpusItem)
+        opus_data = convert(opus_info, OpusItem)
         logger.debug(f"opus_data: {opus_data}")
         author = self.create_author(*opus_data.name_avatar)
 
@@ -314,7 +304,7 @@ class BilibiliParser(BaseParser):
         room = LiveRoom(room_display_id=room_id, credential=await self.credential)
         info_dict = await room.get_room_info()
 
-        room_data = msgspec.convert(info_dict, RoomData)
+        room_data = convert(info_dict, RoomData)
         contents: list[MediaContent] = []
         # 下载封面
         if cover := room_data.cover:
@@ -347,7 +337,7 @@ class BilibiliParser(BaseParser):
         # 加载内容
         await ar.fetch_content()
         data = ar.json()
-        article_info = msgspec.convert(data, ArticleInfo)
+        article_info = convert(data, ArticleInfo)
         logger.debug(f"article_info: {article_info}")
 
         contents: list[MediaContent] = []
@@ -388,7 +378,7 @@ class BilibiliParser(BaseParser):
         if fav_dict["medias"] is None:
             raise ParseException("收藏夹内容为空, 或被风控")
 
-        favdata = msgspec.convert(fav_dict, FavData)
+        favdata = convert(fav_dict, FavData)
 
         return self.result(
             title=favdata.title,

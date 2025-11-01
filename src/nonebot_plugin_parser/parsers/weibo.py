@@ -2,16 +2,15 @@ import re
 import time
 from typing import ClassVar
 
-import httpx
+from httpx import AsyncClient, Cookies
 import msgspec
 
-from ..exception import ParseException
-from .base import BaseParser, Platform
+from .base import BaseParser, ParseException, Platform, PlatformEnum
 
 
 class WeiBoParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="weibo", display_name="微博")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.WEIBO, display_name="微博")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -28,35 +27,24 @@ class WeiBoParser(BaseParser):
         }
         self.headers.update(extra_headers)
 
-    async def parse(self, matched: re.Match[str]):
-        """解析 URL 获取内容信息并下载资源
-
-        Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
+    async def parse(self, keyword: str, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
-        url = matched.group(0)
+        url = searched.group(0)
         if "mapp.api.weibo" in url:
             # ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
             url = await self.get_redirect_url(url)
         # https://video.weibo.com/show?fid=1034:5145615399845897
-        if searched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", url):
-            return await self.parse_fid(searched.group(1))
+        if matched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", url):
+            return await self.parse_fid(matched.group(1))
         # https://m.weibo.cn/detail/4976424138313924
-        elif searched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", url):
-            weibo_id = searched.group(1)
+        elif matched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", url):
+            weibo_id = matched.group(1)
         # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934
-        elif searched := re.search(r"mid=([A-Za-z\d]+)", url):
-            weibo_id = self._mid2id(searched.group(1))
+        elif matched := re.search(r"mid=([A-Za-z\d]+)", url):
+            weibo_id = self._mid2id(matched.group(1))
         # https://weibo.com/1707895270/5006106478773472
-        elif searched := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", url):
-            weibo_id = searched.group(1)
+        elif matched := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", url):
+            weibo_id = matched.group(1)
         else:
             raise ParseException("无法获取到微博的 id")
 
@@ -75,7 +63,7 @@ class WeiBoParser(BaseParser):
         }
         post_content = 'data={"Component_Play_Playinfo":{"oid":"' + fid + '"}}'
 
-        async with httpx.AsyncClient(headers=headers, timeout=self.timeout) as client:
+        async with AsyncClient(headers=headers, timeout=self.timeout) as client:
             response = await client.post(req_url, content=post_content)
             response.raise_for_status()
             json_data = response.json()
@@ -146,11 +134,11 @@ class WeiBoParser(BaseParser):
         url = f"https://m.weibo.cn/statuses/show?id={weibo_id}&_={ts}"
 
         # 关键：不带 cookie、不跟随重定向（避免二跳携 cookie）
-        async with httpx.AsyncClient(
+        async with AsyncClient(
             headers=headers,
             timeout=self.timeout,
             follow_redirects=False,
-            cookies=httpx.Cookies(),
+            cookies=Cookies(),
             trust_env=False,
         ) as client:
             response = await client.get(url)

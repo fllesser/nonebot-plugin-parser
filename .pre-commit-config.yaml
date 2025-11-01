@@ -1,4 +1,4 @@
-default_install_hook_types: [pre-commit, prepare-commit-msg]
+default_install_hook_types: [pre-commit]
 ci:
   autofix_commit_msg: ":rotating_light: auto fix by pre-commit hooks"
   autofix_prs: true

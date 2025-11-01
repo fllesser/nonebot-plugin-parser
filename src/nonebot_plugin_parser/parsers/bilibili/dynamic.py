@@ -1,7 +1,6 @@
 from typing import Any
 
-import msgspec
-from msgspec import Struct
+from msgspec import Struct, convert
 
 
 class AuthorInfo(Struct):
@@ -160,7 +159,7 @@ class DynamicInfo(Struct):
         """获取标题"""
         major_info = self.modules.major_info
         if major_info:
-            major = msgspec.convert(major_info, DynamicMajor)
+            major = convert(major_info, DynamicMajor)
             return major.title
         return None
 
@@ -169,7 +168,7 @@ class DynamicInfo(Struct):
         """获取文本内容"""
         major_info = self.modules.major_info
         if major_info:
-            major = msgspec.convert(major_info, DynamicMajor)
+            major = convert(major_info, DynamicMajor)
             return major.text
         return None
 
@@ -178,7 +177,7 @@ class DynamicInfo(Struct):
         """获取图片URL列表"""
         major_info = self.modules.major_info
         if major_info:
-            major = msgspec.convert(major_info, DynamicMajor)
+            major = convert(major_info, DynamicMajor)
             return major.image_urls
         return []
 
@@ -187,7 +186,7 @@ class DynamicInfo(Struct):
         """获取封面URL"""
         major_info = self.modules.major_info
         if major_info:
-            major = msgspec.convert(major_info, DynamicMajor)
+            major = convert(major_info, DynamicMajor)
             return major.cover_url
         return None
 

@@ -7,15 +7,15 @@ from typing import ClassVar
 from typing_extensions import override
 
 from bs4 import BeautifulSoup, Tag
-import httpx
+from httpx import AsyncClient, HTTPError
 
 from ..exception import ParseException
-from .base import BaseParser, Platform
+from .base import BaseParser, Platform, PlatformEnum
 
 
 class NGAParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name="nga", display_name="NGA")
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.NGA, display_name="NGA")
 
     # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
@@ -45,23 +45,12 @@ class NGAParser(BaseParser):
         return f"https://nga.178.com/read.php?tid={tid}"
 
     @override
-    async def parse(self, matched: re.Match[str]):
-        """解析 URL 获取内容信息并下载资源
-
-        Args:
-            matched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
+    async def parse(self, keyword: str, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
-        tid = matched.group("tid")
+        tid = searched.group("tid")
         url = self.nga_url(tid)
 
-        async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout, follow_redirects=True) as client:
+        async with AsyncClient(headers=self.headers, timeout=self.timeout, follow_redirects=True) as client:
             try:
                 # 第一次请求可能返回403，但包含设置cookie的JavaScript
                 resp = await client.get(url)
@@ -87,7 +76,7 @@ class NGAParser(BaseParser):
 
                         resp = await client.get(retry_url)
 
-            except httpx.HTTPError as e:
+            except HTTPError as e:
                 raise ParseException(f"请求失败: {e}")
 
         if resp.status_code != 200:
