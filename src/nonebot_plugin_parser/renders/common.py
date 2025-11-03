@@ -6,8 +6,8 @@ from typing import ClassVar
 from typing_extensions import override
 
 from nonebot import logger
-from pilmoji import Pilmoji
 from PIL import Image, ImageDraw, ImageFont
+from pilmoji import Pilmoji
 
 from .base import ImageRenderer, ParseResult
 
