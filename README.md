@@ -51,7 +51,10 @@
 ## 💿 安装
 > [!Warning]
 > **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
-    
+
+> [!Important]
+> 插件可选依赖 `htmlkit`, `ytdlp`, `all`，分别用于 htmlkit 渲染和 youtube / tiktok 解析，如果需要使用，请在安装时指定，如 `nb plugin install nonebot-plugin-parser[ytdlp]`
+
 <details open>
 <summary>使用 nb-cli 安装/更新</summary>
 在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装

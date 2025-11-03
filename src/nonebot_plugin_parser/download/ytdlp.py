@@ -2,8 +2,7 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-import msgspec
-from msgspec import Struct
+from msgspec import Struct, convert
 import yt_dlp
 
 from ..config import pconfig
@@ -73,7 +72,7 @@ class YtdlpDownloader:
             if not info_dict:
                 raise ParseException("获取视频信息失败")
 
-        video_info = msgspec.convert(info_dict, VideoInfo)
+        video_info = convert(info_dict, VideoInfo)
         self._video_info_mapping[url] = video_info
         return video_info
 

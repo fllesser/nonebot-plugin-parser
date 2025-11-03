@@ -11,7 +11,6 @@ from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException, SizeLimitException, ZeroSizeException
 from ..utils import generate_file_name, merge_av, safe_unlink
 from .task import auto_task
-from .ytdlp import YtdlpDownloader
 
 
 class StreamDownloader:
@@ -214,4 +213,12 @@ class StreamDownloader:
 
 
 DOWNLOADER: StreamDownloader = StreamDownloader()
-YTDLP_DOWNLOADER: YtdlpDownloader = YtdlpDownloader()
+
+try:
+    import yt_dlp as yt_dlp
+
+    from .ytdlp import YtdlpDownloader
+
+    YTDLP_DOWNLOADER = YtdlpDownloader()
+except ImportError:
+    YTDLP_DOWNLOADER = None
