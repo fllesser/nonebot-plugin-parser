@@ -67,7 +67,7 @@ dev = [
   "ruff>=0.14.3,<1.0.0",
 ]
 extras = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp>=2025.10.14"]
-pydantic-v1 = ["pydantic<2.0.0"]  # renovate:ignore
+pydantic-v1 = ["pydantic<2.12.4"]  # renovate:ignore
 pydantic-v2 = ["pydantic>=2.0.0"]
 telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
 test = [
