@@ -35,16 +35,13 @@ dependencies = [
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "nonebot-plugin-alconna>=0.59.4",
-  "nonebot-plugin-uninfo>=0.9.0",
+  "nonebot-plugin-uninfo>=0.10.0",
 ]
 
 [project.optional-dependencies]
-htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc3"]
+htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc4"]
 ytdlp = ["yt-dlp>=2025.10.14"]
-all = [
-  "nonebot-plugin-htmlkit>=0.1.0rc3",
-  "yt-dlp>=2025.10.14",
-]
+all = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp>=2025.10.14"]
 
 
 [project.urls]
@@ -54,10 +51,9 @@ Release = "https://github.com/fllesser/nonebot-plugin-parser/releases"
 
 [dependency-groups]
 dev = [
-  "nb-cli>=1.4.2",
   "nonebot2[fastapi]>=2.4.3,<3.0.0",
   "pre-commit>=4.3.0",
-  "ruff>=0.14.0,<1.0.0",
+  "ruff>=0.14.3,<1.0.0",
 ]
 
 test = [
@@ -75,7 +71,7 @@ telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
 pydantic-v1 = ["pydantic<2.0.0"]                  # renovate:ignore
 pydantic-v2 = ["pydantic>=2.0.0"]
 
-extras = ["nonebot-plugin-htmlkit>=0.1.0rc3", "yt-dlp>=2025.10.14"]
+extras = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp>=2025.10.14"]
 
 [tool.uv]
 required-version = ">=0.9.2"

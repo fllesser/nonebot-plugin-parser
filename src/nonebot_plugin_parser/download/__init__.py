@@ -214,4 +214,9 @@ class StreamDownloader:
 
 
 DOWNLOADER: StreamDownloader = StreamDownloader()
-YTDLP_DOWNLOADER: YtdlpDownloader = YtdlpDownloader()
+try:
+    import yt_dlp as yt_dlp
+
+    YTDLP_DOWNLOADER = YtdlpDownloader()
+except ImportError:
+    YTDLP_DOWNLOADER = None
