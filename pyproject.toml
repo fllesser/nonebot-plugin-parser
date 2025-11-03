@@ -2,52 +2,63 @@
 name = "nonebot-plugin-parser"
 version = "2.1.0"
 description = "NoneBot2 链接分享解析 Alconna 版, 通用媒体卡片渲染(PIL 实现), 支持 B站/抖音/快手/微博/小红书/youtube/tiktok/twitter/acfun/nga"
-authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.10"
+authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
 keywords = [
+  "acfun",
+  "bilibili",
+  "douyin",
+  "kuaishou",
+  "nga",
   "nonebot",
   "nonebot2",
-  "video",
-  "bilibili",
-  "youtube",
   "tiktok",
   "twitter",
-  "kuaishou",
-  "acfun",
+  "video",
   "weibo",
   "xiaohongshu",
-  "nga",
-  "douyin",
+  "youtube"
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Framework :: AsyncIO",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Communications :: Chat",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Multimedia :: Video",
 ]
 dependencies = [
-  "msgspec>=0.19.0,<1.0.0",
-  "httpx>=0.27.2,<1.0.0",
-  "tqdm>=4.67.1,<5.0.0",
   "aiofiles>=25.1.0",
-  "pillow>=11.0.0",
-
+  "beautifulsoup4>=4.12.0,<5.0.0",
   "bilibili-api-python>=17.4.0,<18.0.0",
   "curl_cffi>=0.13.0,<1.0.0",
-  "beautifulsoup4>=4.12.0,<5.0.0",
-
-  "nonebot2>=2.4.3,<3.0.0",
-  "nonebot-plugin-localstore>=0.7.4,<1.0.0",
-  "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
+  "httpx>=0.27.2,<1.0.0",
+  "msgspec>=0.19.0,<1.0.0",
   "nonebot-plugin-alconna>=0.59.4",
+  "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
+  "nonebot-plugin-localstore>=0.7.4,<1.0.0",
   "nonebot-plugin-uninfo>=0.10.0",
+  "nonebot2>=2.4.3,<3.0.0",
+  "pillow>=11.0.0",
+  "tqdm>=4.67.1,<5.0.0",
 ]
 
-[project.optional-dependencies]
-htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc4"]
-ytdlp = ["yt-dlp>=2025.10.14"]
-all = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp>=2025.10.14"]
-
-
 [project.urls]
-Repository = "https://github.com/fllesser/nonebot-plugin-parser"
 IssueTracker = "https://github.com/fllesser/nonebot-plugin-parser/issues"
 Release = "https://github.com/fllesser/nonebot-plugin-parser/releases"
+Repository = "https://github.com/fllesser/nonebot-plugin-parser"
+
+[project.optional-dependencies]
+all = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp>=2025.10.14"]
+htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc4"]
+ytdlp = ["yt-dlp>=2025.10.14"]
 
 [dependency-groups]
 dev = [
@@ -55,33 +66,46 @@ dev = [
   "pre-commit>=4.3.0",
   "ruff>=0.14.3,<1.0.0",
 ]
-
+extras = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp>=2025.10.14"]
+pydantic-v1 = ["pydantic<2.0.0"]  # renovate:ignore
+pydantic-v2 = ["pydantic>=2.0.0"]
+telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
 test = [
-  "nonebot2[fastapi]>=2.4.3,<3.0.0",
   "nonebot-adapter-onebot>=2.4.6",
+  "nonebot2[fastapi]>=2.4.3,<3.0.0",
   "nonebug>=0.4.3,<1.0.0",
-  "pytest-xdist>=3.8.0,<4.0.0",
+  "poethepoet>=0.37.0",
   "pytest-asyncio>=1.2.0,<1.3.0",
   "pytest-cov>=7.0.0",
-  "poethepoet>=0.37.0",
+  "pytest-xdist>=3.8.0,<4.0.0",
   "respx>=0.22.0",
 ]
 
-telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
-pydantic-v1 = ["pydantic<2.0.0"]                  # renovate:ignore
-pydantic-v2 = ["pydantic>=2.0.0"]
+[build-system]
+requires = ["uv_build>=0.9.0,<0.10.0"]
+build-backend = "uv_build"
 
-extras = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp>=2025.10.14"]
+[tool.bumpversion]
+current_version = "2.1.0"
+commit = true
+message = "🔖 release: bump vesion from {current_version} to {new_version}"
+tag = true
 
-[tool.uv]
-required-version = ">=0.9.2"
-default-groups = ["test", "dev", "extras"]
-conflicts = [
-  [
-    { group = "pydantic-v1" },
-    { group = "pydantic-v2" },
-    { group = "telegram" },
-  ],
+[[tool.bumpversion.files]]
+filename = "uv.lock"
+search = "name = \"nonebot-plugin-parser\"\nversion = \"{current_version}\""
+replace = "name = \"nonebot-plugin-parser\"\nversion = \"{new_version}\""
+
+[tool.coverage.report]
+show_missing = true  # 相当于 --cov-report=term-missing:cite[1]
+# omit = [ # 排除不需要统计的文件
+# ]
+exclude_lines = [
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+  "@overload",
+  "except",
+  "raise",
 ]
 
 [tool.nonebot]
@@ -91,20 +115,6 @@ adapters = [
 ]
 plugins = ["nonebot_plugin_parser"]
 
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "session"
-pythonpath = ["src"]
-addopts = [
-  "-v",                    # 详细输出
-  "-s",                    # 显示打印信息
-  "--tb=short",            # 简短的错误回溯
-  "-ra",                   # 显示所有测试结果摘要
-  "--strict-markers",      # 严格标记模式
-  "--import-mode=prepend", # 导入模式
-]
-
 [tool.poe.tasks]
 test_others = "pytest tests/others --cov=src --cov-report=xml:coverage1.xml --junitxml=junit1.xml -n auto"
 test_parsers = "pytest tests/parsers --cov=src --cov-report=xml:coverage2.xml --junitxml=junit2.xml -n auto"
@@ -112,19 +122,31 @@ test_render = "pytest tests/render --cov=src --cov-report=xml:coverage3.xml --ju
 bump = "bump-my-version bump"
 show-bump = "bump-my-version show-bump"
 
-
-[tool.coverage.report]
-show_missing = true # 相当于 --cov-report=term-missing:cite[1]
-# omit = [ # 排除不需要统计的文件
-
-# ]
-exclude_lines = [
-  "raise NotImplementedError",
-  "if TYPE_CHECKING:",
-  "@overload",
-  "except",
-  "raise",
+[tool.pyright]
+pythonVersion = "3.10"
+pythonPlatform = "All"
+defineConstant = { PYDANTIC_V2 = true }
+executionEnvironments = [
+  { root = "./tests", extraPaths = [
+    "./src",
+  ] },
+  { root = "./src" },
 ]
+typeCheckingMode = "standard"
+disableBytesTypePromotions = true
+
+[tool.pytest.ini_options]
+addopts = [
+  "-v",  # 详细输出
+  "-s",  # 显示打印信息
+  "--tb=short",  # 简短的错误回溯
+  "-ra",  # 显示所有测试结果摘要
+  "--strict-markers",  # 严格标记模式
+  "--import-mode=prepend",  # 导入模式
+]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
 
 [tool.ruff]
 line-length = 120
@@ -135,32 +157,31 @@ line-ending = "lf"
 
 [tool.ruff.lint]
 select = [
-  "F",     # Pyflakes
-  "W",     # pycodestyle warnings
-  "E",     # pycodestyle errors
-  "I",     # isort
-  "UP",    # pyupgrade
-  "ASYNC", # flake8-async
-  "C4",    # flake8-comprehensions
-  "T10",   # flake8-debugger
-  "T20",   # flake8-print
-  "PYI",   # flake8-pyi
-  "PT",    # flake8-pytest-style
-  "Q",     # flake8-quotes
-  "TID",   # flake8-tidy-imports
-  "RUF",   # Ruff-specific rules
+  "F",  # Pyflakes
+  "W",  # pycodestyle warnings
+  "E",  # pycodestyle errors
+  "I",  # isort
+  "UP",  # pyupgrade
+  "ASYNC",  # flake8-async
+  "C4",  # flake8-comprehensions
+  "T10",  # flake8-debugger
+  "T20",  # flake8-print
+  "PYI",  # flake8-pyi
+  "PT",  # flake8-pytest-style
+  "Q",  # flake8-quotes
+  "TID",  # flake8-tidy-imports
+  "RUF",  # Ruff-specific rules
 ]
 ignore = [
-  "E402",   # module-import-not-at-top-of-file
+  "E402",  # module-import-not-at-top-of-file
   "UP037",  # quoted-annotation
-  "RUF001", # ambiguous-unicode-character-string
-  "RUF002", # ambiguous-unicode-character-docstring
-  "RUF003", # ambiguous-unicode-character-comment
-  "W191",   # indentation contains tabs
+  "RUF001",  # ambiguous-unicode-character-string
+  "RUF002",  # ambiguous-unicode-character-docstring
+  "RUF003",  # ambiguous-unicode-character-comment
+  "W191",  # indentation contains tabs
   # "I001",   # isort: imports are incorrectly sorted
-  "TID252", # 相对导入
+  "TID252",  # 相对导入
 ]
-
 
 [tool.ruff.lint.isort]
 force-sort-within-sections = true
@@ -174,33 +195,13 @@ mark-parentheses = false
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
 
-
-[tool.pyright]
-pythonVersion = "3.10"
-pythonPlatform = "All"
-defineConstant = { PYDANTIC_V2 = true }
-executionEnvironments = [
-  { root = "./tests", extraPaths = [
-    "./src",
-  ] },
-  { root = "./src" },
+[tool.uv]
+required-version = ">=0.9.7"
+default-groups = ["test", "dev", "extras"]
+conflicts = [
+  [
+    { group = "pydantic-v1" },
+    { group = "pydantic-v2" },
+    { group = "telegram" },
+  ],
 ]
-typeCheckingMode = "standard"
-reportShadowedImports = false
-disableBytesTypePromotions = true
-
-[build-system]
-requires = ["uv_build>=0.9.0,<0.10.0"]
-build-backend = "uv_build"
-
-
-[tool.bumpversion]
-current_version = "2.1.0"
-commit = true
-message = "🔖 release: bump vesion from {current_version} to {new_version}"
-tag = true
-
-[[tool.bumpversion.files]]
-filename = "uv.lock"
-search = "name = \"nonebot-plugin-parser\"\nversion = \"{current_version}\""
-replace = "name = \"nonebot-plugin-parser\"\nversion = \"{new_version}\""
