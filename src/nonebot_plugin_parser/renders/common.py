@@ -6,6 +6,7 @@ from typing import ClassVar
 from typing_extensions import override
 
 from nonebot import logger
+from pilmoji import Pilmoji
 from PIL import Image, ImageDraw, ImageFont
 
 from .base import ImageRenderer, ParseResult
@@ -700,15 +701,15 @@ class CommonRenderer(ImageRenderer):
                 case HeaderSectionData() as header:
                     y_pos = self._draw_header(image, draw, header, y_pos, result, not_repost)
                 case TitleSectionData() as title:
-                    y_pos = self._draw_title(draw, title.lines, y_pos, self.fontset.title_font.font)
+                    y_pos = self._draw_title(image, draw, title.lines, y_pos, self.fontset.title_font.font)
                 case CoverSectionData() as cover:
                     y_pos = self._draw_cover(image, cover.cover_img, y_pos, card_width)
                 case TextSectionData() as text:
-                    y_pos = self._draw_text(draw, text.lines, y_pos, self.fontset.text_font.font)
+                    y_pos = self._draw_text(image, draw, text.lines, y_pos, self.fontset.text_font.font)
                 case GraphicsSectionData() as graphics:
                     y_pos = self._draw_graphics(image, draw, graphics, y_pos, card_width)
                 case ExtraSectionData() as extra:
-                    y_pos = self._draw_extra(draw, extra.lines, y_pos, self.fontset.extra_font.font)
+                    y_pos = self._draw_extra(image, draw, extra.lines, y_pos, self.fontset.extra_font.font)
                 case RepostSectionData() as repost:
                     y_pos = self._draw_repost(image, draw, repost, y_pos, card_width)
                 case ImageGridSectionData() as image_grid:
@@ -795,16 +796,18 @@ class CommonRenderer(ImageRenderer):
         text_y = text_start_y
 
         # 发布者名称（蓝色）
-        for line in section.name_lines:
-            draw.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=self.fontset.name_font.font)
-            text_y += self.fontset.name_font.line_height
+        with Pilmoji(image) as pilmoji:
+            for line in section.name_lines:
+                pilmoji.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=self.fontset.name_font.font)
+                text_y += self.fontset.name_font.line_height
 
         # 时间（灰色）
         if section.time_lines:
             text_y += self.NAME_TIME_GAP
-            for line in section.time_lines:
-                draw.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font)
-                text_y += self.fontset.extra_font.line_height
+            with Pilmoji(image) as pilmoji:
+                for line in section.time_lines:
+                    pilmoji.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font)
+                    text_y += self.fontset.extra_font.line_height
 
         # 在右侧绘制平台 logo（仅在非转发内容时绘制）
         if not_repost:
@@ -819,11 +822,12 @@ class CommonRenderer(ImageRenderer):
 
         return y_pos + section.height + self.SECTION_SPACING
 
-    def _draw_title(self, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
+    def _draw_title(self, image: Image.Image, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制标题"""
-        for line in lines:
-            draw.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
-            y_pos += self.fontset.title_font.line_height
+        with Pilmoji(image) as pilmoji:
+            for line in lines:
+                pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
+                y_pos += self.fontset.title_font.line_height
         return y_pos + self.SECTION_SPACING
 
     def _draw_cover(self, image: Image.Image, cover_img: Image.Image, y_pos: int, card_width: int) -> int:
@@ -840,11 +844,12 @@ class CommonRenderer(ImageRenderer):
 
         return y_pos + cover_img.height + self.SECTION_SPACING
 
-    def _draw_text(self, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
+    def _draw_text(self, image: Image.Image, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制文本内容"""
-        for line in lines:
-            draw.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
-            y_pos += self.fontset.text_font.line_height
+        with Pilmoji(image) as pilmoji:
+            for line in lines:
+                pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
+                y_pos += self.fontset.text_font.line_height
         return y_pos + self.SECTION_SPACING
 
     def _draw_graphics(
@@ -853,9 +858,10 @@ class CommonRenderer(ImageRenderer):
         """绘制图文内容"""
         # 绘制文本内容（如果有）
         if section.text_lines:
-            for line in section.text_lines:
-                draw.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.text_font.font)
-                y_pos += self.fontset.text_font.line_height
+            with Pilmoji(image) as pilmoji:
+                for line in section.text_lines:
+                    pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.text_font.font)
+                    y_pos += self.fontset.text_font.line_height
             y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
 
         # 绘制图片（居中）
@@ -871,16 +877,18 @@ class CommonRenderer(ImageRenderer):
             extra_font_info = self.fontset.extra_font
             text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (content_width - text_width) // 2
-            draw.text((text_x, y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=extra_font_info.font)
+            with Pilmoji(image) as pilmoji:
+                pilmoji.text((text_x, y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=extra_font_info.font)
             y_pos += extra_font_info.line_height
 
         return y_pos + self.SECTION_SPACING
 
-    def _draw_extra(self, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
+    def _draw_extra(self, image: Image.Image, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制额外信息"""
-        for line in lines:
-            draw.text((self.PADDING, y_pos), line, fill=self.EXTRA_COLOR, font=font)
-            y_pos += self.fontset.extra_font.line_height
+        with Pilmoji(image) as pilmoji:
+            for line in lines:
+                pilmoji.text((self.PADDING, y_pos), line, fill=self.EXTRA_COLOR, font=font)
+                y_pos += self.fontset.extra_font.line_height
         return y_pos
 
     def _draw_repost(
