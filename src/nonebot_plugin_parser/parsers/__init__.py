@@ -8,16 +8,13 @@ from .nga import NGAParser as NGAParser
 from .twitter import TwitterParser as TwitterParser
 from .weibo import WeiBoParser as WeiBoParser
 from .xiaohongshu import XiaoHongShuParser as XiaoHongShuParser
-
 from .bilibili import BilibiliParser as BilibiliParser
 
-try:
-    import yt_dlp as yt_dlp
+from ..download import YTDLP_DOWNLOADER
 
+if YTDLP_DOWNLOADER is not None:
     from .tiktok import TikTokParser as TikTokParser
     from .youtube import YouTubeParser as YouTubeParser
-except ImportError:
-    pass
 
 __all__ = [
     "ParseResult",
