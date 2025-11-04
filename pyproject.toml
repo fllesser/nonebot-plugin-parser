@@ -26,8 +26,6 @@ dependencies = [
   "tqdm>=4.67.1,<5.0.0",
   "aiofiles>=25.1.0",
   "pillow>=11.0.0",
-  "pilmoji @ git+https://github.com/jay3332/pilmoji.git",
-
   # 后续改为可选依赖
   "curl_cffi>=0.13.0,<1.0.0",
   "bilibili-api-python>=17.4.0,<18.0.0",
@@ -39,6 +37,7 @@ dependencies = [
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "nonebot-plugin-alconna>=0.59.4",
   "nonebot-plugin-uninfo>=0.9.0",
+  "pilmoji",
 ]
 
 [project.optional-dependencies]
@@ -84,6 +83,9 @@ conflicts = [
     { group = "telegram" },
   ],
 ]
+
+[tool.uv.sources]
+pilmoji = { git = "https://github.com/jay3332/pilmoji" }
 
 [tool.nonebot]
 adapters = [
