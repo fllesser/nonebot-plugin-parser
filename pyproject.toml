@@ -110,7 +110,7 @@ exclude_lines = [
 ]
 
 [tool.uv.sources]
-pilmoji = { git = "https://github.com/jay3332/pilmoji" }
+pilmoji = { git = "https://github.com/TyxTang/pilmoji" }
 
 [tool.nonebot]
 adapters = [

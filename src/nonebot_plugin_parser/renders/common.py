@@ -8,9 +8,9 @@ from typing_extensions import override
 from nonebot import logger
 from PIL import Image, ImageDraw, ImageFont
 from pilmoji import Pilmoji
+from pilmoji import LocalCachedEmojiSource
 
 from .base import ImageRenderer, ParseResult
-
 
 @dataclass(eq=False, frozen=True, slots=True)
 class FontInfo:
@@ -224,12 +224,23 @@ class CommonRenderer(ImageRenderer):
 
     def __init__(self, font_path: Path | None = None):
         self.font_path: Path = self.DEFAULT_FONT_PATH
+        self._pilmoji = None
 
     def load_resources(self):
         """加载资源"""
         self._load_fonts()
         self._load_video_button()
         self._load_platform_logos()
+    
+    def _get_pilmoji(self, image):
+        """获取或创建Pilmoji实例"""
+        cached_source = LocalCachedEmojiSource(
+            cache_dir="./data/nonebot_plugin_parser/emoji_cache"
+        )
+        if self._pilmoji is None or self._pilmoji.image != image:
+            from pilmoji import Pilmoji
+            self._pilmoji = Pilmoji(image,source=cached_source)
+        return self._pilmoji
 
     def _load_fonts(self):
         """预加载自定义字体"""
@@ -796,18 +807,17 @@ class CommonRenderer(ImageRenderer):
         text_y = text_start_y
 
         # 发布者名称（蓝色）
-        with Pilmoji(image) as pilmoji:
-            for line in section.name_lines:
-                pilmoji.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=self.fontset.name_font.font)
-                text_y += self.fontset.name_font.line_height
+        pilmoji = self._get_pilmoji(image)
+        for line in section.name_lines:
+            pilmoji.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=self.fontset.name_font.font)
+            text_y += self.fontset.name_font.line_height
 
         # 时间（灰色）
         if section.time_lines:
             text_y += self.NAME_TIME_GAP
-            with Pilmoji(image) as pilmoji:
-                for line in section.time_lines:
-                    pilmoji.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font)
-                    text_y += self.fontset.extra_font.line_height
+            for line in section.time_lines:
+                pilmoji.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font)
+                text_y += self.fontset.extra_font.line_height
 
         # 在右侧绘制平台 logo（仅在非转发内容时绘制）
         if not_repost:
@@ -824,10 +834,10 @@ class CommonRenderer(ImageRenderer):
 
     def _draw_title(self, image: Image.Image, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制标题"""
-        with Pilmoji(image) as pilmoji:
-            for line in lines:
-                pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
-                y_pos += self.fontset.title_font.line_height
+        pilmoji = self._get_pilmoji(image)
+        for line in lines:
+            pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
+            y_pos += self.fontset.title_font.line_height
         return y_pos + self.SECTION_SPACING
 
     def _draw_cover(self, image: Image.Image, cover_img: Image.Image, y_pos: int, card_width: int) -> int:
@@ -846,10 +856,10 @@ class CommonRenderer(ImageRenderer):
 
     def _draw_text(self, image: Image.Image, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制文本内容"""
-        with Pilmoji(image) as pilmoji:
-            for line in lines:
-                pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
-                y_pos += self.fontset.text_font.line_height
+        pilmoji = self._get_pilmoji(image)
+        for line in lines:
+            pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
+            y_pos += self.fontset.text_font.line_height
         return y_pos + self.SECTION_SPACING
 
     def _draw_graphics(
@@ -857,11 +867,11 @@ class CommonRenderer(ImageRenderer):
     ) -> int:
         """绘制图文内容"""
         # 绘制文本内容（如果有）
+        pilmoji = self._get_pilmoji(image)
         if section.text_lines:
-            with Pilmoji(image) as pilmoji:
-                for line in section.text_lines:
-                    pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.text_font.font)
-                    y_pos += self.fontset.text_font.line_height
+            for line in section.text_lines:
+                pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.text_font.font)
+                y_pos += self.fontset.text_font.line_height
             y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
 
         # 绘制图片（居中）
@@ -877,18 +887,17 @@ class CommonRenderer(ImageRenderer):
             extra_font_info = self.fontset.extra_font
             text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (content_width - text_width) // 2
-            with Pilmoji(image) as pilmoji:
-                pilmoji.text((text_x, y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=extra_font_info.font)
+            pilmoji.text((text_x, y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=extra_font_info.font)
             y_pos += extra_font_info.line_height
 
         return y_pos + self.SECTION_SPACING
 
     def _draw_extra(self, image: Image.Image, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
         """绘制额外信息"""
-        with Pilmoji(image) as pilmoji:
-            for line in lines:
-                pilmoji.text((self.PADDING, y_pos), line, fill=self.EXTRA_COLOR, font=font)
-                y_pos += self.fontset.extra_font.line_height
+        pilmoji = self._get_pilmoji(image)
+        for line in lines:
+            pilmoji.text((self.PADDING, y_pos), line, fill=self.EXTRA_COLOR, font=font)
+            y_pos += self.fontset.extra_font.line_height
         return y_pos
 
     def _draw_repost(

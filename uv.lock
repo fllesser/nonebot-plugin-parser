@@ -1291,7 +1291,7 @@ requires-dist = [
     { name = "nonebot-plugin-uninfo", specifier = ">=0.10.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
-    { name = "pilmoji", git = "https://github.com/jay3332/pilmoji" },
+    { name = "pilmoji", git = "https://github.com/TyxTang/pilmoji" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
     { name = "yt-dlp", marker = "extra == 'all'", specifier = ">=2025.10.14" },
     { name = "yt-dlp", marker = "extra == 'ytdlp'", specifier = ">=2025.10.14" },
@@ -1497,7 +1497,7 @@ wheels = [
 [[package]]
 name = "pilmoji"
 version = "2.0.5"
-source = { git = "https://github.com/jay3332/pilmoji#357987c9952d3b8fec5c9930004de10467ee72da" }
+source = { git = "https://github.com/TyxTang/pilmoji#1412fa25ada2225475474ebc5f1bd71f0ebb9ed9" }
 dependencies = [
     { name = "emoji" },
     { name = "pillow" },
