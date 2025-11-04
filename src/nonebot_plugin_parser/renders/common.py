@@ -7,10 +7,10 @@ from typing_extensions import override
 
 from nonebot import logger
 from PIL import Image, ImageDraw, ImageFont
-from pilmoji import Pilmoji
 from pilmoji import LocalCachedEmojiSource
 
 from .base import ImageRenderer, ParseResult
+
 
 @dataclass(eq=False, frozen=True, slots=True)
 class FontInfo:
@@ -231,15 +231,14 @@ class CommonRenderer(ImageRenderer):
         self._load_fonts()
         self._load_video_button()
         self._load_platform_logos()
-    
+
     def _get_pilmoji(self, image):
         """获取或创建Pilmoji实例"""
-        cached_source = LocalCachedEmojiSource(
-            cache_dir="./data/nonebot_plugin_parser/emoji_cache"
-        )
+        cached_source = LocalCachedEmojiSource(cache_dir="./data/nonebot_plugin_parser/emoji_cache")
         if self._pilmoji is None or self._pilmoji.image != image:
             from pilmoji import Pilmoji
-            self._pilmoji = Pilmoji(image,source=cached_source)
+
+            self._pilmoji = Pilmoji(image, source=cached_source)
         return self._pilmoji
 
     def _load_fonts(self):
