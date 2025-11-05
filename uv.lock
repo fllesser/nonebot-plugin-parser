@@ -1229,7 +1229,7 @@ dependencies = [
     { name = "nonebot-plugin-uninfo" },
     { name = "nonebot2" },
     { name = "pillow" },
-    { name = "pilmoji" },
+    { name = "pilmoji-for-parser" },
     { name = "tqdm" },
 ]
 
@@ -1291,12 +1291,12 @@ requires-dist = [
     { name = "nonebot-plugin-uninfo", specifier = ">=0.10.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
-    { name = "pilmoji", git = "https://github.com/TyxTang/pilmoji" },
+    { name = "pilmoji-for-parser", git = "https://github.com/fllesser/pilmoji-for-parser?rev=main" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
     { name = "yt-dlp", marker = "extra == 'all'", specifier = ">=2025.10.14" },
     { name = "yt-dlp", marker = "extra == 'ytdlp'", specifier = ">=2025.10.14" },
 ]
-provides-extras = ["htmlkit", "ytdlp", "all"]
+provides-extras = ["all", "htmlkit", "ytdlp"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1495,11 +1495,13 @@ wheels = [
 ]
 
 [[package]]
-name = "pilmoji"
-version = "2.0.5"
-source = { git = "https://github.com/TyxTang/pilmoji#1412fa25ada2225475474ebc5f1bd71f0ebb9ed9" }
+name = "pilmoji-for-parser"
+version = "0.1.0"
+source = { git = "https://github.com/fllesser/pilmoji-for-parser?rev=main#459f13b10a3b455bcf133b99e4e36957a953a391" }
 dependencies = [
+    { name = "aiofiles" },
     { name = "emoji" },
+    { name = "httpx" },
     { name = "pillow" },
 ]
 

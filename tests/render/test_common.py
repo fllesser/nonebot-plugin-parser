@@ -50,10 +50,10 @@ async def test_render_with_emoji():
 
     from nonebot_plugin_parser import pconfig
     from nonebot_plugin_parser.parsers import BilibiliParser
-    from nonebot_plugin_parser.renders import _COMMON_RENDERER
+    from nonebot_plugin_parser.renders import CommonRenderer
 
     parser = BilibiliParser()
-    renderer = _COMMON_RENDERER
+    renderer = CommonRenderer()
 
     opus_url = "https://b23.tv/GwiHK6N"
     keyword, searched = parser.search_url(opus_url)
@@ -86,10 +86,10 @@ async def test_graphics_content():
 
     from nonebot_plugin_parser import pconfig
     from nonebot_plugin_parser.parsers import BilibiliParser
-    from nonebot_plugin_parser.renders import _COMMON_RENDERER
+    from nonebot_plugin_parser.renders import CommonRenderer
 
     parser = BilibiliParser()
-    renderer = _COMMON_RENDERER
+    renderer = CommonRenderer()
 
     # url = "https://www.bilibili.com/opus/1122430505331982343"
     # url = "https://www.bilibili.com/opus/1040093151889457152"
@@ -126,10 +126,10 @@ async def test_read():
 
     from nonebot_plugin_parser import pconfig
     from nonebot_plugin_parser.parsers import BilibiliParser
-    from nonebot_plugin_parser.renders import _COMMON_RENDERER
+    from nonebot_plugin_parser.renders import CommonRenderer
 
     parser = BilibiliParser()
-    renderer = _COMMON_RENDERER
+    renderer = CommonRenderer()
 
     url = "https://www.bilibili.com/read/cv523868"
     keyword, searched = parser.search_url(url)
@@ -165,10 +165,10 @@ async def test_common_render():
 
     from nonebot_plugin_parser import pconfig
     from nonebot_plugin_parser.parsers import WeiBoParser
-    from nonebot_plugin_parser.renders import _COMMON_RENDERER
+    from nonebot_plugin_parser.renders import CommonRenderer
 
     parser = WeiBoParser()
-    renderer = _COMMON_RENDERER
+    renderer = CommonRenderer()
 
     urls = {
         "微博视频": "https://weibo.com/3800478724/Q9ectF6yO",

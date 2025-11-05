@@ -7,8 +7,10 @@ from typing_extensions import override
 
 from nonebot import logger
 from PIL import Image, ImageDraw, ImageFont
-from pilmoji import LocalCachedEmojiSource
+from pilmoji import EmojiCDNSource, EmojiStyle, Pilmoji
 
+from ..config import pconfig
+from ..parsers.data import GraphicsContent
 from .base import ImageRenderer, ParseResult
 
 
@@ -16,7 +18,7 @@ from .base import ImageRenderer, ParseResult
 class FontInfo:
     """字体信息数据类"""
 
-    font: ImageFont.FreeTypeFont | ImageFont.ImageFont
+    font: ImageFont.FreeTypeFont
     line_height: int
     cjk_width: int
 
@@ -36,6 +38,7 @@ class FontInfo:
         if "\u4e00" <= char <= "\u9fff":
             return self.cjk_width
         else:
+            # logger.debug(f"[{char}] 宽度: {self.get_char_width(char)} | [{ord(char)}]")
             return self.get_char_width(char)
 
     def get_text_width(self, text: str) -> int:
@@ -150,10 +153,35 @@ class GraphicsSectionData(SectionData):
     alt_text: str | None = None
 
 
+@dataclass
+class RenderContext:
+    """渲染上下文，存储渲染过程中的状态信息"""
+
+    result: ParseResult
+    """解析结果"""
+    card_width: int
+    """卡片宽度"""
+    image: Image.Image
+    """当前图像"""
+    draw: ImageDraw.ImageDraw
+    """绘图对象"""
+    pilmoji: Pilmoji
+    """Pilmoji实例"""
+    not_repost: bool = True
+    """是否为非转发内容"""
+    bg_color: tuple[int, int, int] | None = None
+    """背景颜色"""
+    y_pos: int = 0
+    """当前绘制位置（绘制阶段使用）"""
+
+    @property
+    def content_width(self) -> int:
+        """内容区域宽度"""
+        return self.card_width - 2 * CommonRenderer.PADDING
+
+
 class CommonRenderer(ImageRenderer):
     """统一的渲染器，将解析结果转换为消息"""
-
-    __slots__ = ("font_path", "fontset", "platform_logos", "video_button_image")
 
     # 卡片配置常量
     PADDING = 25
@@ -221,55 +249,46 @@ class CommonRenderer(ImageRenderer):
     """默认字体路径"""
     DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "media_button.png"
     """默认视频按钮路径"""
+    EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
+        style=EmojiStyle.GOOGLE, cache_dir=pconfig.cache_dir / "emojis"
+    )
 
-    def __init__(self, font_path: Path | None = None):
-        self.font_path: Path = self.DEFAULT_FONT_PATH
-        self._pilmoji = None
-
-    def load_resources(self):
+    @classmethod
+    def load_resources(cls):
         """加载资源"""
-        self._load_fonts()
-        self._load_video_button()
-        self._load_platform_logos()
+        cls._load_fonts()
+        cls._load_video_button()
+        cls._load_platform_logos()
 
-    def _get_pilmoji(self, image):
-        """获取或创建Pilmoji实例"""
-        cached_source = LocalCachedEmojiSource(cache_dir="./data/nonebot_plugin_parser/emoji_cache")
-        if self._pilmoji is None or self._pilmoji.image != image:
-            from pilmoji import Pilmoji
-
-            self._pilmoji = Pilmoji(image, source=cached_source)
-        return self._pilmoji
-
-    def _load_fonts(self):
+    @classmethod
+    def _load_fonts(cls):
         """预加载自定义字体"""
-        from ..config import pconfig
 
-        font_path = pconfig.custom_font
-        if font_path is not None and font_path.exists():
-            self.font_path = font_path
+        font_path = pconfig.custom_font or cls.DEFAULT_FONT_PATH
         # 创建 FontSet 对象
-        self.fontset = FontSet.new(self.font_path)
-        logger.success(f"加载字体「{self.font_path.name}」成功")
+        cls.fontset = FontSet.new(font_path)
+        logger.success(f"加载字体「{font_path.name}」成功")
 
-    def _load_video_button(self):
+    @classmethod
+    def _load_video_button(cls):
         """预加载视频按钮"""
-        self.video_button_image: Image.Image = Image.open(self.DEFAULT_VIDEO_BUTTON_PATH).convert("RGBA")
+        cls.video_button_image: Image.Image = Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH).convert("RGBA")
 
         # 设置透明度为 30%
-        alpha = self.video_button_image.split()[-1]  # 获取 alpha 通道
+        alpha = cls.video_button_image.split()[-1]  # 获取 alpha 通道
         alpha = alpha.point(lambda x: int(x * 0.3))  # 将透明度设置为 30%
-        self.video_button_image.putalpha(alpha)
+        cls.video_button_image.putalpha(alpha)
 
-    def _load_platform_logos(self):
+    @classmethod
+    def _load_platform_logos(cls):
         """预加载平台 logo"""
-        self.platform_logos: dict[str, Image.Image] = {}
+        cls.platform_logos: dict[str, Image.Image] = {}
         from ..constants import PlatformEnum
 
         for platform_name in PlatformEnum:
-            logo_path = self.RESOURCES_DIR / f"{platform_name}.png"
+            logo_path = cls.RESOURCES_DIR / f"{platform_name}.png"
             if logo_path.exists():
-                self.platform_logos[str(platform_name)] = Image.open(logo_path)
+                cls.platform_logos[str(platform_name)] = Image.open(logo_path)
 
     # def __resize_platform_logos(self):
     #     """调整平台 logo 尺寸, 用于调整 logo 大小(仅开发时使用)"""
@@ -334,39 +353,47 @@ class CommonRenderer(ImageRenderer):
         Returns:
             PIL Image 对象
         """
-
-        # 使用默认卡片宽度
+        # 计算必要参数
         card_width = self.DEFAULT_CARD_WIDTH
         content_width = card_width - 2 * self.PADDING
 
-        # 加载并处理封面，传入内容区域宽度以确保封面不超过内容区域
-        cover_img = self._load_and_resize_cover(
-            await result.cover_path, content_width=content_width, apply_min_size=not_repost
-        )
-
         # 计算各部分内容的高度
-        sections = await self._calculate_sections(result, cover_img, content_width)
+        sections = await self._calculate_sections(result, content_width)
 
         # 计算总高度
         card_height = (
             sum(section.height for section in sections) + self.PADDING * 2 + self.SECTION_SPACING * (len(sections) - 1)
         )
-        # 创建画布并绘制（使用指定的背景颜色，或默认背景颜色）
+
+        # 创建画布
         background_color = bg_color if bg_color is not None else self.BG_COLOR
         image = Image.new("RGB", (card_width, card_height), background_color)
-        self._draw_sections(image, sections, card_width, result, not_repost)
+        draw = ImageDraw.Draw(image)
+        pilmoji = Pilmoji(image, source=self.EMOJI_SOURCE, draw=draw)
+
+        # 创建完整的渲染上下文（一次性初始化所有值）
+        ctx = RenderContext(
+            result=result,
+            card_width=card_width,
+            image=image,
+            draw=draw,
+            pilmoji=pilmoji,
+            not_repost=not_repost,
+            bg_color=bg_color,
+            y_pos=self.PADDING,
+        )
+
+        # 绘制所有部分
+        await self._draw_sections(ctx, sections)
 
         return image
 
-    def _load_and_resize_cover(
-        self, cover_path: Path | None, content_width: int, apply_min_size: bool = True
-    ) -> Image.Image | None:
+    def _load_and_resize_cover(self, cover_path: Path | None, content_width: int) -> Image.Image | None:
         """加载并调整封面尺寸
 
         Args:
             cover_path: 封面路径
-            content_width: 内容区域宽度，封面会缩放到此宽度以确保左右padding一致
-            apply_min_size: 是否应用最小尺寸限制（转发内容不需要）
+            content_width: 内容区域宽度, 封面会缩放到此宽度以确保左右padding一致
         """
         if not cover_path or not cover_path.exists():
             return None
@@ -435,17 +462,14 @@ class CommonRenderer(ImageRenderer):
         except Exception:
             return None
 
-    async def _calculate_sections(
-        self, result: ParseResult, cover_img: Image.Image | None, content_width: int
-    ) -> list[SectionData]:
+    async def _calculate_sections(self, result: ParseResult, content_width: int) -> list[SectionData]:
         """计算各部分内容的高度和数据"""
-        sections = []
+        sections: list[SectionData] = []
 
         # 1. Header 部分
-        if result.author:
-            header_section = await self._calculate_header_section(result, content_width)
-            if header_section:
-                sections.append(header_section)
+        header_section = await self._calculate_header_section(result, content_width)
+        if header_section is not None:
+            sections.append(header_section)
 
         # 2. 标题部分
         if result.title:
@@ -454,7 +478,7 @@ class CommonRenderer(ImageRenderer):
             sections.append(TitleSectionData(height=title_height, lines=title_lines))
 
         # 3. 封面，图集，图文内容
-        if cover_img:
+        if cover_img := self._load_and_resize_cover(await result.cover_path, content_width=content_width):
             sections.append(CoverSectionData(height=cover_img.height, cover_img=cover_img))
         elif result.img_contents:
             # 如果没有封面但有图片，处理图片列表
@@ -479,22 +503,20 @@ class CommonRenderer(ImageRenderer):
             extra_height = len(extra_lines) * self.fontset.extra_font.line_height
             sections.append(ExtraSectionData(height=extra_height, lines=extra_lines))
 
-        # 6. 转发内容
+        # 7. 转发内容
         if result.repost:
             repost_section = await self._calculate_repost_section(result.repost)
-            if repost_section:
-                sections.append(repost_section)
+            sections.append(repost_section)
 
         return sections
 
-    async def _calculate_graphics_section(self, graphics_content, content_width: int) -> GraphicsSectionData | None:
+    async def _calculate_graphics_section(
+        self, graphics_content: GraphicsContent, content_width: int
+    ) -> GraphicsSectionData | None:
         """计算图文内容部分的高度和内容"""
         try:
             # 加载图片
             img_path = await graphics_content.get_path()
-            if not img_path or not img_path.exists():
-                return None
-
             image = Image.open(img_path)
 
             # 调整图片尺寸以适应内容宽度
@@ -525,7 +547,7 @@ class CommonRenderer(ImageRenderer):
 
     async def _calculate_header_section(self, result: ParseResult, content_width: int) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
-        if not result.author:
+        if result.author is None:
             return None
 
         # 加载头像
@@ -555,16 +577,9 @@ class CommonRenderer(ImageRenderer):
             text_height=text_height,
         )
 
-    async def _calculate_repost_section(self, repost: ParseResult) -> RepostSectionData | None:
+    async def _calculate_repost_section(self, repost: ParseResult) -> RepostSectionData:
         """计算转发内容的高度和内容（递归调用绘制方法）"""
-        if not repost:
-            return None
-
-        # 递归调用内部方法，生成转发内容的完整卡片（使用转发背景颜色，不强制放大封面）
         repost_image = await self._create_card_image(repost, bg_color=self.REPOST_BG_COLOR, not_repost=False)
-        if not repost_image:
-            return None
-
         # 缩放图片
         scaled_width = int(repost_image.width * self.REPOST_SCALE)
         scaled_height = int(repost_image.height * self.REPOST_SCALE)
@@ -694,36 +709,26 @@ class CommonRenderer(ImageRenderer):
             bottom = top + width
             return img.crop((0, top, width, bottom))
 
-    def _draw_sections(
-        self,
-        image: Image.Image,
-        sections: list[SectionData],
-        card_width: int,
-        result: ParseResult,
-        not_repost: bool = True,
-    ) -> None:
+    async def _draw_sections(self, ctx: RenderContext, sections: list[SectionData]) -> None:
         """绘制所有内容到画布上"""
-        draw = ImageDraw.Draw(image)
-        y_pos = self.PADDING
-
         for section in sections:
             match section:
                 case HeaderSectionData() as header:
-                    y_pos = self._draw_header(image, draw, header, y_pos, result, not_repost)
+                    await self._draw_header(ctx, header)
                 case TitleSectionData() as title:
-                    y_pos = self._draw_title(image, draw, title.lines, y_pos, self.fontset.title_font.font)
+                    await self._draw_title(ctx, title.lines)
                 case CoverSectionData() as cover:
-                    y_pos = self._draw_cover(image, cover.cover_img, y_pos, card_width)
+                    self._draw_cover(ctx, cover.cover_img)
                 case TextSectionData() as text:
-                    y_pos = self._draw_text(image, draw, text.lines, y_pos, self.fontset.text_font.font)
+                    await self._draw_text(ctx, text.lines)
                 case GraphicsSectionData() as graphics:
-                    y_pos = self._draw_graphics(image, draw, graphics, y_pos, card_width)
+                    await self._draw_graphics(ctx, graphics)
                 case ExtraSectionData() as extra:
-                    y_pos = self._draw_extra(image, draw, extra.lines, y_pos, self.fontset.extra_font.font)
+                    await self._draw_extra(ctx, extra.lines)
                 case RepostSectionData() as repost:
-                    y_pos = self._draw_repost(image, draw, repost, y_pos, card_width)
+                    self._draw_repost(ctx, repost)
                 case ImageGridSectionData() as image_grid:
-                    y_pos = self._draw_image_grid(image, image_grid, y_pos, card_width)
+                    self._draw_image_grid(ctx, image_grid)
 
     def _create_avatar_placeholder(self) -> Image.Image:
         """创建默认头像占位符"""
@@ -781,141 +786,131 @@ class CommonRenderer(ImageRenderer):
         placeholder.putalpha(mask)
         return placeholder
 
-    def _draw_header(
-        self,
-        image: Image.Image,
-        draw: ImageDraw.ImageDraw,
-        section: HeaderSectionData,
-        y_pos: int,
-        result: ParseResult,
-        not_repost: bool = True,
-    ) -> int:
+    async def _draw_header(self, ctx: RenderContext, section: HeaderSectionData) -> None:
         """绘制 header 部分"""
         x_pos = self.PADDING
 
         # 绘制头像或占位符
         avatar = section.avatar if section.avatar else self._create_avatar_placeholder()
-        image.paste(avatar, (x_pos, y_pos), avatar)
+        ctx.image.paste(avatar, (x_pos, ctx.y_pos), avatar)
 
         # 文字始终从头像位置后面开始
         text_x = self.PADDING + self.AVATAR_SIZE + self.AVATAR_TEXT_GAP
 
         # 计算文字垂直居中位置（对齐头像中轴）
-        avatar_center = y_pos + self.AVATAR_SIZE // 2
+        avatar_center = ctx.y_pos + self.AVATAR_SIZE // 2
         text_start_y = avatar_center - section.text_height // 2
         text_y = text_start_y
 
         # 发布者名称（蓝色）
-        pilmoji = self._get_pilmoji(image)
         for line in section.name_lines:
-            pilmoji.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=self.fontset.name_font.font)
+            await ctx.pilmoji.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=self.fontset.name_font.font)
             text_y += self.fontset.name_font.line_height
 
         # 时间（灰色）
         if section.time_lines:
             text_y += self.NAME_TIME_GAP
             for line in section.time_lines:
-                pilmoji.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font)
+                await ctx.pilmoji.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font)
                 text_y += self.fontset.extra_font.line_height
 
         # 在右侧绘制平台 logo（仅在非转发内容时绘制）
-        if not_repost:
-            platform_name = result.platform.name
+        if ctx.not_repost:
+            platform_name = ctx.result.platform.name
             if platform_name in self.platform_logos:
                 logo_img = self.platform_logos[platform_name]
                 # 计算 logo 位置（右侧对齐）
-                logo_x = image.width - self.PADDING - logo_img.width
+                logo_x = ctx.image.width - self.PADDING - logo_img.width
                 # 垂直居中对齐头像
-                logo_y = y_pos + (self.AVATAR_SIZE - logo_img.height) // 2
-                image.paste(logo_img, (logo_x, logo_y), logo_img)
+                logo_y = ctx.y_pos + (self.AVATAR_SIZE - logo_img.height) // 2
+                ctx.image.paste(logo_img, (logo_x, logo_y), logo_img)
 
-        return y_pos + section.height + self.SECTION_SPACING
+        ctx.y_pos += section.height + self.SECTION_SPACING
 
-    def _draw_title(self, image: Image.Image, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
+    async def _draw_title(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制标题"""
-        pilmoji = self._get_pilmoji(image)
         for line in lines:
-            pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
-            y_pos += self.fontset.title_font.line_height
-        return y_pos + self.SECTION_SPACING
+            await ctx.pilmoji.text(
+                (self.PADDING, ctx.y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.title_font.font
+            )
+            ctx.y_pos += self.fontset.title_font.line_height
+        ctx.y_pos += self.SECTION_SPACING
 
-    def _draw_cover(self, image: Image.Image, cover_img: Image.Image, y_pos: int, card_width: int) -> int:
+    def _draw_cover(self, ctx: RenderContext, cover_img: Image.Image) -> None:
         """绘制封面"""
         # 封面从左边padding开始，和文字、头像对齐
         x_pos = self.PADDING
-        image.paste(cover_img, (x_pos, y_pos))
+        ctx.image.paste(cover_img, (x_pos, ctx.y_pos))
 
         # 添加视频播放按钮（居中）
         button_size = 128  # 固定使用 128x128 尺寸
         button_x = x_pos + (cover_img.width - button_size) // 2
-        button_y = y_pos + (cover_img.height - button_size) // 2
-        image.paste(self.video_button_image, (button_x, button_y), self.video_button_image)
+        button_y = ctx.y_pos + (cover_img.height - button_size) // 2
+        ctx.image.paste(self.video_button_image, (button_x, button_y), self.video_button_image)
 
-        return y_pos + cover_img.height + self.SECTION_SPACING
+        ctx.y_pos += cover_img.height + self.SECTION_SPACING
 
-    def _draw_text(self, image: Image.Image, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
+    async def _draw_text(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制文本内容"""
-        pilmoji = self._get_pilmoji(image)
         for line in lines:
-            pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=font)
-            y_pos += self.fontset.text_font.line_height
-        return y_pos + self.SECTION_SPACING
+            await ctx.pilmoji.text(
+                (self.PADDING, ctx.y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.text_font.font
+            )
+            ctx.y_pos += self.fontset.text_font.line_height
+        ctx.y_pos += self.SECTION_SPACING
 
-    def _draw_graphics(
-        self, image: Image.Image, draw: ImageDraw.ImageDraw, section: GraphicsSectionData, y_pos: int, card_width: int
-    ) -> int:
+    async def _draw_graphics(self, ctx: RenderContext, section: GraphicsSectionData) -> None:
         """绘制图文内容"""
         # 绘制文本内容（如果有）
-        pilmoji = self._get_pilmoji(image)
         if section.text_lines:
             for line in section.text_lines:
-                pilmoji.text((self.PADDING, y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.text_font.font)
-                y_pos += self.fontset.text_font.line_height
-            y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
+                await ctx.pilmoji.text(
+                    (self.PADDING, ctx.y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.text_font.font
+                )
+                ctx.y_pos += self.fontset.text_font.line_height
+            ctx.y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
 
         # 绘制图片（居中）
-        content_width = card_width - 2 * self.PADDING
-        x_pos = self.PADDING + (content_width - section.image.width) // 2
-        image.paste(section.image, (x_pos, y_pos))
-        y_pos += section.image.height
+        x_pos = self.PADDING + (ctx.content_width - section.image.width) // 2
+        ctx.image.paste(section.image, (x_pos, ctx.y_pos))
+        ctx.y_pos += section.image.height
 
         # 绘制 alt 文本（如果有，居中显示）
         if section.alt_text:
-            y_pos += self.SECTION_SPACING  # 图片和alt文本之间的间距
+            ctx.y_pos += self.SECTION_SPACING  # 图片和alt文本之间的间距
             # 计算文本居中位置
             extra_font_info = self.fontset.extra_font
             text_width = extra_font_info.get_text_width(section.alt_text)
-            text_x = self.PADDING + (content_width - text_width) // 2
-            pilmoji.text((text_x, y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=extra_font_info.font)
-            y_pos += extra_font_info.line_height
+            text_x = self.PADDING + (ctx.content_width - text_width) // 2
+            await ctx.pilmoji.text(
+                (text_x, ctx.y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=extra_font_info.font
+            )
+            ctx.y_pos += extra_font_info.line_height
 
-        return y_pos + self.SECTION_SPACING
+        ctx.y_pos += self.SECTION_SPACING
 
-    def _draw_extra(self, image: Image.Image, draw: ImageDraw.ImageDraw, lines: list[str], y_pos: int, font) -> int:
+    async def _draw_extra(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制额外信息"""
-        pilmoji = self._get_pilmoji(image)
         for line in lines:
-            pilmoji.text((self.PADDING, y_pos), line, fill=self.EXTRA_COLOR, font=font)
-            y_pos += self.fontset.extra_font.line_height
-        return y_pos
+            await ctx.pilmoji.text(
+                (self.PADDING, ctx.y_pos), line, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font
+            )
+            ctx.y_pos += self.fontset.extra_font.line_height
 
-    def _draw_repost(
-        self, image: Image.Image, draw: ImageDraw.ImageDraw, section: RepostSectionData, y_pos: int, card_width: int
-    ) -> int:
+    def _draw_repost(self, ctx: RenderContext, section: RepostSectionData) -> None:
         """绘制转发内容"""
         # 获取缩放后的转发图片
         repost_image = section.scaled_image
 
         # 转发框占满整个内容区域，左右和边缘对齐
-        content_width = card_width - 2 * self.PADDING
         repost_x = self.PADDING
-        repost_y = y_pos
-        repost_width = content_width  # 转发框宽度等于内容区域宽度
+        repost_y = ctx.y_pos
+        repost_width = ctx.content_width  # 转发框宽度等于内容区域宽度
         repost_height = section.height
 
         # 绘制转发背景（圆角矩形）
         self._draw_rounded_rectangle(
-            image,
+            ctx.image,
             (repost_x, repost_y, repost_x + repost_width, repost_y + repost_height),
             self.REPOST_BG_COLOR,
             radius=8,
@@ -923,7 +918,7 @@ class CommonRenderer(ImageRenderer):
 
         # 绘制转发边框
         self._draw_rounded_rectangle_border(
-            draw,
+            ctx.draw,
             (repost_x, repost_y, repost_x + repost_width, repost_y + repost_height),
             self.REPOST_BORDER_COLOR,
             radius=8,
@@ -935,11 +930,11 @@ class CommonRenderer(ImageRenderer):
         card_y = repost_y + self.REPOST_PADDING
 
         # 将缩放后的转发图片贴到主画布上
-        image.paste(repost_image, (card_x, card_y))
+        ctx.image.paste(repost_image, (card_x, card_y))
 
-        return y_pos + repost_height + self.SECTION_SPACING
+        ctx.y_pos += repost_height + self.SECTION_SPACING
 
-    def _draw_image_grid(self, image: Image.Image, section: ImageGridSectionData, y_pos: int, card_width: int) -> int:
+    def _draw_image_grid(self, ctx: RenderContext, section: ImageGridSectionData) -> None:
         """绘制图片网格"""
         images = section.images
         cols = section.cols
@@ -948,10 +943,10 @@ class CommonRenderer(ImageRenderer):
         remaining_count = section.remaining_count
 
         if not images:
-            return y_pos
+            return
 
         # 计算每个图片的尺寸和间距
-        available_width = card_width - 2 * self.PADDING  # 可用宽度
+        available_width = ctx.content_width  # 可用宽度
         img_spacing = self.IMAGE_GRID_SPACING
 
         # 根据图片数量计算每个图片的尺寸
@@ -965,7 +960,7 @@ class CommonRenderer(ImageRenderer):
             max_img_size = self.IMAGE_2_GRID_SIZE if cols == 2 else self.IMAGE_3_GRID_SIZE
             max_img_size = min(calculated_size, max_img_size)
 
-        current_y = y_pos
+        current_y = ctx.y_pos
 
         for row in range(rows):
             row_start = row * cols
@@ -984,15 +979,15 @@ class CommonRenderer(ImageRenderer):
 
                 # 居中放置图片
                 y_offset = (max_height - img.height) // 2
-                image.paste(img, (img_x, img_y + y_offset))
+                ctx.image.paste(img, (img_x, img_y + y_offset))
 
                 # 如果是最后一张图片且有更多图片，绘制+N效果
                 if has_more and row == rows - 1 and i == len(row_images) - 1 and len(images) == self.MAX_IMAGES_DISPLAY:
-                    self._draw_more_indicator(image, img_x, img_y, max_img_size, max_height, remaining_count)
+                    self._draw_more_indicator(ctx.image, img_x, img_y, max_img_size, max_height, remaining_count)
 
             current_y += img_spacing + max_height
 
-        return current_y + img_spacing + self.SECTION_SPACING
+        ctx.y_pos = current_y + img_spacing + self.SECTION_SPACING
 
     def _draw_more_indicator(
         self, image: Image.Image, img_x: int, img_y: int, img_width: int, img_height: int, count: int
@@ -1078,12 +1073,7 @@ class CommonRenderer(ImageRenderer):
 
         def is_punctuation(char: str) -> bool:
             """判断是否为不能为行首的标点符号"""
-            # 中文标点符号
-            chinese_punctuation = "，。！？；：、）】》〉」』〕〗〙〛…—·"
-            # 英文标点符号
-            english_punctuation = ",.;:!?)]}"
-
-            return char in chinese_punctuation or char in english_punctuation
+            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·" or char in ",.;:!?)]}"
 
         for paragraph in paragraphs:
             if not paragraph:
@@ -1097,7 +1087,6 @@ class CommonRenderer(ImageRenderer):
             while remaining_text:
                 next_char = remaining_text[0]
                 char_width = font_info.get_char_width_fast(next_char)
-
                 # 如果当前行为空，直接添加字符
                 if not current_line:
                     current_line = next_char
