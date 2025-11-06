@@ -1,8 +1,9 @@
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
-from functools import lru_cache
+from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar, ParamSpec, TypeVar
 from typing_extensions import override
 
 from nonebot import logger
@@ -12,6 +13,38 @@ from pilmoji import EmojiCDNSource, EmojiStyle, Pilmoji
 from ..config import pconfig
 from ..parsers.data import GraphicsContent
 from .base import ImageRenderer, ParseResult
+
+# 定义类型变量
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+def suppress_exception(func: Callable[P, T]) -> Callable[P, T | None]:
+    """装饰器：捕获所有异常并返回 None"""
+
+    @wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> T | None:
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.debug(f"函数 {func.__name__} 执行失败: {e}")
+            return None
+
+    return wrapper
+
+
+def suppress_exception_async(func: Callable[P, Coroutine[Any, Any, T]]) -> Callable[P, Coroutine[Any, Any, T | None]]:
+    """装饰器：捕获所有异常并返回 None"""
+
+    @wraps(func)
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T | None:
+        try:
+            return await func(*args, **kwargs)
+        except Exception as e:
+            logger.debug(f"函数 {func.__name__} 执行失败: {e}")
+            return None
+
+    return wrapper
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -38,7 +71,6 @@ class FontInfo:
         if "\u4e00" <= char <= "\u9fff":
             return self.cjk_width
         else:
-            # logger.debug(f"[{char}] 宽度: {self.get_char_width(char)} | [{ord(char)}]")
             return self.get_char_width(char)
 
     def get_text_width(self, text: str) -> int:
@@ -388,6 +420,7 @@ class CommonRenderer(ImageRenderer):
 
         return image
 
+    @suppress_exception
     def _load_and_resize_cover(self, cover_path: Path | None, content_width: int) -> Image.Image | None:
         """加载并调整封面尺寸
 
@@ -398,12 +431,12 @@ class CommonRenderer(ImageRenderer):
         if not cover_path or not cover_path.exists():
             return None
 
-        try:
-            cover_img = Image.open(cover_path)
-
+        with Image.open(cover_path) as original_img:
             # 转换为 RGB 模式以确保兼容性
-            if cover_img.mode not in ("RGB", "RGBA"):
-                cover_img = cover_img.convert("RGB")
+            if original_img.mode not in ("RGB", "RGBA"):
+                cover_img = original_img.convert("RGB")
+            else:
+                cover_img = original_img
 
             # 封面宽度应该等于内容区域宽度，以确保左右padding一致
             target_width = content_width
@@ -422,23 +455,24 @@ class CommonRenderer(ImageRenderer):
                     new_width = int(new_width * scale_ratio)
 
                 cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            elif cover_img is original_img:
+                # 如果没有做任何转换，需要 copy 一份，因为原图会在 with 结束时关闭
+                cover_img = cover_img.copy()
 
             return cover_img
-        except Exception:
-            # 加载失败时返回 None
-            return None
 
+    @suppress_exception
     def _load_and_process_avatar(self, avatar: Path | None) -> Image.Image | None:
         """加载并处理头像（圆形裁剪，带抗锯齿）"""
         if not avatar or not avatar.exists():
             return None
 
-        try:
-            avatar_img = Image.open(avatar)
-
+        with Image.open(avatar) as original_img:
             # 转换为 RGBA 模式（用于更好的抗锯齿效果）
-            if avatar_img.mode != "RGBA":
-                avatar_img = avatar_img.convert("RGBA")
+            if original_img.mode != "RGBA":
+                avatar_img = original_img.convert("RGBA")
+            else:
+                avatar_img = original_img
 
             # 使用超采样技术提高质量：先放大到指定倍数
             scale = self.AVATAR_UPSCALE_FACTOR
@@ -459,8 +493,6 @@ class CommonRenderer(ImageRenderer):
             output_avatar = output_avatar.resize((self.AVATAR_SIZE, self.AVATAR_SIZE), Image.Resampling.LANCZOS)
 
             return output_avatar
-        except Exception:
-            return None
 
     async def _calculate_sections(self, result: ParseResult, content_width: int) -> list[SectionData]:
         """计算各部分内容的高度和数据"""
@@ -510,20 +542,22 @@ class CommonRenderer(ImageRenderer):
 
         return sections
 
+    @suppress_exception_async
     async def _calculate_graphics_section(
         self, graphics_content: GraphicsContent, content_width: int
     ) -> GraphicsSectionData | None:
         """计算图文内容部分的高度和内容"""
-        try:
-            # 加载图片
-            img_path = await graphics_content.get_path()
-            image = Image.open(img_path)
-
+        # 加载图片
+        img_path = await graphics_content.get_path()
+        with Image.open(img_path) as original_img:
             # 调整图片尺寸以适应内容宽度
-            if image.width > content_width:
-                ratio = content_width / image.width
-                new_height = int(image.height * ratio)
-                image = image.resize((content_width, new_height), Image.Resampling.LANCZOS)
+            if original_img.width > content_width:
+                ratio = content_width / original_img.width
+                new_height = int(original_img.height * ratio)
+                image = original_img.resize((content_width, new_height), Image.Resampling.LANCZOS)
+            else:
+                # 如果不需要缩放，copy 一份
+                image = original_img.copy()
 
             # 处理文本内容
             text_lines = []
@@ -542,8 +576,6 @@ class CommonRenderer(ImageRenderer):
             return GraphicsSectionData(
                 height=total_height, text_lines=text_lines, image=image, alt_text=graphics_content.alt
             )
-        except Exception:
-            return None
 
     async def _calculate_header_section(self, result: ParseResult, content_width: int) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
@@ -610,51 +642,14 @@ class CommonRenderer(ImageRenderer):
             remaining_count = 0
 
         processed_images = []
+        img_count = len(img_contents)
 
         for img_content in img_contents:
-            try:
-                img_path = await img_content.get_path()
-                if not img_path or not img_path.exists():
-                    continue
-
-                img = Image.open(img_path)
-
-                # 根据图片数量决定处理方式
-                if len(img_contents) >= 2:
-                    # 2张及以上图片，统一为方形
-                    img = self._crop_to_square(img)
-
-                # 计算图片尺寸
-                if len(img_contents) == 1:
-                    # 单张图片，根据卡片宽度调整，与视频封面保持一致
-                    max_width = content_width
-                    max_height = min(self.MAX_IMAGE_HEIGHT, content_width)  # 限制最大高度
-                    if img.width > max_width or img.height > max_height:
-                        ratio = min(max_width / img.width, max_height / img.height)
-                        new_size = (int(img.width * ratio), int(img.height * ratio))
-                        img = img.resize(new_size, Image.Resampling.LANCZOS)
-                else:
-                    # 多张图片，计算最大尺寸
-                    if len(img_contents) in (2, 4):
-                        # 2张或4张图片，使用2列布局
-                        num_gaps = 3  # 2列有3个间距
-                        max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // 2
-                        max_size = min(max_size, self.IMAGE_2_GRID_SIZE)
-                    else:
-                        # 多张图片，使用3列布局
-                        num_gaps = self.IMAGE_GRID_COLS + 1
-                        max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // self.IMAGE_GRID_COLS
-                        max_size = min(max_size, self.IMAGE_3_GRID_SIZE)
-
-                    # 调整多张图片的尺寸
-                    if img.width > max_size or img.height > max_size:
-                        ratio = min(max_size / img.width, max_size / img.height)
-                        new_size = (int(img.width * ratio), int(img.height * ratio))
-                        img = img.resize(new_size, Image.Resampling.LANCZOS)
-
+            img_path = await img_content.get_path()
+            # 使用装饰器保护的方法，失败会返回 None
+            img = await self._load_and_process_grid_image(img_path, content_width, img_count)
+            if img is not None:
                 processed_images.append(img)
-            except Exception:
-                continue
 
         if not processed_images:
             return None
@@ -690,6 +685,67 @@ class CommonRenderer(ImageRenderer):
             has_more=has_more,
             remaining_count=remaining_count,
         )
+
+    @suppress_exception_async
+    async def _load_and_process_grid_image(
+        self, img_path: Path, content_width: int, img_count: int
+    ) -> Image.Image | None:
+        """加载并处理网格图片
+
+        Args:
+            img_path: 图片路径
+            content_width: 内容宽度
+            img_count: 图片总数（用于决定处理方式）
+
+        Returns:
+            处理后的图片对象，失败返回 None
+        """
+        if not img_path.exists():
+            return None
+
+        with Image.open(img_path) as original_img:
+            img = original_img
+
+            # 根据图片数量决定处理方式
+            if img_count >= 2:
+                # 2张及以上图片，统一为方形
+                img = self._crop_to_square(img)
+
+            # 计算图片尺寸
+            if img_count == 1:
+                # 单张图片，根据卡片宽度调整，与视频封面保持一致
+                max_width = content_width
+                max_height = min(self.MAX_IMAGE_HEIGHT, content_width)  # 限制最大高度
+                if img.width > max_width or img.height > max_height:
+                    ratio = min(max_width / img.width, max_height / img.height)
+                    new_size = (int(img.width * ratio), int(img.height * ratio))
+                    img = img.resize(new_size, Image.Resampling.LANCZOS)
+                elif img is original_img:
+                    # 如果没有做任何转换，需要 copy 一份
+                    img = img.copy()
+            else:
+                # 多张图片，计算最大尺寸
+                if img_count in (2, 4):
+                    # 2张或4张图片，使用2列布局
+                    num_gaps = 3  # 2列有3个间距
+                    max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // 2
+                    max_size = min(max_size, self.IMAGE_2_GRID_SIZE)
+                else:
+                    # 多张图片，使用3列布局
+                    num_gaps = self.IMAGE_GRID_COLS + 1
+                    max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // self.IMAGE_GRID_COLS
+                    max_size = min(max_size, self.IMAGE_3_GRID_SIZE)
+
+                # 调整多张图片的尺寸
+                if img.width > max_size or img.height > max_size:
+                    ratio = min(max_size / img.width, max_size / img.height)
+                    new_size = (int(img.width * ratio), int(img.height * ratio))
+                    img = img.resize(new_size, Image.Resampling.LANCZOS)
+                elif img is original_img:
+                    # 如果没有做任何转换，需要 copy 一份
+                    img = img.copy()
+
+            return img
 
     def _crop_to_square(self, img: Image.Image) -> Image.Image:
         """将图片裁剪为方形（上下切割）"""
