@@ -424,7 +424,6 @@ class CommonRenderer(ImageRenderer):
         )
 
         await self._draw_sections(ctx, sections)
-
         return image
 
     @suppress_exception
