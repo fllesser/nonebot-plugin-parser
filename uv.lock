@@ -1291,7 +1291,7 @@ requires-dist = [
     { name = "nonebot-plugin-uninfo", specifier = ">=0.10.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
-    { name = "pilmoji-for-parser", git = "https://github.com/fllesser/pilmoji-for-parser?rev=main" },
+    { name = "pilmoji-for-parser" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
     { name = "yt-dlp", marker = "extra == 'all'", specifier = ">=2025.10.14" },
     { name = "yt-dlp", marker = "extra == 'ytdlp'", specifier = ">=2025.10.14" },
@@ -1497,12 +1497,16 @@ wheels = [
 [[package]]
 name = "pilmoji-for-parser"
 version = "0.1.0"
-source = { git = "https://github.com/fllesser/pilmoji-for-parser?rev=main#459f13b10a3b455bcf133b99e4e36957a953a391" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
     { name = "emoji" },
     { name = "httpx" },
     { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/44/f4ed5df26ea758ad7d5d311be8ec3ba462f03a0d36f7bb0262e8c87a13b7/pilmoji_for_parser-0.1.0.tar.gz", hash = "sha256:9c94b6f8c20c14407da7f3d326a99e394cdd3cdcb503820decd6b2f1c0c5f97b", size = 10521, upload-time = "2025-11-06T09:22:27.259Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/4b/63d6531863caeb64ead3c4e6c4fc9d2240d2f10beba803e633eea0fbc657/pilmoji_for_parser-0.1.0-py3-none-any.whl", hash = "sha256:e7d1038fc864d0fd206d25dbda03e14c9ac1b8574ff55d649dc9dd68a20c9898", size = 11104, upload-time = "2025-11-06T09:22:25.982Z" },
 ]
 
 [[package]]

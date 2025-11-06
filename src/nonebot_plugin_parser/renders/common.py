@@ -197,8 +197,6 @@ class RenderContext:
     """当前图像"""
     draw: ImageDraw.ImageDraw
     """绘图对象"""
-    pilmoji: Pilmoji
-    """Pilmoji实例"""
     not_repost: bool = True
     """是否为非转发内容"""
     bg_color: tuple[int, int, int] | None = None
@@ -282,8 +280,9 @@ class CommonRenderer(ImageRenderer):
     DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "media_button.png"
     """默认视频按钮路径"""
     EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
-        style=EmojiStyle.GOOGLE, cache_dir=pconfig.cache_dir / "emojis"
+        style=EmojiStyle.TWITTER, cache_dir=pconfig.cache_dir / "emojis"
     )
+    PILMOJI: ClassVar[Pilmoji] = Pilmoji(source=EMOJI_SOURCE)
 
     @classmethod
     def load_resources(cls):
@@ -354,6 +353,18 @@ class CommonRenderer(ImageRenderer):
     #                 logger.error(f"resize 平台 logo 失败: {platform_name}")
     #                 continue
 
+    @classmethod
+    async def text(
+        cls,
+        ctx: RenderContext,
+        text: str,
+        xy: tuple[int, int],
+        fill: tuple[int, int, int],
+        font: ImageFont.FreeTypeFont,
+    ):
+        """绘制文本"""
+        await cls.PILMOJI.text(ctx.image, xy, text, fill=fill, font=font)
+
     @override
     async def render_image(self, result: ParseResult) -> bytes:
         """使用 PIL 绘制通用社交媒体帖子卡片
@@ -401,23 +412,18 @@ class CommonRenderer(ImageRenderer):
         background_color = bg_color if bg_color is not None else self.BG_COLOR
         image = Image.new("RGB", (card_width, card_height), background_color)
         draw = ImageDraw.Draw(image)
-        pilmoji = Pilmoji(image, source=self.EMOJI_SOURCE, draw=draw)
-
         # 创建完整的渲染上下文（一次性初始化所有值）
         ctx = RenderContext(
             result=result,
             card_width=card_width,
             image=image,
             draw=draw,
-            pilmoji=pilmoji,
             not_repost=not_repost,
             bg_color=bg_color,
             y_pos=self.PADDING,
         )
 
-        # 绘制所有部分
         await self._draw_sections(ctx, sections)
-
         return image
 
     @suppress_exception
@@ -860,14 +866,14 @@ class CommonRenderer(ImageRenderer):
 
         # 发布者名称（蓝色）
         for line in section.name_lines:
-            await ctx.pilmoji.text((text_x, text_y), line, fill=self.HEADER_COLOR, font=self.fontset.name_font.font)
+            await self.text(ctx, line, (text_x, text_y), self.HEADER_COLOR, self.fontset.name_font.font)
             text_y += self.fontset.name_font.line_height
 
         # 时间（灰色）
         if section.time_lines:
             text_y += self.NAME_TIME_GAP
             for line in section.time_lines:
-                await ctx.pilmoji.text((text_x, text_y), line, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font)
+                await self.text(ctx, line, (text_x, text_y), self.EXTRA_COLOR, self.fontset.extra_font.font)
                 text_y += self.fontset.extra_font.line_height
 
         # 在右侧绘制平台 logo（仅在非转发内容时绘制）
@@ -886,9 +892,7 @@ class CommonRenderer(ImageRenderer):
     async def _draw_title(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制标题"""
         for line in lines:
-            await ctx.pilmoji.text(
-                (self.PADDING, ctx.y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.title_font.font
-            )
+            await self.text(ctx, line, (self.PADDING, ctx.y_pos), self.TEXT_COLOR, self.fontset.title_font.font)
             ctx.y_pos += self.fontset.title_font.line_height
         ctx.y_pos += self.SECTION_SPACING
 
@@ -909,9 +913,7 @@ class CommonRenderer(ImageRenderer):
     async def _draw_text(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制文本内容"""
         for line in lines:
-            await ctx.pilmoji.text(
-                (self.PADDING, ctx.y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.text_font.font
-            )
+            await self.text(ctx, line, (self.PADDING, ctx.y_pos), self.TEXT_COLOR, self.fontset.text_font.font)
             ctx.y_pos += self.fontset.text_font.line_height
         ctx.y_pos += self.SECTION_SPACING
 
@@ -920,9 +922,7 @@ class CommonRenderer(ImageRenderer):
         # 绘制文本内容（如果有）
         if section.text_lines:
             for line in section.text_lines:
-                await ctx.pilmoji.text(
-                    (self.PADDING, ctx.y_pos), line, fill=self.TEXT_COLOR, font=self.fontset.text_font.font
-                )
+                await self.text(ctx, line, (self.PADDING, ctx.y_pos), self.TEXT_COLOR, self.fontset.text_font.font)
                 ctx.y_pos += self.fontset.text_font.line_height
             ctx.y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
 
@@ -938,9 +938,7 @@ class CommonRenderer(ImageRenderer):
             extra_font_info = self.fontset.extra_font
             text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (ctx.content_width - text_width) // 2
-            await ctx.pilmoji.text(
-                (text_x, ctx.y_pos), section.alt_text, fill=self.EXTRA_COLOR, font=extra_font_info.font
-            )
+            await self.text(ctx, section.alt_text, (text_x, ctx.y_pos), self.EXTRA_COLOR, extra_font_info.font)
             ctx.y_pos += extra_font_info.line_height
 
         ctx.y_pos += self.SECTION_SPACING
@@ -948,9 +946,7 @@ class CommonRenderer(ImageRenderer):
     async def _draw_extra(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制额外信息"""
         for line in lines:
-            await ctx.pilmoji.text(
-                (self.PADDING, ctx.y_pos), line, fill=self.EXTRA_COLOR, font=self.fontset.extra_font.font
-            )
+            await self.text(ctx, line, (self.PADDING, ctx.y_pos), self.EXTRA_COLOR, self.fontset.extra_font.font)
             ctx.y_pos += self.fontset.extra_font.line_height
 
     def _draw_repost(self, ctx: RenderContext, section: RepostSectionData) -> None:
