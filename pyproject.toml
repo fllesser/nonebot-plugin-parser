@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-parser"
-version = "2.1.0"
+version = "2.1.1"
 description = "NoneBot2 链接分享解析 Alconna 版, 通用媒体卡片渲染(PIL 实现), 支持 B站/抖音/快手/微博/小红书/youtube/tiktok/twitter/acfun/nga"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -87,7 +87,7 @@ requires = ["uv_build>=0.9.0,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.bumpversion]
-current_version = "2.1.0"
+current_version = "2.1.1"
 commit = true
 message = "🔖 release: bump vesion from {current_version} to {new_version}"
 tag = true
