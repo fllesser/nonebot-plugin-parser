@@ -47,6 +47,7 @@ dependencies = [
   "nonebot-plugin-uninfo>=0.10.0",
   "nonebot2>=2.4.3,<3.0.0",
   "pillow>=11.0.0",
+  "pilmoji-for-parser",
   "tqdm>=4.67.1,<5.0.0",
 ]
 
@@ -205,3 +206,6 @@ conflicts = [
     { group = "telegram" },
   ],
 ]
+
+[tool.uv.sources]
+pilmoji-for-parser = { git = "https://github.com/fllesser/pilmoji-for-parser", rev = "main" }
