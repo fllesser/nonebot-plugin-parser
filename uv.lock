@@ -1291,7 +1291,7 @@ requires-dist = [
     { name = "nonebot-plugin-uninfo", specifier = ">=0.10.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
-    { name = "pilmoji-for-parser", git = "https://github.com/fllesser/pilmoji-for-parser?rev=main" },
+    { name = "pilmoji-for-parser", git = "https://github.com/fllesser/pilmoji-for-parser?rev=459f13b10a3b455bcf133b99e4e36957a953a391" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
     { name = "yt-dlp", marker = "extra == 'all'", specifier = ">=2025.10.14" },
     { name = "yt-dlp", marker = "extra == 'ytdlp'", specifier = ">=2025.10.14" },
@@ -1497,7 +1497,7 @@ wheels = [
 [[package]]
 name = "pilmoji-for-parser"
 version = "0.1.0"
-source = { git = "https://github.com/fllesser/pilmoji-for-parser?rev=main#459f13b10a3b455bcf133b99e4e36957a953a391" }
+source = { git = "https://github.com/fllesser/pilmoji-for-parser?rev=459f13b10a3b455bcf133b99e4e36957a953a391#459f13b10a3b455bcf133b99e4e36957a953a391" }
 dependencies = [
     { name = "aiofiles" },
     { name = "emoji" },
