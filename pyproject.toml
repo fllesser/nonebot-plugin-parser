@@ -208,4 +208,4 @@ conflicts = [
 ]
 
 [tool.uv.sources]
-pilmoji-for-parser = { git = "https://github.com/fllesser/pilmoji-for-parser", rev = "perf-source" }
+pilmoji-for-parser = { git = "https://github.com/fllesser/pilmoji-for-parser", rev = "a79d9ef78fc97bb0deaf754ec3b8c840a09693cd" }
