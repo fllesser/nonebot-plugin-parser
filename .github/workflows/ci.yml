@@ -130,6 +130,7 @@ jobs:
 
     env:
       UV_NO_SYNC: 1
+      COMMENT_TOKEN: ${{ secrets.COMMENT_TOKEN }}
 
     steps:
       - uses: actions/checkout@v5
@@ -167,11 +168,13 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
+          token: ${{ env.COMMENT_TOKEN }}
 
       - name: Update Comment
-        if: ${{ github.event.pull_request.number }}
+        if: ${{ steps.fc.outputs.comment-id }}
         uses: peter-evans/create-or-update-comment@v5
         with:
+          token: ${{ env.COMMENT_TOKEN }}
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body-path: render_result.md
