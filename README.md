@@ -134,25 +134,68 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 
 ## ⚙️ 配置
 
-在 nonebot2 项目的`.env`文件中添加下表中的必填配置
+<details>
+<summary>配置项</summary>
 
-|            配置项            | 必填  |          默认值          |                                                                                                                                      说明                                                                                                                                       |
-| :--------------------------: | :---: | :----------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-|           NICKNAME           |  否   |           [""]           |                                                                                                                   nonebot2 内置配置，可作为解析结果消息的前缀                                                                                                                   |
-|         API_TIMEOUT          |  否   |           30.0           |                                                                                                           nonebot2 内置配置，若服务器上传带宽太低，建议调高，防止超时                                                                                                           |
-|        parser_bili_ck        |  否   |            ""            | B 站 cookie, 必须含有 SESSDATA 项，可附加 B 站 AI 总结功能, 如果需要长期使用此凭据则不应该在**浏览器登录账户**导致 cookie 被刷新，建议注册个小号获取, 也可以配置 ac_time_value 项，用于凭据的自动刷新，[获取方式](https://github.com/fllesser/nonebot-plugin-parser/issues/177) |
-|   parser_bili_video_codes    |  否   | '["avc", "av01", "hev"]' |                                                  允许的 B 站视频编码，越靠前的编码优先级越高，可选 "avc"(H.264，体积较大), "hev"(HEVC), "av01"(AV1), 后两项在不同设备可能有兼容性问题，如需完全避免，可只填一项，如 '["avc"]'                                                   |
-|        parser_ytb_ck         |  否   |            ""            |                                                                                                              Youtube cookie, Youtube 视频因人机检测下载失败，需填                                                                                                               |
-|         parser_proxy         |  否   |           None           |                                                                                 仅作用于 youtube, tiktok 解析，推特解析会自动读取环境变量中的 http_proxy / https_proxy(代理软件通常会自动设置)                                                                                  |
-|      parser_need_upload      |  否   |          False           |                                                                                                                          音频解析，是否需要上传群文件                                                                                                                           |
-|      parser_use_base64       |  否   |          False           |                                            视频，图片，音频是否使用 base64 发送，注意：编解码和传输 base64 会占用更多的内存,性能和带宽, 甚至可能会使 websocket 连接崩溃，因此该配置项仅推荐 nonebot 和 协议端不在同一机器的用户配置                                             |
-|   parser_duration_maximum    |  否   |           480            |                                                                                                                          视频最大解析时长，单位：_秒_                                                                                                                           |
-|       parser_max_size        |  否   |            90            |                                                                                                              音视频下载最大文件大小，单位 MB，超过该配置将阻断下载                                                                                                              |
-|  parser_disabled_platforms   |  否   |            []            |                               全局禁止的解析，示例 parser_disabled_platforms=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖, 请根据自己需求填写["bilibili", "douyin", "kuaishou", "twitter", "youtube", "acfun", "tiktok", "weibo", "xiaohongshu"]                               |
-|      parser_render_type      |  否   |         "common"         |                                                                                        渲染器类型，可选 "default"(无图片渲染), "common"(PIL 通用图片渲染), "htmlkit"(htmlkit, 暂不可用)                                                                                         |
-|      parser_append_url       |  否   |          False           |                                                                                                                           是否在解析结果中附加原始URL                                                                                                                           |
-|      parser_custom_font      |  否   |           None           |                                                                            自定义渲染字体，配置字体文件名，并将字体文件放置于 localstore 生成的插件 data 目录下（如 ./data/nonebot_plugin_parser/）                                                                             |
-| parser_need_forward_contents |  否   |           True           |                                                                                                                是否需要转发媒体内容(超过 4 项时始终使用合并转发)                                                                                                                |
+```bash
+# [可选] nonebot2 内置配置，若服务器上传带宽太低，建议调高，防止超时
+API_TIMEOUT=30.0
+
+# [可选] B 站 cookie, 必须含有 SESSDATA 项，可附加 B 站 AI 总结功能
+# 如果需要长期使用此凭据则不应该在浏览器登录账户导致 cookie 被刷新，建议注册个小号获取
+# 也可以配置 ac_time_value 项，用于凭据的自动刷新
+# 获取方式: https://github.com/fllesser/nonebot-plugin-parser/issues/177
+parser_bili_ck=""
+
+# [可选] 允许的 B 站视频编码，越靠前的编码优先级越高
+# 可选 "avc"(H.264，体积较大), "hev"(HEVC), "av01"(AV1)
+# 后两项在不同设备可能有兼容性问题，如需完全避免，可只填一项，如 '["avc"]'
+parser_bili_video_codes='["avc", "av01", "hev"]'
+
+# [可选] Youtube Cookie, Youtube 视频因人机检测下载失败，需填
+parser_ytb_ck=""
+
+# [可选] 仅作用于 youtube, tiktok 解析
+# 推特解析会自动读取环境变量中的 http_proxy / https_proxy(代理软件通常会自动设置)
+parser_proxy=None
+
+# [可选] 音频解析，是否需要上传群文件
+parser_need_upload=False
+
+# [可选] 视频，图片，音频是否使用 base64 发送
+# 注意：编解码和传输 base64 会占用更多的内存,性能和带宽, 甚至可能会使 websocket 连接崩溃
+# 因此该配置项仅推荐 nonebot 和 协议端不在同一机器的用户配置
+parser_use_base64=False
+
+# [可选] 视频最大解析时长，单位：秒
+parser_duration_maximum=480
+
+# [可选] 音视频下载最大文件大小，单位 MB，超过该配置将阻断下载
+parser_max_size=90
+
+# [可选] 全局禁止的解析
+# 示例 parser_disabled_platforms=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖音
+# 可选值: ["bilibili", "douyin", "kuaishou", "twitter", "youtube", "acfun", "tiktok", "weibo", "xiaohongshu"]
+parser_disabled_platforms='["twitter"]'
+
+# [可选] 渲染器类型
+# 可选 "default"(无图片渲染), "common"(PIL 通用图片渲染), "htmlkit"(htmlkit, 暂不可用)
+parser_render_type="common"
+
+# [可选] 是否在解析结果中附加原始URL
+parser_append_url=False
+
+# [可选] 自定义渲染字体
+# 配置字体文件名，并将字体文件放置于 localstore 生成的插件 data 目录下
+# 例如: ./data/nonebot_plugin_parser/
+parser_custom_font=None
+
+# [可选] 是否需要转发媒体内容(超过 4 项时始终使用合并转发)
+parser_need_forward_contents=True
+```
+
+</details>
+
 ## 🎉 使用
 ### 指令表
 |   指令   |         权限          | 需要@ | 范围  |   说明   |
@@ -164,6 +207,147 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 - [LXGW ZhenKai / 霞鹜臻楷](https://github.com/lxgw/LxgwZhenKai) 效果图使用字体
 - [LXGW Neo XiHei / 霞鹜新晰黑](https://github.com/lxgw/LxgwNeoXiHei)
 - [LXGW Neo ZhiSong / 霞鹜新致宋 / 霞鶩新緻宋](https://github.com/lxgw/LxgwNeoZhiSong)
+
+## 扩展
+> [!IMPORTANT]
+> 插件自 `v2.1.1` 版本开始支持自定义解析器，通过继承 `BaseParser` 类并实现 `platform`, `patterns`, `parse` 方法来实现自定义解析器。
+<details>
+<summary>完整示例</summary>
+
+```python
+from re import Match
+from typing import ClassVar
+
+from httpx import AsyncClient
+from nonebot import require
+
+require("nonebot_plugin_parser")
+from nonebot_plugin_parser.parsers import BaseParser, ParseResult
+from nonebot_plugin_parser.parsers.base import Platform
+
+
+class ExampleParser(BaseParser):
+    """示例视频网站解析器"""
+
+    platform: ClassVar[Platform] = Platform(name="example", display_name="示例网站")
+
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("example.com", r"example\.com/video/(?P<video_id>\w+)"),
+        ("ex.short", r"ex\.short/(?P<short_id>\w+)"),
+    ]
+
+    async def parse(self, keyword: str, searched: Match[str]) -> ParseResult:
+        # 1. 提取视频 ID
+        if keyword == "ex.short":
+            # 处理短链接
+            short_id = searched.group("short_id")
+            full_url = await self.get_redirect_url(f"https://ex.short/{short_id}")
+            video_id = full_url.split("/")[-1]
+        else:
+            video_id = searched.group("video_id")
+
+        # 2. 请求 API 获取视频信息
+        async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+            resp = await client.get(f"https://api.example.com/video/{video_id}")
+            resp.raise_for_status()
+            data = resp.json()
+
+        # 3. 提取数据
+        title = data["title"]
+        author_name = data["author"]["name"]
+        avatar_url = data["author"]["avatar"]
+        video_url = data["video_url"]
+        cover_url = data["cover_url"]
+        duration = data["duration"]
+        timestamp = data["publish_time"]
+        description = data.get("description", "")
+
+        # 4. 视频内容
+        author = self.create_author(author_name, avatar_url)
+        video = self.create_video_content(video_url, cover_url, duration)
+
+        # 5. 图集内容
+        image_urls = data.get("images")
+        images = self.create_image_contents(image_urls)
+
+        # 6. 返回解析结果
+        return self.result(
+            title=title,
+            text=description,
+            author=author,
+            contents=[video, *images],
+            timestamp=timestamp,
+            url=f"https://example.com/video/{video_id}",
+        )
+
+```
+</details>
+<details>
+<summary>辅助函数</summary>
+
+> 构建作者信息
+
+```python
+author = self.create_author(
+    name="作者名",
+    avatar_url="https://example.com/avatar.jpg",   # 可选，会自动下载
+    description="个性签名"                          # 可选
+)
+```
+
+> 构建视频内容
+```python
+# 方式1：传入 URL，自动下载
+video = self.create_video_content(
+    url_or_task="https://example.com/video.mp4",
+    cover_url="https://example.com/cover.jpg",  # 可选
+    duration=120.5                               # 可选，单位：秒
+)
+
+# 方式2：传入已创建的下载任务
+from nonebot_plugin_parser.download import DOWNLOADER
+video_task = DOWNLOADER.download_video(url, ext_headers=self.headers)
+video = self.create_video_content(
+    url_or_task=video_task,
+    cover_url=cover_url,
+    duration=duration
+)
+```
+
+> 构建图集内容
+```python
+# 并发下载图集内容
+images = self.create_image_contents([
+    "https://example.com/img1.jpg",
+    "https://example.com/img2.jpg",
+])
+```
+
+> 构建图文内容(适用于类似 Bilibili 动态图文混排)
+```python
+graphics = self.create_graphics_content(
+    image_url="https://example.com/image.jpg",
+    text="图片前的文字说明",  # 可选
+    alt="图片描述"            # 可选，居中显示
+)
+```
+
+> 创建动图内容（GIF)，平台一般只提供视频（后续插件会做自动转为 gif 的处理)
+```python
+dynamics = self.create_dynamic_contents([
+    "https://example.com/dynamic1.mp4", 
+    "https://example.com/dynamic2.mp4",
+])
+```
+> 重定向 url
+```python
+real_url = await self.get_redirect_url(
+    url="https://short.url/abc",
+    headers=self.headers  # 可选
+)
+```
+
+</details>
 
 
 ## 致谢
