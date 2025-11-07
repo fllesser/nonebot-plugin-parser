@@ -35,8 +35,9 @@ def register_parser_matcher():
             KEYWORD_PARSER_MAP[keyword] = parser
     logger.info(f"启用平台: {', '.join(sorted(enabled_platform_names))}")
 
-    parser_matcher = on_keyword_regex(*[pattern for _cls in enabled_parser_classes for pattern in _cls.patterns])
-    parser_matcher.append_handler(parser_handler)
+    patterns = [p for _cls in enabled_parser_classes for p in _cls.patterns]
+    matcher = on_keyword_regex(*patterns)
+    matcher.append_handler(parser_handler)
 
 
 # 缓存结果
@@ -109,3 +110,59 @@ async def _message_reaction(
         emoji = emoji_map[status][1]
 
     await uniseg.message_reaction(emoji, message_id=message_id)
+
+
+import re
+from typing import cast
+
+from nonebot import on_command
+from nonebot.adapters import Message
+from nonebot.params import CommandArg
+from nonebot_plugin_alconna import UniMessage
+
+from ..download import DOWNLOADER
+from ..helper import UniHelper
+from ..parsers import BilibiliParser
+
+
+@on_command("bm", priority=3, block=True).handle()
+async def _(message: Message = CommandArg()):
+    text = message.extract_plain_text()
+    matched = re.search(r"(BV[\dA-Za-z]{10})(\d{1,3})?", text)
+    if not matched:
+        await UniMessage("请发送正确的音频链接").finish()
+
+    bvid, page_num = matched.group(1), matched.group(2)
+
+    bili_parser = KEYWORD_PARSER_MAP["BV"]
+    bili_parser = cast(BilibiliParser, bili_parser)
+    _, audio_url = await bili_parser.get_download_urls(bvid=bvid, page_index=int(page_num) - 1)
+    if not audio_url:
+        await UniMessage("未找到可下载的音频").finish()
+
+    audio_path = await DOWNLOADER.download_audio(audio_url)
+    await UniMessage(UniHelper.record_seg(audio_path)).send()
+
+    if pconfig.need_upload:
+        await UniMessage(UniHelper.file_seg(audio_path)).send()
+
+
+from ..download import YTDLP_DOWNLOADER
+
+if YTDLP_DOWNLOADER is not None:
+    from ..parsers import YouTubeParser
+
+    @on_command("ym", priority=3, block=True).handle()
+    async def _(message: Message = CommandArg()):
+        text = message.extract_plain_text()
+        ytb_parser = cast(YouTubeParser, KEYWORD_PARSER_MAP["youtu.be"])
+        _, matched = ytb_parser.search_url(text)
+        if not matched:
+            await UniMessage("请发送正确的 youtube 链接").finish()
+
+        url = matched.group(0)
+        audio_path = await YTDLP_DOWNLOADER.download_audio(url)
+        await UniMessage(UniHelper.record_seg(audio_path)).send()
+
+        if pconfig.need_upload:
+            await UniMessage(UniHelper.file_seg(audio_path)).send()
