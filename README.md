@@ -55,7 +55,7 @@
 > [!Important]
 > 插件可选依赖 `htmlkit`, `ytdlp`, `all`，分别用于 htmlkit 渲染和 youtube / tiktok 解析，如果需要使用，请在安装时指定，如 `nb plugin install nonebot-plugin-parser[ytdlp]`
 
-<details open>
+<details>
 <summary>使用 nb-cli 安装/更新</summary>
 在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
 
@@ -71,7 +71,7 @@
 <details>
 <summary>使用包管理器安装</summary>
 在 nonebot2 项目的插件目录下, 打开命令行, 根据你使用的包管理器, 输入相应的安装命令
-<details open>
+<details>
 <summary>uv</summary>
 使用 uv 安装
 
@@ -119,7 +119,7 @@
 
 </details>
 
-<details open>
+<details>
 <summary>安装必要组件</summary>
 部分解析依赖于 ffmpeg
 
@@ -155,7 +155,7 @@ parser_bili_video_codes='["avc", "av01", "hev"]'
 # [可选] Youtube Cookie, Youtube 视频因人机检测下载失败，需填
 parser_ytb_ck=""
 
-# [可选] 仅作用于 youtube, tiktok 解析
+# [可选] 代理, 仅作用于 youtube, tiktok 解析
 # 推特解析会自动读取环境变量中的 http_proxy / https_proxy(代理软件通常会自动设置)
 parser_proxy=None
 
@@ -188,7 +188,7 @@ parser_append_url=False
 # [可选] 自定义渲染字体
 # 配置字体文件名，并将字体文件放置于 localstore 生成的插件 data 目录下
 # 例如: ./data/nonebot_plugin_parser/
-parser_custom_font=None
+parser_custom_font="LXGWZhenKaiGB-Regular.ttf"
 
 # [可选] 是否需要转发媒体内容(超过 4 项时始终使用合并转发)
 parser_need_forward_contents=True
