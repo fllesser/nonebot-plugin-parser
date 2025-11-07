@@ -138,9 +138,6 @@ Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
 <summary>配置项</summary>
 
 ```bash
-# [可选] nonebot2 内置配置，可作为解析结果消息的前缀
-NICKNAME=[""]
-
 # [可选] nonebot2 内置配置，若服务器上传带宽太低，建议调高，防止超时
 API_TIMEOUT=30.0
 
@@ -179,7 +176,7 @@ parser_max_size=90
 # [可选] 全局禁止的解析
 # 示例 parser_disabled_platforms=["bilibili", "douyin"] 表示禁止了哔哩哔哩和抖音
 # 可选值: ["bilibili", "douyin", "kuaishou", "twitter", "youtube", "acfun", "tiktok", "weibo", "xiaohongshu"]
-parser_disabled_platforms=[]
+parser_disabled_platforms='["twitter"]'
 
 # [可选] 渲染器类型
 # 可选 "default"(无图片渲染), "common"(PIL 通用图片渲染), "htmlkit"(htmlkit, 暂不可用)
@@ -210,6 +207,147 @@ parser_need_forward_contents=True
 - [LXGW ZhenKai / 霞鹜臻楷](https://github.com/lxgw/LxgwZhenKai) 效果图使用字体
 - [LXGW Neo XiHei / 霞鹜新晰黑](https://github.com/lxgw/LxgwNeoXiHei)
 - [LXGW Neo ZhiSong / 霞鹜新致宋 / 霞鶩新緻宋](https://github.com/lxgw/LxgwNeoZhiSong)
+
+## 扩展
+> [!IMPORTANT]
+> 插件自 `v2.1.1` 版本开始支持自定义解析器，通过继承 `BaseParser` 类并实现 `platform`, `patterns`, `parse` 方法来实现自定义解析器。
+<details>
+<summary>完整示例</summary>
+
+```python
+from re import Match
+from typing import ClassVar
+
+from httpx import AsyncClient
+from nonebot import require
+
+require("nonebot_plugin_parser")
+from nonebot_plugin_parser.parsers import BaseParser, ParseResult
+from nonebot_plugin_parser.parsers.base import Platform
+
+
+class ExampleParser(BaseParser):
+    """示例视频网站解析器"""
+
+    platform: ClassVar[Platform] = Platform(name="example", display_name="示例网站")
+
+    patterns: ClassVar[list[tuple[str, str]]] = [
+        ("example.com", r"example\.com/video/(?P<video_id>\w+)"),
+        ("ex.short", r"ex\.short/(?P<short_id>\w+)"),
+    ]
+
+    async def parse(self, keyword: str, searched: Match[str]) -> ParseResult:
+        # 1. 提取视频 ID
+        if keyword == "ex.short":
+            # 处理短链接
+            short_id = searched.group("short_id")
+            full_url = await self.get_redirect_url(f"https://ex.short/{short_id}")
+            video_id = full_url.split("/")[-1]
+        else:
+            video_id = searched.group("video_id")
+
+        # 2. 请求 API 获取视频信息
+        async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+            resp = await client.get(f"https://api.example.com/video/{video_id}")
+            resp.raise_for_status()
+            data = resp.json()
+
+        # 3. 提取数据
+        title = data["title"]
+        author_name = data["author"]["name"]
+        avatar_url = data["author"]["avatar"]
+        video_url = data["video_url"]
+        cover_url = data["cover_url"]
+        duration = data["duration"]
+        timestamp = data["publish_time"]
+        description = data.get("description", "")
+
+        # 4. 视频内容
+        author = self.create_author(author_name, avatar_url)
+        video = self.create_video_content(video_url, cover_url, duration)
+
+        # 5. 图集内容
+        image_urls = data.get("images")
+        images = self.create_image_contents(image_urls)
+
+        # 6. 返回解析结果
+        return self.result(
+            title=title,
+            text=description,
+            author=author,
+            contents=[video, *images],
+            timestamp=timestamp,
+            url=f"https://example.com/video/{video_id}",
+        )
+
+```
+</details>
+<details>
+<summary>辅助函数</summary>
+
+> 构建作者信息
+
+```python
+author = self.create_author(
+    name="作者名",
+    avatar_url="https://example.com/avatar.jpg",   # 可选，会自动下载
+    description="个性签名"                          # 可选
+)
+```
+
+> 构建视频内容
+```python
+# 方式1：传入 URL，自动下载
+video = self.create_video_content(
+    url_or_task="https://example.com/video.mp4",
+    cover_url="https://example.com/cover.jpg",  # 可选
+    duration=120.5                               # 可选，单位：秒
+)
+
+# 方式2：传入已创建的下载任务
+from nonebot_plugin_parser.download import DOWNLOADER
+video_task = DOWNLOADER.download_video(url, ext_headers=self.headers)
+video = self.create_video_content(
+    url_or_task=video_task,
+    cover_url=cover_url,
+    duration=duration
+)
+```
+
+> 构建图集内容
+```python
+# 并发下载图集内容
+images = self.create_image_contents([
+    "https://example.com/img1.jpg",
+    "https://example.com/img2.jpg",
+])
+```
+
+> 构建图文内容(适用于类似 Bilibili 动态图文混排)
+```python
+graphics = self.create_graphics_content(
+    image_url="https://example.com/image.jpg",
+    text="图片前的文字说明",  # 可选
+    alt="图片描述"            # 可选，居中显示
+)
+```
+
+> 创建动图内容（GIF)，平台一般只提供视频（后续插件会做自动转为 gif 的处理)
+```python
+dynamics = self.create_dynamic_contents([
+    "https://example.com/dynamic1.mp4", 
+    "https://example.com/dynamic2.mp4",
+])
+```
+> 重定向 url
+```python
+real_url = await self.get_redirect_url(
+    url="https://short.url/abc",
+    headers=self.headers  # 可选
+)
+```
+
+</details>
 
 
 ## 致谢
