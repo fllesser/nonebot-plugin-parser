@@ -210,7 +210,7 @@ parser_need_forward_contents=True
 
 ## 🧩 扩展
 > [!IMPORTANT]
-> 插件自 `v2.1.1` 版本开始支持自定义解析器，通过继承 `BaseParser` 类并实现 `platform`, `patterns`, `parse` 方法来实现自定义解析器。
+> 插件自 `v2.1.1` 版本开始支持自定义解析器，通过继承 `BaseParser` 类并实现 `platform`, `patterns`, `parse` 即可
 <details>
 <summary>完整示例</summary>
 
