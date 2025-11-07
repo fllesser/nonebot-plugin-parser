@@ -144,7 +144,8 @@ API_TIMEOUT=30.0
 # [可选] B 站 cookie, 必须含有 SESSDATA 项，可附加 B 站 AI 总结功能
 # 如果需要长期使用此凭据则不应该在浏览器登录账户导致 cookie 被刷新，建议注册个小号获取
 # 各项获取方式 https://nemo2011.github.io/bilibili-api/#/get-credential
-# ac_time_value 相对特殊，仅用于刷新 Cookies，打开 B 站，打开开发者工具，进入控制台，输入 window.localStorage.ac_time_value 即可获取其值。
+# ac_time_value 相对特殊，仅用于刷新 Cookies
+# B站网页打开开发者工具，进入控制台，输入 window.localStorage.ac_time_value 即可获取其值。
 parser_bili_ck="SESSDATA=xxxxxxxxxx;ac_time_value=131231241231241"
 
 # [可选] 允许的 B 站视频编码，越靠前的编码优先级越高
