@@ -208,7 +208,7 @@ parser_need_forward_contents=True
 - [LXGW Neo XiHei / 霞鹜新晰黑](https://github.com/lxgw/LxgwNeoXiHei)
 - [LXGW Neo ZhiSong / 霞鹜新致宋 / 霞鶩新緻宋](https://github.com/lxgw/LxgwNeoZhiSong)
 
-## 扩展
+## 🧩 扩展
 > [!IMPORTANT]
 > 插件自 `v2.1.1` 版本开始支持自定义解析器，通过继承 `BaseParser` 类并实现 `platform`, `patterns`, `parse` 方法来实现自定义解析器。
 <details>
@@ -350,6 +350,6 @@ real_url = await self.get_redirect_url(
 </details>
 
 
-## 致谢
+## 🎉 致谢
 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
 [parse-video-py](https://github.com/wujunwei928/parse-video-py)
