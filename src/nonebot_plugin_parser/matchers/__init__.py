@@ -128,19 +128,22 @@ from ..parsers import BilibiliParser
 @on_command("bm", priority=3, block=True).handle()
 async def _(message: Message = CommandArg()):
     text = message.extract_plain_text()
-    matched = re.search(r"(BV[\dA-Za-z]{10})(\d{1,3})?", text)
+    matched = re.search(r"(BV[A-Za-z0-9]{10})(\s\d{1,3})?", text)
     if not matched:
-        await UniMessage("请发送正确的音频链接").finish()
+        await UniMessage("请发送正确的 BV 号").finish()
 
     bvid, page_num = matched.group(1), matched.group(2)
+    page_idx = int(page_num) if page_num else 0
 
     bili_parser = KEYWORD_PARSER_MAP["BV"]
     bili_parser = cast(BilibiliParser, bili_parser)
-    _, audio_url = await bili_parser.get_download_urls(bvid=bvid, page_index=int(page_num) - 1)
+    _, audio_url = await bili_parser.get_download_urls(bvid=bvid, page_index=page_idx)
     if not audio_url:
         await UniMessage("未找到可下载的音频").finish()
 
-    audio_path = await DOWNLOADER.download_audio(audio_url)
+    audio_path = await DOWNLOADER.download_audio(
+        audio_url, audio_name=f"{bvid}-{page_idx}.mp3", ext_headers=bili_parser.headers
+    )
     await UniMessage(UniHelper.record_seg(audio_path)).send()
 
     if pconfig.need_upload:
