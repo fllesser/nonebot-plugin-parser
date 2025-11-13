@@ -195,20 +195,22 @@ parser_custom_font="LXGWZhenKaiGB-Regular.ttf"
 parser_need_forward_contents=True
 ```
 
-
 </details>
 
-## 🎉 使用
-### 指令表
-|   指令   |         权限          | 需要@ | 范围  |   说明   |
-| :------: | :-------------------: | :---: | :---: | :------: |
-| 开启解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  | 开启解析 |
-| 关闭解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  | 关闭解析 |
-
-### 推荐的字体
+<details>
+<summary>推荐的字体</summary>
 - [LXGW ZhenKai / 霞鹜臻楷](https://github.com/lxgw/LxgwZhenKai) 效果图使用字体
 - [LXGW Neo XiHei / 霞鹜新晰黑](https://github.com/lxgw/LxgwNeoXiHei)
 - [LXGW Neo ZhiSong / 霞鹜新致宋 / 霞鶩新緻宋](https://github.com/lxgw/LxgwNeoZhiSong)
+</details>
+
+## 🎉 使用
+|   指令   |         权限          | 需要@ | 范围  |       说明        |
+| :------: | :-------------------: | :---: | :---: | :---------------: |
+| 开启解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  |     开启解析      |
+| 关闭解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  |     关闭解析      |
+|    bm    |          ALL          |  否   | 群聊  |   下载 B 站音频   |
+|    ym    |          ALL          |  否   | 群聊  | 下载 youtube 音频 |
 
 ## 🧩 扩展
 > [!IMPORTANT]
