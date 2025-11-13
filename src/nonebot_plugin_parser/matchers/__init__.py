@@ -98,18 +98,22 @@ async def _message_reaction(
     status: Literal["fail", "resolving", "done"],
 ) -> None:
     emoji_map = {
-        "fail": ["10060", "❌"],
-        "resolving": ["424", "👀"],
-        "done": ["144", "🎉"],
+        "fail": ("10060", "❌"),
+        "resolving": ("424", "👀"),
+        "done": ("144", "🎉"),
     }
     message_id = uniseg.get_message_id(event)
     target = uniseg.get_target(event)
-    if target.adapter == SupportAdapter.onebot11:
+
+    if target.adapter in (SupportAdapter.onebot11, SupportAdapter.qq):
         emoji = emoji_map[status][0]
     else:
         emoji = emoji_map[status][1]
 
-    await uniseg.message_reaction(emoji, message_id=message_id)
+    try:
+        await uniseg.message_reaction(emoji, message_id=message_id)
+    except Exception:
+        logger.warning(f"reaction {emoji} to {message_id} failed, maybe not support")
 
 
 import re
