@@ -49,7 +49,6 @@ dependencies = [
   "pillow>=11.0.0",
   "pilmoji-for-parser",
   "tqdm>=4.67.1,<5.0.0",
-  "yt-dlp[default]>=2025.11.12",
 ]
 
 [project.urls]
@@ -58,17 +57,16 @@ Release = "https://github.com/fllesser/nonebot-plugin-parser/releases"
 Repository = "https://github.com/fllesser/nonebot-plugin-parser"
 
 [project.optional-dependencies]
-all = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp>=2025.10.14"]
+all = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp[default]>=2025.11.12"]
 htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc4"]
-ytdlp = ["yt-dlp>=2025.10.14"]
+ytdlp = ["yt-dlp[default]>=2025.11.12"]
 
 [dependency-groups]
 dev = [
   "nonebot2[fastapi]>=2.4.3,<3.0.0",
-  "pre-commit>=4.3.0",
-  "ruff>=0.14.3,<1.0.0",
+  "ruff>=0.14.4,<1.0.0",
 ]
-extras = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp>=2025.10.14"]
+extras = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp[default]>=2025.11.12"]
 pydantic-v1 = ["pydantic<2.0.0"]  # renovate:ignore
 pydantic-v2 = ["pydantic>=2.0.0"]
 telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
