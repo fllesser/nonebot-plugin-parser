@@ -1,5 +1,5 @@
 from collections.abc import Callable, Coroutine
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
@@ -19,7 +19,9 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
-def suppress_exception(func: Callable[P, T]) -> Callable[P, T | None]:
+def suppress_exception(
+    func: Callable[P, T],
+) -> Callable[P, T | None]:
     """装饰器：捕获所有异常并返回 None"""
 
     @wraps(func)
@@ -33,7 +35,9 @@ def suppress_exception(func: Callable[P, T]) -> Callable[P, T | None]:
     return wrapper
 
 
-def suppress_exception_async(func: Callable[P, Coroutine[Any, Any, T]]) -> Callable[P, Coroutine[Any, Any, T | None]]:
+def suppress_exception_async(
+    func: Callable[P, Coroutine[Any, Any, T]],
+) -> Callable[P, Coroutine[Any, Any, T | None]]:
     """装饰器：捕获所有异常并返回 None"""
 
     @wraps(func)
@@ -95,7 +99,13 @@ class FontInfo:
 class FontSet:
     """字体集数据类"""
 
-    FONT_SIZES: ClassVar[dict[str, int]] = {"name": 28, "title": 30, "text": 24, "extra": 24, "indicator": 60}
+    FONT_SIZES: ClassVar[dict[str, int]] = {
+        "name": 28,
+        "title": 30,
+        "text": 24,
+        "extra": 24,
+        "indicator": 60,
+    }
     """字体大小"""
 
     name_font: FontInfo
@@ -109,7 +119,11 @@ class FontSet:
         font_infos: dict[str, FontInfo] = {}
         for name, size in cls.FONT_SIZES.items():
             font = ImageFont.truetype(font_path, size)
-            font_infos[f"{name}_font"] = FontInfo(font=font, line_height=size + 4, cjk_width=size)
+            font_infos[f"{name}_font"] = FontInfo(
+                font=font,
+                line_height=size + 4,
+                cjk_width=size,
+            )
         return FontSet(**font_infos)
 
 
@@ -193,6 +207,8 @@ class RenderContext:
     """解析结果"""
     card_width: int
     """卡片宽度"""
+    content_width: int
+    """内容宽度"""
     image: Image.Image
     """当前图像"""
     draw: ImageDraw.ImageDraw
@@ -201,14 +217,6 @@ class RenderContext:
     """是否为非转发内容"""
     y_pos: int = 0
     """当前绘制位置（绘制阶段使用）"""
-    bg_color: tuple[int, int, int] = field(init=False)
-    """背景颜色"""
-    content_width: int = field(init=False)
-    """内容宽度"""
-
-    def __post_init__(self):
-        self.content_width = self.card_width - 2 * CommonRenderer.PADDING
-        self.bg_color = CommonRenderer.BG_COLOR if self.not_repost else CommonRenderer.REPOST_BG_COLOR
 
 
 class CommonRenderer(ImageRenderer):
@@ -384,22 +392,32 @@ class CommonRenderer(ImageRenderer):
 
         # 创建画布
         bg_color = self.BG_COLOR if not_repost else self.REPOST_BG_COLOR
-        image = Image.new("RGB", (card_width, card_height), bg_color)
+        image = Image.new(
+            "RGB",
+            (card_width, card_height),
+            bg_color,
+        )
+
         # 创建完整的渲染上下文
         ctx = RenderContext(
             result=result,
             card_width=card_width,
+            content_width=content_width,
             image=image,
             draw=ImageDraw.Draw(image),
             not_repost=not_repost,
             y_pos=self.PADDING,  # 以 padding 作为起始
         )
-
+        # 绘制各部分内容
         await self._draw_sections(ctx, sections)
         return image
 
     @suppress_exception
-    def _load_and_resize_cover(self, cover_path: Path | None, content_width: int) -> Image.Image | None:
+    def _load_and_resize_cover(
+        self,
+        cover_path: Path | None,
+        content_width: int,
+    ) -> Image.Image | None:
         """加载并调整封面尺寸
 
         Args:
@@ -432,7 +450,10 @@ class CommonRenderer(ImageRenderer):
                     new_height = self.MAX_COVER_HEIGHT
                     new_width = int(new_width * scale_ratio)
 
-                cover_img = cover_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                cover_img = cover_img.resize(
+                    (new_width, new_height),
+                    Image.Resampling.LANCZOS,
+                )
             elif cover_img is original_img:
                 # 如果没有做任何转换，需要 copy 一份，因为原图会在 with 结束时关闭
                 cover_img = cover_img.copy()
@@ -455,7 +476,10 @@ class CommonRenderer(ImageRenderer):
             # 使用超采样技术提高质量：先放大到指定倍数
             scale = self.AVATAR_UPSCALE_FACTOR
             temp_size = self.AVATAR_SIZE * scale
-            avatar_img = avatar_img.resize((temp_size, temp_size), Image.Resampling.LANCZOS)
+            avatar_img = avatar_img.resize(
+                (temp_size, temp_size),
+                Image.Resampling.LANCZOS,
+            )
 
             # 创建高分辨率圆形遮罩（带抗锯齿）
             mask = Image.new("L", (temp_size, temp_size), 0)
@@ -463,12 +487,19 @@ class CommonRenderer(ImageRenderer):
             mask_draw.ellipse((0, 0, temp_size - 1, temp_size - 1), fill=255)
 
             # 应用遮罩
-            output_avatar = Image.new("RGBA", (temp_size, temp_size), (0, 0, 0, 0))
+            output_avatar = Image.new(
+                "RGBA",
+                (temp_size, temp_size),
+                (0, 0, 0, 0),
+            )
             output_avatar.paste(avatar_img, (0, 0))
             output_avatar.putalpha(mask)
 
             # 缩小到目标尺寸（抗锯齿缩放）
-            output_avatar = output_avatar.resize((self.AVATAR_SIZE, self.AVATAR_SIZE), Image.Resampling.LANCZOS)
+            output_avatar = output_avatar.resize(
+                (self.AVATAR_SIZE, self.AVATAR_SIZE),
+                Image.Resampling.LANCZOS,
+            )
 
             return output_avatar
 
@@ -483,33 +514,54 @@ class CommonRenderer(ImageRenderer):
 
         # 2. 标题部分
         if result.title:
-            title_lines = self._wrap_text(result.title, content_width, self.fontset.title_font)
+            title_lines = self._wrap_text(
+                result.title,
+                content_width,
+                self.fontset.title_font,
+            )
             title_height = len(title_lines) * self.fontset.title_font.line_height
             sections.append(TitleSectionData(height=title_height, lines=title_lines))
 
         # 3. 封面，图集，图文内容
-        if cover_img := self._load_and_resize_cover(await result.cover_path, content_width=content_width):
+        if cover_img := self._load_and_resize_cover(
+            await result.cover_path,
+            content_width=content_width,
+        ):
             sections.append(CoverSectionData(height=cover_img.height, cover_img=cover_img))
         elif result.img_contents:
             # 如果没有封面但有图片，处理图片列表
-            img_grid_section = await self._calculate_image_grid_section(result, content_width)
+            img_grid_section = await self._calculate_image_grid_section(
+                result,
+                content_width,
+            )
             if img_grid_section:
                 sections.append(img_grid_section)
         elif result.graphics_contents:
             for graphics_content in result.graphics_contents:
-                graphics_section = await self._calculate_graphics_section(graphics_content, content_width)
+                graphics_section = await self._calculate_graphics_section(
+                    graphics_content,
+                    content_width,
+                )
                 if graphics_section:
                     sections.append(graphics_section)
 
         # 5. 文本内容
         if result.text:
-            text_lines = self._wrap_text(result.text, content_width, self.fontset.text_font)
+            text_lines = self._wrap_text(
+                result.text,
+                content_width,
+                self.fontset.text_font,
+            )
             text_height = len(text_lines) * self.fontset.text_font.line_height
             sections.append(TextSectionData(height=text_height, lines=text_lines))
 
         # 6. 额外信息
         if result.extra_info:
-            extra_lines = self._wrap_text(result.extra_info, content_width, self.fontset.extra_font)
+            extra_lines = self._wrap_text(
+                result.extra_info,
+                content_width,
+                self.fontset.extra_font,
+            )
             extra_height = len(extra_lines) * self.fontset.extra_font.line_height
             sections.append(ExtraSectionData(height=extra_height, lines=extra_lines))
 
@@ -532,7 +584,10 @@ class CommonRenderer(ImageRenderer):
             if original_img.width > content_width:
                 ratio = content_width / original_img.width
                 new_height = int(original_img.height * ratio)
-                image = original_img.resize((content_width, new_height), Image.Resampling.LANCZOS)
+                image = original_img.resize(
+                    (content_width, new_height),
+                    Image.Resampling.LANCZOS,
+                )
             else:
                 # 如果不需要缩放，copy 一份
                 image = original_img.copy()
@@ -540,7 +595,11 @@ class CommonRenderer(ImageRenderer):
             # 处理文本内容
             text_lines = []
             if graphics_content.text:
-                text_lines = self._wrap_text(graphics_content.text, content_width, self.fontset.text_font)
+                text_lines = self._wrap_text(
+                    graphics_content.text,
+                    content_width,
+                    self.fontset.text_font,
+                )
 
             # 计算总高度：文本高度 + 图片高度 + alt文本高度 + 间距
             text_height = len(text_lines) * self.fontset.text_font.line_height if text_lines else 0
@@ -552,10 +611,17 @@ class CommonRenderer(ImageRenderer):
                 total_height += self.SECTION_SPACING  # 图片和alt文本之间的间距
 
             return GraphicsSectionData(
-                height=total_height, text_lines=text_lines, image=image, alt_text=graphics_content.alt
+                height=total_height,
+                text_lines=text_lines,
+                image=image,
+                alt_text=graphics_content.alt,
             )
 
-    async def _calculate_header_section(self, result: ParseResult, content_width: int) -> HeaderSectionData | None:
+    async def _calculate_header_section(
+        self,
+        result: ParseResult,
+        content_width: int,
+    ) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
         if result.author is None:
             return None
@@ -567,11 +633,19 @@ class CommonRenderer(ImageRenderer):
         text_area_width = content_width - (self.AVATAR_SIZE + self.AVATAR_TEXT_GAP)
 
         # 发布者名称
-        name_lines = self._wrap_text(result.author.name, text_area_width, self.fontset.name_font)
+        name_lines = self._wrap_text(
+            result.author.name,
+            text_area_width,
+            self.fontset.name_font,
+        )
 
         # 时间
         time_text = result.formartted_datetime
-        time_lines = self._wrap_text(time_text, text_area_width, self.fontset.extra_font) if time_text else []
+        time_lines = self._wrap_text(
+            time_text,
+            text_area_width,
+            self.fontset.extra_font,
+        )
 
         # 计算 header 高度（取头像和文字中较大者）
         text_height = len(name_lines) * self.fontset.name_font.line_height
@@ -593,7 +667,10 @@ class CommonRenderer(ImageRenderer):
         # 缩放图片
         scaled_width = int(repost_image.width * self.REPOST_SCALE)
         scaled_height = int(repost_image.height * self.REPOST_SCALE)
-        repost_image_scaled = repost_image.resize((scaled_width, scaled_height), Image.Resampling.LANCZOS)
+        repost_image_scaled = repost_image.resize(
+            (scaled_width, scaled_height),
+            Image.Resampling.LANCZOS,
+        )
 
         return RepostSectionData(
             height=scaled_height + self.REPOST_PADDING * 2,  # 加上转发容器的内边距
@@ -778,11 +855,18 @@ class CommonRenderer(ImageRenderer):
         shoulder_width_ratio = 0.55  # 肩部宽度比例
         shoulder_height_ratio = 0.6  # 肩部高度比例
 
-        placeholder = Image.new("RGBA", (self.AVATAR_SIZE, self.AVATAR_SIZE), (0, 0, 0, 0))
+        placeholder = Image.new(
+            "RGBA",
+            (self.AVATAR_SIZE, self.AVATAR_SIZE),
+            (0, 0, 0, 0),
+        )
         draw = ImageDraw.Draw(placeholder)
 
         # 绘制圆形背景
-        draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=placeholder_bg_color)
+        draw.ellipse(
+            (0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1),
+            fill=placeholder_bg_color,
+        )
 
         # 绘制简单的用户图标（圆形头部 + 肩部）
         center_x = self.AVATAR_SIZE // 2
@@ -841,14 +925,26 @@ class CommonRenderer(ImageRenderer):
 
         # 发布者名称（蓝色）
         for line in section.name_lines:
-            await self.text(ctx, line, (text_x, text_y), self.HEADER_COLOR, self.fontset.name_font.font)
+            await self.text(
+                ctx,
+                line,
+                (text_x, text_y),
+                self.HEADER_COLOR,
+                self.fontset.name_font.font,
+            )
             text_y += self.fontset.name_font.line_height
 
         # 时间（灰色）
         if section.time_lines:
             text_y += self.NAME_TIME_GAP
             for line in section.time_lines:
-                await self.text(ctx, line, (text_x, text_y), self.EXTRA_COLOR, self.fontset.extra_font.font)
+                await self.text(
+                    ctx,
+                    line,
+                    (text_x, text_y),
+                    self.EXTRA_COLOR,
+                    self.fontset.extra_font.font,
+                )
                 text_y += self.fontset.extra_font.line_height
 
         # 在右侧绘制平台 logo（仅在非转发内容时绘制）
@@ -867,7 +963,13 @@ class CommonRenderer(ImageRenderer):
     async def _draw_title(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制标题"""
         for line in lines:
-            await self.text(ctx, line, (self.PADDING, ctx.y_pos), self.TEXT_COLOR, self.fontset.title_font.font)
+            await self.text(
+                ctx,
+                line,
+                (self.PADDING, ctx.y_pos),
+                self.TEXT_COLOR,
+                self.fontset.title_font.font,
+            )
             ctx.y_pos += self.fontset.title_font.line_height
         ctx.y_pos += self.SECTION_SPACING
 
@@ -881,14 +983,24 @@ class CommonRenderer(ImageRenderer):
         button_size = 128  # 固定使用 128x128 尺寸
         button_x = x_pos + (cover_img.width - button_size) // 2
         button_y = ctx.y_pos + (cover_img.height - button_size) // 2
-        ctx.image.paste(self.video_button_image, (button_x, button_y), self.video_button_image)
+        ctx.image.paste(
+            self.video_button_image,
+            (button_x, button_y),
+            self.video_button_image,
+        )
 
         ctx.y_pos += cover_img.height + self.SECTION_SPACING
 
     async def _draw_text(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制文本内容"""
         for line in lines:
-            await self.text(ctx, line, (self.PADDING, ctx.y_pos), self.TEXT_COLOR, self.fontset.text_font.font)
+            await self.text(
+                ctx,
+                line,
+                (self.PADDING, ctx.y_pos),
+                self.TEXT_COLOR,
+                self.fontset.text_font.font,
+            )
             ctx.y_pos += self.fontset.text_font.line_height
         ctx.y_pos += self.SECTION_SPACING
 
@@ -897,7 +1009,13 @@ class CommonRenderer(ImageRenderer):
         # 绘制文本内容（如果有）
         if section.text_lines:
             for line in section.text_lines:
-                await self.text(ctx, line, (self.PADDING, ctx.y_pos), self.TEXT_COLOR, self.fontset.text_font.font)
+                await self.text(
+                    ctx,
+                    line,
+                    (self.PADDING, ctx.y_pos),
+                    self.TEXT_COLOR,
+                    self.fontset.text_font.font,
+                )
                 ctx.y_pos += self.fontset.text_font.line_height
             ctx.y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
 
@@ -913,7 +1031,13 @@ class CommonRenderer(ImageRenderer):
             extra_font_info = self.fontset.extra_font
             text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (ctx.content_width - text_width) // 2
-            await self.text(ctx, section.alt_text, (text_x, ctx.y_pos), self.EXTRA_COLOR, extra_font_info.font)
+            await self.text(
+                ctx,
+                section.alt_text,
+                (text_x, ctx.y_pos),
+                self.EXTRA_COLOR,
+                extra_font_info.font,
+            )
             ctx.y_pos += extra_font_info.line_height
 
         ctx.y_pos += self.SECTION_SPACING
@@ -921,7 +1045,13 @@ class CommonRenderer(ImageRenderer):
     async def _draw_extra(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制额外信息"""
         for line in lines:
-            await self.text(ctx, line, (self.PADDING, ctx.y_pos), self.EXTRA_COLOR, self.fontset.extra_font.font)
+            await self.text(
+                ctx,
+                line,
+                (self.PADDING, ctx.y_pos),
+                self.EXTRA_COLOR,
+                self.fontset.extra_font.font,
+            )
             ctx.y_pos += self.fontset.extra_font.line_height
 
     def _draw_repost(self, ctx: RenderContext, section: RepostSectionData) -> None:
@@ -1010,7 +1140,14 @@ class CommonRenderer(ImageRenderer):
 
                 # 如果是最后一张图片且有更多图片，绘制+N效果
                 if has_more and row == rows - 1 and i == len(row_images) - 1 and len(images) == self.MAX_IMAGES_DISPLAY:
-                    self._draw_more_indicator(ctx.image, img_x, img_y, max_img_size, max_height, remaining_count)
+                    self._draw_more_indicator(
+                        ctx.image,
+                        img_x,
+                        img_y,
+                        max_img_size,
+                        max_height,
+                        remaining_count,
+                    )
 
             current_y += img_spacing + max_height
 
@@ -1091,7 +1228,7 @@ class CommonRenderer(ImageRenderer):
         draw.arc((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=border_color, width=width)
         draw.arc((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=border_color, width=width)
 
-    def _wrap_text(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
+    def _wrap_text(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
         """优化的文本自动换行算法，考虑中英文字符宽度相同
 
         Args:
@@ -1103,7 +1240,7 @@ class CommonRenderer(ImageRenderer):
             换行后的文本列表
         """
         if not text:
-            return [""]
+            return []
 
         lines = []
         paragraphs = text.split("\n")
@@ -1157,4 +1294,4 @@ class CommonRenderer(ImageRenderer):
             if current_line:
                 lines.append(current_line)
 
-        return lines if lines else [""]
+        return lines
