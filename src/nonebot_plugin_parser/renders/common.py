@@ -1,5 +1,5 @@
 from collections.abc import Callable, Coroutine
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
@@ -199,15 +199,16 @@ class RenderContext:
     """绘图对象"""
     not_repost: bool = True
     """是否为非转发内容"""
-    bg_color: tuple[int, int, int] | None = None
-    """背景颜色"""
     y_pos: int = 0
     """当前绘制位置（绘制阶段使用）"""
+    bg_color: tuple[int, int, int] = field(init=False)
+    """背景颜色"""
+    content_width: int = field(init=False)
+    """内容宽度"""
 
-    @property
-    def content_width(self) -> int:
-        """内容区域宽度"""
-        return self.card_width - 2 * CommonRenderer.PADDING
+    def __post_init__(self):
+        self.content_width = self.card_width - 2 * CommonRenderer.PADDING
+        self.bg_color = CommonRenderer.BG_COLOR if self.not_repost else CommonRenderer.REPOST_BG_COLOR
 
 
 class CommonRenderer(ImageRenderer):
@@ -273,14 +274,19 @@ class CommonRenderer(ImageRenderer):
     REPOST_SCALE = 0.88
     """转发缩放比例"""
 
-    RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
+    _RESOURCES = "resources"
+    _EMOJIS = "emojis"
+    _FONT_FILENAME = "HYSongYunLangHeiW-1.ttf"
+    _BUTTON_FILENAME = "media_button.png"
+
+    RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / _RESOURCES
     """资源目录"""
-    DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW-1.ttf"
+    DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / _FONT_FILENAME
     """默认字体路径"""
-    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "media_button.png"
+    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / _BUTTON_FILENAME
     """默认视频按钮路径"""
     EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
-        style=EmojiStyle.TWITTER, cache_dir=pconfig.cache_dir / "emojis"
+        style=EmojiStyle.TWITTER, cache_dir=pconfig.cache_dir / _EMOJIS
     )
     PILMOJI: ClassVar[Pilmoji] = Pilmoji(source=EMOJI_SOURCE)
 
@@ -321,38 +327,6 @@ class CommonRenderer(ImageRenderer):
             if logo_path.exists():
                 cls.platform_logos[str(platform_name)] = Image.open(logo_path)
 
-    # def __resize_platform_logos(self):
-    #     """调整平台 logo 尺寸, 用于调整 logo 大小(仅开发时使用)"""
-    #     # 平台 logo 对应的高度
-    #     platform_names_height: dict[str, int] = {
-    #         "bilibili": 30,
-    #         "douyin": 30,
-    #         "youtube": 24,
-    #         "kuaishou": 36,
-    #         "twitter": 30,
-    #         "tiktok": 30,
-    #         "weibo": 30,
-    #         "xiaohongshu": 24,
-    #     }
-    #     for platform_name, target_height in platform_names_height.items():
-    #         logo_path = Path() / "resources" / "logos" / f"{platform_name}.png"
-    #         logger.info(f"logo_path: {logo_path}")
-    #         save_path = self.RESOURCES_DIR / f"{platform_name}.png"
-    #         if logo_path.exists():
-    #             try:
-    #                 logo_img = Image.open(logo_path).convert("RGBA")
-    #                 # 调整 logo 尺寸, 只限制高度为30像素
-    #                 ratio = target_height / logo_img.height
-    #                 new_width = int(logo_img.width * ratio)
-    #                 new_height = target_height
-    #                 logo_img = logo_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-    #                 # 保存图片
-    #                 logo_img.save(save_path)
-    #             except Exception:
-    #                 # 如果加载失败，跳过这个 logo
-    #                 logger.error(f"resize 平台 logo 失败: {platform_name}")
-    #                 continue
-
     @classmethod
     async def text(
         cls,
@@ -384,13 +358,14 @@ class CommonRenderer(ImageRenderer):
         return output.getvalue()
 
     async def _create_card_image(
-        self, result: ParseResult, bg_color: tuple[int, int, int] | None = None, not_repost: bool = True
+        self,
+        result: ParseResult,
+        not_repost: bool = True,
     ) -> Image.Image:
         """创建卡片图片（内部方法，用于递归调用）
 
         Args:
             result: 解析结果
-            bg_color: 背景颜色，默认使用 BG_COLOR
             not_repost: 是否为非转发内容，转发内容为 False
 
         Returns:
@@ -404,23 +379,20 @@ class CommonRenderer(ImageRenderer):
         sections = await self._calculate_sections(result, content_width)
 
         # 计算总高度
-        card_height = (
-            sum(section.height for section in sections) + self.PADDING * 2 + self.SECTION_SPACING * (len(sections) - 1)
-        )
+        card_height = sum(section.height for section in sections)
+        card_height += self.PADDING * 2 + self.SECTION_SPACING * (len(sections) - 1)
 
         # 创建画布
-        background_color = bg_color if bg_color is not None else self.BG_COLOR
-        image = Image.new("RGB", (card_width, card_height), background_color)
-        draw = ImageDraw.Draw(image)
-        # 创建完整的渲染上下文（一次性初始化所有值）
+        bg_color = self.BG_COLOR if not_repost else self.REPOST_BG_COLOR
+        image = Image.new("RGB", (card_width, card_height), bg_color)
+        # 创建完整的渲染上下文
         ctx = RenderContext(
             result=result,
             card_width=card_width,
             image=image,
-            draw=draw,
+            draw=ImageDraw.Draw(image),
             not_repost=not_repost,
-            bg_color=bg_color,
-            y_pos=self.PADDING,
+            y_pos=self.PADDING,  # 以 padding 作为起始
         )
 
         await self._draw_sections(ctx, sections)
@@ -617,7 +589,7 @@ class CommonRenderer(ImageRenderer):
 
     async def _calculate_repost_section(self, repost: ParseResult) -> RepostSectionData:
         """计算转发内容的高度和内容（递归调用绘制方法）"""
-        repost_image = await self._create_card_image(repost, bg_color=self.REPOST_BG_COLOR, not_repost=False)
+        repost_image = await self._create_card_image(repost, False)
         # 缩放图片
         scaled_width = int(repost_image.width * self.REPOST_SCALE)
         scaled_height = int(repost_image.height * self.REPOST_SCALE)
@@ -694,7 +666,10 @@ class CommonRenderer(ImageRenderer):
 
     @suppress_exception_async
     async def _load_and_process_grid_image(
-        self, img_path: Path, content_width: int, img_count: int
+        self,
+        img_path: Path,
+        content_width: int,
+        img_count: int,
     ) -> Image.Image | None:
         """加载并处理网格图片
 
@@ -1042,7 +1017,13 @@ class CommonRenderer(ImageRenderer):
         ctx.y_pos = current_y + img_spacing + self.SECTION_SPACING
 
     def _draw_more_indicator(
-        self, image: Image.Image, img_x: int, img_y: int, img_width: int, img_height: int, count: int
+        self,
+        image: Image.Image,
+        img_x: int,
+        img_y: int,
+        img_width: int,
+        img_height: int,
+        count: int,
     ):
         """在图片上绘制+N指示器"""
         draw = ImageDraw.Draw(image)
@@ -1067,7 +1048,11 @@ class CommonRenderer(ImageRenderer):
         draw.text((text_x, text_y), text, fill=(255, 255, 255), font=font_info.font)
 
     def _draw_rounded_rectangle(
-        self, image: Image.Image, bbox: tuple[int, int, int, int], fill_color: tuple[int, int, int], radius: int = 8
+        self,
+        image: Image.Image,
+        bbox: tuple[int, int, int, int],
+        fill_color: tuple[int, int, int],
+        radius: int = 8,
     ):
         """绘制圆角矩形"""
         x1, y1, x2, y2 = bbox
