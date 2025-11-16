@@ -33,8 +33,8 @@ class StreamDownloader:
 
         Args:
             url (str): url address
-            file_name (str | None, optional): file name. Defaults to get name by parse_url_resource_name.
-            ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
+            file_name (str | None): file name. Defaults to generate_file_name.
+            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
 
         Returns:
             Path: file path
@@ -44,7 +44,7 @@ class StreamDownloader:
         """
 
         if not file_name:
-            file_name = generate_file_name(url)
+            file_name = generate_file_name(url, ".file")
         file_path = self.cache_dir / file_name
         # 如果文件存在，则直接返回
         if file_path.exists():
@@ -84,7 +84,7 @@ class StreamDownloader:
 
         Args:
             desc (str): 描述
-            total (int | None, optional): 总大小. Defaults to None.
+            total (int | None): 总大小. Defaults to None.
 
         Returns:
             tqdm: 进度条
@@ -111,8 +111,8 @@ class StreamDownloader:
 
         Args:
             url (str): url address
-            video_name (str | None, optional): video name. Defaults to get name by parse url.
-            ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
+            video_name (str | None): video name. Defaults to get name by parse url.
+            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
 
         Returns:
             Path: video file path
@@ -136,8 +136,8 @@ class StreamDownloader:
 
         Args:
             url (str): url address
-            audio_name (str | None, optional): audio name. Defaults to get name by parse_url_resource_name.
-            ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
+            audio_name (str | None ): audio name. Defaults to get name by parse_url_resource_name.
+            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
 
         Returns:
             Path: audio file path
@@ -161,8 +161,8 @@ class StreamDownloader:
 
         Args:
             url (str): url
-            img_name (str, optional): image name. Defaults to None.
-            ext_headers (dict[str, str], optional): ext headers. Defaults to None.
+            img_name (str | None): image name. Defaults to None.
+            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
 
         Returns:
             Path: image file path
@@ -184,13 +184,14 @@ class StreamDownloader:
 
         Args:
             urls (list[str]): urls
-            ext_headers (dict[str, str] | None, optional): ext headers. Defaults to None.
+            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
 
         Returns:
             list[Path]: image file paths
         """
         paths_or_errs = await asyncio.gather(
-            *[self.download_img(url, ext_headers=ext_headers) for url in urls], return_exceptions=True
+            *[self.download_img(url, ext_headers=ext_headers) for url in urls],
+            return_exceptions=True,
         )
         return [p for p in paths_or_errs if isinstance(p, Path)]
 

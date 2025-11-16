@@ -54,7 +54,7 @@ class YtdlpDownloader:
 
         Args:
             url (str): url address
-            cookiefile (Path | None, optional): cookie file path. Defaults to None.
+            cookiefile (Path | None ): cookie file path. Defaults to None.
 
         Returns:
             dict[str, str]: video info
@@ -82,7 +82,7 @@ class YtdlpDownloader:
 
         Args:
             url (str): url address
-            cookiefile (Path | None, optional): cookie file path. Defaults to None.
+            cookiefile (Path | None): cookie file path. Defaults to None.
 
         Returns:
             Path: video file path
@@ -115,7 +115,7 @@ class YtdlpDownloader:
 
         Args:
             url (str): url address
-            cookiefile (Path | None, optional): cookie file path. Defaults to None.
+            cookiefile (Path | None): cookie file path. Defaults to None.
 
         Returns:
             Path: audio file path
