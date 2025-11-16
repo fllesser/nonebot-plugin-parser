@@ -87,7 +87,7 @@ class VideoInfo(Struct):
     def extract_info_with_page(self, page_num: int = 1) -> tuple[int, str, int, int, str | None]:
         """获取视频信息，包含页索引、标题、时长、封面
         Args:
-            page_num (int, optional): 页索引. Defaults to 1.
+            page_num (int): 页索引. Defaults to 1.
 
         Returns:
             tuple[int, str, int, str | None]: 页索引、标题、时长、封面

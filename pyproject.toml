@@ -88,7 +88,7 @@ build-backend = "uv_build"
 [tool.bumpversion]
 current_version = "2.1.2"
 commit = true
-message = "🔖 release: bump vesion from {current_version} to {new_version}"
+message = "release: bump vesion from {current_version} to {new_version}"
 tag = true
 
 [[tool.bumpversion.files]]

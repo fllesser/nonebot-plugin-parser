@@ -97,12 +97,12 @@ class UniHelper:
                 return Video(path=video_path)
 
     @staticmethod
-    def file_seg(file: Path, display_name: str = "") -> File:
+    def file_seg(file: Path, display_name: str | None = None) -> File:
         """获取文件 Seg
 
         Args:
             file (Path): 文件路径
-            display_name (str, optional): 显示名称. Defaults to file.name.
+            display_name (str): 显示名称. Defaults to file.name.
 
         Returns:
             File: 文件 Seg
