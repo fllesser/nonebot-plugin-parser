@@ -1,5 +1,16 @@
 {
     "dependencyDashboard": true,
     "dependencyDashboardAutoclose": true,
-    "dependencyDashboardApproval": false
+    "dependencyDashboardApproval": false,
+    "packageRules": [
+        {
+            "matchPackageNames": [
+                "pydantic"
+            ],
+            "matchUpdateTypes": [
+                "major"
+            ],
+            "enabled": false
+        }
+    ]
 }
