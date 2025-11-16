@@ -44,7 +44,7 @@ class StreamDownloader:
         """
 
         if not file_name:
-            file_name = generate_file_name(url, ".file")
+            file_name = generate_file_name(url)
         file_path = self.cache_dir / file_name
         # 如果文件存在，则直接返回
         if file_path.exists():
