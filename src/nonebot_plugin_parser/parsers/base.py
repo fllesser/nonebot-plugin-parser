@@ -2,9 +2,10 @@
 
 from abc import ABC, abstractmethod
 from asyncio import Task
+from collections.abc import Callable, Coroutine
 from pathlib import Path
 import re
-from typing import ClassVar
+from typing import Any, ClassVar
 from typing_extensions import Unpack
 
 from ..config import pconfig as pconfig
@@ -17,6 +18,8 @@ from ..exception import ParseException as ParseException
 from ..exception import SizeLimitException as SizeLimitException
 from ..exception import ZeroSizeException as ZeroSizeException
 from .data import ParseResult, ParseResultKwargs, Platform
+
+ParseHandler = Callable[[re.Match[str]], Coroutine[Any, Any, ParseResult]]
 
 
 class BaseParser(ABC):
@@ -37,6 +40,8 @@ class BaseParser(ABC):
     patterns: ClassVar[list[tuple[str, str]]]
     """ URL 正则表达式模式列表 [(keyword, pattern), ...] """
 
+    _patterns: ClassVar[list[tuple[str, re.Pattern[str]]]]
+
     def __init__(self):
         self.headers = COMMON_HEADER.copy()
         self.ios_headers = IOS_HEADER.copy()
@@ -48,6 +53,10 @@ class BaseParser(ABC):
         super().__init_subclass__(**kwargs)
         if ABC not in cls.__bases__:  # 跳过抽象类
             BaseParser._registry.append(cls)
+
+        _patterns = [(k, re.compile(p)) for k, p in cls.patterns]
+        _patterns.sort(key=lambda x: len(x[0]), reverse=True)
+        cls._patterns = _patterns
 
     @classmethod
     def get_all_subclass(cls) -> list[type["BaseParser"]]:
@@ -72,15 +81,12 @@ class BaseParser(ABC):
 
     @classmethod
     def search_url(cls, url: str) -> tuple[str, re.Match[str]]:
-        from nonebot import logger
-
         """搜索 URL 匹配模式"""
-        for keyword, pattern in cls.patterns:
+        for keyword, pattern in cls._patterns:
             if keyword not in url:
                 continue
-            if searched := re.search(pattern, url):
+            if searched := pattern.search(url):
                 return keyword, searched
-            logger.debug(f"keyword '{keyword}' is in '{url}', but not matched")
         raise ValueError(f"无法匹配 {url}")
 
     @classmethod

@@ -16,6 +16,7 @@ from ..base import (
     DownloadException,
     DurationLimitException,
     ParseException,
+    ParseHandler,
     PlatformEnum,
     pconfig,
 )
@@ -27,13 +28,21 @@ class BilibiliParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
 
-    # URL 正则表达式模式（keyword, pattern）
     patterns: ClassVar[list[tuple[str, str]]] = [
-        ("bilibili", r"https?://(?:space|www|live|m|t)?\.?bilibili\.com/[A-Za-z\d\._?%&+\-=/#]+()()"),
-        ("bili2233", r"https?://bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+()()"),
-        ("b23", r"https?://b23\.tv/[A-Za-z\d\._?%&+\-=/#]+()()"),
-        ("BV", r"(BV[1-9a-zA-Z]{10})(?:\s)?(\d{1,3})?"),
-        ("av", r"av(\d{6,})(?:\s)?(\d{1,3})?"),
+        ("/read/", r"bilibili\.com/read/cv(?P<read_id>\d+)"),
+        ("/opus/", r"bilibili\.com/opus/(?P<opus_id>\d+)"),
+        ("t.bili", r"t\.bilibili\.com/(?P<dynamic_id>\d+)"),
+        ("/dynamic/", r"bilibili\.com/dynamic/(?P<dynamic_id>\d+)"),
+        ("live.bili", r"live\.bilibili\.com/(?P<room_id>\d+)"),
+        ("/favlist", r"favlist\?fid=(?P<fav_id>\d+)"),
+        # short link
+        ("b23.tv", r"b23\.tv/[A-Za-z\d\._?%&+\-=/#]+"),
+        ("bili2233", r"bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+"),
+        # video
+        ("BV", r"^(?P<bvid>BV[0-9a-zA-Z]{10})(?:\s)?(?P<page_num>\d{1,3})?$"),
+        ("av", r"^av(?P<avid>\d{6,})(?:\s)?(?P<page_num>\d{1,3})?$"),
+        ("/BV", r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9a-zA-Z]{10})(?:\?p=(?P<page_num>\d{1,3}))?"),
+        ("/av", r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:\?p=(?P<page_num>\d{1,3}))?"),
     ]
 
     def __init__(self):
@@ -47,38 +56,72 @@ class BilibiliParser(BaseParser):
         # 第二参数数值参考 curl_cffi 文档
         # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
 
+        self._handlers: dict[str, ParseHandler] = {
+            "BV": self._parse_bv,
+            "/BV": self._parse_bv,
+            "av": self._parse_av,
+            "/av": self._parse_av,
+            "b23": self._parse_short_link,
+            "bili2233": self._parse_short_link,
+            "read/": self._parse_read,
+            "opus/": self._parse_opus,
+            "t.bili": self._parse_dynamic,
+            "dynamic/": self._parse_dynamic,
+            "live.bili": self._parse_live,
+            "favlist": self._parse_favlist,
+        }
+
     @override
     async def parse(self, keyword: str, searched: re.Match[str]):
-        # 从匹配对象中获取原始URL, 视频ID, 页码
-        url, video_id, page_num = str(searched.group(0)), str(searched.group(1)), searched.group(2)
-        # 处理短链
-        if keyword in ("b23", "bili2233"):
-            url = await self.get_redirect_url(url, self.headers)
+        return await self._handlers[keyword](searched)
 
-        if not video_id:
-            # https://www.bilibili.com/video/BV1584y167sD?a=20&p=40
-            if _matched := re.search(r"(?:(BV[\dA-Za-z]{10})|av(\d{6,}))", url):
-                video_id = _matched.group(1) or _matched.group(2)
-            else:
-                return await self.parse_others(url)
+    async def _parse_short_link(self, searched: re.Match[str]):
+        """解析短链"""
+        url = f"https://{searched.group(0)}"
+        redirect_url = await self.get_redirect_url(url, self.headers)
+        if url == redirect_url:
+            raise ParseException("短链重定向失败")
+        keyword, searched = self.search_url(redirect_url)
+        return await self._handlers[keyword](searched)
 
-            # 匹配页码参数
-            if _matched := re.search(r"(?:&|\?)p=(\d{1,3})", url):
-                page_num = _matched.group(1)
-            else:
-                page_num = None
+    async def _parse_bv(self, searched: re.Match[str]):
+        """解析视频信息"""
+        bvid = str(searched.group("bvid"))
+        page_num = int(searched.group("page_num") or 1)
 
-        avid, bvid = None, None
-        page_num = int(page_num) if page_num and page_num.isdigit() else 1
+        return await self.parse_video(bvid=bvid, page_num=page_num)
 
-        # 链接中是否包含BV，av号
-        if video_id.isdigit():
-            avid = int(video_id)
-        else:
-            bvid = video_id
+    async def _parse_av(self, searched: re.Match[str]):
+        """解析视频信息"""
+        avid = int(searched.group("avid"))
+        page_num = int(searched.group("page_num") or 1)
 
-        # 解析视频信息
-        return await self.parse_video(bvid=bvid, avid=avid, page_num=page_num)
+        return await self.parse_video(avid=avid, page_num=page_num)
+
+    async def _parse_dynamic(self, searched: re.Match[str]):
+        """解析动态信息"""
+        dynamic_id = int(searched.group("dynamic_id"))
+        return await self.parse_dynamic(dynamic_id)
+
+    async def _parse_live(self, searched: re.Match[str]):
+        """解析直播信息"""
+        room_id = int(searched.group("room_id"))
+        return await self.parse_live(room_id)
+
+    async def _parse_favlist(self, searched: re.Match[str]):
+        """解析收藏夹信息"""
+        fav_id = int(searched.group("fav_id"))
+        return await self.parse_favlist(fav_id)
+
+    async def _parse_read(self, searched: re.Match[str]):
+        """解析专栏信息"""
+        read_id = int(searched.group("read_id"))
+        return await self.parse_read(read_id)
+
+    async def _parse_opus(self, searched: re.Match[str]):
+        """解析图文动态信息"""
+        opus_id = int(searched.group("opus_id"))
+        return await self.parse_opus(opus_id)
 
     async def parse_video(
         self,
@@ -97,7 +140,7 @@ class BilibiliParser(BaseParser):
 
         from .video import AIConclusion, VideoInfo
 
-        video = await self._parse_video(bvid=bvid, avid=avid)
+        video = await self._get_video(bvid=bvid, avid=avid)
         # 转换为 msgspec struct
         video_info = convert(await video.get_info(), VideoInfo)
         # 获取简介
@@ -105,26 +148,27 @@ class BilibiliParser(BaseParser):
         # up
         author = self.create_author(video_info.owner.name, video_info.owner.face)
         # 处理分 p
-        page_idx, title, duration, timestamp, cover_url = video_info.extract_info_with_page(page_num)
+        page_info = video_info.extract_info_with_page(page_num)
 
         # 获取 AI 总结
         if self._credential:
-            cid = await video.get_cid(page_idx)
+            cid = await video.get_cid(page_info.index)
             ai_conclusion = await video.get_ai_conclusion(cid)
             ai_conclusion = convert(ai_conclusion, AIConclusion)
             ai_summary = ai_conclusion.summary
         else:
             ai_summary: str = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
 
-        url = f"https://bilibili.com/{video_info.bvid}" + (f"?p={page_idx + 1}" if page_idx > 0 else "")
+        url = f"https://bilibili.com/{video_info.bvid}"
+        url += f"?p={page_info.index + 1}" if page_info.index > 0 else ""
 
         # 视频下载 task
         async def download_video():
             output_path = pconfig.cache_dir / f"{video_info.bvid}-{page_num}.mp4"
             if output_path.exists():
                 return output_path
-            v_url, a_url = await self.get_download_urls(video=video, page_index=page_idx)
-            if duration > pconfig.duration_maximum:
+            v_url, a_url = await self.extract_download_urls(video=video, page_index=page_info.index)
+            if page_info.duration > pconfig.duration_maximum:
                 raise DurationLimitException
             if a_url is not None:
                 return await DOWNLOADER.download_av_and_merge(
@@ -134,44 +178,23 @@ class BilibiliParser(BaseParser):
                 return await DOWNLOADER.streamd(v_url, file_name=output_path.name, ext_headers=self.headers)
 
         video_task = asyncio.create_task(download_video())
-        video_content = self.create_video_content(video_task, cover_url, duration)
+        video_content = self.create_video_content(
+            video_task,
+            page_info.cover,
+            page_info.duration,
+        )
 
         return self.result(
             url=url,
-            title=title,
-            timestamp=timestamp,
+            title=page_info.title,
+            timestamp=page_info.timestamp,
             text=text,
             author=author,
             contents=[video_content],
             extra={"info": ai_summary},
         )
 
-    async def parse_others(self, url: str):
-        """解析其他类型链接"""
-        logger.debug(f"解析其他类型链接: {url}")
-        # 1. 动态
-        if "t.bili" in url or "m.bili" in url:
-            return await self.parse_dynamic(url)
-
-        # 2.图文动态
-        if "/opus" in url:
-            return await self.parse_opus(url)
-
-        # 3. 专栏
-        if "/read" in url:
-            return await self.parse_read(url)
-
-        # 4. 直播
-        if "/live" in url:
-            return await self.parse_live(url)
-
-        # 5. 收藏夹
-        if "/favlist" in url:
-            return await self.parse_favlist(url)
-
-        raise ParseException("不支持的 Bilibili 链接")
-
-    async def parse_dynamic(self, url: str):
+    async def parse_dynamic(self, dynamic_id: int):
         """解析动态信息
 
         Args:
@@ -181,10 +204,6 @@ class BilibiliParser(BaseParser):
 
         from .dynamic import DynamicItem
 
-        matched = re.search(r"/(\d+)", url)
-        if matched is None:
-            raise ParseException("无效的动态链接")
-        dynamic_id = int(matched.group(1))
         dynamic = Dynamic(dynamic_id, await self.credential)
 
         # 转换为结构体
@@ -200,7 +219,6 @@ class BilibiliParser(BaseParser):
             contents.append(ImageContent(img_task))
 
         return self.result(
-            url=url,
             title=dynamic_info.title,
             text=dynamic_info.text,
             timestamp=dynamic_info.timestamp,
@@ -208,18 +226,14 @@ class BilibiliParser(BaseParser):
             contents=contents,
         )
 
-    async def parse_opus(self, url: str):
+    async def parse_opus(self, opus_id: int):
         """解析图文动态信息
 
         Args:
             opus_id (int): 图文动态 id
         """
-        matched = re.search(r"/(\d+)", url)
-        if not matched:
-            raise ParseException("无效的动态链接")
-        opus_id = int(matched.group(1))
         opus = Opus(opus_id, await self.credential)
-        return await self._parse_opus(opus)
+        return await self._parse_opus_obj(opus)
 
     async def parse_read_old(self, read_id: int):
         """解析专栏信息, 已废弃
@@ -230,9 +244,9 @@ class BilibiliParser(BaseParser):
         from bilibili_api.article import Article
 
         article = Article(read_id)
-        return await self._parse_opus(await article.turn_to_opus())
+        return await self._parse_opus_obj(await article.turn_to_opus())
 
-    async def _parse_opus(self, bili_opus: Opus):
+    async def _parse_opus_obj(self, bili_opus: Opus):
         """解析图文动态信息
 
         Args:
@@ -271,7 +285,7 @@ class BilibiliParser(BaseParser):
             text=current_text.strip(),
         )
 
-    async def parse_live(self, url: str):
+    async def parse_live(self, room_id: int):
         """解析直播信息
 
         Args:
@@ -283,11 +297,6 @@ class BilibiliParser(BaseParser):
         from bilibili_api.live import LiveRoom
 
         from .live import RoomData
-
-        matched = re.search(r"/(\d+)", url)
-        if matched is None:
-            raise ParseException("无效的直播链接")
-        room_id = int(matched.group(1))
 
         room = LiveRoom(room_display_id=room_id, credential=await self.credential)
         info_dict = await room.get_room_info()
@@ -306,9 +315,16 @@ class BilibiliParser(BaseParser):
 
         author = self.create_author(room_data.name, room_data.avatar)
 
-        return self.result(title=room_data.title, text=room_data.detail, contents=contents, author=author)
+        url = f"https://www.bilibili.com/blackboard/live/live-activity-player.html?enterTheRoom=0&cid={room_id}"
+        return self.result(
+            url=url,
+            title=room_data.title,
+            text=room_data.detail,
+            contents=contents,
+            author=author,
+        )
 
-    async def parse_read(self, url: str):
+    async def parse_read(self, read_id: int):
         """专栏解析
 
         Args:
@@ -320,11 +336,6 @@ class BilibiliParser(BaseParser):
         from bilibili_api.article import Article
 
         from .article import ArticleInfo, ImageNode, TextNode
-
-        matched = re.search(r"/cv(\d+)", url)
-        if matched is None:
-            raise ParseException("无效的专栏链接")
-        read_id = int(matched.group(1))
 
         ar = Article(read_id)
         # 加载内容
@@ -352,7 +363,7 @@ class BilibiliParser(BaseParser):
             contents=contents,
         )
 
-    async def parse_favlist(self, url: str):
+    async def parse_favlist(self, fav_id: int):
         """解析收藏夹信息
 
         Args:
@@ -364,11 +375,6 @@ class BilibiliParser(BaseParser):
         from bilibili_api.favorite_list import get_video_favorite_list_content
 
         from .favlist import FavData
-
-        matched = re.search(r"fid=(\d+)", url)
-        if matched is None:
-            raise ParseException("无效的收藏夹链接")
-        fav_id = int(matched.group(1))
 
         # 只会取一页，20 个
         fav_dict = await get_video_favorite_list_content(fav_id)
@@ -385,7 +391,7 @@ class BilibiliParser(BaseParser):
             contents=[self.create_graphics_content(fav.cover, fav.desc) for fav in favdata.medias],
         )
 
-    async def _parse_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
+    async def _get_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
         """解析视频信息
 
         Args:
@@ -399,10 +405,10 @@ class BilibiliParser(BaseParser):
         else:
             raise ParseException("avid 和 bvid 至少指定一项")
 
-    async def get_download_urls(
+    async def extract_download_urls(
         self,
-        *,
         video: Video | None = None,
+        *,
         bvid: str | None = None,
         avid: int | None = None,
         page_index: int = 0,
@@ -422,7 +428,8 @@ class BilibiliParser(BaseParser):
         )
 
         if video is None:
-            video = await self._parse_video(bvid=bvid, avid=avid)
+            video = await self._get_video(bvid=bvid, avid=avid)
+
         # 获取下载数据
         download_url_data = await video.get_download_url(page_index=page_index)
         detecter = VideoDownloadURLDataDetecter(download_url_data)

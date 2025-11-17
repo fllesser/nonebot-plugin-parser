@@ -11,8 +11,10 @@ async def test_live():
 
     url = "https://live.bilibili.com/1"
     parser = BilibiliParser()
+    _, searched = parser.search_url(url)
+    room_id = int(searched.group("room_id"))
     try:
-        result = await parser.parse_live(url)
+        result = await parser.parse_live(room_id)
     except Exception as e:
         pytest.skip(f"B站直播解析失败: {e} (风控)")
 
@@ -38,8 +40,10 @@ async def test_read():
     from nonebot_plugin_parser.parsers import BilibiliParser
 
     url = "https://www.bilibili.com/read/cv523868"
-    bilibili_parser = BilibiliParser()
-    result = await bilibili_parser.parse_read(url)
+    parser = BilibiliParser()
+    _, searched = parser.search_url(url)
+    read_id = int(searched.group("read_id"))
+    result = await parser.parse_read(read_id)
     logger.debug(f"result: {result}")
     assert result.title, "标题为空"
     assert result.author, "作者为空"
@@ -67,8 +71,10 @@ async def test_opus():
     parser = BilibiliParser()
 
     async def test_parse_opus(opus_url: str) -> None:
+        _, searched = parser.search_url(opus_url)
+        opus_id = int(searched.group("opus_id"))
         try:
-            result = await parser.parse_opus(opus_url)
+            result = await parser.parse_opus(opus_id)
         except Exception as e:
             pytest.skip(f"{opus_url} | opus 解析失败: {e} (风控)")
 
@@ -101,7 +107,9 @@ async def test_dynamic():
     parser = BilibiliParser()
 
     async def test_parse_dynamic(dynamic_url: str) -> None:
-        result = await parser.parse_dynamic(dynamic_url)
+        _, searched = parser.search_url(dynamic_url)
+        dynamic_id = int(searched.group("dynamic_id"))
+        result = await parser.parse_dynamic(dynamic_id)
         assert result.title, "标题为空"
         assert result.author, "作者为空"
         avatar_path = await result.author.get_avatar_path()

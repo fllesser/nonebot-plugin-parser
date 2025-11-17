@@ -35,7 +35,7 @@ def register_parser_matcher():
             KEYWORD_PARSER_MAP[keyword] = parser
     logger.info(f"启用平台: {', '.join(sorted(enabled_platform_names))}")
 
-    patterns = [p for _cls in enabled_parser_classes for p in _cls.patterns]
+    patterns = [p for _cls in enabled_parser_classes for p in _cls._patterns]
     matcher = on_keyword_regex(*patterns)
     matcher.append_handler(parser_handler)
 
@@ -141,7 +141,7 @@ async def _(message: Message = CommandArg()):
 
     bili_parser = KEYWORD_PARSER_MAP["BV"]
     bili_parser = cast(BilibiliParser, bili_parser)
-    _, audio_url = await bili_parser.get_download_urls(bvid=bvid, page_index=page_idx)
+    _, audio_url = await bili_parser.extract_download_urls(bvid=bvid, page_index=page_idx)
     if not audio_url:
         await UniMessage("未找到可下载的音频").finish()
 

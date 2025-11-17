@@ -9,7 +9,9 @@ async def test_favlist():
     logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
     url = "https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create"
     parser = BilibiliParser()
-    result = await parser.parse_favlist(url)
+    _, searched = parser.search_url(url)
+    fav_id = int(searched.group("fav_id"))
+    result = await parser.parse_favlist(fav_id)
 
     assert result.title, "标题为空"
     assert result.author, "作者为空"
@@ -51,7 +53,7 @@ async def test_max_size_video():
     bvid = "BV1du4y1E7Nh"
     audio_url = None
     try:
-        _, audio_url = await parser.get_download_urls(bvid=bvid)
+        _, audio_url = await parser.extract_download_urls(bvid=bvid)
     except DurationLimitException:
         pass
 
@@ -67,8 +69,7 @@ async def test_no_audio_video():
     from nonebot_plugin_parser.parsers import BilibiliParser
 
     parser = BilibiliParser()
-
-    video_url, audio_url = await parser.get_download_urls(bvid="BV1gRjMziELt")
+    video_url, audio_url = await parser.extract_download_urls(bvid="BV1gRjMziELt")
 
     assert video_url is not None
     assert audio_url is None
