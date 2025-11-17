@@ -31,8 +31,8 @@ jobs:
           python-version: 3.12
           version: "latest"
       
-      - name: uv sync
-        run: uv sync
+      - name: Install Dependencies
+        run: uv sync --locked
 
       - name: basedpyright
         run: uvx basedpyright
