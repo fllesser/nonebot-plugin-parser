@@ -98,16 +98,12 @@ class BilibiliParser(BaseParser):
         from .video import AIConclusion, VideoInfo
 
         video = await self._parse_video(bvid=bvid, avid=avid)
-
         # 转换为 msgspec struct
         video_info = convert(await video.get_info(), VideoInfo)
-
         # 获取简介
         text = f"简介: {video_info.desc}" if video_info.desc else None
-
         # up
         author = self.create_author(video_info.owner.name, video_info.owner.face)
-
         # 处理分 p
         page_idx, title, duration, timestamp, cover_url = video_info.extract_info_with_page(page_num)
 
@@ -420,7 +416,6 @@ class BilibiliParser(BaseParser):
         from bilibili_api.video import (
             AudioStreamDownloadURL,
             VideoDownloadURLDataDetecter,
-            VideoQuality,
             VideoStreamDownloadURL,
         )
 
@@ -430,7 +425,7 @@ class BilibiliParser(BaseParser):
         download_url_data = await video.get_download_url(page_index=page_index)
         detecter = VideoDownloadURLDataDetecter(download_url_data)
         streams = detecter.detect_best_streams(
-            video_max_quality=VideoQuality._1080P,
+            video_max_quality=pconfig.bili_video_quality,
             codecs=pconfig.bili_video_codes,
             no_dolby_video=True,
             no_hdr=True,
