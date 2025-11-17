@@ -30,6 +30,9 @@ jobs:
           enable-cache: true
           python-version: 3.12
           version: "latest"
+      
+      - name: uv sync
+        run: uv sync
 
       - name: basedpyright
         run: uvx basedpyright
