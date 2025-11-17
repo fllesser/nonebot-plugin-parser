@@ -14,12 +14,14 @@ on:
 
 jobs:
   typos:
+    name: Typos
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5 # v5
       - uses: crate-ci/typos@master
 
   static-type-check:
+    name: BasedPyright
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
