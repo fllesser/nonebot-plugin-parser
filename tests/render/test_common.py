@@ -77,7 +77,15 @@ async def test_render_with_emoji():
         await f.write(image_raw)
     render_size = image_path.stat().st_size / 1024 / 1024
     logger.success(f"{opus_url} | 渲染成功，图片已保存到 {image_path}")
-    DATA_COLLECTION.append(RenderDataItem(opus_url, "哔哩哔哩动态", cost_time, total_size, render_size))
+    DATA_COLLECTION.append(
+        RenderDataItem(
+            opus_url,
+            "哔哩哔哩动态",
+            cost_time,
+            total_size,
+            render_size,
+        )
+    )
 
 
 async def test_graphics_content():
@@ -116,7 +124,15 @@ async def test_graphics_content():
     async with aiofiles.open(image_path, "wb+") as f:
         await f.write(image_raw)
     render_size = image_path.stat().st_size / 1024 / 1024
-    DATA_COLLECTION.append(RenderDataItem(url, "bilibili-opus", cost_time, total_size, render_size))
+    DATA_COLLECTION.append(
+        RenderDataItem(
+            url,
+            "bilibili-opus",
+            cost_time,
+            total_size,
+            render_size,
+        )
+    )
     logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
 
 
@@ -155,7 +171,15 @@ async def test_read():
         await f.write(image_raw)
 
     render_size = image_path.stat().st_size / 1024 / 1024
-    DATA_COLLECTION.append(RenderDataItem(url, "bilibili-read", cost_time, total_size, render_size))
+    DATA_COLLECTION.append(
+        RenderDataItem(
+            url,
+            "bilibili-read",
+            cost_time,
+            total_size,
+            render_size,
+        )
+    )
 
     logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
 
@@ -226,12 +250,11 @@ async def test_common_render():
 def test_write_result():
     # 按时间排序
     sorted_data_collection = sorted(DATA_COLLECTION, key=lambda x: x.cost)
-    result = "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB)\n"
+    result = "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB) |\n"
     result += "| --- | --- | --- | --- |\n"
     for item in sorted_data_collection:
-        result += (
-            f"| [{item.url_type}]({item.url}) | {item.cost:.5f} | {item.media_size:.5f} | {item.render_size:.5f} |\n"
-        )
+        result += f"| [{item.url_type}]({item.url}) | {item.cost:.5f} "
+        result += f"| {item.media_size:.5f} | {item.render_size:.5f} |\n"
 
     with open("render_result.md", "w+") as f:
         f.write(result)
