@@ -121,15 +121,27 @@
 
 <details>
 <summary>安装必要组件</summary>
-部分解析依赖于 ffmpeg
 
-ubuntu/debian
+部分解析依赖 `ffmpeg`
+
+`ubuntu/debian`
 
     sudo apt-get install ffmpeg
 
-其他 linux 参考(原项目推荐): https://gitee.com/baihu433/ffmpeg
+其他 `Linux` 参考(原项目推荐): https://gitee.com/baihu433/ffmpeg
 
-Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
+`Windows` 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
+
+`yt-dlp` 自 `2025.11.12` 起要求用户安装外部 `JavaScript Runtime`，参考 https://github.com/yt-dlp/yt-dlp/releases/tag/2025.11.12, 推荐安装 [Deno](https://deno.com)
+
+`macOS / Linux`
+
+    curl -fsSL https://deno.land/install.sh | sh
+
+`windows`
+
+    irm https://deno.land/install.ps1 | iex
+
 </details>
 
 ## ⚙️ 配置
