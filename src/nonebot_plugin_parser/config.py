@@ -1,7 +1,7 @@
 from enum import Enum
 from pathlib import Path
 
-from bilibili_api.video import VideoCodecs
+from bilibili_api.video import VideoCodecs, VideoQuality
 from nonebot import get_driver, get_plugin_config, require
 from pydantic import BaseModel
 
@@ -43,8 +43,14 @@ class Config(BaseModel):
     """是否在解析结果中附加原始URL"""
     parser_disabled_platforms: list[PlatformEnum] = []
     """禁止的解析器"""
-    parser_bili_video_codes: list[VideoCodecs] = [VideoCodecs.AVC, VideoCodecs.AV1, VideoCodecs.HEV]
+    parser_bili_video_codes: list[VideoCodecs] = [
+        VideoCodecs.AVC,
+        VideoCodecs.AV1,
+        VideoCodecs.HEV,
+    ]
     """B站视频编码"""
+    parser_bili_video_quality: VideoQuality = VideoQuality._1080P
+    """B站视频分辨率"""
     parser_render_type: RenderType = RenderType.common
     """Renderer 类型"""
     parser_custom_font: str | None = None
@@ -91,6 +97,11 @@ class Config(BaseModel):
     def bili_video_codes(self) -> list[VideoCodecs]:
         """B站视频编码"""
         return self.parser_bili_video_codes
+
+    @property
+    def bili_video_quality(self) -> VideoQuality:
+        """B站视频分辨率"""
+        return self.parser_bili_video_quality
 
     @property
     def render_type(self) -> RenderType:
