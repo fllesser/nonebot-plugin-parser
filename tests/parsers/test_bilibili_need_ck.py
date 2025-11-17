@@ -7,10 +7,9 @@ async def test_favlist():
     from nonebot_plugin_parser.parsers import BilibiliParser
 
     logger.info("开始解析B站收藏夹 https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create")
-    # https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create
-    fav_id = 311147541
+    url = "https://space.bilibili.com/396886341/favlist?fid=311147541&ftype=create"
     parser = BilibiliParser()
-    result = await parser.parse_favlist(fav_id)
+    result = await parser.parse_favlist(url)
 
     assert result.title, "标题为空"
     assert result.author, "作者为空"

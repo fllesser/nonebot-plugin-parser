@@ -148,7 +148,6 @@ class BilibiliParser(BaseParser):
 
     async def parse_others(self, url: str):
         """解析其他类型链接"""
-        # 判断链接类型并解析
         logger.debug(f"解析其他类型链接: {url}")
         # 1. 动态
         if "t.bili" in url or "m.bili" in url:
@@ -156,35 +155,19 @@ class BilibiliParser(BaseParser):
 
         # 2.图文动态
         if "/opus" in url:
-            matched = re.search(r"/(\d+)", url)
-            if not matched:
-                raise ParseException("无效的动态链接")
-            opus_id = int(matched.group(1))
-            return await self.parse_opus(opus_id)
+            return await self.parse_opus(url)
 
         # 3. 专栏
         if "/read" in url:
-            matched = re.search(r"/cv(\d+)", url)
-            if matched is None:
-                raise ParseException("无效的专栏链接")
-            read_id = int(matched.group(1))
-            return await self.parse_read(read_id)
+            return await self.parse_read(url)
 
         # 4. 直播
         if "/live" in url:
-            matched = re.search(r"/(\d+)", url)
-            if matched is None:
-                raise ParseException("无效的直播链接")
-            room_id = int(matched.group(1))
-            return await self.parse_live(room_id)
+            return await self.parse_live(url)
 
         # 5. 收藏夹
         if "/favlist" in url:
-            matched = re.search(r"fid=(\d+)", url)
-            if matched is None:
-                raise ParseException("无效的收藏夹链接")
-            fav_id = int(matched.group(1))
-            return await self.parse_favlist(fav_id)
+            return await self.parse_favlist(url)
 
         raise ParseException("不支持的 Bilibili 链接")
 
@@ -225,12 +208,16 @@ class BilibiliParser(BaseParser):
             contents=contents,
         )
 
-    async def parse_opus(self, opus_id: int):
+    async def parse_opus(self, url: str):
         """解析图文动态信息
 
         Args:
             opus_id (int): 图文动态 id
         """
+        matched = re.search(r"/(\d+)", url)
+        if not matched:
+            raise ParseException("无效的动态链接")
+        opus_id = int(matched.group(1))
         opus = Opus(opus_id, await self.credential)
         return await self._parse_opus(opus)
 
@@ -284,7 +271,7 @@ class BilibiliParser(BaseParser):
             text=current_text.strip(),
         )
 
-    async def parse_live(self, room_id: int):
+    async def parse_live(self, url: str):
         """解析直播信息
 
         Args:
@@ -296,6 +283,11 @@ class BilibiliParser(BaseParser):
         from bilibili_api.live import LiveRoom
 
         from .live import RoomData
+
+        matched = re.search(r"/(\d+)", url)
+        if matched is None:
+            raise ParseException("无效的直播链接")
+        room_id = int(matched.group(1))
 
         room = LiveRoom(room_display_id=room_id, credential=await self.credential)
         info_dict = await room.get_room_info()
@@ -316,7 +308,7 @@ class BilibiliParser(BaseParser):
 
         return self.result(title=room_data.title, text=room_data.detail, contents=contents, author=author)
 
-    async def parse_read(self, read_id: int):
+    async def parse_read(self, url: str):
         """专栏解析
 
         Args:
@@ -328,6 +320,11 @@ class BilibiliParser(BaseParser):
         from bilibili_api.article import Article
 
         from .article import ArticleInfo, ImageNode, TextNode
+
+        matched = re.search(r"/cv(\d+)", url)
+        if matched is None:
+            raise ParseException("无效的专栏链接")
+        read_id = int(matched.group(1))
 
         ar = Article(read_id)
         # 加载内容
@@ -355,7 +352,7 @@ class BilibiliParser(BaseParser):
             contents=contents,
         )
 
-    async def parse_favlist(self, fav_id: int):
+    async def parse_favlist(self, url: str):
         """解析收藏夹信息
 
         Args:
@@ -367,6 +364,11 @@ class BilibiliParser(BaseParser):
         from bilibili_api.favorite_list import get_video_favorite_list_content
 
         from .favlist import FavData
+
+        matched = re.search(r"fid=(\d+)", url)
+        if matched is None:
+            raise ParseException("无效的收藏夹链接")
+        fav_id = int(matched.group(1))
 
         # 只会取一页，20 个
         fav_dict = await get_video_favorite_list_content(fav_id)
