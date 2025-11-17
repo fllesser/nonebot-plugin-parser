@@ -10,13 +10,34 @@ on:
       - "tests/**"
       - "pyproject.toml"
       - "uv.lock"
+      - ".github/workflows/ci.yml"
 
 jobs:
   typos:
+    name: Typos
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5 # v5
       - uses: crate-ci/typos@master
+
+  static-type-check:
+    name: BasedPyright
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: 3.12
+          version: "latest"
+      
+      - name: Install Dependencies
+        run: uv sync --locked
+
+      - name: Static typing check
+        run: uvx basedpyright
 
   test-others:
     name: Test
@@ -43,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: setup uv
+      - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
@@ -87,7 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: setup uv
+      - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
@@ -139,7 +160,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: setup uv
+      - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
