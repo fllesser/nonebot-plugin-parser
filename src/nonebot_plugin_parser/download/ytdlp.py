@@ -45,9 +45,9 @@ class YtdlpDownloader:
             "force_generic_extractor": True,
         }
         self._ydl_download_base_opts: dict[str, Any] = {}
-        if pconfig.proxy is not None:
-            self._ydl_download_base_opts["proxy"] = pconfig.proxy
-            self._ydl_extract_base_opts["proxy"] = pconfig.proxy
+        if proxy := pconfig.proxy:
+            self._ydl_download_base_opts["proxy"] = proxy
+            self._ydl_extract_base_opts["proxy"] = proxy
 
     async def extract_video_info(self, url: str, cookiefile: Path | None = None) -> VideoInfo:
         """get video info by url
@@ -62,12 +62,12 @@ class YtdlpDownloader:
         video_info = self._video_info_mapping.get(url, None)
         if video_info:
             return video_info
-        ydl_opts = {} | self._ydl_extract_base_opts
+        ydl_opts = self._ydl_extract_base_opts.copy()
 
         if cookiefile:
             ydl_opts["cookiefile"] = str(cookiefile)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # pyright: ignore[reportArgumentType]
             info_dict = await asyncio.to_thread(ydl.extract_info, url, download=False)
             if not info_dict:
                 raise ParseException("获取视频信息失败")
@@ -105,7 +105,7 @@ class YtdlpDownloader:
         if cookiefile:
             ydl_opts["cookiefile"] = str(cookiefile)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # pyright: ignore[reportArgumentType]
             await asyncio.to_thread(ydl.download, [url])
         return video_path
 
@@ -139,6 +139,6 @@ class YtdlpDownloader:
 
         if cookiefile:
             ydl_opts["cookiefile"] = str(cookiefile)
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # pyright: ignore[reportArgumentType]
             await asyncio.to_thread(ydl.download, [url])
         return audio_path
