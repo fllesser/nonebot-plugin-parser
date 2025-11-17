@@ -21,7 +21,12 @@ class SearchResult:
 
     __slots__ = ("keyword", "searched", "text")
 
-    def __init__(self, text: str, keyword: str, searched: re.Match[str]):
+    def __init__(
+        self,
+        text: str,
+        keyword: str,
+        searched: re.Match[str],
+    ):
         self.text: str = text
         self.keyword: str = keyword
         self.searched: re.Match[str] = searched
@@ -110,6 +115,8 @@ class KeyPatternList(list[tuple[str, re.Pattern[str]]]):
             if isinstance(pattern, str):
                 pattern = re.compile(pattern)
             self.append((key, pattern))
+        # 按 key 长 -> 短
+        self.sort(key=lambda x: len(x[0]), reverse=True)
 
 
 class KeywordRegexRule:
