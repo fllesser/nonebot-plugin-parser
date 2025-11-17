@@ -61,14 +61,14 @@ class BilibiliParser(BaseParser):
             "/BV": self._parse_bv,
             "av": self._parse_av,
             "/av": self._parse_av,
-            "b23": self._parse_short_link,
+            "b23.tv": self._parse_short_link,
             "bili2233": self._parse_short_link,
-            "read/": self._parse_read,
-            "opus/": self._parse_opus,
+            "/read/": self._parse_read,
+            "/opus/": self._parse_opus,
             "t.bili": self._parse_dynamic,
-            "dynamic/": self._parse_dynamic,
+            "/dynamic/": self._parse_dynamic,
             "live.bili": self._parse_live,
-            "favlist": self._parse_favlist,
+            "/favlist": self._parse_favlist,
         }
 
     @override
