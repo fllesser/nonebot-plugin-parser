@@ -10,6 +10,7 @@ on:
       - "tests/**"
       - "pyproject.toml"
       - "uv.lock"
+      - ".github/workflows/ci.yml"
 
 jobs:
   typos:
@@ -29,7 +30,7 @@ jobs:
           enable-cache: true
           python-version: 3.12
           version: "latest"
-      
+
       - name: basedpyright
         run: uvx basedpyright
 
