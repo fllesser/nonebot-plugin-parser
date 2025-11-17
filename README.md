@@ -165,9 +165,9 @@ parser_bili_ck="SESSDATA=xxxxxxxxxx;ac_time_value=131231241231241"
 # 后两项在不同设备可能有兼容性问题，如需完全避免，可只填一项，如 '["avc"]'
 parser_bili_video_codes='["avc", "av01", "hev"]'
 
-# B 站视频分辨率
+# [可选] B 站视频清晰度
 # 360p(16), 480p(32), 720p(64), 1080p(80), 1080p+(112), 1080p_60(116), 4k(120)
-parser_bili_video_quality= 80
+parser_bili_video_quality=80
 
 # [可选] Youtube Cookie, Youtube 视频因人机检测下载失败，需填
 parser_ytb_ck=""
