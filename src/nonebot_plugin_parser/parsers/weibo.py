@@ -49,11 +49,7 @@ class WeiBoParser(BaseParser):
     @handle("mapp.api.weibo", r"https?://mapp\.api\.weibo\.cn/fx/[A-Za-z\d]+\.html")
     async def _parse_mapp_api_weibo(self, searched: re.Match[str]):
         url = searched.group(0)
-        redirect_url = await self.get_redirect_url(url)
-        if url == redirect_url:
-            raise ParseException("链接重定向失败")
-        keyword, searched = self.search_url(redirect_url)
-        return await self._handlers[keyword](self, searched)
+        return await self.parse_with_redirect(url)
 
     async def parse_fid(self, fid: str):
         """
