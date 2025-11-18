@@ -24,23 +24,23 @@ class WeiBoParser(BaseParser):
         self.headers.update(extra_headers)
 
     # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934
-    @handle("weibo.com/tv", r"https?://weibo\.com/tv/show/\d{4}:\d+\?mid=(?P<mid>\d+)")
+    @handle("weibo.com/tv", r"weibo\.com/tv/show/\d{4}:\d+\?mid=(?P<mid>\d+)")
     async def _parse_weibo_tv(self, searched: re.Match[str]):
         mid = str(searched.group("mid"))
         weibo_id = self._mid2id(mid)
         return await self.parse_weibo_id(weibo_id)
 
     # https://video.weibo.com/show?fid=1034:5145615399845897
-    @handle("video.weibo", r"https?://video\.weibo\.com/show\?fid=(?P<fid>\d+:\d+)")
+    @handle("video.weibo", r"video\.weibo\.com/show\?fid=(?P<fid>\d+:\d+)")
     async def _parse_video_weibo(self, searched: re.Match[str]):
         fid = str(searched.group("fid"))
         return await self.parse_fid(fid)
 
     # https://m.weibo.cn/status/5234367615996775
     # https://m.weibo.cn/detail/4976424138313924
-    @handle("m.weibo.cn", r"https?://m\.weibo\.cn/(?:status|detail)/(?P<wid>\d+)")
+    @handle("m.weibo.cn", r"m\.weibo\.cn/(?:status|detail)/(?P<wid>\d+)")
     # https://weibo.com/7207262816/P5kWdcfDe
-    @handle("weibo.com", r"https?://weibo\.com/\d+/(?P<wid>[0-9a-zA-Z]+)")
+    @handle("weibo.com", r"weibo\.com/\d+/(?P<wid>[0-9a-zA-Z]+)")
     async def _parse_m_weibo_cn(self, searched: re.Match[str]):
         wid = str(searched.group("wid"))
         return await self.parse_weibo_id(wid)
