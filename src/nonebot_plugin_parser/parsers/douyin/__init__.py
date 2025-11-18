@@ -1,58 +1,49 @@
 import re
 from typing import ClassVar
-from typing_extensions import deprecated, override
 
 import httpx
 import msgspec
 from nonebot import logger
 
-from ..base import COMMON_TIMEOUT, BaseParser, ParseException, Platform, PlatformEnum
+from ..base import COMMON_TIMEOUT, BaseParser, ParseException, Platform, PlatformEnum, handle
 
 
 class DouyinParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.DOUYIN, display_name="抖音")
 
-    # URL 正则表达式模式（keyword, pattern）
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        ("v.douyin", r"https://v\.douyin\.com/[a-zA-Z0-9_\-]+"),
-        ("douyin", r"https://www\.(?:douyin|iesdouyin)\.com/[a-zA-Z0-9_\-/]+"),
-    ]
+    # https://v.douyin.com/_2ljF4AmKL8
+    @handle("v.douyin", r"v\.douyin\.com/[a-zA-Z0-9_\-]+")
+    async def _parse_v_douyin(self, searched: re.Match[str]):
+        url = f"https://{searched.group(0)}"
+        return await self.parse_with_redirect(url)
 
-    def _build_iesdouyin_url(self, _type: str, video_id: str) -> str:
-        return f"https://www.iesdouyin.com/share/{_type}/{video_id}"
+    # https://www.douyin.com/video/7521023890996514083
+    # https://www.douyin.com/note/7469411074119322899
+    @handle("douyin", r"douyin\.com/(?P<ty>video|note)/(?P<id>\d+)")
+    @handle("iesdouyin", r"iesdouyin\.com/share/(?P<ty>slides|video|note)/(?P<id>\d+)")
+    @handle("m.douyin", r"m\.douyin\.com/share/(?P<ty>slides|video|note)/(?P<id>\d+)")
+    async def _parse_douyin(self, searched: re.Match[str]):
+        ty, id = searched.group("ty"), searched.group("id")
+        if ty == "slides":
+            return await self.parse_slides(id)
 
-    def _build_m_douyin_url(self, _type: str, video_id: str) -> str:
-        return f"https://m.douyin.com/share/{_type}/{video_id}"
-
-    @deprecated("use parse instead after 2.0.12, will be removed in the future")
-    async def parse_share_url(self, share_url: str):
-        if matched := re.match(r"(video|note)/([0-9]+)", share_url):
-            # https://www.douyin.com/video/xxxxxx
-            _type, video_id = matched.group(1), matched.group(2)
-            iesdouyin_url = self._build_iesdouyin_url(_type, video_id)
-        else:
-            # https://v.douyin.com/xxxxxx
-            iesdouyin_url = await self.get_redirect_url(share_url)
-            # https://www.iesdouyin.com/share/video/7468908569061100857/?region=CN&mid=0&u_
-            match = re.search(r"(slides|video|note)/(\d+)", iesdouyin_url)
-            if not match:
-                raise ParseException(f"无法从 {share_url} 中解析出 ID")
-            _type, video_id = match.group(1), match.group(2)
-            if _type == "slides":
-                return await self.parse_slides(video_id)
-
-        for url in [
-            self._build_m_douyin_url(_type, video_id),
-            share_url,
-            iesdouyin_url,
-        ]:
+        for url in (
+            self._build_m_douyin_url(ty, id),
+            self._build_iesdouyin_url(ty, id),
+        ):
             try:
                 return await self.parse_video(url)
             except ParseException as e:
-                logger.warning(f"failed to parse {url[:60]}, error: {e}")
+                logger.warning(f"failed to parse {url}, error: {e}")
                 continue
         raise ParseException("分享已删除或资源直链获取失败, 请稍后再试")
+
+    def _build_iesdouyin_url(self, ty: str, video_id: str) -> str:
+        return f"https://www.iesdouyin.com/share/{ty}/{video_id}"
+
+    def _build_m_douyin_url(self, ty: str, video_id: str) -> str:
+        return f"https://m.douyin.com/share/{ty}/{video_id}"
 
     async def parse_video(self, url: str):
         async with httpx.AsyncClient(
@@ -133,42 +124,3 @@ class DouyinParser(BaseParser):
             contents=contents,
             timestamp=slides_data.create_time,
         )
-
-    @override
-    async def parse(self, keyword: str, searched: re.Match[str]):
-        """解析 URL 获取内容信息并下载资源
-
-        Args:
-            keyword: 关键词
-            searched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果（已下载资源，包含 Path)
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
-        # 从匹配对象中获取原始URL
-        share_url = searched.group(0)
-        # return await self.parse_share_url(url)
-        if "v.douyin" in share_url:
-            share_url = await self.get_redirect_url(share_url)
-
-        match = re.search(r"(slides|video|note)/(\d+)", share_url)
-        if not match:
-            raise ParseException(f"无法从 {share_url} 中解析出 ID")
-        _type, video_id = match.group(1), match.group(2)
-        if _type == "slides":
-            return await self.parse_slides(video_id)
-
-        for url in (
-            self._build_m_douyin_url(_type, video_id),
-            self._build_iesdouyin_url(_type, video_id),
-            share_url,
-        ):
-            try:
-                return await self.parse_video(url)
-            except ParseException as e:
-                logger.warning(f"failed to parse {url[:60]}, error: {e}")
-                continue
-        raise ParseException("分享已删除或资源直链获取失败, 请稍后再试")
