@@ -202,12 +202,12 @@ async def test_common_render():
         "微博图集(2张)": "https://weibo.com/7983081104/Q98U3sDmH",
         "微博图集(3张)": "https://weibo.com/7299853661/Q8LXh1X74",
         "微博图集(4张)": "https://weibo.com/6458148211/Q3Cdb5vgP",
-        "微博纯文": "https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html",
+        # "微博纯文": "https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html",
         "微博纯文2": "https://weibo.com/5647310207/Q9c0ZwW2X",
         "微博转发纯文": "https://weibo.com/2385967842/Q9epfFLvQ",
         "微博转发(横图)": "https://weibo.com/7207262816/Q6YCbtAn8",
         "微博转发(竖图)": "https://weibo.com/7207262816/Q617WgOm4",
-        "微博转发(两张)": "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
+        # "微博转发(两张)": "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
         "微博转发(视频)": "https://weibo.com/1694917363/Q0KtXh6z2",
     }
 

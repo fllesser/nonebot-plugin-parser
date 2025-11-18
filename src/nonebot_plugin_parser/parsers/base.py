@@ -1,10 +1,11 @@
 """Parser 基类定义"""
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from asyncio import Task
+from collections.abc import Callable, Coroutine
 from pathlib import Path
-import re
-from typing import ClassVar
+from re import Match, Pattern, compile
+from typing import Any, ClassVar, TypeVar, cast
 from typing_extensions import Unpack
 
 from ..config import pconfig as pconfig
@@ -18,8 +19,31 @@ from ..exception import SizeLimitException as SizeLimitException
 from ..exception import ZeroSizeException as ZeroSizeException
 from .data import ParseResult, ParseResultKwargs, Platform
 
+T = TypeVar("T", bound="BaseParser")
+HandlerFunc = Callable[[T, Match[str]], Coroutine[Any, Any, ParseResult]]
 
-class BaseParser(ABC):
+
+# 注册处理器装饰器
+def handle(keyword: str, pattern: str):
+    """注册处理器装饰器"""
+
+    def decorator(func: HandlerFunc) -> HandlerFunc:
+        # 获取 所属类
+        # cls_name = func.__qualname__.split(".")[0]
+        # setattr(func, "_cls_name", cls_name)
+
+        if not hasattr(func, "_key_patterns"):
+            setattr(func, "_key_patterns", [])
+
+        key_patterns: list[tuple[str, Pattern[str]]] = getattr(func, "_key_patterns")
+        key_patterns.append((keyword, compile(pattern)))
+
+        return func
+
+    return decorator
+
+
+class BaseParser:
     """所有平台 Parser 的抽象基类
 
     子类必须实现：
@@ -28,14 +52,17 @@ class BaseParser(ABC):
     - parse: 解析 URL 的方法（接收正则表达式对象）
     """
 
-    # 类变量：存储所有已注册的 Parser 类
     _registry: ClassVar[list[type["BaseParser"]]] = []
+    """ 存储所有已注册的 Parser 类 """
 
     platform: ClassVar[Platform]
     """ 平台信息（包含名称和显示名称） """
 
     patterns: ClassVar[list[tuple[str, str]]]
     """ URL 正则表达式模式列表 [(keyword, pattern), ...] """
+
+    _patterns: ClassVar[list[tuple[str, Pattern[str]]]]
+    _handlers: ClassVar[dict[str, HandlerFunc]]
 
     def __init__(self):
         self.headers = COMMON_HEADER.copy()
@@ -49,13 +76,25 @@ class BaseParser(ABC):
         if ABC not in cls.__bases__:  # 跳过抽象类
             BaseParser._registry.append(cls)
 
+        cls._handlers = {}
+        cls._patterns = [(k, compile(p)) for k, p in cls.patterns]
+        cls._patterns.sort(key=lambda x: -len(x[0]))  # 按关键字长度降序排序
+
+        # 获取所有被 handle 装饰的方法
+        for attr_name in dir(cls):
+            attr = getattr(cls, attr_name)
+            if callable(attr) and hasattr(attr, "_key_patterns"):
+                key_patterns: list[tuple[str, Pattern[str]]] = getattr(attr, "_key_patterns")
+                for keyword, pattern in key_patterns:
+                    cls._handlers[keyword] = cast(HandlerFunc, attr)
+                    cls._patterns.append((keyword, pattern))
+
     @classmethod
     def get_all_subclass(cls) -> list[type["BaseParser"]]:
         """获取所有已注册的 Parser 类"""
         return cls._registry
 
-    @abstractmethod
-    async def parse(self, keyword: str, searched: re.Match[str]) -> ParseResult:
+    async def parse(self, keyword: str, searched: Match[str]) -> ParseResult:
         """解析 URL 获取内容信息并下载资源
 
         Args:
@@ -68,19 +107,16 @@ class BaseParser(ABC):
         Raises:
             ParseException: 解析失败时抛出
         """
-        raise NotImplementedError
+        return await self._handlers[keyword](self, searched)
 
     @classmethod
-    def search_url(cls, url: str) -> tuple[str, re.Match[str]]:
-        from nonebot import logger
-
+    def search_url(cls, url: str) -> tuple[str, Match[str]]:
         """搜索 URL 匹配模式"""
-        for keyword, pattern in cls.patterns:
+        for keyword, pattern in cls._patterns:
             if keyword not in url:
                 continue
-            if searched := re.search(pattern, url):
+            if searched := pattern.search(url):
                 return keyword, searched
-            logger.debug(f"keyword '{keyword}' is in '{url}', but not matched")
         raise ValueError(f"无法匹配 {url}")
 
     @classmethod
@@ -146,8 +182,11 @@ class BaseParser(ABC):
         """创建图片内容列表"""
         from .data import ImageContent
 
-        img_tasks = [DOWNLOADER.download_img(url, ext_headers=self.headers) for url in image_urls]
-        return [ImageContent(task) for task in img_tasks]
+        contents: list[ImageContent] = []
+        for url in image_urls:
+            task = DOWNLOADER.download_img(url, ext_headers=self.headers)
+            contents.append(ImageContent(task))
+        return contents
 
     def create_dynamic_contents(
         self,
@@ -156,8 +195,11 @@ class BaseParser(ABC):
         """创建动态图片内容列表"""
         from .data import DynamicContent
 
-        dynamic_tasks = [DOWNLOADER.download_video(url, ext_headers=self.headers) for url in dynamic_urls]
-        return [DynamicContent(task) for task in dynamic_tasks]
+        contents: list[DynamicContent] = []
+        for url in dynamic_urls:
+            task = DOWNLOADER.download_video(url, ext_headers=self.headers)
+            contents.append(DynamicContent(task))
+        return contents
 
     def create_audio_content(
         self,

@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from msgspec import Struct
 
 from .common import Upper
@@ -29,6 +31,15 @@ class Page(Struct):
     """时长"""
     first_frame: str | None = None
     """封面图片"""
+
+
+@dataclass(frozen=True, slots=True)
+class PageInfo:
+    index: int
+    title: str
+    duration: int
+    timestamp: int
+    cover: str | None = None
 
 
 class VideoInfo(Struct):
@@ -84,7 +95,7 @@ class VideoInfo(Struct):
 
         return " ".join(result_parts)
 
-    def extract_info_with_page(self, page_num: int = 1) -> tuple[int, str, int, int, str | None]:
+    def extract_info_with_page(self, page_num: int = 1) -> PageInfo:
         """获取视频信息，包含页索引、标题、时长、封面
         Args:
             page_num (int): 页索引. Defaults to 1.
@@ -105,7 +116,14 @@ class VideoInfo(Struct):
             duration = page.duration
             cover = page.first_frame
             timestamp = page.ctime
-        return page_idx, title, duration, timestamp, cover
+
+        return PageInfo(
+            index=page_idx,
+            title=title,
+            duration=duration,
+            timestamp=timestamp,
+            cover=cover,
+        )
 
 
 class ModelResult(Struct):
