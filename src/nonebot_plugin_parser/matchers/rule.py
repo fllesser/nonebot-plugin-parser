@@ -116,7 +116,8 @@ class KeyPatternList(list[tuple[str, re.Pattern[str]]]):
                 pattern = re.compile(pattern)
             self.append((key, pattern))
         # 按 key 长 -> 短
-        self.sort(key=lambda x: len(x[0]), reverse=True)
+        self.sort(key=lambda x: -len(x[0]))
+        logger.debug(f"KeyWords: {[k for k, _ in self]}")
 
 
 class KeywordRegexRule:
