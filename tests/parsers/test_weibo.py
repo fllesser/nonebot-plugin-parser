@@ -37,7 +37,7 @@ async def test_repost():
     parser = WeiBoParser()
 
     urls = [
-        "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
+        # "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
         "https://weibo.com/1694917363/Q0KtXh6z2",
     ]
 
@@ -71,7 +71,7 @@ async def test_video():
     parser = WeiBoParser()
 
     urls = [
-        "https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934",
+        "https://weibo.com/tv/show/1034:5197094538117264?mid=5197095191711778",
         "https://video.weibo.com/show?fid=1034:5145615399845897",
         "https://weibo.com/7207262816/O70aCbjnd",
         "http://m.weibo.cn/status/5112672433738061",
@@ -100,7 +100,7 @@ async def test_text():
     parser = WeiBoParser()
 
     urls = [
-        "https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html",
+        # "https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html",
         "https://weibo.com/3144744040/PvoG6c1AR",
         "https://weibo.com/3144744040/PiTAYaTKQ",
         "https://weibo.com/1157864602/Q0PtH9Yux",

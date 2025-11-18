@@ -1,5 +1,6 @@
 youtube:
 - https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz
+- https://www.youtube.com/watch?v=EKkzbbLYPuI
 
 kuaishou:
 视频：
@@ -48,35 +49,36 @@ X:
 
 douyin:
 视频
-- https://v.douyin.com/_2ljF4AmKL8/
-- https://www.douyin.com/video/7521023890996514083
+  - https://v.douyin.com/_2ljF4AmKL8/
+  - https://www.douyin.com/video/7521023890996514083
 普通图文
-- https://www.douyin.com/note/7469411074119322899
-- https://v.douyin.com/iP6Uu1Kh
-- https://v.douyin.com/GeIocABVe5U/     # 含 'BV'，用于测试匹配
+  - https://www.douyin.com/note/7469411074119322899
+  - https://v.douyin.com/iP6Uu1Kh
+  - https://v.douyin.com/GeIocABVe5U/     # 含 'BV'，用于测试匹配
 老视频，网页打开会重定向到 m.ixigua.com
-- https://v.douyin.com/iUrHrruH
+  - https://v.douyin.com/iUrHrruH
 含视频的图集
-- https://v.douyin.com/CeiJfqyWs # 将会解析出视频
-- https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
+  - https://v.douyin.com/CeiJfqyWs # 将会解析出视频
+  - https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
 
 xiaohongshu:
 因经常失效，不提供
 
 weibo:
 视频
-- https://video.weibo.com/show?fid=1034:5145615399845897 视频（fid)
-- https://weibo.com/7207262816/O70aCbjnd 视频
-- http://m.weibo.cn/status/5112672433738061 视频(m.weibo.cn)
+  - https://video.weibo.com/show?fid=1034:5145615399845897 视频（fid)
+  - https://weibo.com/7207262816/O70aCbjnd 视频
+  - http://m.weibo.cn/status/5112672433738061 视频(m.weibo.cn)
+  - https://weibo.com/tv/show/1034:5197094538117264?mid=5197095191711778
 图集
-- https://weibo.com/7207262816/P5kWdcfDe 多图 > 9 张
-- https://weibo.com/7207262816/P2AFBk387 9张
-- https://weibo.com/7207262816/Q6YCbtAn8 单张，转发，横屏
-- https://weibo.com/7207262816/Q617WgOm4 单张，转发，长图
-- https://weibo.com/7207262816/PsFzpzUX2 两张
-- https://weibo.com/7207262816/P2rJE157H 三张
+  - https://weibo.com/7207262816/P5kWdcfDe 多图 > 9 张
+  - https://weibo.com/7207262816/P2AFBk387 9张
+  - https://weibo.com/7207262816/Q6YCbtAn8 单张，转发，横屏
+  - https://weibo.com/7207262816/Q617WgOm4 单张，转发，长图
+  - https://weibo.com/7207262816/PsFzpzUX2 两张
+  - https://weibo.com/7207262816/P2rJE157H 三张
 纯文
-- ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
+  - ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
 转发
-- https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html 图文
-- https://weibo.com/1694917363/Q0KtXh6z2 视频
+  - https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html 图文
+  - https://weibo.com/1694917363/Q0KtXh6z2 视频

@@ -69,6 +69,7 @@ weibo:
   - https://video.weibo.com/show?fid=1034:5145615399845897 视频（fid)
   - https://weibo.com/7207262816/O70aCbjnd 视频
   - http://m.weibo.cn/status/5112672433738061 视频(m.weibo.cn)
+  - https://weibo.com/tv/show/1034:5197094538117264?mid=5197095191711778
 图集
   - https://weibo.com/7207262816/P5kWdcfDe 多图 > 9 张
   - https://weibo.com/7207262816/P2AFBk387 9张

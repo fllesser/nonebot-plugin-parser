@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from nonebot import logger
+import pytest
 
 
 def test_pattern_matching():
@@ -22,9 +23,18 @@ def test_pattern_matching():
                 continue
             if pattern.search(url):
                 logger.success(f"URL 匹配成功: {url} 关键词: {keyword}")
-                return
+                return True
             logger.debug(f"keyword '{keyword}' is in '{url}', but not matched")
-        raise ValueError(f"URL 未匹配成功: {url}")
+        return False
 
+    # 统计匹配结果
+    failed_urls: list[str] = []
     for url in urls:
-        match_url(url)
+        if not match_url(url):
+            failed_urls.append(url)
+
+    if failed_urls:
+        logger.error("以下 URL 未能匹配成功:")
+        for url in failed_urls:
+            logger.error(f"- {url}")
+        pytest.fail(f"共有 {len(failed_urls)} 个 URL 未能匹配成功，请检查日志。")

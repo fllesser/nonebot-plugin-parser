@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-import functools
+from functools import wraps
 from pathlib import Path
 from typing import Literal
 
@@ -146,7 +146,7 @@ class UniHelper:
 
     @staticmethod
     def exception_handler(func):
-        @functools.wraps(func)
+        @wraps(func)
         async def wrapper(*args, **kwargs):
             event = current_event.get()
             await UniHelper.message_reaction(event, "resolving")

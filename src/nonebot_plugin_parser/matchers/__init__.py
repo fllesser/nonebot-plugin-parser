@@ -28,7 +28,7 @@ def register_parser_matcher():
     for _cls in enabled_parser_classes:
         parser = _cls()
         enabled_platform_names.append(parser.platform.display_name)
-        for keyword, _ in _cls.patterns:
+        for keyword, _ in _cls._patterns:
             KEYWORD_PARSER_MAP[keyword] = parser
     logger.info(f"启用平台: {', '.join(sorted(enabled_platform_names))}")
 

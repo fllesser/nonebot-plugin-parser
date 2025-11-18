@@ -2,7 +2,6 @@ import asyncio
 import json
 import re
 from typing import ClassVar
-from typing_extensions import override
 
 from bilibili_api import HEADERS, Credential, request_settings, select_client
 from bilibili_api.opus import Opus
@@ -16,8 +15,8 @@ from ..base import (
     DownloadException,
     DurationLimitException,
     ParseException,
-    ParseHandler,
     PlatformEnum,
+    handle,
     pconfig,
 )
 from ..cookie import ck2dict
@@ -27,23 +26,7 @@ from ..data import ImageContent, MediaContent, Platform
 class BilibiliParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
-
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        ("/read/", r"bilibili\.com/read/cv(?P<read_id>\d+)"),
-        ("/opus/", r"bilibili\.com/opus/(?P<opus_id>\d+)"),
-        ("t.bili", r"t\.bilibili\.com/(?P<dynamic_id>\d+)"),
-        ("/dynamic/", r"bilibili\.com/dynamic/(?P<dynamic_id>\d+)"),
-        ("live.bili", r"live\.bilibili\.com/(?P<room_id>\d+)"),
-        ("/favlist", r"favlist\?fid=(?P<fav_id>\d+)"),
-        # short link
-        ("b23.tv", r"b23\.tv/[A-Za-z\d\._?%&+\-=/#]+"),
-        ("bili2233", r"bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+"),
-        # video
-        ("BV", r"^(?P<bvid>BV[0-9a-zA-Z]{10})(?:\s)?(?P<page_num>\d{1,3})?$"),
-        ("av", r"^av(?P<avid>\d{6,})(?:\s)?(?P<page_num>\d{1,3})?$"),
-        ("/BV", r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9a-zA-Z]{10})(?:\?p=(?P<page_num>\d{1,3}))?"),
-        ("/av", r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:\?p=(?P<page_num>\d{1,3}))?"),
-    ]
+    patterns: ClassVar[list[tuple[str, str]]] = []
 
     def __init__(self):
         self.headers = HEADERS.copy()
@@ -56,25 +39,8 @@ class BilibiliParser(BaseParser):
         # 第二参数数值参考 curl_cffi 文档
         # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
 
-        self._handlers: dict[str, ParseHandler] = {
-            "BV": self._parse_bv,
-            "/BV": self._parse_bv,
-            "av": self._parse_av,
-            "/av": self._parse_av,
-            "b23.tv": self._parse_short_link,
-            "bili2233": self._parse_short_link,
-            "/read/": self._parse_read,
-            "/opus/": self._parse_opus,
-            "t.bili": self._parse_dynamic,
-            "/dynamic/": self._parse_dynamic,
-            "live.bili": self._parse_live,
-            "/favlist": self._parse_favlist,
-        }
-
-    @override
-    async def parse(self, keyword: str, searched: re.Match[str]):
-        return await self._handlers[keyword](searched)
-
+    @handle("b23.tv", r"b23\.tv/[A-Za-z\d\._?%&+\-=/#]+")
+    @handle("bili2233", r"bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+")
     async def _parse_short_link(self, searched: re.Match[str]):
         """解析短链"""
         url = f"https://{searched.group(0)}"
@@ -82,8 +48,10 @@ class BilibiliParser(BaseParser):
         if url == redirect_url:
             raise ParseException("短链重定向失败")
         keyword, searched = self.search_url(redirect_url)
-        return await self._handlers[keyword](searched)
+        return await self._handlers[keyword](self, searched)
 
+    @handle("BV", r"^(?P<bvid>BV[0-9a-zA-Z]{10})(?:\s)?(?P<page_num>\d{1,3})?$")
+    @handle("/BV", r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9a-zA-Z]{10})(?:\?p=(?P<page_num>\d{1,3}))?")
     async def _parse_bv(self, searched: re.Match[str]):
         """解析视频信息"""
         bvid = str(searched.group("bvid"))
@@ -91,6 +59,8 @@ class BilibiliParser(BaseParser):
 
         return await self.parse_video(bvid=bvid, page_num=page_num)
 
+    @handle("av", r"^av(?P<avid>\d{6,})(?:\s)?(?P<page_num>\d{1,3})?$")
+    @handle("/av", r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:\?p=(?P<page_num>\d{1,3}))?")
     async def _parse_av(self, searched: re.Match[str]):
         """解析视频信息"""
         avid = int(searched.group("avid"))
@@ -98,26 +68,32 @@ class BilibiliParser(BaseParser):
 
         return await self.parse_video(avid=avid, page_num=page_num)
 
+    @handle("/dynamic/", r"bilibili\.com/dynamic/(?P<dynamic_id>\d+)")
+    @handle("t.bili", r"t\.bilibili\.com/(?P<dynamic_id>\d+)")
     async def _parse_dynamic(self, searched: re.Match[str]):
         """解析动态信息"""
         dynamic_id = int(searched.group("dynamic_id"))
         return await self.parse_dynamic(dynamic_id)
 
+    @handle("live.bili", r"live\.bilibili\.com/(?P<room_id>\d+)")
     async def _parse_live(self, searched: re.Match[str]):
         """解析直播信息"""
         room_id = int(searched.group("room_id"))
         return await self.parse_live(room_id)
 
+    @handle("/favlist", r"favlist\?fid=(?P<fav_id>\d+)")
     async def _parse_favlist(self, searched: re.Match[str]):
         """解析收藏夹信息"""
         fav_id = int(searched.group("fav_id"))
         return await self.parse_favlist(fav_id)
 
+    @handle("/read/", r"bilibili\.com/read/cv(?P<read_id>\d+)")
     async def _parse_read(self, searched: re.Match[str]):
         """解析专栏信息"""
         read_id = int(searched.group("read_id"))
         return await self.parse_read(read_id)
 
+    @handle("/opus/", r"bilibili\.com/opus/(?P<opus_id>\d+)")
     async def _parse_opus(self, searched: re.Match[str]):
         """解析图文动态信息"""
         opus_id = int(searched.group("opus_id"))
