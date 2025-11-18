@@ -28,11 +28,7 @@ KeyPatterns = list[tuple[str, Pattern[str]]]
 def handle(keyword: str, pattern: str):
     """注册处理器装饰器"""
 
-    def decorator(func: HandlerFunc) -> HandlerFunc:
-        # 获取 所属类
-        # cls_name = func.__qualname__.split(".")[0]
-        # setattr(func, "_cls_name", cls_name)
-
+    def decorator(func: HandlerFunc[T]) -> HandlerFunc[T]:
         if not hasattr(func, "_key_patterns"):
             setattr(func, "_key_patterns", [])
 
@@ -84,8 +80,9 @@ class BaseParser:
             attr = getattr(cls, attr_name)
             if callable(attr) and hasattr(attr, "_key_patterns"):
                 key_patterns: KeyPatterns = getattr(attr, "_key_patterns")
+                handler = cast(HandlerFunc, attr)
                 for keyword, pattern in key_patterns:
-                    cls._handlers[keyword] = cast(HandlerFunc, attr)
+                    cls._handlers[keyword] = handler
                     cls._key_patterns.append((keyword, pattern))
 
         # 按关键字长度降序排序

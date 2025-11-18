@@ -38,7 +38,7 @@ class WeiBoParser(BaseParser):
 
     # https://m.weibo.cn/status/5234367615996775
     # https://m.weibo.cn/detail/4976424138313924
-    @handle("m.weibo.cn", r"https?://m\.weibo\.cn/(?:status|detail)/(?P<wid>)\d+")
+    @handle("m.weibo.cn", r"https?://m\.weibo\.cn/(?:status|detail)/(?P<wid>\d+)")
     # https://weibo.com/7207262816/P5kWdcfDe
     @handle("weibo.com", r"https?://weibo\.com/\d+/(?P<wid>[0-9a-zA-Z]+)")
     async def _parse_m_weibo_cn(self, searched: re.Match[str]):
