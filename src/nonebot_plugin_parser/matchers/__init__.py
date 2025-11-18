@@ -22,17 +22,17 @@ KEYWORD_PARSER_MAP: dict[str, BaseParser] = {}
 
 @get_driver().on_startup
 def register_parser_matcher():
-    enabled_parser_classes = _get_enabled_parser_classes()
+    enabled_classes = _get_enabled_parser_classes()
 
-    enabled_platform_names = []
-    for _cls in enabled_parser_classes:
+    enabled_platforms = []
+    for _cls in enabled_classes:
         parser = _cls()
-        enabled_platform_names.append(parser.platform.display_name)
-        for keyword, _ in _cls._patterns:
+        enabled_platforms.append(parser.platform.display_name)
+        for keyword, _ in _cls._key_patterns:
             KEYWORD_PARSER_MAP[keyword] = parser
-    logger.info(f"启用平台: {', '.join(sorted(enabled_platform_names))}")
+    logger.info(f"启用平台: {', '.join(sorted(enabled_platforms))}")
 
-    patterns = [p for _cls in enabled_parser_classes for p in _cls._patterns]
+    patterns = [p for _cls in enabled_classes for p in _cls._key_patterns]
     matcher = on_keyword_regex(*patterns)
     matcher.append_handler(parser_handler)
 

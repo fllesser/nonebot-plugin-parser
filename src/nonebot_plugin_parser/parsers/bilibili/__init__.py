@@ -26,7 +26,6 @@ from ..data import ImageContent, MediaContent, Platform
 class BilibiliParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
-    patterns: ClassVar[list[tuple[str, str]]] = []
 
     def __init__(self):
         self.headers = HEADERS.copy()

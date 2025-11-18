@@ -8,7 +8,7 @@ def test_pattern_matching():
     from nonebot_plugin_parser.parsers import BaseParser
 
     parser_classes = BaseParser.get_all_subclass()
-    patterns = [p for _cls in parser_classes for p in _cls._patterns]
+    patterns = [p for _cls in parser_classes for p in _cls._key_patterns]
     patterns.sort(key=lambda x: len(x[0]), reverse=True)  # 按关键字长度降序排序
 
     urls_file = Path(__file__).parent / "urls.txt"

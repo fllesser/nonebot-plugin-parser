@@ -21,6 +21,7 @@ from .data import ParseResult, ParseResultKwargs, Platform
 
 T = TypeVar("T", bound="BaseParser")
 HandlerFunc = Callable[[T, Match[str]], Coroutine[Any, Any, ParseResult]]
+KeyPatterns = list[tuple[str, Pattern[str]]]
 
 
 # 注册处理器装饰器
@@ -35,7 +36,7 @@ def handle(keyword: str, pattern: str):
         if not hasattr(func, "_key_patterns"):
             setattr(func, "_key_patterns", [])
 
-        key_patterns: list[tuple[str, Pattern[str]]] = getattr(func, "_key_patterns")
+        key_patterns: KeyPatterns = getattr(func, "_key_patterns")
         key_patterns.append((keyword, compile(pattern)))
 
         return func
@@ -47,9 +48,8 @@ class BaseParser:
     """所有平台 Parser 的抽象基类
 
     子类必须实现：
-    - platform: 平台信息（包含名称和显示名称）
-    - patterns: URL 正则表达式模式列表
-    - parse: 解析 URL 的方法（接收正则表达式对象）
+    - platform: 平台信息（包含名称和显示名称)
+    - patterns: URL 正则表达式模式列表 [(keyword, pattern), ...]
     """
 
     _registry: ClassVar[list[type["BaseParser"]]] = []
@@ -58,10 +58,10 @@ class BaseParser:
     platform: ClassVar[Platform]
     """ 平台信息（包含名称和显示名称） """
 
-    patterns: ClassVar[list[tuple[str, str]]]
+    patterns: ClassVar[list[tuple[str, str]]] = []
     """ URL 正则表达式模式列表 [(keyword, pattern), ...] """
 
-    _patterns: ClassVar[list[tuple[str, Pattern[str]]]]
+    _key_patterns: ClassVar[KeyPatterns]
     _handlers: ClassVar[dict[str, HandlerFunc]]
 
     def __init__(self):
@@ -77,17 +77,19 @@ class BaseParser:
             BaseParser._registry.append(cls)
 
         cls._handlers = {}
-        cls._patterns = [(k, compile(p)) for k, p in cls.patterns]
-        cls._patterns.sort(key=lambda x: -len(x[0]))  # 按关键字长度降序排序
+        cls._key_patterns = [(k, compile(p)) for k, p in cls.patterns]
 
         # 获取所有被 handle 装饰的方法
         for attr_name in dir(cls):
             attr = getattr(cls, attr_name)
             if callable(attr) and hasattr(attr, "_key_patterns"):
-                key_patterns: list[tuple[str, Pattern[str]]] = getattr(attr, "_key_patterns")
+                key_patterns: KeyPatterns = getattr(attr, "_key_patterns")
                 for keyword, pattern in key_patterns:
                     cls._handlers[keyword] = cast(HandlerFunc, attr)
-                    cls._patterns.append((keyword, pattern))
+                    cls._key_patterns.append((keyword, pattern))
+
+        # 按关键字长度降序排序
+        cls._key_patterns.sort(key=lambda x: -len(x[0]))
 
     @classmethod
     def get_all_subclass(cls) -> list[type["BaseParser"]]:
@@ -112,7 +114,7 @@ class BaseParser:
     @classmethod
     def search_url(cls, url: str) -> tuple[str, Match[str]]:
         """搜索 URL 匹配模式"""
-        for keyword, pattern in cls._patterns:
+        for keyword, pattern in cls._key_patterns:
             if keyword not in url:
                 continue
             if searched := pattern.search(url):
