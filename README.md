@@ -121,15 +121,27 @@
 
 <details>
 <summary>安装必要组件</summary>
-部分解析依赖于 ffmpeg
 
-ubuntu/debian
+部分解析依赖 `ffmpeg`
+
+`ubuntu/debian`
 
     sudo apt-get install ffmpeg
 
-其他 linux 参考(原项目推荐): https://gitee.com/baihu433/ffmpeg
+其他 `Linux` 参考(原项目推荐): https://gitee.com/baihu433/ffmpeg
 
-Windows 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
+`Windows` 参考(原项目推荐): https://www.jianshu.com/p/5015a477de3c
+
+`yt-dlp` 自 `2025.11.12` 起要求用户安装外部 `JavaScript Runtime`，参考 https://github.com/yt-dlp/yt-dlp/releases/tag/2025.11.12, 推荐安装 [Deno](https://deno.com)
+
+`macOS / Linux`
+
+    curl -fsSL https://deno.land/install.sh | sh
+
+`windows`
+
+    irm https://deno.land/install.ps1 | iex
+
 </details>
 
 ## ⚙️ 配置
@@ -152,6 +164,10 @@ parser_bili_ck="SESSDATA=xxxxxxxxxx;ac_time_value=131231241231241"
 # 可选 "avc"(H.264，体积较大), "hev"(HEVC), "av01"(AV1)
 # 后两项在不同设备可能有兼容性问题，如需完全避免，可只填一项，如 '["avc"]'
 parser_bili_video_codes='["avc", "av01", "hev"]'
+
+# [可选] B 站视频清晰度
+# 360p(16), 480p(32), 720p(64), 1080p(80), 1080p+(112), 1080p_60(116), 4k(120)
+parser_bili_video_quality=80
 
 # [可选] Youtube Cookie, Youtube 视频因人机检测下载失败，需填
 parser_ytb_ck=""
@@ -195,20 +211,23 @@ parser_custom_font="LXGWZhenKaiGB-Regular.ttf"
 parser_need_forward_contents=True
 ```
 
-
 </details>
 
-## 🎉 使用
-### 指令表
-|   指令   |         权限          | 需要@ | 范围  |   说明   |
-| :------: | :-------------------: | :---: | :---: | :------: |
-| 开启解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  | 开启解析 |
-| 关闭解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  | 关闭解析 |
+<details>
+<summary>推荐的字体</summary>
 
-### 推荐的字体
 - [LXGW ZhenKai / 霞鹜臻楷](https://github.com/lxgw/LxgwZhenKai) 效果图使用字体
 - [LXGW Neo XiHei / 霞鹜新晰黑](https://github.com/lxgw/LxgwNeoXiHei)
 - [LXGW Neo ZhiSong / 霞鹜新致宋 / 霞鶩新緻宋](https://github.com/lxgw/LxgwNeoZhiSong)
+</details>
+
+## 🎉 使用
+|   指令   |         权限          | 需要@ | 范围  |       说明        |
+| :------: | :-------------------: | :---: | :---: | :---------------: |
+| 开启解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  |     开启解析      |
+| 关闭解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  |     关闭解析      |
+|    bm    |           -           |  否   | 群聊  |   下载 B 站音频   |
+|    ym    |           -           |  否   | 群聊  | 下载 youtube 音频 |
 
 ## 🧩 扩展
 > [!IMPORTANT]

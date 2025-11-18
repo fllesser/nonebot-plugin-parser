@@ -6,7 +6,19 @@ def test_generate_file_name():
 
     from nonebot_plugin_parser.utils import generate_file_name
 
-    suffix_lst = [".jpg", ".png", ".gif", ".webp", ".jpeg", ".bmp", ".tiff", ".ico", ".svg", ".heic", ".heif"]
+    suffix_lst = [
+        ".jpg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".jpeg",
+        ".bmp",
+        ".tiff",
+        ".ico",
+        ".svg",
+        ".heic",
+        ".heif",
+    ]
     # 测试 100 个链接
     for i in range(20):
         url = f"https://www.google.com/test{i}{random.choice(suffix_lst)}"

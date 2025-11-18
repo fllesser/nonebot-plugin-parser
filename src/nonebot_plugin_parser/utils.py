@@ -190,7 +190,7 @@ def generate_file_name(url: str, default_suffix: str = "") -> str:
 
     Args:
         url (str): url
-        default_suffix (str, optional): 默认后缀. Defaults to "".
+        default_suffix (str): 默认后缀. Defaults to "".
 
     Returns:
         str: 文件名

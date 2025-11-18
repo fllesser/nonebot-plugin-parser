@@ -1,5 +1,4 @@
 import asyncio
-import re
 
 from nonebot import logger
 import pytest
@@ -10,11 +9,12 @@ async def test_live():
     logger.info("开始解析B站直播 https://live.bilibili.com/6")
     from nonebot_plugin_parser.parsers import BilibiliParser
 
-    # https://live.bilibili.com/1
-    room_id = 1
-    bilibili_parser = BilibiliParser()
+    url = "https://live.bilibili.com/1"
+    parser = BilibiliParser()
+    _, searched = parser.search_url(url)
+    room_id = int(searched.group("room_id"))
     try:
-        result = await bilibili_parser.parse_live(room_id)
+        result = await parser.parse_live(room_id)
     except Exception as e:
         pytest.skip(f"B站直播解析失败: {e} (风控)")
 
@@ -39,10 +39,11 @@ async def test_read():
     logger.info("开始解析B站图文 https://www.bilibili.com/read/cv523868")
     from nonebot_plugin_parser.parsers import BilibiliParser
 
-    # https://www.bilibili.com/read/cv523868
-    read_id = 523868
-    bilibili_parser = BilibiliParser()
-    result = await bilibili_parser.parse_read(read_id)
+    url = "https://www.bilibili.com/read/cv523868"
+    parser = BilibiliParser()
+    _, searched = parser.search_url(url)
+    read_id = int(searched.group("read_id"))
+    result = await parser.parse_read(read_id)
     logger.debug(f"result: {result}")
     assert result.title, "标题为空"
     assert result.author, "作者为空"
@@ -70,11 +71,8 @@ async def test_opus():
     parser = BilibiliParser()
 
     async def test_parse_opus(opus_url: str) -> None:
-        matched = re.search(r"opus/(\d+)", opus_url)
-        assert matched
-        opus_id = int(matched.group(1))
-        logger.info(f"{opus_url} | 开始解析哔哩哔哩动态 opus_id: {opus_id}")
-
+        _, searched = parser.search_url(opus_url)
+        opus_id = int(searched.group("opus_id"))
         try:
             result = await parser.parse_opus(opus_id)
         except Exception as e:
@@ -109,7 +107,9 @@ async def test_dynamic():
     parser = BilibiliParser()
 
     async def test_parse_dynamic(dynamic_url: str) -> None:
-        result = await parser.parse_dynamic(dynamic_url)
+        _, searched = parser.search_url(dynamic_url)
+        dynamic_id = int(searched.group("dynamic_id"))
+        result = await parser.parse_dynamic(dynamic_id)
         assert result.title, "标题为空"
         assert result.author, "作者为空"
         avatar_path = await result.author.get_avatar_path()
