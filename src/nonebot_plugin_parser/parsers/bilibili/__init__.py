@@ -43,11 +43,7 @@ class BilibiliParser(BaseParser):
     async def _parse_short_link(self, searched: re.Match[str]):
         """解析短链"""
         url = f"https://{searched.group(0)}"
-        redirect_url = await self.get_redirect_url(url, self.headers)
-        if url == redirect_url:
-            raise ParseException("短链重定向失败")
-        keyword, searched = self.search_url(redirect_url)
-        return await self._handlers[keyword](self, searched)
+        return await self.parse_with_redirect(url)
 
     @handle("BV", r"^(?P<bvid>BV[0-9a-zA-Z]{10})(?:\s)?(?P<page_num>\d{1,3})?$")
     @handle("/BV", r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9a-zA-Z]{10})(?:\?p=(?P<page_num>\d{1,3}))?")

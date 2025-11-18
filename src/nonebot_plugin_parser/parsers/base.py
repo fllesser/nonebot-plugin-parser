@@ -108,6 +108,16 @@ class BaseParser:
         """
         return await self._handlers[keyword](self, searched)
 
+    async def parse_with_redirect(self, url: str) -> ParseResult:
+        """先重定向再解析"""
+        redirect_url = await self.get_redirect_url(url, headers=self.headers)
+
+        if redirect_url == url:
+            raise ParseException(f"无法重定向 URL: {url}")
+
+        keyword, searched = self.search_url(redirect_url)
+        return await self.parse(keyword, searched)
+
     @classmethod
     def search_url(cls, url: str) -> tuple[str, Match[str]]:
         """搜索 URL 匹配模式"""
