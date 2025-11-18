@@ -1,9 +1,14 @@
 from collections.abc import Sequence
+import functools
 from pathlib import Path
+from typing import Literal
 
+from nonebot import logger
+from nonebot.adapters import Event
 from nonebot.internal.matcher import current_bot
-from nonebot_plugin_alconna import File, Image, Text, Video
-from nonebot_plugin_alconna.uniseg import Segment, UniMessage, Voice
+from nonebot.matcher import current_event
+from nonebot_plugin_alconna import File, Image, Text, Video, uniseg
+from nonebot_plugin_alconna.uniseg import Segment, SupportAdapter, UniMessage, Voice
 from nonebot_plugin_alconna.uniseg.segment import CustomNode, Reference
 
 from .config import pconfig
@@ -115,3 +120,44 @@ class UniHelper:
             return File(raw=file.read_bytes(), name=display_name)
         else:
             return File(path=file, name=display_name)
+
+    @staticmethod
+    async def message_reaction(
+        event: Event,
+        status: Literal["fail", "resolving", "done"],
+    ) -> None:
+        emoji_map = {
+            "fail": ("10060", "❌"),
+            "resolving": ("424", "👀"),
+            "done": ("144", "🎉"),
+        }
+        message_id = uniseg.get_message_id(event)
+        target = uniseg.get_target(event)
+
+        if target.adapter in (SupportAdapter.onebot11, SupportAdapter.qq):
+            emoji = emoji_map[status][0]
+        else:
+            emoji = emoji_map[status][1]
+
+        try:
+            await uniseg.message_reaction(emoji, message_id=message_id)
+        except Exception:
+            logger.warning(f"reaction {emoji} to {message_id} failed, maybe not support")
+
+    @staticmethod
+    def exception_handler(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            event = current_event.get()
+            await UniHelper.message_reaction(event, "resolving")
+
+            try:
+                result = await func(*args, **kwargs)
+            except Exception:
+                await UniHelper.message_reaction(event, "fail")
+                raise
+
+            await UniHelper.message_reaction(event, "done")
+            return result
+
+        return wrapper

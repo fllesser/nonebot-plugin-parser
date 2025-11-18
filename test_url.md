@@ -1,5 +1,6 @@
 youtube:
 - https://youtu.be/EKkzbbLYPuI?si=K_S9zIp5g7DhigVz
+- https://www.youtube.com/watch?v=EKkzbbLYPuI
 
 kuaishou:
 视频：
