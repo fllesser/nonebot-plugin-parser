@@ -5,50 +5,55 @@ from typing import ClassVar
 from httpx import AsyncClient, Cookies
 import msgspec
 
-from .base import BaseParser, ParseException, Platform, PlatformEnum
+from .base import BaseParser, ParseException, Platform, PlatformEnum, handle
 
 
 class WeiBoParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.WEIBO, display_name="微博")
 
-    # URL 正则表达式模式（keyword, pattern）
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        ("weibo.com", r"https?://(?:www|m|video)?\.?weibo\.com/[A-Za-z\d._?%&+\-=/#@:]+"),
-        ("m.weibo.cn", r"https?://m\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
-        ("mapp.api.weibo", r"https?://mapp\.api\.weibo\.cn/[A-Za-z\d._?%&+\-=/#@]+"),
-    ]
-
     def __init__(self):
         super().__init__()
         extra_headers = {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
+            "accept": (
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,"
+                "image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+            ),
             "referer": "https://weibo.com/",
         }
         self.headers.update(extra_headers)
 
-    async def parse(self, keyword: str, searched: re.Match[str]):
-        # 从匹配对象中获取原始URL
-        url = searched.group(0)
-        if "mapp.api.weibo" in url:
-            # ​​​https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html
-            url = await self.get_redirect_url(url)
-        # https://video.weibo.com/show?fid=1034:5145615399845897
-        if matched := re.search(r"https://video\.weibo\.com/show\?fid=(\d+:\d+)", url):
-            return await self.parse_fid(matched.group(1))
-        # https://m.weibo.cn/detail/4976424138313924
-        elif matched := re.search(r"m\.weibo\.cn(?:/detail|/status)?/([A-Za-z\d]+)", url):
-            weibo_id = matched.group(1)
-        # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934
-        elif matched := re.search(r"mid=([A-Za-z\d]+)", url):
-            weibo_id = self._mid2id(matched.group(1))
-        # https://weibo.com/1707895270/5006106478773472
-        elif matched := re.search(r"(?<=weibo.com/)[A-Za-z\d]+/([A-Za-z\d]+)", url):
-            weibo_id = matched.group(1)
-        else:
-            raise ParseException("无法获取到微博的 id")
-
+    # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934
+    @handle("weibo.com/tv", r"https?://weibo\.com/tv/show/\d{4}:\d+\?mid=(?P<mid>\d+)")
+    async def _parse_weibo_tv(self, searched: re.Match[str]):
+        mid = str(searched.group("mid"))
+        weibo_id = self._mid2id(mid)
         return await self.parse_weibo_id(weibo_id)
+
+    # https://video.weibo.com/show?fid=1034:5145615399845897
+    @handle("video.weibo", r"https?://video\.weibo\.com/show\?fid=(?P<fid>\d+:\d+)")
+    async def _parse_video_weibo(self, searched: re.Match[str]):
+        fid = str(searched.group("fid"))
+        return await self.parse_fid(fid)
+
+    # https://m.weibo.cn/status/5234367615996775
+    # https://m.weibo.cn/detail/4976424138313924
+    @handle("m.weibo.cn", r"https?://m\.weibo\.cn/(?:status|detail)/(?P<wid>\d+)")
+    # https://weibo.com/7207262816/P5kWdcfDe
+    @handle("weibo.com", r"https?://weibo\.com/\d+/(?P<wid>[0-9a-zA-Z]+)")
+    async def _parse_m_weibo_cn(self, searched: re.Match[str]):
+        wid = str(searched.group("wid"))
+        return await self.parse_weibo_id(wid)
+
+    # https://mapp.api.weibo.cn/fx/233911ddcc6bffea835a55e725fb0ebc.html
+    @handle("mapp.api.weibo", r"https?://mapp\.api\.weibo\.cn/fx/[A-Za-z\d]+\.html")
+    async def _parse_mapp_api_weibo(self, searched: re.Match[str]):
+        url = searched.group(0)
+        redirect_url = await self.get_redirect_url(url)
+        if url == redirect_url:
+            raise ParseException("链接重定向失败")
+        keyword, searched = self.search_url(redirect_url)
+        return await self._handlers[keyword](self, searched)
 
     async def parse_fid(self, fid: str):
         """
