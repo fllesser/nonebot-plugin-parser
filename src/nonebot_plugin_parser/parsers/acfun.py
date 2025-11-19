@@ -23,9 +23,9 @@ class AcfunParser(BaseParser):
         super().__init__()
         self.headers["referer"] = "https://www.acfun.cn/"
 
-    @handle("acfun.cn", r"(?:ac=|/ac)(\d+)")
+    @handle("acfun.cn", r"(?:ac=|/ac)(?P<acid>\d+)")
     async def _parse(self, searched: re.Match[str]):
-        acid = int(searched.group(1))
+        acid = int(searched.group("acid"))
         url = f"https://www.acfun.cn/v/ac{acid}"
 
         m3u8_url, title, description, author, upload_time = await self.parse_video_info(url)
