@@ -2,7 +2,7 @@ import re
 from typing import ClassVar
 
 from ..download import DOWNLOADER, YTDLP_DOWNLOADER
-from .base import BaseParser, PlatformEnum
+from .base import BaseParser, PlatformEnum, handle
 from .data import Author, Platform, VideoContent
 
 
@@ -10,12 +10,8 @@ class TikTokParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.TIKTOK, display_name="TikTok")
 
-    # URL 正则表达式模式（keyword, pattern）
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        ("tiktok.com", r"(?:https?://)?(www|vt|vm)\.tiktok\.com/[A-Za-z0-9._?%&+\-=/#@]*"),
-    ]
-
-    async def parse(self, keyword: str, searched: re.Match[str]):
+    @handle("tiktok.com", r"(?:https?://)?(www|vt|vm)\.tiktok\.com/[A-Za-z0-9._?%&+\-=/#@]*")
+    async def _parse(self, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
         url, prefix = searched.group(0), searched.group(1)
 
