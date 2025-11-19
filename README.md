@@ -231,7 +231,7 @@ parser_need_forward_contents=True
 
 ## 🧩 扩展
 > [!IMPORTANT]
-> 插件自 `v2.1.1` 版本开始支持自定义解析器，通过继承 `BaseParser` 类并实现 `platform`, `patterns`, `parse` 即可
+> 插件自 `v2.2.0` 版本开始支持自定义解析器，通过继承 `BaseParser` 类并实现 `platform`, `handle` 即可
 <details>
 <summary>完整示例</summary>
 
@@ -244,7 +244,7 @@ from nonebot import require
 
 require("nonebot_plugin_parser")
 from nonebot_plugin_parser.parsers import BaseParser, ParseResult
-from nonebot_plugin_parser.parsers.base import Platform
+from nonebot_plugin_parser.parsers.base import Platform, handle
 
 
 class ExampleParser(BaseParser):
@@ -252,21 +252,20 @@ class ExampleParser(BaseParser):
 
     platform: ClassVar[Platform] = Platform(name="example", display_name="示例网站")
 
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        ("example.com", r"example\.com/video/(?P<video_id>\w+)"),
-        ("ex.short", r"ex\.short/(?P<short_id>\w+)"),
-    ]
+    @handle("ex.short", r"ex\.short/\w+)")
+    async def _parse_short_link(self, searched: re.Match[str]):
+        """解析短链"""
+        url = f"https://{searched.group(0)}"
+        # 重定向再解析，请确保重定向链接的 handle 存在
+        # 比如 url 重定向到 example.com/... 就会调用 _parse 解析
+        return await self.parse_with_redirect(url)
 
-    async def parse(self, keyword: str, searched: Match[str]) -> ParseResult:
+    @handle("example.com", r"example\.com/video/(?P<video_id>\w+)")
+    @handle("exam.ple", r"exam\.ple/(?P<video_id>\w+)")
+    async def _parse(self, searched: Match[str]) -> ParseResult:
         # 1. 提取视频 ID
-        if keyword == "ex.short":
-            # 处理短链接
-            short_id = searched.group("short_id")
-            full_url = await self.get_redirect_url(f"https://ex.short/{short_id}")
-            video_id = full_url.split("/")[-1]
-        else:
-            video_id = searched.group("video_id")
-
+        video_id = searched.group("video_id")
+    
         # 2. 请求 API 获取视频信息
         async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
             resp = await client.get(f"https://api.example.com/video/{video_id}")
