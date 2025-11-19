@@ -1,7 +1,7 @@
 import re
 from typing import ClassVar
 
-import httpx
+from httpx import AsyncClient
 import msgspec
 from nonebot import logger
 
@@ -20,17 +20,17 @@ class DouyinParser(BaseParser):
 
     # https://www.douyin.com/video/7521023890996514083
     # https://www.douyin.com/note/7469411074119322899
-    @handle("douyin", r"douyin\.com/(?P<ty>video|note)/(?P<id>\d+)")
-    @handle("iesdouyin", r"iesdouyin\.com/share/(?P<ty>slides|video|note)/(?P<id>\d+)")
-    @handle("m.douyin", r"m\.douyin\.com/share/(?P<ty>slides|video|note)/(?P<id>\d+)")
+    @handle("douyin", r"douyin\.com/(?P<ty>video|note)/(?P<vid>\d+)")
+    @handle("iesdouyin", r"iesdouyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
+    @handle("m.douyin", r"m\.douyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
     async def _parse_douyin(self, searched: re.Match[str]):
-        ty, id = searched.group("ty"), searched.group("id")
+        ty, vid = searched.group("ty"), searched.group("vid")
         if ty == "slides":
-            return await self.parse_slides(id)
+            return await self.parse_slides(vid)
 
         for url in (
-            self._build_m_douyin_url(ty, id),
-            self._build_iesdouyin_url(ty, id),
+            self._build_m_douyin_url(ty, vid),
+            self._build_iesdouyin_url(ty, vid),
         ):
             try:
                 return await self.parse_video(url)
@@ -39,14 +39,16 @@ class DouyinParser(BaseParser):
                 continue
         raise ParseException("分享已删除或资源直链获取失败, 请稍后再试")
 
-    def _build_iesdouyin_url(self, ty: str, video_id: str) -> str:
-        return f"https://www.iesdouyin.com/share/{ty}/{video_id}"
+    @staticmethod
+    def _build_iesdouyin_url(ty: str, vid: str) -> str:
+        return f"https://www.iesdouyin.com/share/{ty}/{vid}"
 
-    def _build_m_douyin_url(self, ty: str, video_id: str) -> str:
-        return f"https://m.douyin.com/share/{ty}/{video_id}"
+    @staticmethod
+    def _build_m_douyin_url(ty: str, vid: str) -> str:
+        return f"https://m.douyin.com/share/{ty}/{vid}"
 
     async def parse_video(self, url: str):
-        async with httpx.AsyncClient(
+        async with AsyncClient(
             headers=self.ios_headers,
             timeout=COMMON_TIMEOUT,
             follow_redirects=False,
@@ -98,7 +100,7 @@ class DouyinParser(BaseParser):
             "aweme_ids": f"[{video_id}]",
             "request_source": "200",
         }
-        async with httpx.AsyncClient(headers=self.android_headers, verify=False) as client:
+        async with AsyncClient(headers=self.android_headers, verify=False) as client:
             response = await client.get(url, params=params)
             response.raise_for_status()
 
