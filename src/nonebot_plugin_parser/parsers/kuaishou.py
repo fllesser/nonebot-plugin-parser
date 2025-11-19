@@ -5,8 +5,8 @@ from typing import ClassVar
 from httpx import AsyncClient
 import msgspec
 
-from .base import BaseParser, ParseException, PlatformEnum
-from .data import ParseResult, Platform
+from .base import BaseParser, ParseException, PlatformEnum, handle
+from .data import Platform
 
 
 class KuaiShouParser(BaseParser):
@@ -15,30 +15,29 @@ class KuaiShouParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.KUAISHOU, display_name="快手")
 
-    # URL 正则表达式模式（keyword, pattern）
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        ("v.kuaishou.com", r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
-        ("kuaishou", r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+"),
-        ("chenzhongtech", r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+"),
-    ]
-
     def __init__(self):
         super().__init__()
         self.ios_headers["Referer"] = "https://v.kuaishou.com/"
 
-    async def parse(self, keyword: str, searched: re.Match[str]) -> ParseResult:
+    # https://v.kuaishou.com/2yAnzeZ
+    @handle("v.kuaishou", r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+")
+    # https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
+    @handle("kuaishou", r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+")
+    # https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
+    @handle("chenzhongtech", r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+")
+    async def _parse_v_kuaishou(self, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
         url = searched.group(0)
-        location_url = await self.get_redirect_url(url, headers=self.ios_headers)
+        real_url = await self.get_redirect_url(url, headers=self.ios_headers)
 
-        if len(location_url) <= 0:
+        if len(real_url) <= 0:
             raise ParseException("failed to get location url from url")
 
         # /fw/long-video/ 返回结果不一样, 统一替换为 /fw/photo/ 请求
-        location_url = location_url.replace("/fw/long-video/", "/fw/photo/")
+        real_url = real_url.replace("/fw/long-video/", "/fw/photo/")
 
         async with AsyncClient(headers=self.ios_headers, timeout=self.timeout) as client:
-            response = await client.get(location_url)
+            response = await client.get(real_url)
             response.raise_for_status()
             response_text = response.text
 
