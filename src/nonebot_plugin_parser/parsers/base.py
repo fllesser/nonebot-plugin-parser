@@ -23,16 +23,18 @@ T = TypeVar("T", bound="BaseParser")
 HandlerFunc = Callable[[T, Match[str]], Coroutine[Any, Any, ParseResult]]
 KeyPatterns = list[tuple[str, Pattern[str]]]
 
+_KEY_PATTERNS = "_key_patterns"
+
 
 # 注册处理器装饰器
 def handle(keyword: str, pattern: str):
     """注册处理器装饰器"""
 
     def decorator(func: HandlerFunc[T]) -> HandlerFunc[T]:
-        if not hasattr(func, "_key_patterns"):
-            setattr(func, "_key_patterns", [])
+        if not hasattr(func, _KEY_PATTERNS):
+            setattr(func, _KEY_PATTERNS, [])
 
-        key_patterns: KeyPatterns = getattr(func, "_key_patterns")
+        key_patterns: KeyPatterns = getattr(func, _KEY_PATTERNS)
         key_patterns.append((keyword, compile(pattern)))
 
         return func
@@ -45,7 +47,6 @@ class BaseParser:
 
     子类必须实现：
     - platform: 平台信息（包含名称和显示名称)
-    - patterns: URL 正则表达式模式列表 [(keyword, pattern), ...]
     """
 
     _registry: ClassVar[list[type["BaseParser"]]] = []
@@ -53,9 +54,6 @@ class BaseParser:
 
     platform: ClassVar[Platform]
     """ 平台信息（包含名称和显示名称） """
-
-    patterns: ClassVar[list[tuple[str, str]]] = []
-    """ URL 正则表达式模式列表 [(keyword, pattern), ...] """
 
     _key_patterns: ClassVar[KeyPatterns]
     _handlers: ClassVar[dict[str, HandlerFunc]]
@@ -73,13 +71,13 @@ class BaseParser:
             BaseParser._registry.append(cls)
 
         cls._handlers = {}
-        cls._key_patterns = [(k, compile(p)) for k, p in cls.patterns]
+        cls._key_patterns = []
 
         # 获取所有被 handle 装饰的方法
         for attr_name in dir(cls):
             attr = getattr(cls, attr_name)
-            if callable(attr) and hasattr(attr, "_key_patterns"):
-                key_patterns: KeyPatterns = getattr(attr, "_key_patterns")
+            if callable(attr) and hasattr(attr, _KEY_PATTERNS):
+                key_patterns: KeyPatterns = getattr(attr, _KEY_PATTERNS)
                 handler = cast(HandlerFunc, attr)
                 for keyword, pattern in key_patterns:
                     cls._handlers[keyword] = handler

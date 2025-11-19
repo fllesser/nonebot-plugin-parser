@@ -4,28 +4,17 @@ import random
 import re
 import time
 from typing import ClassVar
-from typing_extensions import override
 
 from bs4 import BeautifulSoup, Tag
 from httpx import AsyncClient, HTTPError
 
 from ..exception import ParseException
-from .base import BaseParser, Platform, PlatformEnum
+from .base import BaseParser, Platform, PlatformEnum, handle
 
 
 class NGAParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.NGA, display_name="NGA")
-
-    # URL 正则表达式模式（keyword, pattern）
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        # ("ngabbs.com", r"https?://ngabbs\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
-        # ("nga.178.com", r"https?://nga\.178\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
-        # ("bbs.nga.cn", r"https?://bbs\.nga\.cn/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
-        ("ngabbs.com", r"tid=(?P<tid>\d+)"),
-        ("nga.178.com", r"tid=(?P<tid>\d+)"),
-        ("bbs.nga.cn", r"tid=(?P<tid>\d+)"),
-    ]
 
     def __init__(self):
         super().__init__()
@@ -44,8 +33,13 @@ class NGAParser(BaseParser):
     def nga_url(tid: str | int) -> str:
         return f"https://nga.178.com/read.php?tid={tid}"
 
-    @override
-    async def parse(self, keyword: str, searched: re.Match[str]):
+    # ("ngabbs.com", r"https?://ngabbs\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
+    # ("nga.178.com", r"https?://nga\.178\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
+    # ("bbs.nga.cn", r"https?://bbs\.nga\.cn/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
+    @handle("ngabbs.com", r"tid=(?P<tid>\d+)")
+    @handle("nga.178.com", r"tid=(?P<tid>\d+)")
+    @handle("bbs.nga.cn", r"tid=(?P<tid>\d+)")
+    async def _parse(self, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
         tid = searched.group("tid")
         url = self.nga_url(tid)

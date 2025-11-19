@@ -4,7 +4,6 @@ from pathlib import Path
 import re
 import time
 from typing import ClassVar
-from typing_extensions import override
 
 import aiofiles
 from httpx import AsyncClient, HTTPError
@@ -13,21 +12,39 @@ from nonebot import logger
 from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
 from ..exception import DownloadException, ParseException
 from ..utils import safe_unlink
-from .base import DOWNLOADER, BaseParser, Platform, PlatformEnum, pconfig
+from .base import DOWNLOADER, BaseParser, Platform, PlatformEnum, handle, pconfig
 
 
 class AcfunParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.ACFUN, display_name="猴山")
 
-    # URL 正则表达式模式（keyword, pattern）
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        ("acfun.cn", r"(?:ac=|/ac)(\d+)"),
-    ]
-
     def __init__(self):
         super().__init__()
         self.headers["referer"] = "https://www.acfun.cn/"
+
+    @handle("acfun.cn", r"(?:ac=|/ac)(\d+)")
+    async def _parse(self, searched: re.Match[str]):
+        acid = int(searched.group(1))
+        url = f"https://www.acfun.cn/v/ac{acid}"
+
+        m3u8_url, title, description, author, upload_time = await self.parse_video_info(url)
+        author = self.create_author(author) if author else None
+
+        # 2024-12-1 -> timestamp
+        timestamp = int(time.mktime(time.strptime(upload_time, "%Y-%m-%d")))
+        text = f"简介: {description}"
+
+        # 下载视频
+        video_task = asyncio.create_task(self.download_video(m3u8_url, acid))
+
+        return self.result(
+            title=title,
+            text=text,
+            author=author,
+            timestamp=timestamp,
+            contents=[self.create_video_content(video_task)],
+        )
 
     async def parse_video_info(self, url: str) -> tuple[str, str, str, str, str]:
         """解析acfun链接获取详细信息
@@ -132,26 +149,3 @@ class AcfunParser(BaseParser):
         m3u8_full_urls = [f"{m3u8_prefix}/{d}" for d in m3u8_relative_links]
 
         return m3u8_full_urls
-
-    @override
-    async def parse(self, keyword: str, searched: re.Match[str]):
-        acid = int(searched.group(1))
-        url = f"https://www.acfun.cn/v/ac{acid}"
-
-        m3u8_url, title, description, author, upload_time = await self.parse_video_info(url)
-        author = self.create_author(author) if author else None
-
-        # 2024-12-1 -> timestamp
-        timestamp = int(time.mktime(time.strptime(upload_time, "%Y-%m-%d")))
-        text = f"简介: {description}"
-
-        # 下载视频
-        video_task = asyncio.create_task(self.download_video(m3u8_url, acid))
-
-        return self.result(
-            title=title,
-            text=text,
-            author=author,
-            timestamp=timestamp,
-            contents=[self.create_video_content(video_task)],
-        )

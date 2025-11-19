@@ -86,3 +86,6 @@ weibo:
 转发
   - https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html 图文
   - https://weibo.com/1694917363/Q0KtXh6z2 视频
+
+nga:
+- https://nga.178.com/read.php?tid=45263995

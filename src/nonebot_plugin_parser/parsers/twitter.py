@@ -5,18 +5,13 @@ from typing import Any, ClassVar
 from httpx import AsyncClient
 
 from ..exception import ParseException
-from .base import BaseParser, PlatformEnum
+from .base import BaseParser, PlatformEnum, handle
 from .data import ParseResult, Platform
 
 
 class TwitterParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.TWITTER, display_name="小蓝鸟")
-
-    # URL 正则表达式模式（keyword, pattern）
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        ("x.com", r"https?://x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)"),
-    ]
 
     async def _req_xdown_api(self, url: str) -> dict[str, Any]:
         headers = {
@@ -32,7 +27,8 @@ class TwitterParser(BaseParser):
             response = await client.post(url, data=data)
             return response.json()
 
-    async def parse(self, keyword: str, searched: re.Match[str]) -> ParseResult:
+    @handle("x.com", r"https?://x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)")
+    async def _parse(self, searched: re.Match[str]) -> ParseResult:
         # 从匹配对象中获取原始URL
         url = searched.group(0)
         resp = await self._req_xdown_api(url)
