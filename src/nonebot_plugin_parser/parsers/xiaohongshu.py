@@ -43,20 +43,27 @@ class XiaoHongShuParser(BaseParser):
         xhs_id = searched.group("xhs_id")
         return await self.parse_explore(url, xhs_id)
 
-    @handle("hongshu.com/discovery/item/", r"discovery/item/[A-Za-z0-9._?%&+=/#@-]*")
+    # https://www.xiaohongshu.com/discovery/item/68e8e3fa00000000030342ec?app_platform=android&ignoreEngage=true&app_version=9.6.0&share_from_user_hidden=true&xsec_source=app_share&type=normal&xsec_token=CBW9rwIV2qhcCD-JsQAOSHd2tTW9jXAtzqlgVXp6c52Sw%3D&author_share=1&xhsshare=QQ&shareRedId=ODs3RUk5ND42NzUyOTgwNjY3OTo8S0tK&apptime=1761372823&share_id=3b61945239ac403db86bea84a4f15124&share_channel=qq
+    @handle("hongshu.com/discovery/item/", r"discovery/item/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*")
     async def _parse_discovery(self, searched: re.Match[str]):
-        url = f"https://www.xiaohongshu.com/{searched.group(0)}"
-        return await self.parse_discovery(url)
+        route = searched.group(0)
+        explore_route = route.replace("discovery/item", "explore", 1)
+        xhs_id = searched.group("xhs_id")
+
+        try:
+            return await self.parse_explore(f"https://www.xiaohongshu.com/{explore_route}", xhs_id)
+        except ParseException:
+            logger.debug("parse_explore failed, fallback to parse_discovery")
+            return await self.parse_discovery(f"https://www.xiaohongshu.com/{route}")
 
     async def parse_explore(self, url: str, xhs_id: str):
-        logger.debug(f"explore_url: {url}")
         async with AsyncClient(
             headers=self.headers,
             timeout=self.timeout,
         ) as client:
             response = await client.get(url)
             html = response.text
-            logger.info(f"url: {response.url} | status_code: {response.status_code}")
+            logger.debug(f"url: {response.url} | status_code: {response.status_code}")
 
         json_obj = self._extract_initial_state_json(html)
 
