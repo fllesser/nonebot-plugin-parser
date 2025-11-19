@@ -1,31 +1,25 @@
 import json
 import re
 from typing import Any, ClassVar
-from typing_extensions import override
-from urllib.parse import urlparse
 
 from httpx import AsyncClient, Cookies
 from msgspec import Struct, convert, field
 from nonebot import logger
 
-from .base import BaseParser, ParseException, Platform, PlatformEnum
+from .base import BaseParser, ParseException, Platform, PlatformEnum, handle
 
 
 class XiaoHongShuParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.XIAOHONGSHU, display_name="小红书")
 
-    # URL 正则表达式模式（keyword, pattern）
-    patterns: ClassVar[list[tuple[str, str]]] = [
-        ("xiaohongshu.com", r"https?://(?:www\.)?xiaohongshu\.com/[A-Za-z0-9._?%&+=/#@-]*"),
-        ("xhslink.com", r"https?://xhslink\.com/[A-Za-z0-9._?%&+=/#@-]*"),
-    ]
-
     def __init__(self):
         super().__init__()
         explore_headers = {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,"
-            "image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "accept": (
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,"
+                "image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+            )
         }
         self.headers.update(explore_headers)
         discovery_headers = {
@@ -37,33 +31,39 @@ class XiaoHongShuParser(BaseParser):
         }
         self.ios_headers.update(discovery_headers)
 
-    @override
-    async def parse(self, keyword: str, searched: re.Match[str]):
-        # 从匹配对象中获取原始URL
-        url = searched.group(0)
-        # 处理 xhslink 短链
-        if "xhslink" in url:
-            url = await self.get_redirect_url(url, self.ios_headers)
-            logger.debug(f"xhslink redirect url: {url}")
+    @handle("xhslink.com", r"xhslink\.com/[A-Za-z0-9._?%&+=/#@-]*")
+    async def _parse_short_link(self, searched: re.Match[str]):
+        url = f"https://{searched.group(0)}"
+        return await self.parse_with_redirect(url, self.ios_headers)
 
-        urlpath = urlparse(url).path
+    # https://www.xiaohongshu.com/explore/68feefe40000000007030c4a?xsec_token=ABjAKjfMHJ7ck4UjPlugzVqMb35utHMRe_vrgGJ2AwJnc=&xsec_source=pc_feed
+    @handle("hongshu.com/explore", r"explore/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*")
+    async def _parse_explore(self, searched: re.Match[str]):
+        url = f"https://www.xiaohongshu.com/{searched.group(0)}"
+        xhs_id = searched.group("xhs_id")
+        return await self.parse_explore(url, xhs_id)
 
-        if urlpath.startswith("/explore/"):
-            xhs_id = urlpath.split("/")[-1]
-            return await self._parse_explore(url, xhs_id)
-        elif urlpath.startswith("/discovery/item/"):
-            return await self._parse_discovery(url)
-        else:
-            raise ParseException(f"不支持的小红书链接: {url}, urlpath: {urlpath}")
+    # https://www.xiaohongshu.com/discovery/item/68e8e3fa00000000030342ec?app_platform=android&ignoreEngage=true&app_version=9.6.0&share_from_user_hidden=true&xsec_source=app_share&type=normal&xsec_token=CBW9rwIV2qhcCD-JsQAOSHd2tTW9jXAtzqlgVXp6c52Sw%3D&author_share=1&xhsshare=QQ&shareRedId=ODs3RUk5ND42NzUyOTgwNjY3OTo8S0tK&apptime=1761372823&share_id=3b61945239ac403db86bea84a4f15124&share_channel=qq
+    @handle("hongshu.com/discovery/item/", r"discovery/item/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*")
+    async def _parse_discovery(self, searched: re.Match[str]):
+        route = searched.group(0)
+        explore_route = route.replace("discovery/item", "explore", 1)
+        xhs_id = searched.group("xhs_id")
 
-    async def _parse_explore(self, url: str, xhs_id: str):
+        try:
+            return await self.parse_explore(f"https://www.xiaohongshu.com/{explore_route}", xhs_id)
+        except ParseException:
+            logger.debug("parse_explore failed, fallback to parse_discovery")
+            return await self.parse_discovery(f"https://www.xiaohongshu.com/{route}")
+
+    async def parse_explore(self, url: str, xhs_id: str):
         async with AsyncClient(
             headers=self.headers,
             timeout=self.timeout,
         ) as client:
             response = await client.get(url)
             html = response.text
-            logger.info(f"url: {response.url} | status_code: {response.status_code}")
+            logger.debug(f"url: {response.url} | status_code: {response.status_code}")
 
         json_obj = self._extract_initial_state_json(html)
 
@@ -128,7 +128,7 @@ class XiaoHongShuParser(BaseParser):
             contents=contents,
         )
 
-    async def _parse_discovery(self, url: str):
+    async def parse_discovery(self, url: str):
         async with AsyncClient(
             headers=self.ios_headers,
             timeout=self.timeout,

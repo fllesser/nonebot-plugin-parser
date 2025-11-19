@@ -15,7 +15,7 @@ def test_pattern_matching():
     with urls_file.open("r", encoding="utf-8") as f:
         urls = f.readlines()
     urls = [url.strip() for url in urls if url.strip()]
-    urls = [url.removeprefix("- ").strip() for url in urls if url.startswith("- ")]
+    urls = [url.removeprefix("-").strip() for url in urls if url.startswith("-")]
 
     def match_url(url: str):
         for keyword, pattern in patterns:
