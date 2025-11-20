@@ -1,3 +1,5 @@
+#:tombi schema.strict = false
+
 [project]
 name = "nonebot-plugin-parser"
 version = "2.2.0"
