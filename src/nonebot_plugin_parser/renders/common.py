@@ -18,6 +18,9 @@ from .base import ImageRenderer, ParseResult
 P = ParamSpec("P")
 T = TypeVar("T")
 
+Color = tuple[int, int, int]
+PILImage = Image.Image
+
 
 def suppress_exception(
     func: Callable[P, T],
@@ -138,7 +141,7 @@ class SectionData:
 class HeaderSectionData(SectionData):
     """Header 部分数据"""
 
-    avatar: Image.Image | None
+    avatar: PILImage | None
     name_lines: list[str]
     time_lines: list[str]
     text_height: int
@@ -155,7 +158,7 @@ class TitleSectionData(SectionData):
 class CoverSectionData(SectionData):
     """封面部分数据"""
 
-    cover_img: Image.Image
+    cover_img: PILImage
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -176,14 +179,14 @@ class ExtraSectionData(SectionData):
 class RepostSectionData(SectionData):
     """转发部分数据"""
 
-    scaled_image: Image.Image
+    scaled_image: PILImage
 
 
 @dataclass(eq=False, frozen=True, slots=True)
 class ImageGridSectionData(SectionData):
     """图片网格部分数据"""
 
-    images: list[Image.Image]
+    images: list[PILImage]
     cols: int
     rows: int
     has_more: bool
@@ -195,7 +198,7 @@ class GraphicsSectionData(SectionData):
     """图文内容部分数据"""
 
     text_lines: list[str]
-    image: Image.Image
+    image: PILImage
     alt_text: str | None = None
 
 
@@ -209,7 +212,7 @@ class RenderContext:
     """卡片宽度"""
     content_width: int
     """内容宽度"""
-    image: Image.Image
+    image: PILImage
     """当前图像"""
     draw: ImageDraw.ImageDraw
     """绘图对象"""
@@ -262,31 +265,33 @@ class CommonRenderer(ImageRenderer):
     IMAGE_GRID_COLS = 3
     """图片网格列数"""
 
-    # 颜色配置
-    BG_COLOR: ClassVar[tuple[int, int, int]] = (255, 255, 255)
-    """背景色"""
-    TEXT_COLOR: ClassVar[tuple[int, int, int]] = (51, 51, 51)
-    """文本色"""
-    HEADER_COLOR: ClassVar[tuple[int, int, int]] = (0, 122, 255)
-    """标题色"""
-    EXTRA_COLOR: ClassVar[tuple[int, int, int]] = (136, 136, 136)
-    """额外信息色"""
-
     # 转发内容配置
-    REPOST_BG_COLOR: ClassVar[tuple[int, int, int]] = (247, 247, 247)
-    """转发背景色"""
-    REPOST_BORDER_COLOR: ClassVar[tuple[int, int, int]] = (230, 230, 230)
-    """转发边框色"""
     REPOST_PADDING = 12
     """转发内容内边距"""
     REPOST_SCALE = 0.88
     """转发缩放比例"""
 
-    _RESOURCES = "resources"
+    # 资源名称
     _EMOJIS = "emojis"
-    _FONT_FILENAME = "HYSongYunLangHeiW-1.ttf"
+    _RESOURCES = "resources"
     _BUTTON_FILENAME = "media_button.png"
+    _FONT_FILENAME = "HYSongYunLangHeiW-1.ttf"
 
+    # 颜色配置
+    BG_COLOR: ClassVar[Color] = (255, 255, 255)
+    """背景色"""
+    TEXT_COLOR: ClassVar[Color] = (51, 51, 51)
+    """文本色"""
+    HEADER_COLOR: ClassVar[Color] = (0, 122, 255)
+    """标题色"""
+    EXTRA_COLOR: ClassVar[Color] = (136, 136, 136)
+    """额外信息色"""
+    REPOST_BG_COLOR: ClassVar[Color] = (247, 247, 247)
+    """转发背景色"""
+    REPOST_BORDER_COLOR: ClassVar[Color] = (230, 230, 230)
+    """转发边框色"""
+
+    # 路径配置
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / _RESOURCES
     """资源目录"""
     DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / _FONT_FILENAME
@@ -317,7 +322,7 @@ class CommonRenderer(ImageRenderer):
     @classmethod
     def _load_video_button(cls):
         """预加载视频按钮"""
-        cls.video_button_image: Image.Image = Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH).convert("RGBA")
+        cls.video_button_image: PILImage = Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH).convert("RGBA")
 
         # 设置透明度为 30%
         alpha = cls.video_button_image.split()[-1]  # 获取 alpha 通道
@@ -327,7 +332,7 @@ class CommonRenderer(ImageRenderer):
     @classmethod
     def _load_platform_logos(cls):
         """预加载平台 logo"""
-        cls.platform_logos: dict[str, Image.Image] = {}
+        cls.platform_logos: dict[str, PILImage] = {}
         from ..constants import PlatformEnum
 
         for platform_name in PlatformEnum:
@@ -341,7 +346,7 @@ class CommonRenderer(ImageRenderer):
         ctx: RenderContext,
         text: str,
         xy: tuple[int, int],
-        fill: tuple[int, int, int],
+        fill: Color,
         font: ImageFont.FreeTypeFont,
     ):
         """绘制文本"""
@@ -369,7 +374,7 @@ class CommonRenderer(ImageRenderer):
         self,
         result: ParseResult,
         not_repost: bool = True,
-    ) -> Image.Image:
+    ) -> PILImage:
         """创建卡片图片（内部方法，用于递归调用）
 
         Args:
@@ -417,7 +422,7 @@ class CommonRenderer(ImageRenderer):
         self,
         cover_path: Path | None,
         content_width: int,
-    ) -> Image.Image | None:
+    ) -> PILImage | None:
         """加载并调整封面尺寸
 
         Args:
@@ -461,7 +466,7 @@ class CommonRenderer(ImageRenderer):
             return cover_img
 
     @suppress_exception
-    def _load_and_process_avatar(self, avatar: Path | None) -> Image.Image | None:
+    def _load_and_process_avatar(self, avatar: Path | None) -> PILImage | None:
         """加载并处理头像（圆形裁剪，带抗锯齿）"""
         if not avatar or not avatar.exists():
             return None
@@ -747,7 +752,7 @@ class CommonRenderer(ImageRenderer):
         img_path: Path,
         content_width: int,
         img_count: int,
-    ) -> Image.Image | None:
+    ) -> PILImage | None:
         """加载并处理网格图片
 
         Args:
@@ -805,7 +810,7 @@ class CommonRenderer(ImageRenderer):
 
             return img
 
-    def _crop_to_square(self, img: Image.Image) -> Image.Image:
+    def _crop_to_square(self, img: PILImage) -> PILImage:
         """将图片裁剪为方形（上下切割）"""
         width, height = img.size
 
@@ -844,7 +849,7 @@ class CommonRenderer(ImageRenderer):
                 case ImageGridSectionData() as image_grid:
                     self._draw_image_grid(ctx, image_grid)
 
-    def _create_avatar_placeholder(self) -> Image.Image:
+    def _create_avatar_placeholder(self) -> PILImage:
         """创建默认头像占位符"""
         # 头像占位符配置常量
         placeholder_bg_color = (230, 230, 230, 255)
@@ -973,7 +978,7 @@ class CommonRenderer(ImageRenderer):
             ctx.y_pos += self.fontset.title_font.line_height
         ctx.y_pos += self.SECTION_SPACING
 
-    def _draw_cover(self, ctx: RenderContext, cover_img: Image.Image) -> None:
+    def _draw_cover(self, ctx: RenderContext, cover_img: PILImage) -> None:
         """绘制封面"""
         # 封面从左边padding开始，和文字、头像对齐
         x_pos = self.PADDING
@@ -1155,7 +1160,7 @@ class CommonRenderer(ImageRenderer):
 
     def _draw_more_indicator(
         self,
-        image: Image.Image,
+        image: PILImage,
         img_x: int,
         img_y: int,
         img_width: int,
@@ -1186,9 +1191,9 @@ class CommonRenderer(ImageRenderer):
 
     def _draw_rounded_rectangle(
         self,
-        image: Image.Image,
+        image: PILImage,
         bbox: tuple[int, int, int, int],
-        fill_color: tuple[int, int, int],
+        fill_color: Color,
         radius: int = 8,
     ):
         """绘制圆角矩形"""
@@ -1209,7 +1214,7 @@ class CommonRenderer(ImageRenderer):
         self,
         draw: ImageDraw.ImageDraw,
         bbox: tuple[int, int, int, int],
-        border_color: tuple[int, int, int],
+        border_color: Color,
         radius: int = 8,
         width: int = 1,
     ):
