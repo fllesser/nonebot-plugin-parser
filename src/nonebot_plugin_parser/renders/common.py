@@ -102,13 +102,13 @@ class FontInfo:
 class FontSet:
     """字体集数据类"""
 
-    FONT_SIZES: ClassVar[dict[str, int]] = {
-        "name": 28,
-        "title": 30,
-        "text": 24,
-        "extra": 24,
-        "indicator": 60,
-    }
+    _FONT_SIZES = (
+        ("name", 28),
+        ("title", 30),
+        ("text", 24),
+        ("extra", 24),
+        ("indicator", 60),
+    )
     """字体大小"""
 
     name_font: FontInfo
@@ -120,7 +120,7 @@ class FontSet:
     @classmethod
     def new(cls, font_path: Path):
         font_infos: dict[str, FontInfo] = {}
-        for name, size in cls.FONT_SIZES.items():
+        for name, size in cls._FONT_SIZES:
             font = ImageFont.truetype(font_path, size)
             font_infos[f"{name}_font"] = FontInfo(
                 font=font,
