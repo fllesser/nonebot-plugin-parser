@@ -136,7 +136,7 @@ class BaseParser:
         url: str,
         headers: dict[str, str] | None = None,
     ) -> str:
-        """获取重定向后的URL"""
+        """获取重定向后的 URL, 单次重定向"""
         from httpx import AsyncClient
 
         headers = headers or COMMON_HEADER.copy()
@@ -150,6 +150,26 @@ class BaseParser:
             if response.status_code >= 400:
                 response.raise_for_status()
             return response.headers.get("Location", url)
+
+    @staticmethod
+    async def get_final_url(
+        url: str,
+        headers: dict[str, str] | None = None,
+    ) -> str:
+        """获取重定向后的 URL, 允许多次重定向"""
+        from httpx import AsyncClient
+
+        headers = headers or COMMON_HEADER.copy()
+        async with AsyncClient(
+            headers=headers,
+            verify=False,
+            follow_redirects=True,
+            timeout=COMMON_TIMEOUT,
+        ) as client:
+            response = await client.get(url)
+            if response.status_code >= 400:
+                response.raise_for_status()
+            return str(response.url)
 
     def create_author(
         self,

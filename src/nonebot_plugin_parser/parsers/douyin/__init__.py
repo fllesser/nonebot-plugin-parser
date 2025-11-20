@@ -14,7 +14,8 @@ class DouyinParser(BaseParser):
 
     # https://v.douyin.com/_2ljF4AmKL8
     @handle("v.douyin", r"v\.douyin\.com/[a-zA-Z0-9_\-]+")
-    async def _parse_v_douyin(self, searched: re.Match[str]):
+    @handle("jx.douyin", r"jx\.douyin\.com/[a-zA-Z0-9_\-]+")
+    async def _parse_short_link(self, searched: re.Match[str]):
         url = f"https://{searched.group(0)}"
         return await self.parse_with_redirect(url)
 
@@ -23,6 +24,8 @@ class DouyinParser(BaseParser):
     @handle("douyin", r"douyin\.com/(?P<ty>video|note)/(?P<vid>\d+)")
     @handle("iesdouyin", r"iesdouyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
     @handle("m.douyin", r"m\.douyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
+    # https://jingxuan.douyin.com/m/video/7574300896016862490?app=yumme&utm_source=copy_link
+    @handle("jingxuan.douyin", r"jingxuan\.douyin.com/m/(?P<ty>slides|video|note)/(?P<vid>\d+)")
     async def _parse_douyin(self, searched: re.Match[str]):
         ty, vid = searched.group("ty"), searched.group("vid")
         if ty == "slides":
@@ -37,7 +40,7 @@ class DouyinParser(BaseParser):
             except ParseException as e:
                 logger.warning(f"failed to parse {url}, error: {e}")
                 continue
-        raise ParseException("分享已删除或资源直链获取失败, 请稍后再试")
+        raise ParseException("分享已删除或资源直链提取失败, 请稍后再试")
 
     @staticmethod
     def _build_iesdouyin_url(ty: str, vid: str) -> str:
