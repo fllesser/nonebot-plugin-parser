@@ -1,6 +1,6 @@
 import asyncio
 import json
-import re
+from re import Match
 from typing import ClassVar
 
 from bilibili_api import HEADERS, Credential, request_settings, select_client
@@ -22,6 +22,13 @@ from ..base import (
 from ..cookie import ck2dict
 from ..data import ImageContent, MediaContent, Platform
 
+# 选择客户端
+select_client("curl_cffi")
+# 模仿浏览器
+# 第二参数数值参考 curl_cffi 文档
+# https://curl-cffi.readthedocs.io/en/latest/impersonate.html
+request_settings.set("impersonate", "chrome131")
+
 
 class BilibiliParser(BaseParser):
     # 平台信息
@@ -31,23 +38,17 @@ class BilibiliParser(BaseParser):
         self.headers = HEADERS.copy()
         self._credential: Credential | None = None
         self._cookies_file = pconfig.config_dir / "bilibili_cookies.json"
-        # 选择客户端
-        select_client("curl_cffi")
-        # 模仿浏览器
-        request_settings.set("impersonate", "chrome131")
-        # 第二参数数值参考 curl_cffi 文档
-        # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
 
     @handle("b23.tv", r"b23\.tv/[A-Za-z\d\._?%&+\-=/#]+")
     @handle("bili2233", r"bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+")
-    async def _parse_short_link(self, searched: re.Match[str]):
+    async def _parse_short_link(self, searched: Match[str]):
         """解析短链"""
         url = f"https://{searched.group(0)}"
         return await self.parse_with_redirect(url)
 
     @handle("BV", r"^(?P<bvid>BV[0-9a-zA-Z]{10})(?:\s)?(?P<page_num>\d{1,3})?$")
     @handle("/BV", r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9a-zA-Z]{10})(?:\?p=(?P<page_num>\d{1,3}))?")
-    async def _parse_bv(self, searched: re.Match[str]):
+    async def _parse_bv(self, searched: Match[str]):
         """解析视频信息"""
         bvid = str(searched.group("bvid"))
         page_num = int(searched.group("page_num") or 1)
@@ -56,7 +57,7 @@ class BilibiliParser(BaseParser):
 
     @handle("av", r"^av(?P<avid>\d{6,})(?:\s)?(?P<page_num>\d{1,3})?$")
     @handle("/av", r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:\?p=(?P<page_num>\d{1,3}))?")
-    async def _parse_av(self, searched: re.Match[str]):
+    async def _parse_av(self, searched: Match[str]):
         """解析视频信息"""
         avid = int(searched.group("avid"))
         page_num = int(searched.group("page_num") or 1)
@@ -65,31 +66,31 @@ class BilibiliParser(BaseParser):
 
     @handle("/dynamic/", r"bilibili\.com/dynamic/(?P<dynamic_id>\d+)")
     @handle("t.bili", r"t\.bilibili\.com/(?P<dynamic_id>\d+)")
-    async def _parse_dynamic(self, searched: re.Match[str]):
+    async def _parse_dynamic(self, searched: Match[str]):
         """解析动态信息"""
         dynamic_id = int(searched.group("dynamic_id"))
         return await self.parse_dynamic(dynamic_id)
 
     @handle("live.bili", r"live\.bilibili\.com/(?P<room_id>\d+)")
-    async def _parse_live(self, searched: re.Match[str]):
+    async def _parse_live(self, searched: Match[str]):
         """解析直播信息"""
         room_id = int(searched.group("room_id"))
         return await self.parse_live(room_id)
 
     @handle("/favlist", r"favlist\?fid=(?P<fav_id>\d+)")
-    async def _parse_favlist(self, searched: re.Match[str]):
+    async def _parse_favlist(self, searched: Match[str]):
         """解析收藏夹信息"""
         fav_id = int(searched.group("fav_id"))
         return await self.parse_favlist(fav_id)
 
     @handle("/read/", r"bilibili\.com/read/cv(?P<read_id>\d+)")
-    async def _parse_read(self, searched: re.Match[str]):
+    async def _parse_read(self, searched: Match[str]):
         """解析专栏信息"""
         read_id = int(searched.group("read_id"))
         return await self.parse_read(read_id)
 
     @handle("/opus/", r"bilibili\.com/opus/(?P<opus_id>\d+)")
-    async def _parse_opus(self, searched: re.Match[str]):
+    async def _parse_opus(self, searched: Match[str]):
         """解析图文动态信息"""
         opus_id = int(searched.group("opus_id"))
         return await self.parse_opus(opus_id)
@@ -422,25 +423,26 @@ class BilibiliParser(BaseParser):
         return video_stream.url, audio_stream.url
 
     async def _init_credential(self) -> Credential | None:
-        """初始化 bilibili api"""
+        """初始化哔哩哔哩登录凭证"""
 
         if not pconfig.bili_ck:
-            logger.warning("未配置 parser_bili_ck, 无法使用哔哩哔哩 AI 总结, 可能无法解析 720p 以上画质视频")
+            logger.warning("未配置 `parser_bili_ck`, 无法使用哔哩哔哩 `AI` 总结, 可能无法解析 `720p` 以上画质视频")
             return None
 
         credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
-        if not await credential.check_valid() and self._cookies_file.exists():
-            logger.info(f"parser_bili_ck 已过期, 尝试从 {self._cookies_file} 加载")
-            credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
-        else:
-            logger.info(f"parser_bili_ck 有效, 保存到 {self._cookies_file}")
+        if await credential.check_valid():
+            logger.info(f"`parser_bili_ck` 有效, 保存到 {self._cookies_file}")
             self._cookies_file.write_text(json.dumps(credential.get_cookies()))
+        else:
+            logger.info(f"`parser_bili_ck` 已过期, 尝试从 {self._cookies_file} 加载")
+            if self._cookies_file.exists():
+                credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
 
         return credential
 
     @property
     async def credential(self) -> Credential | None:
-        """获取哔哩哔哩登录凭证"""
+        """哔哩哔哩登录凭证"""
 
         if self._credential is None:
             self._credential = await self._init_credential()
@@ -448,16 +450,16 @@ class BilibiliParser(BaseParser):
                 return None
 
         if not await self._credential.check_valid():
-            logger.warning("哔哩哔哩 cookies 已过期, 请重新配置 parser_bili_ck")
+            logger.warning("哔哩哔哩凭证已过期, 请重新配置 `parser_bili_ck`")
             return self._credential
 
         if await self._credential.check_refresh():
-            logger.info("哔哩哔哩 cookies 需要刷新")
+            logger.info("哔哩哔哩凭证需要刷新")
             if self._credential.has_ac_time_value() and self._credential.has_bili_jct():
                 await self._credential.refresh()
-                logger.info(f"哔哩哔哩 cookies 刷新成功, 保存到 {self._cookies_file}")
+                logger.info(f"哔哩哔哩凭证刷新成功, 保存到 {self._cookies_file}")
                 self._cookies_file.write_text(json.dumps(self._credential.get_cookies()))
             else:
-                logger.warning("哔哩哔哩 cookies 刷新需要包含 SESSDATA, ac_time_value, bili_jct")
+                logger.warning("哔哩哔哩凭证刷新需要包含 `SESSDATA`, `ac_time_value`, `bili_jct` 项")
 
         return self._credential
