@@ -122,7 +122,7 @@ if YTDLP_DOWNLOADER is not None:
         ytb_parser = cast(YouTubeParser, KEYWORD_PARSER_MAP["youtu.be"])
         _, matched = ytb_parser.search_url(text)
         if not matched:
-            await UniMessage("请发送正确的 youtube 链接").finish()
+            await UniMessage("请发送正确的油管链接").finish()
 
         url = matched.group(0)
 

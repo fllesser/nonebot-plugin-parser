@@ -5,7 +5,7 @@ from asyncio import Task
 from collections.abc import Callable, Coroutine
 from pathlib import Path
 from re import Match, Pattern, compile
-from typing import Any, ClassVar, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 from typing_extensions import Unpack
 
 from ..config import pconfig as pconfig
@@ -55,8 +55,9 @@ class BaseParser:
     platform: ClassVar[Platform]
     """ 平台信息（包含名称和显示名称） """
 
-    _key_patterns: ClassVar[KeyPatterns]
-    _handlers: ClassVar[dict[str, HandlerFunc]]
+    if TYPE_CHECKING:
+        _key_patterns: ClassVar[KeyPatterns]
+        _handlers: ClassVar[dict[str, HandlerFunc]]
 
     def __init__(self):
         self.headers = COMMON_HEADER.copy()
@@ -106,7 +107,11 @@ class BaseParser:
         """
         return await self._handlers[keyword](self, searched)
 
-    async def parse_with_redirect(self, url: str, headers: dict[str, str] | None = None) -> ParseResult:
+    async def parse_with_redirect(
+        self,
+        url: str,
+        headers: dict[str, str] | None = None,
+    ) -> ParseResult:
         """先重定向再解析"""
         redirect_url = await self.get_redirect_url(url, headers=headers or self.headers)
 
