@@ -119,8 +119,8 @@ class AcfunParser(BaseParser):
                             break
         except HTTPError:
             await safe_unlink(video_file)
-            logger.exception("acfun 视频下载失败")
-            raise DownloadException("acfun 视频下载失败")
+            logger.exception("视频下载失败")
+            raise DownloadException("视频下载失败")
         return video_file
 
     async def _parse_m3u8(self, m3u8_url: str):
