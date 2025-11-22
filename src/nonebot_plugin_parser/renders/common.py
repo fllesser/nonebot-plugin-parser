@@ -1,9 +1,9 @@
-from collections.abc import Callable, Coroutine
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
-from typing import Any, ClassVar, ParamSpec, TypeVar
+from typing import ClassVar, ParamSpec, TypeVar
 from typing_extensions import override
 
 from nonebot import logger
@@ -39,8 +39,8 @@ def suppress_exception(
 
 
 def suppress_exception_async(
-    func: Callable[P, Coroutine[Any, Any, T]],
-) -> Callable[P, Coroutine[Any, Any, T | None]]:
+    func: Callable[P, Awaitable[T]],
+) -> Callable[P, Awaitable[T | None]]:
     """装饰器：捕获所有异常并返回 None"""
 
     @wraps(func)
