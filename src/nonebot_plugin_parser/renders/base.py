@@ -76,6 +76,9 @@ class BaseRenderer(ABC):
                     forwardable_segs.append(graphics_msg)
 
         if forwardable_segs:
+            if result.text:
+                forwardable_segs.append(result.text)
+
             if pconfig.need_forward_contents or len(forwardable_segs) > 4:
                 forward_msg = UniHelper.construct_forward_message(forwardable_segs + dynamic_segs)
                 yield UniMessage(forward_msg)
