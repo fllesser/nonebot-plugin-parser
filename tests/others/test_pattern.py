@@ -11,7 +11,7 @@ def test_pattern_matching():
     patterns = [p for _cls in parser_classes for p in _cls._key_patterns]
     patterns.sort(key=lambda x: len(x[0]), reverse=True)  # 按关键字长度降序排序
 
-    urls_file = Path(__file__).parent / "urls.txt"
+    urls_file = Path(__file__).parent / "test_urls.md"
     with urls_file.open("r", encoding="utf-8") as f:
         urls = f.readlines()
     urls = [url.strip() for url in urls if url.strip()]

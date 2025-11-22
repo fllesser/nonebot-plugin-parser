@@ -129,7 +129,7 @@ class BaseParser:
                 continue
             if searched := pattern.search(url):
                 return keyword, searched
-        raise ValueError(f"无法匹配 {url}")
+        raise ParseException(f"无法匹配 {url}")
 
     @classmethod
     def result(cls, **kwargs: Unpack[ParseResultKwargs]) -> ParseResult:

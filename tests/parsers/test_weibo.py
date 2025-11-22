@@ -79,8 +79,6 @@ async def test_video():
 
     async def parse_video(url: str) -> None:
         keyword, searched = parser.search_url(url)
-        assert searched, "无法匹配 URL"
-        logger.info(f"{url} | 开始解析微博")
         parse_result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: {parse_result}")
         video_paths = parse_result.video_contents
@@ -108,11 +106,39 @@ async def test_text():
 
     async def parse_text(url: str) -> None:
         keyword, searched = parser.search_url(url)
-        assert searched, "无法匹配 URL"
-        logger.info(f"{url} | 开始解析微博")
-        parse_result = await parser.parse(keyword, searched)
-        logger.debug(f"{url} | 解析结果: \n{parse_result}")
-        assert parse_result.text
+        result = await parser.parse(keyword, searched)
+
+        logger.debug(f"{url} | 解析结果: \n{result}")
+        assert result.text
         logger.success(f"{url} | 微博纯文本解析成功")
 
     await asyncio.gather(*[parse_text(url) for url in urls])
+
+
+@pytest.mark.asyncio
+async def test_article():
+    """测试微博文章"""
+    from nonebot_plugin_parser.parsers import WeiBoParser
+
+    parser = WeiBoParser()
+
+    urls = ["https://weibo.com/ttarticle/x/m/show#/id=2309404962180771742222"]
+
+    async def parse_article(url: str):
+        keyword, searched = parser.search_url(url)
+        result = await parser.parse(keyword, searched)
+        assert result.url
+        assert result.title
+        assert result.text
+        assert result.timestamp
+        assert result.author
+        assert result.author.name
+        assert result.author.avatar
+        assert result.contents
+
+        for content in result.contents:
+            await content.get_path()
+
+        await result.author.get_avatar_path()
+
+    await asyncio.gather(*[parse_article(url) for url in urls])

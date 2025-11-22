@@ -1,11 +1,14 @@
-import re
-import time
+from re import Match, sub
+from time import time
 from typing import ClassVar
+from uuid import uuid4
 
+from bs4 import BeautifulSoup, Tag
 from httpx import AsyncClient, Cookies
 import msgspec
 
 from .base import BaseParser, ParseException, Platform, PlatformEnum, handle
+from .data import MediaContent
 
 
 class WeiBoParser(BaseParser):
@@ -25,14 +28,14 @@ class WeiBoParser(BaseParser):
 
     # https://weibo.com/tv/show/1034:5007449447661594?mid=5007452630158934
     @handle("weibo.com/tv", r"weibo\.com/tv/show/\d{4}:\d+\?mid=(?P<mid>\d+)")
-    async def _parse_weibo_tv(self, searched: re.Match[str]):
+    async def _parse_weibo_tv(self, searched: Match[str]):
         mid = str(searched.group("mid"))
         weibo_id = self._mid2id(mid)
         return await self.parse_weibo_id(weibo_id)
 
     # https://video.weibo.com/show?fid=1034:5145615399845897
     @handle("video.weibo", r"video\.weibo\.com/show\?fid=(?P<fid>\d+:\d+)")
-    async def _parse_video_weibo(self, searched: re.Match[str]):
+    async def _parse_video_weibo(self, searched: Match[str]):
         fid = str(searched.group("fid"))
         return await self.parse_fid(fid)
 
@@ -41,15 +44,98 @@ class WeiBoParser(BaseParser):
     @handle("m.weibo.cn", r"m\.weibo\.cn/(?:status|detail)/(?P<wid>\d+)")
     # https://weibo.com/7207262816/P5kWdcfDe
     @handle("weibo.com", r"weibo\.com/\d+/(?P<wid>[0-9a-zA-Z]+)")
-    async def _parse_m_weibo_cn(self, searched: re.Match[str]):
+    async def _parse_m_weibo_cn(self, searched: Match[str]):
         wid = str(searched.group("wid"))
         return await self.parse_weibo_id(wid)
 
     # https://mapp.api.weibo.cn/fx/233911ddcc6bffea835a55e725fb0ebc.html
     @handle("mapp.api.weibo", r"mapp\.api\.weibo\.cn/fx/[A-Za-z\d]+\.html")
-    async def _parse_mapp_api_weibo(self, searched: re.Match[str]):
+    async def _parse_mapp_api_weibo(self, searched: Match[str]):
         url = f"https://{searched.group(0)}"
         return await self.parse_with_redirect(url)
+
+    # https://weibo.com/ttarticle/p/show?id=2309404962180771742222
+    # https://weibo.com/ttarticle/x/m/show#/id=2309404962180771742222
+    @handle("weibo.com/ttarticle", r"id=(?P<id>\d+)")
+    # https://card.weibo.com/article/m/show/id/2309404962180771742222
+    @handle("weibo.com/article", r"/id/(?P<id>\d+)")
+    async def _parse_article(self, searched: Match[str]):
+        _id = searched.group("id")
+        return await self.parse_article(_id)
+
+    async def parse_article(self, _id: str):
+        class UserInfo(Struct):
+            screen_name: str
+            profile_image_url: str
+
+        class Data(Struct):
+            url: str
+            title: str
+            content: str
+            userinfo: UserInfo
+            create_at_unix: int
+
+        class Detail(Struct):
+            code: str
+            msg: str
+            data: Data
+
+        url = "https://card.weibo.com/article/m/aj/detail"
+        params = {
+            "_rid": str(uuid4()),
+            "id": _id,
+            "_t": int(time() * 1000),
+        }
+
+        async with AsyncClient(
+            headers=self.headers,
+            timeout=self.timeout,
+        ) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            detail = msgspec.json.decode(response.content, type=Detail)
+
+        if detail.msg != "success":
+            raise ParseException("请求失败")
+
+        data = detail.data
+
+        soup = BeautifulSoup(data.content, "html.parser")
+        contents: list[MediaContent] = []
+        text_buffer: list[str] = []
+
+        for element in soup.find_all(["p", "img"]):
+            if not isinstance(element, Tag):
+                continue
+
+            if element.name == "p":
+                text = element.get_text(strip=True)
+                # 去除零宽空格
+                text = text.replace("\u200b", "")
+                if text:
+                    text_buffer.append(text)
+            elif element.name == "img":
+                src = element.get("src")
+                if isinstance(src, str):
+                    text = "\n\n".join(text_buffer)
+                    contents.append(self.create_graphics_content(src, text=text))
+                    text_buffer.clear()
+
+        author = self.create_author(
+            data.userinfo.screen_name,
+            data.userinfo.profile_image_url,
+        )
+
+        end_text = "\n\n".join(text_buffer) if text_buffer else None
+
+        return self.result(
+            url=data.url,
+            title=data.title,
+            author=author,
+            timestamp=data.create_at_unix,
+            text=end_text,
+            contents=contents,
+        )
 
     async def parse_fid(self, fid: str):
         """
@@ -84,7 +170,7 @@ class WeiBoParser(BaseParser):
         # 提取标题和文本
         title, text = data.get("title", ""), data.get("text", "")
         if text:
-            text = re.sub(r"<[^>]*>", "", text)
+            text = sub(r"<[^>]*>", "", text)
             text = text.replace("\n\n", "").strip()
 
         # 获取封面
@@ -131,7 +217,7 @@ class WeiBoParser(BaseParser):
         }
 
         # 加时间戳参数，减少被缓存/规则命中的概率
-        ts = int(time.time() * 1000)
+        ts = int(time() * 1000)
         url = f"https://m.weibo.cn/statuses/show?id={weibo_id}&_={ts}"
 
         # 关键：不带 cookie、不跟随重定向（避免二跳携 cookie）
@@ -287,7 +373,7 @@ class WeiboData(Struct):
         # 将 <br /> 转换为 \n
         text = self.text.replace("<br />", "\n")
         # 去除 html 标签
-        text = re.sub(r"<[^>]*>", "", text)
+        text = sub(r"<[^>]*>", "", text)
         return text
 
     @property
@@ -316,7 +402,10 @@ class WeiboData(Struct):
 
     @property
     def timestamp(self) -> int:
-        return int(time.mktime(time.strptime(self.created_at, "%a %b %d %H:%M:%S %z %Y")))
+        from time import mktime, strptime
+
+        create_at = strptime(self.created_at, "%a %b %d %H:%M:%S %z %Y")
+        return int(mktime(create_at))
 
 
 class WeiboResponse(Struct):
