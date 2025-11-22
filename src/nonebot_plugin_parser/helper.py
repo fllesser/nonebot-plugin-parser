@@ -1,15 +1,23 @@
-from collections.abc import Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from functools import wraps
 from pathlib import Path
-from typing import Literal
+from typing import Any, ClassVar, Literal
 
 from nonebot import logger
 from nonebot.adapters import Event
-from nonebot.internal.matcher import current_bot
-from nonebot.matcher import current_event
-from nonebot_plugin_alconna import File, Image, Text, Video, uniseg
-from nonebot_plugin_alconna.uniseg import Segment, SupportAdapter, UniMessage, Voice
-from nonebot_plugin_alconna.uniseg.segment import CustomNode, Reference
+from nonebot.matcher import current_bot, current_event
+from nonebot_plugin_alconna import SupportAdapter, uniseg
+from nonebot_plugin_alconna.uniseg import (
+    CustomNode,
+    File,
+    Image,
+    Reference,
+    Segment,
+    Text,
+    UniMessage,
+    Video,
+    Voice,
+)
 
 from .config import pconfig
 
@@ -19,7 +27,10 @@ ForwardNodeInner = str | Segment | UniMessage
 
 class UniHelper:
     @staticmethod
-    def construct_forward_message(segments: Sequence[ForwardNodeInner], user_id: str | None = None) -> Reference:
+    def construct_forward_message(
+        segments: Sequence[ForwardNodeInner],
+        user_id: str | None = None,
+    ) -> Reference:
         """构造转发消息
 
         Args:
@@ -45,7 +56,10 @@ class UniHelper:
         return Reference(nodes=nodes)
 
     @staticmethod
-    def img_seg(img_path: Path | None = None, raw: bytes | None = None) -> Image:
+    def img_seg(
+        img_path: Path | None = None,
+        raw: bytes | None = None,
+    ) -> Image:
         """获取图片 Seg
 
         Args:
@@ -102,7 +116,10 @@ class UniHelper:
                 return Video(path=video_path)
 
     @staticmethod
-    def file_seg(file: Path, display_name: str | None = None) -> File:
+    def file_seg(
+        file: Path,
+        display_name: str | None = None,
+    ) -> File:
         """获取文件 Seg
 
         Args:
@@ -121,43 +138,45 @@ class UniHelper:
         else:
             return File(path=file, name=display_name)
 
-    @staticmethod
+    EMOJI_MAP: ClassVar[dict[str, tuple[str, str]]] = {
+        "fail": ("10060", "❌"),
+        "resolving": ("424", "👀"),
+        "done": ("144", "🎉"),
+    }
+
+    @classmethod
     async def message_reaction(
+        cls,
         event: Event,
         status: Literal["fail", "resolving", "done"],
     ) -> None:
-        emoji_map = {
-            "fail": ("10060", "❌"),
-            "resolving": ("424", "👀"),
-            "done": ("144", "🎉"),
-        }
         message_id = uniseg.get_message_id(event)
         target = uniseg.get_target(event)
 
         if target.adapter in (SupportAdapter.onebot11, SupportAdapter.qq):
-            emoji = emoji_map[status][0]
+            emoji = cls.EMOJI_MAP[status][0]
         else:
-            emoji = emoji_map[status][1]
+            emoji = cls.EMOJI_MAP[status][1]
 
         try:
             await uniseg.message_reaction(emoji, message_id=message_id)
         except Exception:
             logger.warning(f"reaction {emoji} to {message_id} failed, maybe not support")
 
-    @staticmethod
-    def exception_handler(func):
+    @classmethod
+    def exception_handler(cls, func: Callable[..., Awaitable[Any]]):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             event = current_event.get()
-            await UniHelper.message_reaction(event, "resolving")
+            await cls.message_reaction(event, "resolving")
 
             try:
                 result = await func(*args, **kwargs)
             except Exception:
-                await UniHelper.message_reaction(event, "fail")
+                await cls.message_reaction(event, "fail")
                 raise
 
-            await UniHelper.message_reaction(event, "done")
+            await cls.message_reaction(event, "done")
             return result
 
         return wrapper
