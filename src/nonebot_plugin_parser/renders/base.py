@@ -7,7 +7,7 @@ from typing_extensions import override
 import uuid
 
 from ..config import pconfig
-from ..exception import DownloadException, DownloadLimitException, ZeroSizeException
+from ..exception import DownloadException, ZeroSizeException
 from ..helper import ForwardNodeInner, UniHelper, UniMessage
 from ..parsers import ParseResult
 from ..parsers.data import AudioContent, DynamicContent, GraphicsContent, ImageContent, VideoContent
@@ -50,9 +50,8 @@ class BaseRenderer(ABC):
             try:
                 path = await cont.get_path()
             # 继续渲染其他内容, 类似之前 gather (return_exceptions=True) 的处理
-            except (DownloadLimitException, ZeroSizeException):
-                # 预期异常，不抛出
-                # yield UniMessage(e.message)
+            except ZeroSizeException:
+                # 预期异常
                 continue
             except DownloadException:
                 failed_count += 1

@@ -20,6 +20,7 @@ from nonebot_plugin_alconna.uniseg import (
 )
 
 from .config import pconfig
+from .exception import TipException
 
 ForwardNodeInner = str | Segment | UniMessage
 """转发消息节点内部允许的类型"""
@@ -150,6 +151,12 @@ class UniHelper:
         event: Event,
         status: Literal["fail", "resolving", "done"],
     ) -> None:
+        """发送消息回应
+
+        Args:
+            event (Event): 事件对象
+            status (Literal["fail", "resolving", "done"]): 状态
+        """
         message_id = uniseg.get_message_id(event)
         target = uniseg.get_target(event)
 
@@ -164,7 +171,18 @@ class UniHelper:
             logger.warning(f"reaction {emoji} to {message_id} failed, maybe not support")
 
     @classmethod
-    def exception_handler(cls, func: Callable[..., Awaitable[Any]]):
+    def with_reaction(cls, func: Callable[..., Awaitable[Any]]):
+        """自动回应装饰器
+
+        自动处理消息响应状态，并捕获 TipException 发送提示消息
+
+        Args:
+            func: 被装饰的函数
+
+        Returns:
+            装饰后的函数
+        """
+
         @wraps(func)
         async def wrapper(*args, **kwargs):
             event = current_event.get()
@@ -172,6 +190,9 @@ class UniHelper:
 
             try:
                 result = await func(*args, **kwargs)
+            except TipException as e:
+                await UniMessage.text(e.message).send()
+                raise
             except Exception:
                 await cls.message_reaction(event, "fail")
                 raise
