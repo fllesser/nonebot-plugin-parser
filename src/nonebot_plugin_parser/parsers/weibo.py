@@ -61,9 +61,9 @@ class WeiBoParser(BaseParser):
     @handle("weibo.com/article", r"/id/(?P<id>\d+)")
     async def _parse_article(self, searched: Match[str]):
         _id = searched.group("id")
-        return await self.parse_aritcle(_id)
+        return await self.parse_article(_id)
 
-    async def parse_aritcle(self, _id: str):
+    async def parse_article(self, _id: str):
         class UserInfo(Struct):
             screen_name: str
             profile_image_url: str
