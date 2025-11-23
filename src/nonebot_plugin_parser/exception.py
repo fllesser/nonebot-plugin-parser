@@ -19,7 +19,7 @@ class DownloadException(ParseException):
         super().__init__(message or "媒体下载失败")
 
 
-class DownloadLimitException(DownloadException, TipException):
+class DownloadLimitException(DownloadException):
     """下载超过限制异常"""
 
     pass

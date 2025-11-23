@@ -20,7 +20,8 @@ from nonebot_plugin_alconna.uniseg import (
 )
 
 from .config import pconfig
-from .exception import TipException
+
+# from .exception import TipException
 
 ForwardNodeInner = str | Segment | UniMessage
 """转发消息节点内部允许的类型"""
@@ -190,9 +191,9 @@ class UniHelper:
 
             try:
                 result = await func(*args, **kwargs)
-            except TipException as e:
-                await UniMessage.text(e.message).send()
-                raise
+            # except TipException as e:
+            #     await UniMessage.text(e.message).send()
+            #     raise
             except Exception:
                 await cls.message_reaction(event, "fail")
                 raise

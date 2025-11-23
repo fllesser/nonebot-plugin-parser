@@ -67,7 +67,7 @@ async def parser_handler(
     async for message in renderer.render_messages(result):
         await message.send()
 
-    # 4. 无 raise 再缓存解析结果
+    # 4. 缓存解析结果
     _RESULT_CACHE[cache_key] = result
 
 
