@@ -9,8 +9,7 @@ import uuid
 from ..config import pconfig
 from ..exception import DownloadException, DownloadLimitException, ZeroSizeException
 from ..helper import ForwardNodeInner, UniHelper, UniMessage
-from ..parsers import ParseResult
-from ..parsers.data import AudioContent, DynamicContent, GraphicsContent, ImageContent, VideoContent
+from ..parsers import AudioContent, DynamicContent, GraphicsContent, ImageContent, ParseResult, VideoContent
 
 
 class BaseRenderer(ABC):

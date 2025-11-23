@@ -243,9 +243,7 @@ from httpx import AsyncClient
 from nonebot import require
 
 require("nonebot_plugin_parser")
-from nonebot_plugin_parser.parsers import BaseParser, ParseResult
-from nonebot_plugin_parser.parsers.base import Platform, handle
-
+from nonebot_plugin_parser.parsers import BaseParser, Platform, handle
 
 class ExampleParser(BaseParser):
     """示例视频网站解析器"""
@@ -253,7 +251,7 @@ class ExampleParser(BaseParser):
     platform: ClassVar[Platform] = Platform(name="example", display_name="示例网站")
 
     @handle("ex.short", r"ex\.short/\w+)")
-    async def _parse_short_link(self, searched: re.Match[str]):
+    async def _parse_short_link(self, searched: Match[str]):
         """解析短链"""
         url = f"https://{searched.group(0)}"
         # 重定向再解析，请确保重定向链接的 handle 存在
@@ -262,7 +260,7 @@ class ExampleParser(BaseParser):
 
     @handle("example.com", r"example\.com/video/(?P<video_id>\w+)")
     @handle("exam.ple", r"exam\.ple/(?P<video_id>\w+)")
-    async def _parse(self, searched: Match[str]) -> ParseResult:
+    async def _parse(self, searched: Match[str]):
         # 1. 提取视频 ID
         video_id = searched.group("video_id")
     

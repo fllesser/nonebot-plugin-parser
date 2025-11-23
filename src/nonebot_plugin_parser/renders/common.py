@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from pilmoji import EmojiCDNSource, EmojiStyle, Pilmoji
 
 from ..config import pconfig
-from ..parsers.data import GraphicsContent
+from ..parsers import GraphicsContent
 from .base import ImageRenderer, ParseResult
 
 # 定义类型变量
