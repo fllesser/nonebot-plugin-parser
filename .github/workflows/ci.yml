@@ -55,6 +55,9 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         # os: [ubuntu-latest, windows-latest, macos-latest]
         pydantic: ["pydantic-v1", "pydantic-v2"]
+        exclude:
+          - python-version: "3.14"
+            pydantic: "pydantic-v1"
 
     env:
       OS: ubuntu-latest
