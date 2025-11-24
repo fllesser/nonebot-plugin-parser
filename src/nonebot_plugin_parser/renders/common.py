@@ -322,7 +322,8 @@ class CommonRenderer(ImageRenderer):
     @classmethod
     def _load_video_button(cls):
         """预加载视频按钮"""
-        cls.video_button_image: PILImage = Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH).convert("RGBA")
+        with Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH) as img:
+            cls.video_button_image: PILImage = img.convert("RGBA")
 
         # 设置透明度为 30%
         alpha = cls.video_button_image.split()[-1]  # 获取 alpha 通道
@@ -332,13 +333,14 @@ class CommonRenderer(ImageRenderer):
     @classmethod
     def _load_platform_logos(cls):
         """预加载平台 logo"""
-        cls.platform_logos: dict[str, PILImage] = {}
         from ..constants import PlatformEnum
 
+        cls.platform_logos: dict[str, PILImage] = {}
         for platform_name in PlatformEnum:
             logo_path = cls.RESOURCES_DIR / f"{platform_name}.png"
             if logo_path.exists():
-                cls.platform_logos[str(platform_name)] = Image.open(logo_path)
+                with Image.open(logo_path) as img:
+                    cls.platform_logos[str(platform_name)] = img.convert("RGBA")
 
     @classmethod
     async def text(
