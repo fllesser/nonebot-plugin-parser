@@ -40,7 +40,3 @@ def test_limited_size_dict():
     for i in range(20, 30):
         limited_size_dict[f"test{i}"] = f"test{i}"
     assert len(limited_size_dict) == 20
-
-
-def test_test():
-    pass

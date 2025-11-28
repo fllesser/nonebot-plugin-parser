@@ -1,5 +1,3 @@
-#:tombi schema.strict = false
-
 [project]
 name = "nonebot-plugin-parser"
 version = "2.2.2"
@@ -137,14 +135,14 @@ executionEnvironments = [
 typeCheckingMode = "standard"
 disableBytesTypePromotions = true
 
-[tool.pytest.ini_options]
+[tool.pytest]
 addopts = [
-  "-v",  # 详细输出
-  "-s",  # 显示打印信息
+  "--import-mode=prepend",  # 导入模式
+  "--strict-markers",  # 严格标记模式
   "--tb=short",  # 简短的错误回溯
   "-ra",  # 显示所有测试结果摘要
-  "--strict-markers",  # 严格标记模式
-  "--import-mode=prepend",  # 导入模式
+  "-s",  # 显示打印信息
+  "-v",  # 详细输出
 ]
 pythonpath = ["src"]
 asyncio_mode = "auto"
@@ -207,3 +205,6 @@ conflicts = [
     { group = "telegram" },
   ],
 ]
+
+[tool.uv.sources]
+nonebug = { git = "https://github.com/fllesser/nonebug", rev = "dev/migrate-uv" }
