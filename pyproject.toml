@@ -166,7 +166,6 @@ asyncio_default_fixture_loop_scope = "session"
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
 
 [tool.ruff.format]
 line-ending = "lf"
