@@ -1,12 +1,12 @@
-from itertools import chain
 import re
 from typing import Any, ClassVar
+from itertools import chain
 
 from httpx import AsyncClient
 
-from ..exception import ParseException
 from .base import BaseParser, PlatformEnum, handle
-from .data import ParseResult, Platform
+from .data import Platform, ParseResult
+from ..exception import ParseException
 
 
 class TwitterParser(BaseParser):
@@ -51,7 +51,7 @@ class TwitterParser(BaseParser):
         Returns:
             ParseResult: 解析结果
         """
-        from bs4 import BeautifulSoup, Tag
+        from bs4 import Tag, BeautifulSoup
 
         soup = BeautifulSoup(html_content, "html.parser")
 

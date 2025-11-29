@@ -18,7 +18,7 @@ keywords = [
   "video",
   "weibo",
   "xiaohongshu",
-  "youtube"
+  "youtube",
 ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -66,7 +66,8 @@ ytdlp = ["yt-dlp[default]>=2025.11.12"]
 [dependency-groups]
 dev = [
   "nonebot2[fastapi]>=2.4.3,<3.0.0",
-  "ruff>=0.14.4,<1.0.0",
+  "ruff>=0.14.7,<1.0.0",
+  "types-yt-dlp>=2025.11.12.20251115",
 ]
 extras = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp[default]>=2025.11.12"]
 pydantic-v1 = ["pydantic<2.0.0"]
@@ -179,13 +180,12 @@ ignore = [
   "RUF002",  # ambiguous-unicode-character-docstring
   "RUF003",  # ambiguous-unicode-character-comment
   "W191",  # indentation contains tabs
-  # "I001",   # isort: imports are incorrectly sorted
-  "TID252",  # 相对导入
+  "TID252",  # relative-import
 ]
 
 [tool.ruff.lint.isort]
-force-sort-within-sections = true
-known-first-party = ["tests/*"]
+length-sort = true
+known-first-party = ["nonebot_plugin_parser", "tests/*"]
 extra-standard-library = ["typing_extensions"]
 
 [tool.ruff.lint.flake8-pytest-style]

@@ -1,15 +1,15 @@
-import asyncio
-import json
-import random
 import re
+import json
 import time
+import random
+import asyncio
 from typing import ClassVar
 
-from bs4 import BeautifulSoup, Tag
-from httpx import AsyncClient, HTTPError
+from bs4 import Tag, BeautifulSoup
+from httpx import HTTPError, AsyncClient
 
+from .base import Platform, BaseParser, PlatformEnum, handle
 from ..exception import ParseException
-from .base import BaseParser, Platform, PlatformEnum, handle
 
 
 class NGAParser(BaseParser):

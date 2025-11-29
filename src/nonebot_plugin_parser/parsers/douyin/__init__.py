@@ -1,11 +1,18 @@
 import re
 from typing import ClassVar
 
-from httpx import AsyncClient
 import msgspec
+from httpx import AsyncClient
 from nonebot import logger
 
-from ..base import COMMON_TIMEOUT, BaseParser, ParseException, Platform, PlatformEnum, handle
+from ..base import (
+    COMMON_TIMEOUT,
+    Platform,
+    BaseParser,
+    PlatformEnum,
+    ParseException,
+    handle,
+)
 
 
 class DouyinParser(BaseParser):
@@ -25,7 +32,10 @@ class DouyinParser(BaseParser):
     @handle("iesdouyin", r"iesdouyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
     @handle("m.douyin", r"m\.douyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
     # https://jingxuan.douyin.com/m/video/7574300896016862490?app=yumme&utm_source=copy_link
-    @handle("jingxuan.douyin", r"jingxuan\.douyin.com/m/(?P<ty>slides|video|note)/(?P<vid>\d+)")
+    @handle(
+        "jingxuan.douyin",
+        r"jingxuan\.douyin.com/m/(?P<ty>slides|video|note)/(?P<vid>\d+)",
+    )
     async def _parse_douyin(self, searched: re.Match[str]):
         ty, vid = searched.group("ty"), searched.group("vid")
         if ty == "slides":

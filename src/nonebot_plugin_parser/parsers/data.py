@@ -1,8 +1,8 @@
-from asyncio import Task
-from dataclasses import dataclass, field
-from datetime import datetime
-from pathlib import Path
 from typing import Any
+from asyncio import Task
+from pathlib import Path
+from datetime import datetime
+from dataclasses import field, dataclass
 
 
 def repr_path_task(path_task: Path | Task[Path]) -> str:
@@ -229,8 +229,8 @@ class ParseResult:
         )
 
 
-from dataclasses import dataclass, field
 from typing import Any, TypedDict
+from dataclasses import field, dataclass
 
 
 class ParseResultKwargs(TypedDict, total=False):

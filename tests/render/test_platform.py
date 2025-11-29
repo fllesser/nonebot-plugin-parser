@@ -1,6 +1,6 @@
 def test_platform_enum():
-    from nonebot_plugin_parser.constants import PlatformEnum
     from nonebot_plugin_parser.renders import CommonRenderer
+    from nonebot_plugin_parser.constants import PlatformEnum
 
     assert PlatformEnum.BILIBILI == "bilibili"
     assert str(PlatformEnum.BILIBILI) == "bilibili"

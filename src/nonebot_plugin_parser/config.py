@@ -1,9 +1,9 @@
 from enum import Enum
 from pathlib import Path
 
-from bilibili_api.video import VideoCodecs, VideoQuality
-from nonebot import get_driver, get_plugin_config, require
+from nonebot import require, get_driver, get_plugin_config
 from pydantic import BaseModel
+from bilibili_api.video import VideoCodecs, VideoQuality
 
 from .constants import PlatformEnum
 

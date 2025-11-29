@@ -1,13 +1,13 @@
 from re import Match, sub
 from time import time
-from typing import ClassVar
 from uuid import uuid4
+from typing import ClassVar
 
-from bs4 import BeautifulSoup, Tag
-from httpx import AsyncClient, Cookies
 import msgspec
+from bs4 import Tag, BeautifulSoup
+from httpx import Cookies, AsyncClient
 
-from .base import BaseParser, ParseException, Platform, PlatformEnum, handle
+from .base import Platform, BaseParser, PlatformEnum, ParseException, handle
 from .data import MediaContent
 
 

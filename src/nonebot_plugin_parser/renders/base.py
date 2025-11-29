@@ -1,15 +1,22 @@
-from abc import ABC, abstractmethod
-from collections.abc import AsyncGenerator
-from itertools import chain
-from pathlib import Path
-from typing import Any, ClassVar
-from typing_extensions import override
 import uuid
+from abc import ABC, abstractmethod
+from typing import Any, ClassVar
+from pathlib import Path
+from itertools import chain
+from collections.abc import AsyncGenerator
+from typing_extensions import override
 
 from ..config import pconfig
-from ..exception import DownloadException, DownloadLimitException, ZeroSizeException
-from ..helper import ForwardNodeInner, UniHelper, UniMessage
-from ..parsers import AudioContent, DynamicContent, GraphicsContent, ImageContent, ParseResult, VideoContent
+from ..helper import UniHelper, UniMessage, ForwardNodeInner
+from ..parsers import (
+    ParseResult,
+    AudioContent,
+    ImageContent,
+    VideoContent,
+    DynamicContent,
+    GraphicsContent,
+)
+from ..exception import DownloadException, ZeroSizeException, DownloadLimitException
 
 
 class BaseRenderer(ABC):

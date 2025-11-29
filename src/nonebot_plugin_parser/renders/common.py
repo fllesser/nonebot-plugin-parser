@@ -1,18 +1,18 @@
-from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
-from functools import lru_cache, wraps
 from io import BytesIO
+from typing import TypeVar, ClassVar, ParamSpec
 from pathlib import Path
-from typing import ClassVar, ParamSpec, TypeVar
+from functools import wraps, lru_cache
+from dataclasses import dataclass
+from collections.abc import Callable, Awaitable
 from typing_extensions import override
 
-from nonebot import logger
 from PIL import Image, ImageDraw, ImageFont
-from pilmoji import EmojiCDNSource, EmojiStyle, Pilmoji
+from nonebot import logger
+from pilmoji import Pilmoji, EmojiStyle, EmojiCDNSource
 
+from .base import ParseResult, ImageRenderer
 from ..config import pconfig
 from ..parsers import GraphicsContent
-from .base import ImageRenderer, ParseResult
 
 # 定义类型变量
 P = ParamSpec("P")
@@ -1230,10 +1230,34 @@ class CommonRenderer(ImageRenderer):
         draw.rectangle((x2 - width, y1 + radius, x2, y2 - radius), fill=border_color)  # 右
 
         # 绘制四个圆角边框
-        draw.arc((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=border_color, width=width)
-        draw.arc((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=border_color, width=width)
-        draw.arc((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=border_color, width=width)
-        draw.arc((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=border_color, width=width)
+        draw.arc(
+            (x1, y1, x1 + 2 * radius, y1 + 2 * radius),
+            180,
+            270,
+            fill=border_color,
+            width=width,
+        )
+        draw.arc(
+            (x2 - 2 * radius, y1, x2, y1 + 2 * radius),
+            270,
+            360,
+            fill=border_color,
+            width=width,
+        )
+        draw.arc(
+            (x1, y2 - 2 * radius, x1 + 2 * radius, y2),
+            90,
+            180,
+            fill=border_color,
+            width=width,
+        )
+        draw.arc(
+            (x2 - 2 * radius, y2 - 2 * radius, x2, y2),
+            0,
+            90,
+            fill=border_color,
+            width=width,
+        )
 
     def _wrap_text(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
         """优化的文本自动换行算法，考虑中英文字符宽度相同

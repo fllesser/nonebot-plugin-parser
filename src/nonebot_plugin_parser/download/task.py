@@ -1,7 +1,7 @@
+from typing import Any, TypeVar, ParamSpec
 from asyncio import Task, create_task
-from collections.abc import Callable, Coroutine
 from functools import wraps
-from typing import Any, ParamSpec, TypeVar
+from collections.abc import Callable, Coroutine
 
 P = ParamSpec("P")
 T = TypeVar("T")

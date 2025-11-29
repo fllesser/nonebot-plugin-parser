@@ -1,18 +1,18 @@
-import asyncio
-import json
-from pathlib import Path
 import re
+import json
 import time
+import asyncio
 from typing import ClassVar
+from pathlib import Path
 
 import aiofiles
-from httpx import AsyncClient, HTTPError
+from httpx import HTTPError, AsyncClient
 from nonebot import logger
 
-from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
-from ..exception import DownloadException, ParseException
+from .base import DOWNLOADER, Platform, BaseParser, PlatformEnum, handle, pconfig
 from ..utils import safe_unlink
-from .base import DOWNLOADER, BaseParser, Platform, PlatformEnum, handle, pconfig
+from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
+from ..exception import ParseException, DownloadException
 
 
 class AcfunParser(BaseParser):

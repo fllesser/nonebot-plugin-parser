@@ -1,10 +1,10 @@
-from dataclasses import dataclass
 import time
 from typing import Any
+from dataclasses import dataclass
 
+import pytest
 import aiofiles
 from nonebot import logger
-import pytest
 
 
 @dataclass

@@ -1,11 +1,11 @@
-from random import choice
 import re
+from random import choice
 from typing import ClassVar
 
-from httpx import AsyncClient
 import msgspec
+from httpx import AsyncClient
 
-from .base import BaseParser, ParseException, PlatformEnum, handle
+from .base import BaseParser, PlatformEnum, ParseException, handle
 from .data import Platform
 
 
@@ -24,7 +24,10 @@ class KuaiShouParser(BaseParser):
     # https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
     @handle("kuaishou", r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+")
     # https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
-    @handle("chenzhongtech", r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+")
+    @handle(
+        "chenzhongtech",
+        r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+",
+    )
     async def _parse_v_kuaishou(self, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
         url = searched.group(0)
