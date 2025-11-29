@@ -88,6 +88,21 @@ test = [
 requires = ["uv_build>=0.9.0,<0.10.0"]
 build-backend = "uv_build"
 
+[tool.uv]
+required-version = ">=0.9.7"
+default-groups = ["test", "dev", "extras"]
+conflicts = [
+  [
+    { group = "pydantic-v1" },
+    { group = "pydantic-v2" },
+    { group = "telegram" },
+  ],
+]
+
+[tool.uv.sources]
+nonebug = { git = "https://github.com/fllesser/nonebug", rev = "pytest9" }
+
+
 [tool.bumpversion]
 current_version = "2.2.2"
 commit = true
@@ -100,7 +115,7 @@ search = "name = \"nonebot-plugin-parser\"\nversion = \"{current_version}\""
 replace = "name = \"nonebot-plugin-parser\"\nversion = \"{new_version}\""
 
 [tool.coverage.report]
-show_missing = true  # 相当于 --cov-report=term-missing:cite[1]
+show_missing = true # 相当于 --cov-report=term-missing:cite[1]
 exclude_lines = [
   "raise NotImplementedError",
   "if TYPE_CHECKING:",
@@ -138,12 +153,12 @@ disableBytesTypePromotions = true
 
 [tool.pytest]
 addopts = [
-  "--import-mode=prepend",  # 导入模式
-  "--strict-markers",  # 严格标记模式
-  "--tb=short",  # 简短的错误回溯
-  "-ra",  # 显示所有测试结果摘要
-  "-s",  # 显示打印信息
-  "-v",  # 详细输出
+  "--import-mode=prepend", # 导入模式
+  "--strict-markers",      # 严格标记模式
+  "--tb=short",            # 简短的错误回溯
+  "-ra",                   # 显示所有测试结果摘要
+  "-s",                    # 显示打印信息
+  "-v",                    # 详细输出
 ]
 pythonpath = ["src"]
 asyncio_mode = "auto"
@@ -158,29 +173,29 @@ line-ending = "lf"
 
 [tool.ruff.lint]
 select = [
-  "F",  # Pyflakes
-  "W",  # pycodestyle warnings
-  "E",  # pycodestyle errors
-  "I",  # isort
-  "UP",  # pyupgrade
-  "ASYNC",  # flake8-async
-  "C4",  # flake8-comprehensions
-  "T10",  # flake8-debugger
-  "T20",  # flake8-print
-  "PYI",  # flake8-pyi
-  "PT",  # flake8-pytest-style
-  "Q",  # flake8-quotes
-  "TID",  # flake8-tidy-imports
-  "RUF",  # Ruff-specific rules
+  "F",     # Pyflakes
+  "W",     # pycodestyle warnings
+  "E",     # pycodestyle errors
+  "I",     # isort
+  "UP",    # pyupgrade
+  "ASYNC", # flake8-async
+  "C4",    # flake8-comprehensions
+  "T10",   # flake8-debugger
+  "T20",   # flake8-print
+  "PYI",   # flake8-pyi
+  "PT",    # flake8-pytest-style
+  "Q",     # flake8-quotes
+  "TID",   # flake8-tidy-imports
+  "RUF",   # Ruff-specific rules
 ]
 ignore = [
-  "E402",  # module-import-not-at-top-of-file
+  "E402",   # module-import-not-at-top-of-file
   "UP037",  # quoted-annotation
-  "RUF001",  # ambiguous-unicode-character-string
-  "RUF002",  # ambiguous-unicode-character-docstring
-  "RUF003",  # ambiguous-unicode-character-comment
-  "W191",  # indentation contains tabs
-  "TID252",  # relative-import
+  "RUF001", # ambiguous-unicode-character-string
+  "RUF002", # ambiguous-unicode-character-docstring
+  "RUF003", # ambiguous-unicode-character-comment
+  "W191",   # indentation contains tabs
+  "TID252", # relative-import
 ]
 
 [tool.ruff.lint.isort]
@@ -194,17 +209,3 @@ mark-parentheses = false
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
-
-[tool.uv]
-required-version = ">=0.9.7"
-default-groups = ["test", "dev", "extras"]
-conflicts = [
-  [
-    { group = "pydantic-v1" },
-    { group = "pydantic-v2" },
-    { group = "telegram" },
-  ],
-]
-
-[tool.uv.sources]
-nonebug = { git = "https://github.com/fllesser/nonebug", rev = "pytest9" }
