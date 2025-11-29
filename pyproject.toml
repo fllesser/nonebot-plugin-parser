@@ -207,4 +207,4 @@ conflicts = [
 ]
 
 [tool.uv.sources]
-nonebug = { git = "https://github.com/fllesser/nonebug", rev = "dev/migrate-uv" }
+nonebug = { git = "https://github.com/fllesser/nonebug", rev = "pytest9" }
