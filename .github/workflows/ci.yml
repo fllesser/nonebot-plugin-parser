@@ -62,6 +62,7 @@ jobs:
     env:
       OS: ubuntu-latest
       PYTHON: ${{ matrix.python-version }}
+      PYDANTIC: ${{ matrix.pydantic }}
       UV_NO_SYNC: 1
 
     steps:
@@ -84,14 +85,14 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
-          env_vars: OS,PYTHON
+          env_vars: PYTHON,PYDANTIC
           files: ./junit1.xml
           use_oidc: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          env_vars: OS,PYTHON
+          env_vars: PYTHON,PYDANTIC
           files: ./coverage1.xml
           use_oidc: true
 
