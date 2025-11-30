@@ -14,19 +14,22 @@ if YTDLP_DOWNLOADER is not None:
     from .tiktok import TikTokParser as TikTokParser
     from .youtube import YouTubeParser as YouTubeParser
 
-from .base import handle as handle
-from .data import Author
-from .data import Platform as Platform
-from .data import ParseResult as ParseResult
-from .data import AudioContent as AudioContent
-from .data import ImageContent as ImageContent
-from .data import VideoContent as VideoContent
-from .data import DynamicContent as DynamicContent
-from .data import GraphicsContent as GraphicsContent
+from .base import handle
+from .data import (
+    Author,
+    Platform,
+    ParseResult,
+    AudioContent,
+    ImageContent,
+    VideoContent,
+    DynamicContent,
+    GraphicsContent,
+)
 
 __all__ = [
     "AudioContent",
     "Author",
+    "BaseParser",
     "DynamicContent",
     "GraphicsContent",
     "ImageContent",
