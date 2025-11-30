@@ -72,7 +72,7 @@ dev = [
 extras = [
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "yt-dlp[default]>=2025.11.12",
-  # "types-yt-dlp>=2025.11.12.20251115",
+  "types-yt-dlp>=2025.11.12.20251115",
 ]
 pydantic-v1 = ["pydantic<2.0.0"]
 pydantic-v2 = ["pydantic>=2.0.0"]

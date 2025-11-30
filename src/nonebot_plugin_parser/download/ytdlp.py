@@ -1,8 +1,8 @@
 import asyncio
+from typing import TYPE_CHECKING
 from pathlib import Path
 
 import yt_dlp
-from yt_dlp import _Params
 from msgspec import Struct, convert
 
 from .task import auto_task
@@ -38,6 +38,9 @@ class YtdlpDownloader:
     """YtdlpDownloader class"""
 
     def __init__(self):
+        if TYPE_CHECKING:
+            from yt_dlp import _Params
+
         self._video_info_mapping = LimitedSizeDict[str, VideoInfo]()
         self._extract_base_opts: _Params = {
             "quiet": True,
