@@ -1,12 +1,9 @@
 import asyncio
-from typing import TYPE_CHECKING
 from pathlib import Path
 
 import yt_dlp
+from yt_dlp import _Params
 from msgspec import Struct, convert
-
-if TYPE_CHECKING:
-    from yt_dlp import _Params
 
 from .task import auto_task
 from ..utils import LimitedSizeDict, generate_file_name
@@ -100,7 +97,7 @@ class YtdlpDownloader:
             return video_path
 
         ydl_opts = self._download_base_opts.copy()
-        ydl_opts["outtmpl"] = f"{video_path}"
+        ydl_opts["outtmpl"] = str(video_path)
         ydl_opts["merge_output_format"] = "mp4"
         ydl_opts["format"] = f"bv[filesize<={duration // 10 + 10}M]+ba/b[filesize<={duration // 8 + 10}M]"
         ydl_opts["postprocessors"] = [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}]
