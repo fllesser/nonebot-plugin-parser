@@ -2,15 +2,15 @@ import asyncio
 from pathlib import Path
 
 import aiofiles
-from httpx import AsyncClient, HTTPError
+from httpx import HTTPError, AsyncClient
 from nonebot import logger
 from tqdm.asyncio import tqdm
 
+from .task import auto_task
+from ..utils import merge_av, safe_unlink, generate_file_name
 from ..config import pconfig
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
-from ..exception import DownloadException, SizeLimitException, ZeroSizeException
-from ..utils import generate_file_name, merge_av, safe_unlink
-from .task import auto_task
+from ..exception import DownloadException, ZeroSizeException, SizeLimitException
 
 
 class StreamDownloader:
@@ -63,7 +63,7 @@ class StreamDownloader:
                     raise ZeroSizeException
 
                 if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
-                    logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
+                    logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {{pconfig.max_size}} MB, 取消下载")
                     raise SizeLimitException
 
                 with self.get_progress_bar(file_name, content_length) as bar:
@@ -136,7 +136,7 @@ class StreamDownloader:
 
         Args:
             url (str): url address
-            audio_name (str | None ): audio name. Defaults to get name by parse_url_resource_name.
+            audio_name (str | None ): audio name. Defaults to generate from url.
             ext_headers (dict[str, str] | None): ext headers. Defaults to None.
 
         Returns:
@@ -161,7 +161,7 @@ class StreamDownloader:
 
         Args:
             url (str): url
-            img_name (str | None): image name. Defaults to None.
+            img_name (str | None): image name. Defaults to generate from url.
             ext_headers (dict[str, str] | None): ext headers. Defaults to None.
 
         Returns:

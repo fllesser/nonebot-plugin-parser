@@ -2,8 +2,8 @@
 
 from typing_extensions import override
 
-from ..helper import Segment, Text
-from .base import BaseRenderer, ParseResult, UniHelper, UniMessage
+from .base import UniHelper, UniMessage, ParseResult, BaseRenderer
+from ..helper import Text, Segment
 
 
 class DefaultRenderer(BaseRenderer):

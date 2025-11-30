@@ -1,11 +1,11 @@
-from random import choice
 import re
+from random import choice
 from typing import ClassVar
 
-from httpx import AsyncClient
 import msgspec
+from httpx import AsyncClient
 
-from .base import BaseParser, ParseException, PlatformEnum, handle
+from .base import BaseParser, PlatformEnum, ParseException, handle
 from .data import Platform
 
 
@@ -20,14 +20,14 @@ class KuaiShouParser(BaseParser):
         self.ios_headers["Referer"] = "https://v.kuaishou.com/"
 
     # https://v.kuaishou.com/2yAnzeZ
-    @handle("v.kuaishou", r"https?://v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+")
+    @handle("v.kuaishou", r"v\.kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+")
     # https://www.kuaishou.com/short-video/3xhjgcmir24m4nm
-    @handle("kuaishou", r"https?://(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+")
+    @handle("kuaishou", r"(?:www\.)?kuaishou\.com/[A-Za-z\d._?%&+\-=/#]+")
     # https://v.m.chenzhongtech.com/fw/photo/3xburnkmj3auazc
-    @handle("chenzhongtech", r"https?://(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+")
+    @handle("chenzhongtech", r"(?:v\.m\.)?chenzhongtech\.com/fw/[A-Za-z\d._?%&+\-=/#]+")
     async def _parse_v_kuaishou(self, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
-        url = searched.group(0)
+        url = f"https://{searched.group(0)}"
         real_url = await self.get_redirect_url(url, headers=self.ios_headers)
 
         if len(real_url) <= 0:

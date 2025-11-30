@@ -1,14 +1,14 @@
 import asyncio
+from typing import TYPE_CHECKING
 from pathlib import Path
-from typing import Any
 
-from msgspec import Struct, convert
 import yt_dlp
+from msgspec import Struct, convert
 
-from ..config import pconfig
-from ..exception import DurationLimitException, ParseException
-from ..utils import LimitedSizeDict, generate_file_name
 from .task import auto_task
+from ..utils import LimitedSizeDict, generate_file_name
+from ..config import pconfig
+from ..exception import ParseException, DurationLimitException
 
 
 class VideoInfo(Struct):
@@ -38,16 +38,19 @@ class YtdlpDownloader:
     """YtdlpDownloader class"""
 
     def __init__(self):
+        if TYPE_CHECKING:
+            from yt_dlp import _Params
+
         self._video_info_mapping = LimitedSizeDict[str, VideoInfo]()
-        self._ydl_extract_base_opts: dict[str, Any] = {
+        self._extract_base_opts: _Params = {
             "quiet": True,
-            "skip_download": True,
+            "skip_download": "1",
             "force_generic_extractor": True,
         }
-        self._ydl_download_base_opts: dict[str, Any] = {}
+        self._download_base_opts: _Params = {}
         if proxy := pconfig.proxy:
-            self._ydl_download_base_opts["proxy"] = proxy
-            self._ydl_extract_base_opts["proxy"] = proxy
+            self._download_base_opts["proxy"] = proxy
+            self._extract_base_opts["proxy"] = proxy
 
     async def extract_video_info(self, url: str, cookiefile: Path | None = None) -> VideoInfo:
         """get video info by url
@@ -62,12 +65,12 @@ class YtdlpDownloader:
         video_info = self._video_info_mapping.get(url, None)
         if video_info:
             return video_info
-        ydl_opts = self._ydl_extract_base_opts.copy()
+        ydl_opts = self._extract_base_opts.copy()
 
         if cookiefile:
             ydl_opts["cookiefile"] = str(cookiefile)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # pyright: ignore[reportArgumentType]
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = await asyncio.to_thread(ydl.extract_info, url, download=False)
             if not info_dict:
                 raise ParseException("获取视频信息失败")
@@ -95,17 +98,17 @@ class YtdlpDownloader:
         video_path = pconfig.cache_dir / generate_file_name(url, ".mp4")
         if video_path.exists():
             return video_path
-        ydl_opts = {
-            "outtmpl": f"{video_path}",
-            "merge_output_format": "mp4",
-            "format": f"bv[filesize<={duration // 10 + 10}M]+ba/b[filesize<={duration // 8 + 10}M]",
-            "postprocessors": [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}],
-        } | self._ydl_download_base_opts
+
+        ydl_opts = self._download_base_opts.copy()
+        ydl_opts["outtmpl"] = str(video_path)
+        ydl_opts["merge_output_format"] = "mp4"
+        ydl_opts["format"] = f"bv[filesize<={duration // 10 + 10}M]+ba/b[filesize<={duration // 8 + 10}M]"
+        ydl_opts["postprocessors"] = [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}]
 
         if cookiefile:
             ydl_opts["cookiefile"] = str(cookiefile)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # pyright: ignore[reportArgumentType]
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             await asyncio.to_thread(ydl.download, [url])
         return video_path
 
@@ -125,20 +128,19 @@ class YtdlpDownloader:
         if audio_path.exists():
             return audio_path
 
-        ydl_opts = {
-            "outtmpl": f"{pconfig.cache_dir / file_name}.%(ext)s",
-            "format": "bestaudio/best",
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "flac",
-                    "preferredquality": "0",
-                }
-            ],
-        } | self._ydl_download_base_opts
+        ydl_opts = self._download_base_opts.copy()
+        ydl_opts["outtmpl"] = f"{pconfig.cache_dir / file_name}.%(ext)s"
+        ydl_opts["format"] = "bestaudio/best"
+        ydl_opts["postprocessors"] = [
+            {
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "flac",
+                "preferredquality": "0",
+            }
+        ]
 
         if cookiefile:
             ydl_opts["cookiefile"] = str(cookiefile)
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # pyright: ignore[reportArgumentType]
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             await asyncio.to_thread(ydl.download, [url])
         return audio_path

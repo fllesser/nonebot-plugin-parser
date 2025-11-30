@@ -2,9 +2,9 @@ import json
 from pathlib import Path
 
 from nonebot import on_command
+from nonebot.rule import to_me
 from nonebot.matcher import Matcher
 from nonebot.permission import SUPERUSER
-from nonebot.rule import to_me
 from nonebot_plugin_uninfo import ADMIN, Session, UniSession
 
 from ..config import pconfig

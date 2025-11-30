@@ -1,13 +1,13 @@
 """统一的解析器 matcher"""
 
-from nonebot import get_driver, logger
+from nonebot import logger, get_driver
 
+from .rule import Searched, SearchResult, on_keyword_regex
+from ..utils import LimitedSizeDict
 from ..config import pconfig
 from ..helper import UniHelper
 from ..parsers import BaseParser, ParseResult
 from ..renders import get_renderer
-from ..utils import LimitedSizeDict
-from .rule import Searched, SearchResult, on_keyword_regex
 
 
 def _get_enabled_parser_classes() -> list[type[BaseParser]]:
@@ -75,12 +75,12 @@ import re
 from typing import cast
 
 from nonebot import on_command
-from nonebot.adapters import Message
 from nonebot.params import CommandArg
+from nonebot.adapters import Message
 from nonebot_plugin_alconna import UniMessage
 
-from ..download import DOWNLOADER
 from ..parsers import BilibiliParser
+from ..download import DOWNLOADER
 
 
 @on_command("bm", priority=3, block=True).handle()

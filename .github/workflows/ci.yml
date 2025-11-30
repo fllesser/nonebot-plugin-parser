@@ -62,6 +62,7 @@ jobs:
     env:
       OS: ubuntu-latest
       PYTHON: ${{ matrix.python-version }}
+      PYDANTIC: ${{ matrix.pydantic }}
       UV_NO_SYNC: 1
 
     steps:
@@ -74,8 +75,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           version: "latest"
 
-      - name: Install Dependencies for test group
-        run: uv sync --no-dev --locked --group ${{ matrix.pydantic }}
+      - name: Install Dependencies
+        run: uv sync --locked --group ${{ matrix.pydantic }}
 
       - name: Run Pytest Others
         run: uv run poe test_others
@@ -84,14 +85,14 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
-          env_vars: OS,PYTHON
+          env_vars: PYTHON,PYDANTIC
           files: ./junit1.xml
           use_oidc: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          env_vars: OS,PYTHON
+          env_vars: PYTHON,PYDANTIC
           files: ./coverage1.xml
           use_oidc: true
 
@@ -126,8 +127,8 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Install Dependencies for test group
-        run: uv sync --no-dev --locked
+      - name: Install Dependencies
+        run: uv sync --locked
 
       - name: Run Pytest Parsers
         run: uv run poe test_parsers
@@ -170,8 +171,8 @@ jobs:
           python-version: 3.14
           version: "latest"
 
-      - name: Install Dependencies for test group
-        run: uv sync --no-dev --locked
+      - name: Install Dependencies
+        run: uv sync --locked
 
       - name: Run Pytest Render
         run: uv run poe test_render

@@ -1,8 +1,8 @@
 import importlib
 
-from ..config import RenderType, pconfig
 from .base import BaseRenderer
 from .common import CommonRenderer
+from ..config import RenderType, pconfig
 from .default import DefaultRenderer
 
 _CommonRenderer = CommonRenderer()

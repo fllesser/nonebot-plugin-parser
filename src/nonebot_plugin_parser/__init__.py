@@ -6,9 +6,9 @@ from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_uninfo")
 
+from .utils import safe_unlink
 from .config import Config, pconfig
 from .matchers import clear_result_cache
-from .utils import safe_unlink
 
 __plugin_meta__ = PluginMetadata(
     name="链接分享解析 Alconna 版",

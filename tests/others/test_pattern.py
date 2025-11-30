@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from nonebot import logger
 import pytest
+from nonebot import logger
 
 
 def test_pattern_matching():

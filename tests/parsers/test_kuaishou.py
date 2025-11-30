@@ -1,15 +1,15 @@
 import asyncio
 
 import httpx
-from nonebot import logger
 import pytest
+from nonebot import logger
 
 
 @pytest.mark.asyncio
 async def test_parse():
     """测试快手视频解析"""
-    from nonebot_plugin_parser.parsers import KuaiShouParser
     from nonebot_plugin_parser.utils import fmt_size
+    from nonebot_plugin_parser.parsers import KuaiShouParser
 
     parser = KuaiShouParser()
 

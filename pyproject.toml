@@ -18,7 +18,7 @@ keywords = [
   "video",
   "weibo",
   "xiaohongshu",
-  "youtube"
+  "youtube",
 ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -66,9 +66,14 @@ ytdlp = ["yt-dlp[default]>=2025.11.12"]
 [dependency-groups]
 dev = [
   "nonebot2[fastapi]>=2.4.3,<3.0.0",
-  "ruff>=0.14.4,<1.0.0",
+  "ruff>=0.14.7,<1.0.0",
+  { include-group = "test" },
 ]
-extras = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp[default]>=2025.11.12"]
+extras = [
+  "nonebot-plugin-htmlkit>=0.1.0rc4",
+  "yt-dlp[default]>=2025.11.12",
+  "types-yt-dlp>=2025.11.12.20251115",
+]
 pydantic-v1 = ["pydantic<2.0.0"]
 pydantic-v2 = ["pydantic>=2.0.0"]
 telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
@@ -81,11 +86,26 @@ test = [
   "pytest-cov>=7.0.0",
   "pytest-xdist>=3.8.0,<4.0.0",
   "respx>=0.22.0",
+  { include-group = "extras" },
 ]
 
 [build-system]
 requires = ["uv_build>=0.9.0,<0.10.0"]
 build-backend = "uv_build"
+
+[tool.uv]
+required-version = ">=0.9.7"
+conflicts = [
+  [
+    { group = "pydantic-v1" },
+    { group = "pydantic-v2" },
+    { group = "telegram" },
+  ],
+]
+
+[tool.uv.sources]
+nonebug = { git = "https://github.com/fllesser/nonebug", rev = "pytest9" }
+
 
 [tool.bumpversion]
 current_version = "2.2.2"
@@ -99,7 +119,7 @@ search = "name = \"nonebot-plugin-parser\"\nversion = \"{current_version}\""
 replace = "name = \"nonebot-plugin-parser\"\nversion = \"{new_version}\""
 
 [tool.coverage.report]
-show_missing = true  # 相当于 --cov-report=term-missing:cite[1]
+show_missing = true # 相当于 --cov-report=term-missing:cite[1]
 exclude_lines = [
   "raise NotImplementedError",
   "if TYPE_CHECKING:",
@@ -137,12 +157,12 @@ disableBytesTypePromotions = true
 
 [tool.pytest]
 addopts = [
-  "--import-mode=prepend",  # 导入模式
-  "--strict-markers",  # 严格标记模式
-  "--tb=short",  # 简短的错误回溯
-  "-ra",  # 显示所有测试结果摘要
-  "-s",  # 显示打印信息
-  "-v",  # 详细输出
+  "--import-mode=prepend", # 导入模式
+  "--strict-markers",      # 严格标记模式
+  "--tb=short",            # 简短的错误回溯
+  "-ra",                   # 显示所有测试结果摘要
+  "-s",                    # 显示打印信息
+  "-v",                    # 详细输出
 ]
 pythonpath = ["src"]
 asyncio_mode = "auto"
@@ -150,61 +170,41 @@ asyncio_default_fixture_loop_scope = "session"
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
 
 [tool.ruff.format]
 line-ending = "lf"
 
 [tool.ruff.lint]
 select = [
-  "F",  # Pyflakes
-  "W",  # pycodestyle warnings
-  "E",  # pycodestyle errors
-  "I",  # isort
-  "UP",  # pyupgrade
-  "ASYNC",  # flake8-async
-  "C4",  # flake8-comprehensions
-  "T10",  # flake8-debugger
-  "T20",  # flake8-print
-  "PYI",  # flake8-pyi
-  "PT",  # flake8-pytest-style
-  "Q",  # flake8-quotes
-  "TID",  # flake8-tidy-imports
-  "RUF",  # Ruff-specific rules
+  "F",     # Pyflakes
+  "W",     # pycodestyle warnings
+  "E",     # pycodestyle errors
+  "I",     # isort
+  "UP",    # pyupgrade
+  "ASYNC", # flake8-async
+  "C4",    # flake8-comprehensions
+  "T10",   # flake8-debugger
+  "T20",   # flake8-print
+  "PYI",   # flake8-pyi
+  "PT",    # flake8-pytest-style
+  "Q",     # flake8-quotes
+  "TID",   # flake8-tidy-imports
+  "RUF",   # Ruff-specific rules
 ]
 ignore = [
-  "E402",  # module-import-not-at-top-of-file
+  "E402",   # module-import-not-at-top-of-file
   "UP037",  # quoted-annotation
-  "RUF001",  # ambiguous-unicode-character-string
-  "RUF002",  # ambiguous-unicode-character-docstring
-  "RUF003",  # ambiguous-unicode-character-comment
-  "W191",  # indentation contains tabs
-  # "I001",   # isort: imports are incorrectly sorted
-  "TID252",  # 相对导入
+  "RUF001", # ambiguous-unicode-character-string
+  "RUF002", # ambiguous-unicode-character-docstring
+  "RUF003", # ambiguous-unicode-character-comment
+  "W191",   # indentation contains tabs
+  "TID252", # relative-import
 ]
 
 [tool.ruff.lint.isort]
-force-sort-within-sections = true
-known-first-party = ["tests/*"]
+length-sort = true
+known-first-party = ["nonebot_plugin_parser", "tests/*"]
 extra-standard-library = ["typing_extensions"]
-
-[tool.ruff.lint.flake8-pytest-style]
-fixture-parentheses = false
-mark-parentheses = false
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
-
-[tool.uv]
-required-version = ">=0.9.7"
-default-groups = ["test", "dev", "extras"]
-conflicts = [
-  [
-    { group = "pydantic-v1" },
-    { group = "pydantic-v2" },
-    { group = "telegram" },
-  ],
-]
-
-[tool.uv.sources]
-nonebug = { git = "https://github.com/fllesser/nonebug", rev = "pytest9" }

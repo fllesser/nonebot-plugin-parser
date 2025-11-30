@@ -1,9 +1,9 @@
 import re
 from typing import ClassVar
 
-from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 from .base import BaseParser, PlatformEnum, handle
 from .data import Author, Platform, VideoContent
+from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 
 
 class TikTokParser(BaseParser):

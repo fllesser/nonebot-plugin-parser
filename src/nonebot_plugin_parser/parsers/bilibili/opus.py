@@ -1,5 +1,5 @@
-from collections.abc import Generator
 from typing import Any
+from collections.abc import Generator
 
 from msgspec import Struct
 
@@ -145,6 +145,9 @@ class OpusItem(Struct):
         """从节点列表中提取文本内容"""
         text_content = ""
         for node in nodes:
-            if node.get("type") in ["TEXT_NODE_TYPE_WORD", "TEXT_NODE_TYPE_RICH"] and node.get("word"):
+            if node.get("type") in [
+                "TEXT_NODE_TYPE_WORD",
+                "TEXT_NODE_TYPE_RICH",
+            ] and node.get("word"):
                 text_content += node["word"].get("words", "")
         return text_content

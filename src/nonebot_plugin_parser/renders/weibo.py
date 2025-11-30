@@ -5,7 +5,7 @@ from nonebot import require
 require("nonebot_plugin_htmlkit")
 from nonebot_plugin_htmlkit import template_to_pic
 
-from .base import ImageRenderer, ParseResult
+from .base import ParseResult, ImageRenderer
 
 
 class Renderer(ImageRenderer):

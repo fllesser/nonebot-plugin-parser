@@ -1,12 +1,12 @@
 import re
 from typing import ClassVar
 
-from httpx import AsyncClient
 import msgspec
+from httpx import AsyncClient
 
-from ..download import YTDLP_DOWNLOADER
-from .base import BaseParser, Platform, PlatformEnum, handle, pconfig
+from .base import Platform, BaseParser, PlatformEnum, handle, pconfig
 from .cookie import save_cookies_with_netscape
+from ..download import YTDLP_DOWNLOADER
 
 
 class YouTubeParser(BaseParser):
@@ -24,7 +24,10 @@ class YouTubeParser(BaseParser):
             )
 
     @handle("youtu.be", r"https?://(?:www\.)?youtu\.be/[A-Za-z\d\._\?%&\+\-=/#]+")
-    @handle("youtube.com", r"https?://(?:www\.)?youtube\.com/(?:watch|shorts)(?:/[A-Za-z\d_\-]+|\?v=[A-Za-z\d_\-]+)")
+    @handle(
+        "youtube.com",
+        r"https?://(?:www\.)?youtube\.com/(?:watch|shorts)(?:/[A-Za-z\d_\-]+|\?v=[A-Za-z\d_\-]+)",
+    )
     async def _parse_video(self, searched: re.Match[str]):
         return await self.parse_video(searched)
 
@@ -97,7 +100,11 @@ class YouTubeParser(BaseParser):
                     "osVersion": "10_15_7",
                 },
                 "user": {"lockedSafetyMode": False},
-                "request": {"useSsl": True, "internalExperimentFlags": [], "consistencyTokenJars": []},
+                "request": {
+                    "useSsl": True,
+                    "internalExperimentFlags": [],
+                    "consistencyTokenJars": [],
+                },
             },
             "browseId": channel_id,
         }

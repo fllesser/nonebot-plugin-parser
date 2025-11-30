@@ -1,5 +1,5 @@
-from nonebot import logger
 import pytest
+from nonebot import logger
 
 
 @pytest.mark.asyncio
@@ -45,9 +45,12 @@ async def test_video():
 
 
 async def test_max_size_video():
-    from nonebot_plugin_parser.download import DOWNLOADER
-    from nonebot_plugin_parser.exception import DurationLimitException, SizeLimitException
     from nonebot_plugin_parser.parsers import BilibiliParser
+    from nonebot_plugin_parser.download import DOWNLOADER
+    from nonebot_plugin_parser.exception import (
+        SizeLimitException,
+        DurationLimitException,
+    )
 
     parser = BilibiliParser()
     bvid = "BV1du4y1E7Nh"

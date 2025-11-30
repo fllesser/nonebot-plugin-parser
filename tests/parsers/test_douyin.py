@@ -1,5 +1,5 @@
-from nonebot import logger
 import pytest
+from nonebot import logger
 
 
 @pytest.mark.asyncio

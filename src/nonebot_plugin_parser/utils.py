@@ -1,9 +1,9 @@
-import asyncio
-from collections import OrderedDict
-import hashlib
-from pathlib import Path
 import re
+import asyncio
+import hashlib
 from typing import Any, TypeVar
+from pathlib import Path
+from collections import OrderedDict
 from urllib.parse import urlparse
 
 from nonebot import logger

@@ -1,7 +1,7 @@
 """Bilibili 专栏文章解析器"""
 
-from collections.abc import Generator
 from typing import Any
+from collections.abc import Generator
 
 from msgspec import Struct
 

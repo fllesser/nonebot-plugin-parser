@@ -1,26 +1,26 @@
-import asyncio
 import json
+import asyncio
 from re import Match
 from typing import ClassVar
 
-from bilibili_api import HEADERS, Credential, request_settings, select_client
-from bilibili_api.opus import Opus
-from bilibili_api.video import Video
 from msgspec import convert
 from nonebot import logger
+from bilibili_api import HEADERS, Credential, select_client, request_settings
+from bilibili_api.opus import Opus
+from bilibili_api.video import Video
 
 from ..base import (
     DOWNLOADER,
     BaseParser,
+    PlatformEnum,
+    ParseException,
     DownloadException,
     DurationLimitException,
-    ParseException,
-    PlatformEnum,
     handle,
     pconfig,
 )
+from ..data import Platform, ImageContent, MediaContent
 from ..cookie import ck2dict
-from ..data import ImageContent, MediaContent, Platform
 
 # 选择客户端
 select_client("curl_cffi")
@@ -47,7 +47,10 @@ class BilibiliParser(BaseParser):
         return await self.parse_with_redirect(url)
 
     @handle("BV", r"^(?P<bvid>BV[0-9a-zA-Z]{10})(?:\s)?(?P<page_num>\d{1,3})?$")
-    @handle("/BV", r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9a-zA-Z]{10})(?:\?p=(?P<page_num>\d{1,3}))?")
+    @handle(
+        "/BV",
+        r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9a-zA-Z]{10})(?:\?p=(?P<page_num>\d{1,3}))?",
+    )
     async def _parse_bv(self, searched: Match[str]):
         """解析视频信息"""
         bvid = str(searched.group("bvid"))
@@ -56,7 +59,10 @@ class BilibiliParser(BaseParser):
         return await self.parse_video(bvid=bvid, page_num=page_num)
 
     @handle("av", r"^av(?P<avid>\d{6,})(?:\s)?(?P<page_num>\d{1,3})?$")
-    @handle("/av", r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:\?p=(?P<page_num>\d{1,3}))?")
+    @handle(
+        "/av",
+        r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:\?p=(?P<page_num>\d{1,3}))?",
+    )
     async def _parse_av(self, searched: Match[str]):
         """解析视频信息"""
         avid = int(searched.group("avid"))
@@ -110,7 +116,7 @@ class BilibiliParser(BaseParser):
             page_num (int): 页码
         """
 
-        from .video import AIConclusion, VideoInfo
+        from .video import VideoInfo, AIConclusion
 
         video = await self._get_video(bvid=bvid, avid=avid)
         # 转换为 msgspec struct
@@ -228,7 +234,7 @@ class BilibiliParser(BaseParser):
             ParseResult: 解析结果
         """
 
-        from .opus import ImageNode, OpusItem, TextNode
+        from .opus import OpusItem, TextNode, ImageNode
 
         opus_info = await bili_opus.get_info()
         if not isinstance(opus_info, dict):
@@ -307,7 +313,7 @@ class BilibiliParser(BaseParser):
         """
         from bilibili_api.article import Article
 
-        from .article import ArticleInfo, ImageNode, TextNode
+        from .article import TextNode, ImageNode, ArticleInfo
 
         ar = Article(read_id)
         # 加载内容
@@ -395,8 +401,8 @@ class BilibiliParser(BaseParser):
 
         from bilibili_api.video import (
             AudioStreamDownloadURL,
-            VideoDownloadURLDataDetecter,
             VideoStreamDownloadURL,
+            VideoDownloadURLDataDetecter,
         )
 
         if video is None:

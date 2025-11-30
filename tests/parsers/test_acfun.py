@@ -1,11 +1,11 @@
-from nonebot import logger
 import pytest
+from nonebot import logger
 
 
 @pytest.mark.asyncio
 async def test_parse():
-    from nonebot_plugin_parser.parsers import AcfunParser
     from nonebot_plugin_parser.utils import fmt_size
+    from nonebot_plugin_parser.parsers import AcfunParser
 
     url = "https://www.acfun.cn/v/ac46593564"
     parser = AcfunParser()

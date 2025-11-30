@@ -1,12 +1,12 @@
-import json
 import re
+import json
 from typing import Any, ClassVar
 
-from httpx import AsyncClient, Cookies
-from msgspec import Struct, convert, field
+from httpx import Cookies, AsyncClient
+from msgspec import Struct, field, convert
 from nonebot import logger
 
-from .base import BaseParser, ParseException, Platform, PlatformEnum, handle
+from .base import Platform, BaseParser, PlatformEnum, ParseException, handle
 
 
 class XiaoHongShuParser(BaseParser):
@@ -37,14 +37,20 @@ class XiaoHongShuParser(BaseParser):
         return await self.parse_with_redirect(url, self.ios_headers)
 
     # https://www.xiaohongshu.com/explore/68feefe40000000007030c4a?xsec_token=ABjAKjfMHJ7ck4UjPlugzVqMb35utHMRe_vrgGJ2AwJnc=&xsec_source=pc_feed
-    @handle("hongshu.com/explore", r"explore/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*")
+    @handle(
+        "hongshu.com/explore",
+        r"explore/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*",
+    )
     async def _parse_explore(self, searched: re.Match[str]):
         url = f"https://www.xiaohongshu.com/{searched.group(0)}"
         xhs_id = searched.group("xhs_id")
         return await self.parse_explore(url, xhs_id)
 
     # https://www.xiaohongshu.com/discovery/item/68e8e3fa00000000030342ec?app_platform=android&ignoreEngage=true&app_version=9.6.0&share_from_user_hidden=true&xsec_source=app_share&type=normal&xsec_token=CBW9rwIV2qhcCD-JsQAOSHd2tTW9jXAtzqlgVXp6c52Sw%3D&author_share=1&xhsshare=QQ&shareRedId=ODs3RUk5ND42NzUyOTgwNjY3OTo8S0tK&apptime=1761372823&share_id=3b61945239ac403db86bea84a4f15124&share_channel=qq
-    @handle("hongshu.com/discovery/item/", r"discovery/item/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*")
+    @handle(
+        "hongshu.com/discovery/item/",
+        r"discovery/item/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*",
+    )
     async def _parse_discovery(self, searched: re.Match[str]):
         route = searched.group(0)
         explore_route = route.replace("discovery/item", "explore", 1)
