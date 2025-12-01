@@ -1420,7 +1420,6 @@ telegram = [
 ]
 test = [
     { name = "nonebot-adapter-onebot" },
-    { name = "nonebot-plugin-htmlkit" },
     { name = "nonebot2", extra = ["fastapi"] },
     { name = "nonebug" },
     { name = "poethepoet" },
@@ -1428,8 +1427,6 @@ test = [
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
     { name = "respx" },
-    { name = "types-yt-dlp" },
-    { name = "yt-dlp", extra = ["default"] },
 ]
 
 [package.metadata]
@@ -1480,7 +1477,6 @@ pydantic-v2 = [{ name = "pydantic", specifier = ">=2.0.0" }]
 telegram = [{ name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" }]
 test = [
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
-    { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
     { name = "nonebug", git = "https://github.com/fllesser/nonebug?rev=pytest9" },
     { name = "poethepoet", specifier = ">=0.38.0" },
@@ -1488,8 +1484,6 @@ test = [
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0,<4.0.0" },
     { name = "respx", specifier = ">=0.22.0" },
-    { name = "types-yt-dlp", specifier = ">=2025.11.12.20251115" },
-    { name = "yt-dlp", extras = ["default"], specifier = ">=2025.11.12" },
 ]
 
 [[package]]
