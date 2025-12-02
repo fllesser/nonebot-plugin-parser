@@ -1678,7 +1678,7 @@ wheels = [
 [[package]]
 name = "pilmoji-for-parser"
 version = "0.1.1"
-source = { git = "https://github.com/fllesser/pilmoji-for-parser?rev=emoji%2Fpadding#d61bbbc998e81ad8034e573dd02590190aef8e65" }
+source = { git = "https://github.com/fllesser/pilmoji-for-parser?rev=emoji%2Fpadding#b7e65806a310133147fec154347ac20f7f4d083e" }
 dependencies = [
     { name = "aiofiles" },
     { name = "emoji" },
