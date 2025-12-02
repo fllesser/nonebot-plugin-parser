@@ -1359,7 +1359,7 @@ wheels = [
 
 [[package]]
 name = "nonebot-plugin-parser"
-version = "2.2.2"
+version = "2.2.3"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
