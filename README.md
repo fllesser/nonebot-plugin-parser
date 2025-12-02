@@ -209,6 +209,9 @@ parser_custom_font="LXGWZhenKaiGB-Regular.ttf"
 
 # [可选] 是否需要转发媒体内容(超过 4 项时始终使用合并转发)
 parser_need_forward_contents=True
+
+# [可选] emoji 渲染样式 "apple", "google", "twitter", "facebook"(默认)
+parser_emoji_style="facebook"
 ```
 
 </details>
