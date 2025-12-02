@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from PIL import Image, ImageDraw, ImageFont
 from nonebot import logger
-from pilmoji import Pilmoji, EmojiStyle, EmojiCDNSource
+from pilmoji import Pilmoji, EmojiCDNSource
 
 from .base import ParseResult, ImageRenderer
 from ..config import pconfig
@@ -299,7 +299,7 @@ class CommonRenderer(ImageRenderer):
     DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / _BUTTON_FILENAME
     """默认视频按钮路径"""
     EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
-        style=EmojiStyle.TWITTER, cache_dir=pconfig.cache_dir / _EMOJIS
+        style=pconfig.emoji_style, cache_dir=pconfig.cache_dir / _EMOJIS
     )
     PILMOJI: ClassVar[Pilmoji] = Pilmoji(source=EMOJI_SOURCE)
 
