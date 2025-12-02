@@ -53,7 +53,6 @@ dependencies = [
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
   "nonebot-plugin-uninfo>=0.10.1,<1.0.0",
-
 ]
 
 [project.urls]
@@ -107,6 +106,7 @@ conflicts = [
 
 [tool.uv.sources]
 nonebug = { git = "https://github.com/fllesser/nonebug", rev = "dev/migrate-uv" }
+pilmoji-for-parser = { git = "https://github.com/fllesser/pilmoji-for-parser", rev = "perf/render" }
 
 [tool.bumpversion]
 tag = true

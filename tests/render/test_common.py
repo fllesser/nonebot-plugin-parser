@@ -261,7 +261,6 @@ async def test_common_render():
             logger.exception(f"{url} | 渲染失败")
 
 
-@pytest.mark.asyncio
 def test_write_result():
     # 按时间排序
     sorted_data_collection = sorted(DATA_COLLECTION, key=lambda x: x.cost)
