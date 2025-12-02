@@ -99,6 +99,7 @@ async def test_opus():
     logger.success("B站动态解析成功")
 
 
+@pytest.mark.asyncio
 async def test_dynamic():
     from nonebot_plugin_parser.parsers import BilibiliParser
 

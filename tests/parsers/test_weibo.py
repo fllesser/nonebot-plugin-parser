@@ -31,6 +31,7 @@ async def test_graphics():
     await asyncio.gather(*[parse_graphics(url) for url in urls])
 
 
+@pytest.mark.asyncio
 async def test_repost():
     from nonebot_plugin_parser.parsers import WeiBoParser
 

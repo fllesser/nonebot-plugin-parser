@@ -19,6 +19,7 @@ class RenderDataItem:
 DATA_COLLECTION: list[RenderDataItem] = []
 
 
+@pytest.mark.asyncio
 async def download_all_media(result: Any):
     """下载所有媒体资源"""
     from nonebot_plugin_parser.parsers import ParseResult
@@ -46,6 +47,7 @@ async def download_all_media(result: Any):
     return total_size
 
 
+@pytest.mark.asyncio
 async def test_render_with_emoji():
     """测试使用 BilibiliParser 解析链接并用 CommonRenderer 渲染"""
 
@@ -93,6 +95,7 @@ async def test_render_with_emoji():
     )
 
 
+@pytest.mark.asyncio
 async def test_graphics_content():
     """测试使用 BilibiliParser 解析链接并用 CommonRenderer 渲染"""
     import aiofiles
@@ -145,6 +148,7 @@ async def test_graphics_content():
     logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
 
 
+@pytest.mark.asyncio
 async def test_read():
     """测试使用 BilibiliParser 解析链接并用 CommonRenderer 渲染"""
     import aiofiles
@@ -193,6 +197,7 @@ async def test_read():
     logger.success(f"{url} | 渲染成功，图片已保存到 {image_path}")
 
 
+@pytest.mark.asyncio
 async def test_common_render():
     """测试使用 WeiboParser 解析链接并用 CommonRenderer 渲染"""
 
@@ -256,6 +261,7 @@ async def test_common_render():
             logger.exception(f"{url} | 渲染失败")
 
 
+@pytest.mark.asyncio
 def test_write_result():
     # 按时间排序
     sorted_data_collection = sorted(DATA_COLLECTION, key=lambda x: x.cost)

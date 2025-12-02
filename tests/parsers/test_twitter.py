@@ -1,8 +1,10 @@
 import asyncio
 
+import pytest
 from nonebot import logger
 
 
+@pytest.mark.asyncio
 async def test_video():
     from nonebot_plugin_parser.parsers import TwitterParser
 
@@ -30,6 +32,7 @@ async def test_video():
     await asyncio.gather(*[parse_video(url) for url in urls])
 
 
+@pytest.mark.asyncio
 async def test_img():
     from nonebot_plugin_parser.parsers import TwitterParser
 
@@ -55,6 +58,7 @@ async def test_img():
     await asyncio.gather(*[parse_img(url) for url in urls])
 
 
+@pytest.mark.asyncio
 async def test_gif():
     from nonebot_plugin_parser.parsers import TwitterParser
 
