@@ -1,14 +1,12 @@
 from enum import Enum
 from pathlib import Path
 
-from nonebot import require, get_driver, get_plugin_config
+from nonebot import require, get_plugin_config
+from pilmoji import EmojiStyle
 from pydantic import BaseModel
 from bilibili_api.video import VideoCodecs, VideoQuality
 
 from .constants import PlatformEnum
-
-_nickname: str = next(iter(get_driver().config.nickname), "")
-"""全局名称"""
 
 require("nonebot_plugin_localstore")
 import nonebot_plugin_localstore as _store
@@ -57,11 +55,8 @@ class Config(BaseModel):
     """自定义字体"""
     parser_need_forward_contents: bool = True
     """是否需要转发媒体内容"""
-
-    @property
-    def nickname(self) -> str:
-        """全局名称"""
-        return _nickname
+    parser_emoji_style: EmojiStyle = EmojiStyle.FACEBOOK
+    """Pilmoji 表情样式"""
 
     @property
     def cache_dir(self) -> Path:
@@ -147,6 +142,11 @@ class Config(BaseModel):
     def need_forward_contents(self) -> bool:
         """是否需要转发媒体内容"""
         return self.parser_need_forward_contents
+
+    @property
+    def emoji_style(self) -> EmojiStyle:
+        """Pilmoji 表情样式"""
+        return self.parser_emoji_style
 
 
 pconfig: Config = get_plugin_config(Config)
