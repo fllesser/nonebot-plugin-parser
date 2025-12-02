@@ -27,6 +27,7 @@ async def test_favlist():
     logger.success("B站收藏夹解析成功")
 
 
+@pytest.mark.asyncio
 async def test_video():
     from nonebot_plugin_parser.parsers import BilibiliParser
 
@@ -44,6 +45,7 @@ async def test_video():
     assert video_path.exists(), "视频不存在"
 
 
+@pytest.mark.asyncio
 async def test_max_size_video():
     from nonebot_plugin_parser.parsers import BilibiliParser
     from nonebot_plugin_parser.download import DOWNLOADER

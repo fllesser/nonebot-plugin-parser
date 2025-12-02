@@ -8,9 +8,9 @@ on:
     paths:
       - "src/**"
       - "tests/**"
-      - "pyproject.toml"
+      - ".github/**"
       - "uv.lock"
-      - ".github/workflows/ci.yml"
+      - "pyproject.toml"
 
 jobs:
   typos:
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: crate-ci/typos@master
 
-  static-type-check:
+  basedpyright:
     name: BasedPyright
     runs-on: ubuntu-latest
     steps:
@@ -39,7 +39,7 @@ jobs:
       - name: Static typing check
         run: uvx basedpyright
 
-  test-others:
+  test:
     name: Test
     runs-on: ubuntu-latest
     permissions:
@@ -53,7 +53,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-        # os: [ubuntu-latest, windows-latest, macos-latest]
         pydantic: ["pydantic-v1", "pydantic-v2"]
         exclude:
           - python-version: "3.14"
@@ -61,6 +60,7 @@ jobs:
 
     env:
       OS: ubuntu-latest
+      TASK: test_others
       PYTHON: ${{ matrix.python-version }}
       PYDANTIC: ${{ matrix.pydantic }}
       UV_NO_SYNC: 1
@@ -72,28 +72,26 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ env.PYTHON }}
           version: "latest"
 
       - name: Install Dependencies
-        run: uv sync --locked --group ${{ matrix.pydantic }}
+        run: uv sync --locked --group ${{ env.PYDANTIC }}
 
       - name: Run Pytest Others
-        run: uv run poe test_others
+        run: uv run poe ${{ env.TASK }}
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
           env_vars: PYTHON,PYDANTIC
-          files: ./junit1.xml
           use_oidc: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           env_vars: PYTHON,PYDANTIC
-          files: ./coverage1.xml
           use_oidc: true
 
   test-parsers:
@@ -107,17 +105,13 @@ jobs:
       cancel-in-progress: true
 
     env:
+      DENO: v2.x
+      PYTHON: 3.14
       UV_NO_SYNC: 1
+      TEST: "test_parsers"
 
     steps:
       - uses: actions/checkout@v6
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-          python-version: 3.14
-          version: "latest"
 
       - name: Setup FFmpeg
         uses: AnimMouse/setup-ffmpeg@v1
@@ -125,25 +119,32 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: ${{ env.DENO }}
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: ${{ env.PYTHON }}
+          version: "latest"
 
       - name: Install Dependencies
         run: uv sync --locked
 
       - name: Run Pytest Parsers
-        run: uv run poe test_parsers
+        run: uv run poe ${{ env.TEST }}
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
-          files: ./junit2.xml
+          env_vars: PYTHON
           use_oidc: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: ./coverage2.xml
+          env_vars: PYTHON
           use_oidc: true
 
   test-render:
@@ -159,7 +160,9 @@ jobs:
       cancel-in-progress: true
 
     env:
+      PYTHON: 3.14
       UV_NO_SYNC: 1
+      TASK: test_render
 
     steps:
       - uses: actions/checkout@v6
@@ -168,26 +171,26 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          python-version: 3.14
+          python-version: ${{ env.PYTHON }}
           version: "latest"
 
       - name: Install Dependencies
         run: uv sync --locked
 
       - name: Run Pytest Render
-        run: uv run poe test_render
+        run: uv run poe ${{ env.TASK }}
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
-          files: ./junit3.xml
+          env_vars: PYTHON
           use_oidc: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: ./coverage3.xml
+          env_vars: PYTHON
           use_oidc: true
 
       - name: Find or Create Comment

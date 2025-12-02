@@ -1437,12 +1437,12 @@ requires-dist = [
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.20.0,<1.0.0" },
-    { name = "nonebot-plugin-alconna", specifier = ">=0.59.4" },
+    { name = "nonebot-plugin-alconna", specifier = ">=0.59.4,<1.0.0" },
     { name = "nonebot-plugin-apscheduler", specifier = ">=0.5.0,<1.0.0" },
     { name = "nonebot-plugin-htmlkit", marker = "extra == 'all'", specifier = ">=0.1.0rc4" },
     { name = "nonebot-plugin-htmlkit", marker = "extra == 'htmlkit'", specifier = ">=0.1.0rc4" },
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
-    { name = "nonebot-plugin-uninfo", specifier = ">=0.10.0" },
+    { name = "nonebot-plugin-uninfo", specifier = ">=0.10.1,<1.0.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
     { name = "pilmoji-for-parser", specifier = ">=0.1.0" },
@@ -1488,15 +1488,15 @@ test = [
 
 [[package]]
 name = "nonebot-plugin-uninfo"
-version = "0.10.0"
+version = "0.10.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "importlib-metadata" },
     { name = "nonebot2" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1c/c0/14557dbd37722e6e6b786c41e145e3906da58a90dea4b9e08b8e82b018a9/nonebot_plugin_uninfo-0.10.0.tar.gz", hash = "sha256:fb9f57cf1e1741d55e6d3179972e5cf7d04d27c6b8ac0250953fa168e18697e0", size = 41152, upload-time = "2025-10-22T02:19:24.552Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/16/94/369e10017c2ff134ce5b01f53b14a5c54a6c84ecf39f3d564a72251f2d6e/nonebot_plugin_uninfo-0.10.1.tar.gz", hash = "sha256:cdd6acbeb235d5617b5d5feb232160f5815fb5b5c74cff6d71cb5dfd415855ce", size = 41008, upload-time = "2025-11-25T14:45:19.783Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/45/a23ac107775de8e892998f57156e714380a57fdb297e966ad488bf2ba045/nonebot_plugin_uninfo-0.10.0-py3-none-any.whl", hash = "sha256:30227b2e0562917aca35334129b9de3af92e0a438ef458d923f33ac623ee912c", size = 66316, upload-time = "2025-10-22T02:19:22.814Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/e3/70bb2cafa4cbfb28d06acf3172e095f10c36572e39edffbc3f82281b6fa6/nonebot_plugin_uninfo-0.10.1-py3-none-any.whl", hash = "sha256:3e5952af14e46cbf8e72920d995ac43aa491d9e9048285bd69901c5bd28dea9f", size = 65720, upload-time = "2025-11-25T14:45:18.069Z" },
 ]
 
 [[package]]
