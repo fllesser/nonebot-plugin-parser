@@ -1446,7 +1446,7 @@ requires-dist = [
     { name = "nonebot-plugin-uninfo", specifier = ">=0.10.1,<1.0.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
-    { name = "pilmoji-for-parser", git = "https://github.com/fllesser/pilmoji-for-parser?rev=emoji%2Fpadding" },
+    { name = "pilmoji-for-parser", specifier = ">=0.1.2" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
     { name = "yt-dlp", extras = ["default"], marker = "extra == 'all'", specifier = ">=2025.11.12" },
     { name = "yt-dlp", extras = ["default"], marker = "extra == 'ytdlp'", specifier = ">=2025.11.12" },
@@ -1677,13 +1677,17 @@ wheels = [
 
 [[package]]
 name = "pilmoji-for-parser"
-version = "0.1.1"
-source = { git = "https://github.com/fllesser/pilmoji-for-parser?rev=emoji%2Fpadding#b7e65806a310133147fec154347ac20f7f4d083e" }
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
     { name = "emoji" },
     { name = "httpx" },
     { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c7/ee/bc53aeb4120b86a53e7fa20c4f48ce482e40379b575a2376be4a5542b94a/pilmoji_for_parser-0.1.2.tar.gz", hash = "sha256:0ed829eaff59076c0f0da5536d432a05ed162019179cf47ee842ee401feb4b02", size = 8128, upload-time = "2025-12-02T14:01:53.972Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8a/15/7b8ed9cb1f70073b45f6acd38586d8c0c5e1457fa5675468be6e1a8eb4ea/pilmoji_for_parser-0.1.2-py3-none-any.whl", hash = "sha256:2d9f1bb2a63567dd174ddb4c7afe81d6fd2f92c141a3da97e39b9ef9936f1428", size = 8580, upload-time = "2025-12-02T14:01:53.014Z" },
 ]
 
 [[package]]

@@ -41,7 +41,7 @@ classifiers = [
 dependencies = [
   "nonebot2>=2.4.3,<3.0.0",
   "pillow>=11.0.0",
-  "pilmoji-for-parser>=0.1.1",
+  "pilmoji-for-parser>=0.1.2",
   "tqdm>=4.67.1,<5.0.0",
   "aiofiles>=25.1.0",
   "curl_cffi>=0.13.0,<1.0.0",
@@ -106,7 +106,6 @@ conflicts = [
 
 [tool.uv.sources]
 nonebug = { git = "https://github.com/fllesser/nonebug", rev = "dev/migrate-uv" }
-pilmoji-for-parser = { git = "https://github.com/fllesser/pilmoji-for-parser", rev = "emoji/padding" }
 
 [tool.bumpversion]
 tag = true
