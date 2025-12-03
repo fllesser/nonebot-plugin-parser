@@ -1446,7 +1446,7 @@ requires-dist = [
     { name = "nonebot-plugin-uninfo", specifier = ">=0.10.1,<1.0.0" },
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
-    { name = "pilmoji-for-parser", specifier = ">=0.1.2" },
+    { name = "pilmoji-for-parser", specifier = ">=0.1.3" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
     { name = "yt-dlp", extras = ["default"], marker = "extra == 'all'", specifier = ">=2025.11.12" },
     { name = "yt-dlp", extras = ["default"], marker = "extra == 'ytdlp'", specifier = ">=2025.11.12" },
@@ -1677,7 +1677,7 @@ wheels = [
 
 [[package]]
 name = "pilmoji-for-parser"
-version = "0.1.2"
+version = "0.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -1685,9 +1685,9 @@ dependencies = [
     { name = "httpx" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c7/ee/bc53aeb4120b86a53e7fa20c4f48ce482e40379b575a2376be4a5542b94a/pilmoji_for_parser-0.1.2.tar.gz", hash = "sha256:0ed829eaff59076c0f0da5536d432a05ed162019179cf47ee842ee401feb4b02", size = 8128, upload-time = "2025-12-02T14:01:53.972Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/50/5a/6586e3577102c03690291bfb99a3c912ea2e127ca2ce52d7c9931aceb1c1/pilmoji_for_parser-0.1.3.tar.gz", hash = "sha256:8e769b35c1f13e88292f7468fe1b2af077582f4b2d49ac7b4445b276126e94ee", size = 8164, upload-time = "2025-12-03T05:06:21.16Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/15/7b8ed9cb1f70073b45f6acd38586d8c0c5e1457fa5675468be6e1a8eb4ea/pilmoji_for_parser-0.1.2-py3-none-any.whl", hash = "sha256:2d9f1bb2a63567dd174ddb4c7afe81d6fd2f92c141a3da97e39b9ef9936f1428", size = 8580, upload-time = "2025-12-02T14:01:53.014Z" },
+    { url = "https://files.pythonhosted.org/packages/29/c2/fad6e1b9ebf2cc345669fe69a5dd5426f52e7d2f1f463666a0bf501aa2ab/pilmoji_for_parser-0.1.3-py3-none-any.whl", hash = "sha256:d7a6fc2022a242b133dae1ab716b095d5c1ce76deaf1c2b83416d9bf341a684a", size = 8632, upload-time = "2025-12-03T05:06:20.066Z" },
 ]
 
 [[package]]
@@ -1924,10 +1924,10 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "annotated-types" },
-    { name = "pydantic-core" },
-    { name = "typing-extensions" },
-    { name = "typing-inspection" },
+    { name = "annotated-types", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "pydantic-core", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "typing-inspection", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/69/44/36f1a6e523abc58ae5f928898e4aca2e0ea509b5aa6f6f392a5d882be928/pydantic-2.12.5.tar.gz", hash = "sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49", size = 821591, upload-time = "2025-11-26T15:11:46.471Z" }
 wheels = [
@@ -1939,7 +1939,7 @@ name = "pydantic-core"
 version = "2.41.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/71/70/23b021c950c2addd24ec408e9ab05d59b035b39d97cdc1130e1bce647bb6/pydantic_core-2.41.5.tar.gz", hash = "sha256:08daa51ea16ad373ffd5e7606252cc32f07bc72b28284b6bc9c6df804816476e", size = 460952, upload-time = "2025-11-04T13:43:49.098Z" }
 wheels = [
@@ -2510,7 +2510,7 @@ name = "typing-inspection"
 version = "0.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/55/e3/70399cb7dd41c10ac53367ae42139cf4b1ca5f36bb3dc6c9d33acdb43655/typing_inspection-0.4.2.tar.gz", hash = "sha256:ba561c48a67c5958007083d386c3295464928b01faa735ab8547c5692e87f464", size = 75949, upload-time = "2025-10-01T02:14:41.687Z" }
 wheels = [
