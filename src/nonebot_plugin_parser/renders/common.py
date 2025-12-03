@@ -298,10 +298,14 @@ class CommonRenderer(ImageRenderer):
     """默认字体路径"""
     DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / _BUTTON_FILENAME
     """默认视频按钮路径"""
-    EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
-        style=pconfig.emoji_style, cache_dir=pconfig.cache_dir / _EMOJIS
+    PILMOJI: ClassVar[Pilmoji] = Pilmoji(
+        source=EmojiCDNSource(
+            base_url=pconfig.emoji_cdn,
+            style=pconfig.emoji_style,
+            cache_dir=pconfig.cache_dir / _EMOJIS,
+        )
     )
-    PILMOJI: ClassVar[Pilmoji] = Pilmoji(source=EMOJI_SOURCE)
+    """Pilmoji 实例"""
 
     @classmethod
     def load_resources(cls):
@@ -352,7 +356,7 @@ class CommonRenderer(ImageRenderer):
         font: ImageFont.FreeTypeFont,
     ):
         """绘制文本"""
-        await cls.PILMOJI.text(ctx.image, xy, text, fill=fill, font=font)
+        await cls.PILMOJI.text(ctx.image, xy, text, font, fill)
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
