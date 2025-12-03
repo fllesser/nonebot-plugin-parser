@@ -4,6 +4,7 @@ from pathlib import Path
 from nonebot import require, get_driver, get_plugin_config
 from pilmoji import EmojiStyle
 from pydantic import BaseModel
+from pilmoji.source import ELK_SH_CDN
 from bilibili_api.video import VideoCodecs, VideoQuality
 
 from .constants import PlatformEnum
@@ -56,6 +57,8 @@ class Config(BaseModel):
     """自定义字体"""
     parser_need_forward_contents: bool = True
     """是否需要转发媒体内容"""
+    parser_emoji_cdn: str = ELK_SH_CDN
+    """Pilmoji 表情 CDN"""
     parser_emoji_style: EmojiStyle = EmojiStyle.FACEBOOK
     """Pilmoji 表情样式"""
 
@@ -148,6 +151,11 @@ class Config(BaseModel):
     def need_forward_contents(self) -> bool:
         """是否需要转发媒体内容"""
         return self.parser_need_forward_contents
+
+    @property
+    def emoji_cdn(self) -> str:
+        """Pilmoji 表情 CDN"""
+        return self.parser_emoji_cdn
 
     @property
     def emoji_style(self) -> EmojiStyle:
