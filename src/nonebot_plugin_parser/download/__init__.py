@@ -63,7 +63,7 @@ class StreamDownloader:
                     raise ZeroSizeException
 
                 if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
-                    logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {{pconfig.max_size}} MB, 取消下载")
+                    logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
                     raise SizeLimitException
 
                 with self.get_progress_bar(file_name, content_length) as bar:
