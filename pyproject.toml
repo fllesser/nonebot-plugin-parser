@@ -139,7 +139,7 @@ plugins = ["nonebot_plugin_parser"]
 [tool.poe.tasks]
 test-other = "pytest tests/others --cov=src --cov-report=xml --junitxml=junit.xml -n auto"
 test-parser = "pytest tests/parsers --cov=src --cov-report=xml --junitxml=junit.xml -n auto"
-test-render = "pytest tests/renders --cov=src --cov-report=xml --junitxml=junit.xml -n auto"
+test-render = "pytest tests/renders --cov=src --cov-report=xml --junitxml=junit.xml"
 bump = "bump-my-version bump"
 show-bump = "bump-my-version show-bump"
 
