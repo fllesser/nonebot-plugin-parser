@@ -1,5 +1,4 @@
 import time
-from typing import Any
 from dataclasses import dataclass
 
 import pytest
@@ -45,11 +44,11 @@ def write_final_result():
         logger.success("所有测试结果已写入 render_result.md")
 
 
-async def download_all_media(result: Any):
+async def download_all_media(result):
     """下载所有媒体资源"""
     from nonebot_plugin_parser.parsers import ParseResult
 
-    assert isinstance(result, ParseResult), "result 类型错误"
+    assert isinstance(result, ParseResult)
 
     total_size = 0
     assert result.author, f"没有作者: {result.url}"
