@@ -123,6 +123,10 @@ async def _download_all_media(result) -> float:
     # 添加头像和封面下载任务
     download_tasks.append(result.author.get_avatar_path())
     download_tasks.append(result.cover_path)
+    if respot := result.repost:
+        assert respot.author
+        download_tasks.append(respot.author.get_avatar_path())
+        download_tasks.append(respot.cover_path)
 
     # 添加所有内容下载任务（包括转发内容）
     # 与渲染器逻辑保持一致
