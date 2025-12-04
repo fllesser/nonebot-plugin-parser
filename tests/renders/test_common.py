@@ -25,7 +25,7 @@ def result_collections():
 
 @pytest.fixture(scope="module", autouse=True)
 async def render_collected_results(result_collections: list[Result]):
-    """在所有测试完成后，并发渲染收集到的结果"""
+    """在所有测试完成后，先并发下载，再顺序渲染"""
     yield
 
     if not result_collections:
@@ -39,9 +39,8 @@ async def render_collected_results(result_collections: list[Result]):
     import aiofiles
 
     from nonebot_plugin_parser import pconfig
-    from nonebot_plugin_parser.renders import CommonRenderer
+    from nonebot_plugin_parser.renders import _CommonRenderer as renderer
 
-    renderer = CommonRenderer()
     result_file = "render_result.md"
 
     # 写入表头
@@ -49,18 +48,31 @@ async def render_collected_results(result_collections: list[Result]):
         await f.write("| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB) |\n")
         await f.write("| --- | --- | --- | --- |\n")
 
-    async def render_single(item: Result) -> dict | None:
-        """渲染单个结果"""
+    # 第一阶段：并发下载所有结果的媒体资源
+    logger.info(f"开始并发下载 {len(result_collections)} 个结果的媒体资源")
+    download_start = time.time()
+
+    download_tasks = [_download_all_media(item.parse_result) for item in result_collections]
+    media_sizes = await asyncio.gather(*download_tasks, return_exceptions=True)
+
+    download_time = time.time() - download_start
+    logger.info(f"所有媒体资源下载完成，耗时: {download_time:.3f} 秒")
+
+    # 第二阶段：顺序渲染所有结果
+    logger.info(f"开始顺序渲染 {len(result_collections)} 个结果")
+    render_data = []
+
+    for i, item in enumerate(result_collections):
         try:
+            # 获取下载的媒体大小
+            total_size = media_sizes[i] if not isinstance(media_sizes[i], Exception) else 0.0
+
             logger.info(f"{item.url} | 开始渲染")
 
-            # 下载媒体资源
-            total_size = await _download_all_media(item.parse_result)
-
             # 渲染图片
-            start_time = time.time()
+            render_start = time.time()
             image_raw = await renderer.render_image(item.parse_result)
-            cost_time = time.time() - start_time
+            render_time = time.time() - render_start
 
             # 保存图片
             image_path = pconfig.cache_dir / "test_renders" / f"{item.url_type}.png"
@@ -70,22 +82,19 @@ async def render_collected_results(result_collections: list[Result]):
 
             render_size = image_path.stat().st_size / 1024 / 1024
 
-            logger.success(f"{item.url} | 渲染成功，耗时: {cost_time:.5f} 秒")
-            return {
-                "url": item.url,
-                "url_type": item.url_type,
-                "cost": cost_time,
-                "media_size": total_size,
-                "render_size": render_size,
-            }
+            logger.success(f"{item.url} | 渲染成功，耗时: {render_time:.3f}s, 媒体大小: {total_size:.2f}MB")
+
+            render_data.append(
+                {
+                    "url": item.url,
+                    "url_type": item.url_type,
+                    "cost": render_time,
+                    "media_size": total_size,
+                    "render_size": render_size,
+                }
+            )
         except Exception:
             logger.exception(f"{item.url} | 渲染失败")
-            return None
-
-    # 并发渲染所有结果
-    logger.info(f"开始并发渲染 {len(result_collections)} 个结果")
-    render_results = await asyncio.gather(*[render_single(item) for item in result_collections])
-    render_data = [r for r in render_results if r is not None]
 
     # 按耗时排序并写入结果
     if render_data:
@@ -101,6 +110,7 @@ async def _download_all_media(result) -> float:
     """并发下载所有媒体资源并返回总大小(MB)"""
     import asyncio
     from pathlib import Path
+    from itertools import chain
 
     from nonebot_plugin_parser.parsers import ParseResult
 
@@ -114,8 +124,12 @@ async def _download_all_media(result) -> float:
     download_tasks.append(result.author.get_avatar_path())
     download_tasks.append(result.cover_path)
 
-    # 添加内容下载任务
-    for content in result.contents:
+    # 添加所有内容下载任务（包括转发内容）
+    # 与渲染器逻辑保持一致
+    for content in chain(
+        result.contents,
+        result.repost.contents if result.repost else (),
+    ):
         download_tasks.append(content.get_path())
 
     # 并发下载所有资源
@@ -124,22 +138,41 @@ async def _download_all_media(result) -> float:
         return_exceptions=True,
     )
 
-    # 处理转发内容（递归）
-    total_size: float = 0
-    if result.repost:
-        total_size += await _download_all_media(result.repost)
-
     # 计算大小（跳过异常结果）
-    for path in paths:
+    total_size: float = 0
+    downloaded_count = 0
+    failed_count = 0
+    none_count = 0
+
+    for i, path in enumerate(paths):
         if isinstance(path, Exception):
-            # 跳过异常
+            # 记录异常但不中断
+            logger.debug(f"下载任务 {i} 失败: {type(path).__name__}: {path}")
+            failed_count += 1
             continue
-        if path and isinstance(path, Path):
+
+        if path is None:
+            # 某些内容可能没有实际文件（比如纯文本内容）
+            none_count += 1
+            continue
+
+        if isinstance(path, Path):
             try:
-                total_size += path.stat().st_size / 1024 / 1024
-            except (AttributeError, OSError):
+                file_size = path.stat().st_size / 1024 / 1024
+                total_size += file_size
+                downloaded_count += 1
+                logger.debug(f"下载成功: {path.name} ({file_size:.2f} MB)")
+            except (AttributeError, OSError) as e:
                 # 跳过无效路径或文件不存在的情况
-                pass
+                logger.debug(f"无法获取文件大小: {path}, 错误: {e}")
+                failed_count += 1
+        else:
+            logger.debug(f"下载任务 {i} 返回了非 Path 对象: {type(path)}")
+            failed_count += 1
+
+    logger.debug(
+        f"下载统计: 成功 {downloaded_count}, None {none_count}, 失败 {failed_count}, 总大小 {total_size:.2f} MB"
+    )
 
     return total_size
 
