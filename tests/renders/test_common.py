@@ -15,32 +15,28 @@ class RenderDataItem:
     render_size: float
 
 
-# 模块级别的数据收集器
-_module_data_collection: list[RenderDataItem] = []
-
-
 @pytest.fixture(scope="module")
 def data_collection():
-    """模块级别的数据收集器 fixture"""
-    return _module_data_collection
+    """会话级别的数据收集器 fixture"""
+    return list[RenderDataItem]()
 
 
 @pytest.fixture(scope="module", autouse=True)
-def write_final_result():
+def write_final_result(data_collection: list[RenderDataItem]):
     """模块级别的数据收集器"""
+    result_file = "render_result.md"
+    with open(result_file, "w+") as f:
+        f.write("| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB) |\n")
+        f.write("| --- | --- | --- | --- |\n")
     yield
     # 在模块所有测试完成后执行写入操作
-    if _module_data_collection:
+    if data_collection:
         # 按时间排序
-        sorted_data_collection = sorted(_module_data_collection, key=lambda x: x.cost)
-        result = "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB) |\n"
-        result += "| --- | --- | --- | --- |\n"
-        for item in sorted_data_collection:
-            result += f"| [{item.url_type}]({item.url}) | {item.cost:.5f} "
-            result += f"| {item.media_size:.5f} | {item.render_size:.5f} |\n"
-
-        with open("render_result.md", "w+") as f:
-            f.write(result)
+        sorted_data_collection = sorted(data_collection, key=lambda x: x.cost)
+        with open(result_file, "a") as f:
+            for item in sorted_data_collection:
+                f.write(f"| [{item.url_type}]({item.url}) | {item.cost:.5f} ")
+                f.write(f"| {item.media_size:.5f} | {item.render_size:.5f} |\n")
         logger.success("所有测试结果已写入 render_result.md")
 
 
