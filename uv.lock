@@ -55,7 +55,7 @@ wheels = [
 [[package]]
 name = "apilmoji"
 version = "0.1.0"
-source = { git = "https://github.com/fllesser/apilmoji?rev=connect_pool#ee112263275c60738587178a6b1ab34b587b597f" }
+source = { git = "https://github.com/fllesser/apilmoji?rev=connect_pool#4c170a33c5dbd3ad65e782693e571891d9a85fbc" }
 dependencies = [
     { name = "aiofiles" },
     { name = "emoji" },
