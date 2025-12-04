@@ -55,7 +55,7 @@ wheels = [
 [[package]]
 name = "apilmoji"
 version = "0.1.0"
-source = { git = "https://github.com/fllesser/apilmoji?rev=connect_pool#2310b9f5f3b5f84efad6ab04cce361d6d681288b" }
+source = { git = "https://github.com/fllesser/apilmoji?rev=connect_pool#4f2b4084575267042e2b08ac6a38e6a3f75e056c" }
 dependencies = [
     { name = "aiofiles" },
     { name = "emoji" },
@@ -610,7 +610,7 @@ wheels = [
 
 [[package]]
 name = "fastapi"
-version = "0.123.5"
+version = "0.123.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-doc" },
@@ -619,9 +619,9 @@ dependencies = [
     { name = "starlette" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/78/b8/c6e916565af8a8e1c8f5a4736b31a6995adb51dbd4cbefc8b022e753ecb9/fastapi-0.123.5.tar.gz", hash = "sha256:54bbb660ca231d3985474498b51c621ddcf8888d9a4c1ecb10aa40ec217e4965", size = 352030, upload-time = "2025-12-02T21:08:38.532Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/99/8f2d4be9af90b3e56b865a07bdd390398e53d67c9c95c729b5772e528179/fastapi-0.123.8.tar.gz", hash = "sha256:d106de125c8dd3d4341517fa2ae36d9cffe82a6500bd910d3c080e6c42b1b490", size = 354253, upload-time = "2025-12-04T13:02:54.58Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/dc/faa52fe784892bb057934248ded02705d26ca3aca562876e61c239947036/fastapi-0.123.5-py3-none-any.whl", hash = "sha256:a9c708e47c0fa424139cddb8601d0f92d3111b77843c22e9c8d0164d65fe3c97", size = 111316, upload-time = "2025-12-02T21:08:36.191Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/23/dd53f49e8309454e2c52bdfffe7493cc0f00d10e2fc885d3f4d64c90731f/fastapi-0.123.8-py3-none-any.whl", hash = "sha256:d7c8db95f61d398f7e1491ad52e6b2362755f8ec61c7a740b29e70f18a2901e3", size = 111645, upload-time = "2025-12-04T13:02:53.163Z" },
 ]
 
 [[package]]
@@ -1925,10 +1925,10 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "annotated-types", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
-    { name = "pydantic-core", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
-    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
-    { name = "typing-inspection", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "annotated-types" },
+    { name = "pydantic-core" },
+    { name = "typing-extensions" },
+    { name = "typing-inspection" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/69/44/36f1a6e523abc58ae5f928898e4aca2e0ea509b5aa6f6f392a5d882be928/pydantic-2.12.5.tar.gz", hash = "sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49", size = 821591, upload-time = "2025-11-26T15:11:46.471Z" }
 wheels = [
@@ -1940,7 +1940,7 @@ name = "pydantic-core"
 version = "2.41.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/71/70/23b021c950c2addd24ec408e9ab05d59b035b39d97cdc1130e1bce647bb6/pydantic_core-2.41.5.tar.gz", hash = "sha256:08daa51ea16ad373ffd5e7606252cc32f07bc72b28284b6bc9c6df804816476e", size = 460952, upload-time = "2025-11-04T13:43:49.098Z" }
 wheels = [
@@ -2511,7 +2511,7 @@ name = "typing-inspection"
 version = "0.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/55/e3/70399cb7dd41c10ac53367ae42139cf4b1ca5f36bb3dc6c9d33acdb43655/typing_inspection-0.4.2.tar.gz", hash = "sha256:ba561c48a67c5958007083d386c3295464928b01faa735ab8547c5692e87f464", size = 75949, upload-time = "2025-10-01T02:14:41.687Z" }
 wheels = [
