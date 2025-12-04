@@ -303,7 +303,8 @@ class CommonRenderer(ImageRenderer):
             base_url=pconfig.emoji_cdn,
             style=pconfig.emoji_style,
             cache_dir=pconfig.cache_dir / _EMOJIS,
-        )
+        ),
+        enable_tqdm=True,
     )
     """Pilmoji 实例"""
 
@@ -350,13 +351,21 @@ class CommonRenderer(ImageRenderer):
     async def text(
         cls,
         ctx: RenderContext,
-        text: str,
         xy: tuple[int, int],
+        lines: list[str],
+        font: FontInfo,
         fill: Color,
-        font: ImageFont.FreeTypeFont,
-    ):
+    ) -> int:
         """绘制文本"""
-        await cls.PILMOJI.text(ctx.image, xy, text, font, fill)
+        await cls.PILMOJI.text(
+            ctx.image,
+            xy,
+            lines,
+            font.font,
+            fill=fill,
+            line_height=font.line_height,
+        )
+        return font.line_height * len(lines)
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
@@ -935,28 +944,24 @@ class CommonRenderer(ImageRenderer):
         text_y = text_start_y
 
         # 发布者名称（蓝色）
-        for line in section.name_lines:
-            await self.text(
-                ctx,
-                line,
-                (text_x, text_y),
-                self.HEADER_COLOR,
-                self.fontset.name_font.font,
-            )
-            text_y += self.fontset.name_font.line_height
+        text_y += await self.text(
+            ctx,
+            (text_x, text_y),
+            section.name_lines,
+            self.fontset.name_font,
+            fill=self.HEADER_COLOR,
+        )
 
         # 时间（灰色）
         if section.time_lines:
             text_y += self.NAME_TIME_GAP
-            for line in section.time_lines:
-                await self.text(
-                    ctx,
-                    line,
-                    (text_x, text_y),
-                    self.EXTRA_COLOR,
-                    self.fontset.extra_font.font,
-                )
-                text_y += self.fontset.extra_font.line_height
+            text_y += await self.text(
+                ctx,
+                (text_x, text_y),
+                section.time_lines,
+                self.fontset.extra_font,
+                fill=self.EXTRA_COLOR,
+            )
 
         # 在右侧绘制平台 logo（仅在非转发内容时绘制）
         if ctx.not_repost:
@@ -973,15 +978,14 @@ class CommonRenderer(ImageRenderer):
 
     async def _draw_title(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制标题"""
-        for line in lines:
-            await self.text(
-                ctx,
-                line,
-                (self.PADDING, ctx.y_pos),
-                self.TEXT_COLOR,
-                self.fontset.title_font.font,
-            )
-            ctx.y_pos += self.fontset.title_font.line_height
+        ctx.y_pos += await self.text(
+            ctx,
+            (self.PADDING, ctx.y_pos),
+            lines,
+            self.fontset.title_font,
+            self.TEXT_COLOR,
+        )
+
         ctx.y_pos += self.SECTION_SPACING
 
     def _draw_cover(self, ctx: RenderContext, cover_img: PILImage) -> None:
@@ -1004,30 +1008,26 @@ class CommonRenderer(ImageRenderer):
 
     async def _draw_text(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制文本内容"""
-        for line in lines:
-            await self.text(
-                ctx,
-                line,
-                (self.PADDING, ctx.y_pos),
-                self.TEXT_COLOR,
-                self.fontset.text_font.font,
-            )
-            ctx.y_pos += self.fontset.text_font.line_height
+        ctx.y_pos += await self.text(
+            ctx,
+            (self.PADDING, ctx.y_pos),
+            lines,
+            self.fontset.text_font,
+            fill=self.TEXT_COLOR,
+        )
         ctx.y_pos += self.SECTION_SPACING
 
     async def _draw_graphics(self, ctx: RenderContext, section: GraphicsSectionData) -> None:
         """绘制图文内容"""
         # 绘制文本内容（如果有）
         if section.text_lines:
-            for line in section.text_lines:
-                await self.text(
-                    ctx,
-                    line,
-                    (self.PADDING, ctx.y_pos),
-                    self.TEXT_COLOR,
-                    self.fontset.text_font.font,
-                )
-                ctx.y_pos += self.fontset.text_font.line_height
+            ctx.y_pos += await self.text(
+                ctx,
+                (self.PADDING, ctx.y_pos),
+                section.text_lines,
+                self.fontset.text_font,
+                fill=self.TEXT_COLOR,
+            )
             ctx.y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
 
         # 绘制图片（居中）
@@ -1042,28 +1042,25 @@ class CommonRenderer(ImageRenderer):
             extra_font_info = self.fontset.extra_font
             text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (ctx.content_width - text_width) // 2
-            await self.text(
+            ctx.y_pos += await self.text(
                 ctx,
-                section.alt_text,
                 (text_x, ctx.y_pos),
-                self.EXTRA_COLOR,
-                extra_font_info.font,
+                [section.alt_text],
+                self.fontset.extra_font,
+                fill=self.EXTRA_COLOR,
             )
-            ctx.y_pos += extra_font_info.line_height
 
         ctx.y_pos += self.SECTION_SPACING
 
     async def _draw_extra(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制额外信息"""
-        for line in lines:
-            await self.text(
-                ctx,
-                line,
-                (self.PADDING, ctx.y_pos),
-                self.EXTRA_COLOR,
-                self.fontset.extra_font.font,
-            )
-            ctx.y_pos += self.fontset.extra_font.line_height
+        ctx.y_pos += await self.text(
+            ctx,
+            (self.PADDING, ctx.y_pos),
+            lines,
+            self.fontset.extra_font,
+            fill=self.EXTRA_COLOR,
+        )
 
     def _draw_repost(self, ctx: RenderContext, section: RepostSectionData) -> None:
         """绘制转发内容"""
@@ -1277,8 +1274,8 @@ class CommonRenderer(ImageRenderer):
         if not text:
             return []
 
-        lines = []
-        paragraphs = text.split("\n")
+        lines: list[str] = []
+        paragraphs = text.splitlines()
 
         def is_punctuation(char: str) -> bool:
             """判断是否为不能为行首的标点符号"""

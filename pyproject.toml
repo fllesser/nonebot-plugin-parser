@@ -106,6 +106,7 @@ conflicts = [
 
 [tool.uv.sources]
 nonebug = { git = "https://github.com/fllesser/nonebug", rev = "dev/migrate-uv" }
+pilmoji-for-parser = { git = "https://github.com/fllesser/pilmoji-for-parser", rev = "refactor/fetch-emoji" }
 
 [tool.bumpversion]
 tag = true
