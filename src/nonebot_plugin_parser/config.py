@@ -2,9 +2,8 @@ from enum import Enum
 from pathlib import Path
 
 from nonebot import require, get_driver, get_plugin_config
-from pilmoji import EmojiStyle
+from apilmoji import ELK_SH_CDN, EmojiStyle
 from pydantic import BaseModel
-from pilmoji.source import ELK_SH_CDN
 from bilibili_api.video import VideoCodecs, VideoQuality
 
 from .constants import PlatformEnum

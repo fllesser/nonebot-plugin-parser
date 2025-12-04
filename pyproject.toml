@@ -46,9 +46,9 @@ dependencies = [
   "curl_cffi>=0.13.0,<1.0.0",
   "httpx>=0.27.2,<1.0.0",
   "msgspec>=0.20.0,<1.0.0",
+  "apilmoji[tqdm]>=0.1.0,<1.0.0",
   "beautifulsoup4>=4.12.0,<5.0.0",
   "bilibili-api-python>=17.4.0,<18.0.0",
-  "pilmoji-for-parser[tqdm]>=0.2.0,<1.0.0",
   "nonebot-plugin-alconna>=0.59.4,<1.0.0",
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
@@ -106,7 +106,6 @@ conflicts = [
 
 [tool.uv.sources]
 nonebug = { git = "https://github.com/nonebot/nonebug" }
-pilmoji-for-parser = { git = "https://github.com/fllesser/pilmoji-for-parser", rev = "refactor/fetch-emoji" }
 
 [tool.bumpversion]
 tag = true

@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from PIL import Image, ImageDraw, ImageFont
 from nonebot import logger
-from pilmoji import Pilmoji, EmojiCDNSource
+from apilmoji import Pilmoji, EmojiCDNSource
 
 from .base import ParseResult, ImageRenderer
 from ..config import pconfig
