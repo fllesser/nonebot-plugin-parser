@@ -1458,7 +1458,7 @@ dev = [
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
-    { name = "nonebug", git = "https://github.com/fllesser/nonebug?rev=dev%2Fmigrate-uv" },
+    { name = "nonebug", git = "https://github.com/nonebot/nonebug" },
     { name = "poethepoet", specifier = ">=0.38.0" },
     { name = "pytest-asyncio", specifier = ">=1.3.0,<1.4.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
@@ -1479,7 +1479,7 @@ telegram = [{ name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" }]
 test = [
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
-    { name = "nonebug", git = "https://github.com/fllesser/nonebug?rev=dev%2Fmigrate-uv" },
+    { name = "nonebug", git = "https://github.com/nonebot/nonebug" },
     { name = "poethepoet", specifier = ">=0.38.0" },
     { name = "pytest-asyncio", specifier = ">=1.3.0,<1.4.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
@@ -1542,7 +1542,7 @@ fastapi = [
 [[package]]
 name = "nonebug"
 version = "0.4.3"
-source = { git = "https://github.com/fllesser/nonebug?rev=dev%2Fmigrate-uv#e5f11e380fa316b85da3c9f1f59c95987e9e8aec" }
+source = { git = "https://github.com/nonebot/nonebug#864b208ae08433f28a01b3010e2da3ee3bfd2b61" }
 dependencies = [
     { name = "asgiref" },
     { name = "async-asgi-testclient" },

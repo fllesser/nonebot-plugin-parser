@@ -16,10 +16,35 @@ class RenderDataItem:
     render_size: float
 
 
-DATA_COLLECTION: list[RenderDataItem] = []
+# 模块级别的数据收集器
+_module_data_collection: list[RenderDataItem] = []
 
 
-@pytest.mark.asyncio
+@pytest.fixture(scope="module")
+def data_collection():
+    """模块级别的数据收集器 fixture"""
+    return _module_data_collection
+
+
+@pytest.fixture(scope="module", autouse=True)
+def write_final_result():
+    """模块级别的数据收集器"""
+    yield
+    # 在模块所有测试完成后执行写入操作
+    if _module_data_collection:
+        # 按时间排序
+        sorted_data_collection = sorted(_module_data_collection, key=lambda x: x.cost)
+        result = "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB) |\n"
+        result += "| --- | --- | --- | --- |\n"
+        for item in sorted_data_collection:
+            result += f"| [{item.url_type}]({item.url}) | {item.cost:.5f} "
+            result += f"| {item.media_size:.5f} | {item.render_size:.5f} |\n"
+
+        with open("render_result.md", "w+") as f:
+            f.write(result)
+        logger.success("所有测试结果已写入 render_result.md")
+
+
 async def download_all_media(result: Any):
     """下载所有媒体资源"""
     from nonebot_plugin_parser.parsers import ParseResult
@@ -48,7 +73,7 @@ async def download_all_media(result: Any):
 
 
 @pytest.mark.asyncio
-async def test_render_with_emoji():
+async def test_render_with_emoji(data_collection: list[RenderDataItem]):
     """测试使用 BilibiliParser 解析链接并用 CommonRenderer 渲染"""
 
     from nonebot_plugin_parser import pconfig
@@ -85,7 +110,7 @@ async def test_render_with_emoji():
         await f.write(image_raw)
     render_size = image_path.stat().st_size / 1024 / 1024
     logger.success(f"{opus_url} | 渲染成功，图片已保存到 {image_path}")
-    DATA_COLLECTION.append(
+    data_collection.append(
         RenderDataItem(
             opus_url,
             "哔哩哔哩动态",
@@ -97,7 +122,7 @@ async def test_render_with_emoji():
 
 
 @pytest.mark.asyncio
-async def test_graphics_content():
+async def test_graphics_content(data_collection: list[RenderDataItem]):
     """测试使用 BilibiliParser 解析链接并用 CommonRenderer 渲染"""
     import aiofiles
 
@@ -137,7 +162,7 @@ async def test_graphics_content():
     async with aiofiles.open(image_path, "wb+") as f:
         await f.write(image_raw)
     render_size = image_path.stat().st_size / 1024 / 1024
-    DATA_COLLECTION.append(
+    data_collection.append(
         RenderDataItem(
             url,
             "bilibili-opus",
@@ -150,7 +175,7 @@ async def test_graphics_content():
 
 
 @pytest.mark.asyncio
-async def test_read():
+async def test_read(data_collection: list[RenderDataItem]):
     """测试使用 BilibiliParser 解析链接并用 CommonRenderer 渲染"""
     import aiofiles
 
@@ -185,7 +210,7 @@ async def test_read():
         await f.write(image_raw)
 
     render_size = image_path.stat().st_size / 1024 / 1024
-    DATA_COLLECTION.append(
+    data_collection.append(
         RenderDataItem(
             url,
             "bilibili-read",
@@ -199,7 +224,7 @@ async def test_read():
 
 
 @pytest.mark.asyncio
-async def test_common_render():
+async def test_common_render(data_collection: list[RenderDataItem]):
     """测试使用 WeiboParser 解析链接并用 CommonRenderer 渲染"""
 
     from nonebot_plugin_parser import pconfig
@@ -253,23 +278,10 @@ async def test_common_render():
             await f.write(image_raw)
 
         render_size = image_path.stat().st_size / 1024 / 1024
-        DATA_COLLECTION.append(RenderDataItem(url, url_type, cost_time, total_size, render_size))
+        data_collection.append(RenderDataItem(url, url_type, cost_time, total_size, render_size))
 
     for url_type, url in urls.items():
         try:
             await parse_and_render(url_type, url)
         except Exception:
             logger.exception(f"{url} | 渲染失败")
-
-
-def test_write_result():
-    # 按时间排序
-    sorted_data_collection = sorted(DATA_COLLECTION, key=lambda x: x.cost)
-    result = "| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB) |\n"
-    result += "| --- | --- | --- | --- |\n"
-    for item in sorted_data_collection:
-        result += f"| [{item.url_type}]({item.url}) | {item.cost:.5f} "
-        result += f"| {item.media_size:.5f} | {item.render_size:.5f} |\n"
-
-    with open("render_result.md", "w+") as f:
-        f.write(result)
