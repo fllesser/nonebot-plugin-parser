@@ -114,12 +114,15 @@ async def _download_all_media(result) -> float:
     download_tasks.append(result.author.get_avatar_path())
     download_tasks.append(result.cover_path)
 
-    # 添加内容下载任务（前9项）
-    for content in result.contents[:9]:
+    # 添加内容下载任务
+    for content in result.contents:
         download_tasks.append(content.get_path())
 
     # 并发下载所有资源
-    paths = await asyncio.gather(*download_tasks, return_exceptions=True)
+    paths = await asyncio.gather(
+        *download_tasks,
+        return_exceptions=True,
+    )
 
     # 处理转发内容（递归）
     total_size: float = 0
