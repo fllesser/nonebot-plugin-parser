@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from PIL import Image, ImageDraw, ImageFont
 from nonebot import logger
-from apilmoji import Pilmoji, EmojiCDNSource
+from apilmoji import Apilmoji, EmojiCDNSource
 
 from .base import ParseResult, ImageRenderer
 from ..config import pconfig
@@ -298,15 +298,13 @@ class CommonRenderer(ImageRenderer):
     """默认字体路径"""
     DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / _BUTTON_FILENAME
     """默认视频按钮路径"""
-    PILMOJI: ClassVar[Pilmoji] = Pilmoji(
-        source=EmojiCDNSource(
-            base_url=pconfig.emoji_cdn,
-            style=pconfig.emoji_style,
-            cache_dir=pconfig.cache_dir / _EMOJIS,
-            enable_tqdm=True,
-        ),
+    EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
+        base_url=pconfig.emoji_cdn,
+        style=pconfig.emoji_style,
+        cache_dir=pconfig.cache_dir / _EMOJIS,
+        enable_tqdm=True,
     )
-    """Pilmoji 实例"""
+    """Emoji Source"""
 
     @classmethod
     def load_resources(cls):
@@ -357,13 +355,14 @@ class CommonRenderer(ImageRenderer):
         fill: Color,
     ) -> int:
         """绘制文本"""
-        await cls.PILMOJI.text(
+        await Apilmoji.text(
             ctx.image,
             xy,
             lines,
             font.font,
             fill=fill,
             line_height=font.line_height,
+            source=cls.EMOJI_SOURCE,
         )
         return font.line_height * len(lines)
 
