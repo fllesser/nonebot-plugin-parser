@@ -46,9 +46,9 @@ dependencies = [
   "curl_cffi>=0.13.0,<1.0.0",
   "httpx>=0.27.2,<1.0.0",
   "msgspec>=0.20.0,<1.0.0",
+  "apilmoji[tqdm]>=0.1.2,<1.0.0",
   "beautifulsoup4>=4.12.0,<5.0.0",
   "bilibili-api-python>=17.4.0,<18.0.0",
-  "pilmoji-for-parser[tqdm]>=0.2.0,<1.0.0",
   "nonebot-plugin-alconna>=0.59.4,<1.0.0",
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
@@ -105,7 +105,7 @@ conflicts = [
 ]
 
 [tool.uv.sources]
-nonebug = { git = "https://github.com/fllesser/nonebug", rev = "dev/migrate-uv" }
+nonebug = { git = "https://github.com/nonebot/nonebug" }
 
 [tool.bumpversion]
 tag = true
@@ -136,9 +136,9 @@ adapters = [
 plugins = ["nonebot_plugin_parser"]
 
 [tool.poe.tasks]
-test_others = "pytest tests/others --cov=src --cov-report=xml --junitxml=junit.xml -n auto"
-test_parsers = "pytest tests/parsers --cov=src --cov-report=xml --junitxml=junit.xml -n auto"
-test_render = "pytest tests/render --cov=src --cov-report=xml --junitxml=junit.xml"
+test-other = "pytest tests/others --cov=src --cov-report=xml --junitxml=junit.xml -n auto"
+test-parser = "pytest tests/parsers --cov=src --cov-report=xml --junitxml=junit.xml -n auto"
+test-render = "pytest tests/renders --cov=src --cov-report=xml --junitxml=junit.xml"
 bump = "bump-my-version bump"
 show-bump = "bump-my-version show-bump"
 

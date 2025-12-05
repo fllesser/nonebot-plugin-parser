@@ -212,7 +212,7 @@ parser_need_forward_contents=True
 
 # [可选] emoji 渲染 CDN
 # 例如 ELK_SH_CDN = "https://emojicdn.elk.sh", MQRIO_DEV_CDN = "https://emoji-cdn.mqrio.dev"
-parser_emoji_cdn=ELK_SH_CDN
+parser_emoji_cdn="https://emojicdn.elk.sh"
 
 # [可选] emoji 渲染样式 "apple", "google", "twitter", "facebook"(默认)
 parser_emoji_style="facebook"

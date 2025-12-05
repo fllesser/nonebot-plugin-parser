@@ -60,7 +60,7 @@ jobs:
 
     env:
       OS: ubuntu-latest
-      TASK: test_others
+      TASK: test-other
       PYTHON: ${{ matrix.python-version }}
       PYDANTIC: ${{ matrix.pydantic }}
       UV_NO_SYNC: 1
@@ -108,7 +108,7 @@ jobs:
       DENO: v2.x
       PYTHON: 3.14
       UV_NO_SYNC: 1
-      TEST: "test_parsers"
+      TEST: "test-parser"
 
     steps:
       - uses: actions/checkout@v6
@@ -162,7 +162,7 @@ jobs:
     env:
       PYTHON: 3.14
       UV_NO_SYNC: 1
-      TASK: test_render
+      TASK: test-render
 
     steps:
       - uses: actions/checkout@v6
