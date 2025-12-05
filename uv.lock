@@ -54,13 +54,17 @@ wheels = [
 
 [[package]]
 name = "apilmoji"
-version = "0.1.0"
-source = { git = "https://github.com/fllesser/apilmoji?rev=new-impl#d5d504b49a34e6d8a39a327713c1975a175c579f" }
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
     { name = "emoji" },
     { name = "httpx" },
     { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/00/df/d09964b797b45191171597d709ea7cf695f41bbe09fc9c97034baa0a1e8a/apilmoji-0.1.2.tar.gz", hash = "sha256:b9ce0bf2b84db117c0dcc19ec0c04294f49d849c127e46cd42bb51158f116b43", size = 8483, upload-time = "2025-12-05T03:56:14.659Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/93/bb/417bf5945e8fab45a5ab426d43883b0631a9499ac8232a92850c5bad67b8/apilmoji-0.1.2-py3-none-any.whl", hash = "sha256:d611d375b0c1445bb27327956fbd5f5be0bed7169223da2e727caea1952b5575", size = 8887, upload-time = "2025-12-05T03:56:13.525Z" },
 ]
 
 [package.optional-dependencies]
@@ -1449,7 +1453,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=25.1.0" },
-    { name = "apilmoji", extras = ["tqdm"], git = "https://github.com/fllesser/apilmoji?rev=new-impl" },
+    { name = "apilmoji", extras = ["tqdm"], specifier = ">=0.1.2,<1.0.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
@@ -1925,10 +1929,10 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "annotated-types" },
-    { name = "pydantic-core" },
-    { name = "typing-extensions" },
-    { name = "typing-inspection" },
+    { name = "annotated-types", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "pydantic-core", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "typing-inspection", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/69/44/36f1a6e523abc58ae5f928898e4aca2e0ea509b5aa6f6f392a5d882be928/pydantic-2.12.5.tar.gz", hash = "sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49", size = 821591, upload-time = "2025-11-26T15:11:46.471Z" }
 wheels = [
@@ -1940,7 +1944,7 @@ name = "pydantic-core"
 version = "2.41.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/71/70/23b021c950c2addd24ec408e9ab05d59b035b39d97cdc1130e1bce647bb6/pydantic_core-2.41.5.tar.gz", hash = "sha256:08daa51ea16ad373ffd5e7606252cc32f07bc72b28284b6bc9c6df804816476e", size = 460952, upload-time = "2025-11-04T13:43:49.098Z" }
 wheels = [
@@ -2511,7 +2515,7 @@ name = "typing-inspection"
 version = "0.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/55/e3/70399cb7dd41c10ac53367ae42139cf4b1ca5f36bb3dc6c9d33acdb43655/typing_inspection-0.4.2.tar.gz", hash = "sha256:ba561c48a67c5958007083d386c3295464928b01faa735ab8547c5692e87f464", size = 75949, upload-time = "2025-10-01T02:14:41.687Z" }
 wheels = [
