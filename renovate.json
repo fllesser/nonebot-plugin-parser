@@ -1,16 +1,12 @@
 {
-    "dependencyDashboard": true,
-    "dependencyDashboardAutoclose": true,
-    "dependencyDashboardApproval": false,
-    "packageRules": [
-        {
-            "matchPackageNames": [
-                "pydantic"
-            ],
-            "matchUpdateTypes": [
-                "major"
-            ],
-            "enabled": false
-        }
-    ]
+  "dependencyDashboard": true,
+  "dependencyDashboardAutoclose": true,
+  "dependencyDashboardApproval": false,
+  "packageRules": [
+    {
+      "matchDepTypes": ["dependency-groups"],
+      "matchDependencyGroups": ["pydantic-v1"],
+      "enabled": false
+    }
+  ]
 }

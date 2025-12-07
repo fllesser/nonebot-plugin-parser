@@ -54,7 +54,7 @@ wheels = [
 
 [[package]]
 name = "apilmoji"
-version = "0.2.0"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -62,9 +62,9 @@ dependencies = [
     { name = "httpx" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/31/c4/68b827b92b79ffeec35ca3d32c57e26e40050bc4f2a4c983fbdc72ac8449/apilmoji-0.2.0.tar.gz", hash = "sha256:abee9d9dd12e5e5aa8ec6f597c32598c139fb380bb8384b5e8cf1ebf8c9c55df", size = 8886, upload-time = "2025-12-06T04:04:39.005Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/e5/c3215c4afa276dc455ffe78b56f06fc975f72154c050a3643967e24119ed/apilmoji-0.2.1.tar.gz", hash = "sha256:5058c45fe326a8722d61f116b9238e2d0cb853d24f3e03ea5c42f933f7e044fa", size = 8240, upload-time = "2025-12-07T04:50:26.956Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/25/79675137b41f28af1e7142ccbc197d40fdd6c8353269f0843806c7fd0cb1/apilmoji-0.2.0-py3-none-any.whl", hash = "sha256:6a0103f8f8d5492628902f9857a6bfc11906361ad38df72efec3f08b944306c7", size = 9225, upload-time = "2025-12-06T04:04:37.936Z" },
+    { url = "https://files.pythonhosted.org/packages/ae/3d/6ee486a3a781bca7eb3314fc2789e2a420fea6d44d3bd53f757e1729f335/apilmoji-0.2.1-py3-none-any.whl", hash = "sha256:6fccd6d5fea82ebf7f722fac1ae4b14607dca08c62f4c74085d07e601b16dcd1", size = 8433, upload-time = "2025-12-07T04:50:27.925Z" },
 ]
 
 [package.optional-dependencies]
@@ -1453,7 +1453,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=25.1.0" },
-    { name = "apilmoji", extras = ["tqdm"], specifier = ">=0.2.0,<1.0.0" },
+    { name = "apilmoji", extras = ["tqdm"], specifier = ">=0.2.1,<1.0.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
