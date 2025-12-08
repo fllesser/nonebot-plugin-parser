@@ -447,6 +447,8 @@ class BilibiliParser(BaseParser):
 
     async def check_qr_state(self) -> AsyncGenerator[str]:
         """检查二维码登录状态"""
+        confirmed = False
+
         for _ in range(30):
             state = await self._qr_login.check_state()
             match state:
@@ -456,9 +458,12 @@ class BilibiliParser(BaseParser):
                     self._save_credential()
                     break
                 case QrCodeLoginEvents.CONF:
-                    yield "二维码已扫描, 请确认登录"
+                    if not confirmed:
+                        yield "二维码已扫描, 请确认登录"
+                        confirmed = True
                 case QrCodeLoginEvents.TIMEOUT:
                     yield "二维码过期, 请重新生成"
+                    break
             await asyncio.sleep(2)
         else:
             yield "二维码登录超时, 请重新生成"
