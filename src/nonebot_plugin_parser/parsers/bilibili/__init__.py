@@ -8,6 +8,7 @@ from nonebot import logger
 from bilibili_api import HEADERS, Credential, select_client, request_settings
 from bilibili_api.opus import Opus
 from bilibili_api.video import Video
+from bilibili_api.login_v2 import QrCodeLogin, QrCodeLoginEvents
 
 from ..base import (
     DOWNLOADER,
@@ -37,6 +38,7 @@ class BilibiliParser(BaseParser):
     def __init__(self):
         self.headers = HEADERS.copy()
         self._credential: Credential | None = None
+        self._qr_login: QrCodeLogin | None = None
         self._cookies_file = pconfig.config_dir / "bilibili_cookies.json"
 
     @handle("b23.tv", r"b23\.tv/[A-Za-z\d\._?%&+\-=/#]+")
@@ -422,14 +424,40 @@ class BilibiliParser(BaseParser):
         logger.debug(f"音频流质量: {audio_stream.audio_quality.name}")
         return video_stream.url, audio_stream.url
 
+    async def _get_credential_by_qrcode(self) -> Credential:
+        """通过二维码登录获取哔哩哔哩登录凭证"""
+        self._qr_login = QrCodeLogin()
+        await self._qr_login.generate_qrcode()
+        qrcode_terminal = self._qr_login.get_qrcode_terminal()
+        logger.info(f"请扫描以下二维码登录哔哩哔哩(建议使用小号): \n{qrcode_terminal} ")
+
+        for i in range(60):
+            state = await self._qr_login.check_state()
+            match state:
+                case QrCodeLoginEvents.DONE:
+                    logger.success("二维码登录成功")
+                    break
+                case QrCodeLoginEvents.CONF:
+                    logger.info("二维码已扫描, 请确认登录")
+                case QrCodeLoginEvents.TIMEOUT:
+                    logger.warning("二维码登录超时, 请重启机器人")
+                    break
+                case QrCodeLoginEvents.SCAN:
+                    pass
+            await asyncio.sleep(2)
+        else:
+            logger.warning("二维码登录超时, 请重启机器人")
+
+        return self._qr_login.get_credential()
+
     async def _init_credential(self) -> Credential | None:
         """初始化哔哩哔哩登录凭证"""
 
-        if not pconfig.bili_ck:
-            logger.warning("未配置 `parser_bili_ck`, 无法使用哔哩哔哩 `AI` 总结, 可能无法解析 `720p` 以上画质视频")
-            return None
+        if pconfig.bili_ck:
+            credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
+        else:
+            credential = await self._get_credential_by_qrcode()
 
-        credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
         if await credential.check_valid():
             logger.info(f"`parser_bili_ck` 有效, 保存到 {self._cookies_file}")
             self._cookies_file.write_text(json.dumps(credential.get_cookies()))
