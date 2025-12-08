@@ -2,6 +2,7 @@ import json
 import asyncio
 from re import Match
 from typing import ClassVar
+from collections.abc import AsyncGenerator
 
 from msgspec import convert
 from nonebot import logger
@@ -25,8 +26,7 @@ from ..cookie import ck2dict
 
 # 选择客户端
 select_client("curl_cffi")
-# 模仿浏览器
-# 第二参数数值参考 curl_cffi 文档
+# 模拟浏览器，第二参数数值参考 curl_cffi 文档
 # https://curl-cffi.readthedocs.io/en/latest/impersonate.html
 request_settings.set("impersonate", "chrome131")
 
@@ -38,7 +38,6 @@ class BilibiliParser(BaseParser):
     def __init__(self):
         self.headers = HEADERS.copy()
         self._credential: Credential | None = None
-        self._qr_login: QrCodeLogin | None = None
         self._cookies_file = pconfig.config_dir / "bilibili_cookies.json"
 
     @handle("b23.tv", r"b23\.tv/[A-Za-z\d\._?%&+\-=/#]+")
@@ -424,70 +423,78 @@ class BilibiliParser(BaseParser):
         logger.debug(f"音频流质量: {audio_stream.audio_quality.name}")
         return video_stream.url, audio_stream.url
 
-    async def _get_credential_by_qrcode(self) -> Credential:
+    def _save_credential(self):
+        """存储哔哩哔哩登录凭证"""
+        if self._credential is None:
+            return
+
+        self._cookies_file.write_text(json.dumps(self._credential.get_cookies()))
+
+    def _load_credential(self):
+        """从文件加载哔哩哔哩登录凭证"""
+        if not self._cookies_file.exists():
+            return
+
+        self._credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
+
+    async def login_with_qrcode(self) -> bytes:
         """通过二维码登录获取哔哩哔哩登录凭证"""
         self._qr_login = QrCodeLogin()
         await self._qr_login.generate_qrcode()
-        qrcode_terminal = self._qr_login.get_qrcode_terminal()
-        logger.info(f"请扫描以下二维码登录哔哩哔哩(建议使用小号): \n{qrcode_terminal} ")
 
-        for i in range(30):
+        qr_pic = self._qr_login.get_qrcode_picture()
+        return qr_pic.content
+
+    async def check_qr_state(self) -> AsyncGenerator[str]:
+        """检查二维码登录状态"""
+        for _ in range(30):
             state = await self._qr_login.check_state()
             match state:
                 case QrCodeLoginEvents.DONE:
-                    logger.success("二维码登录成功")
+                    yield "二维码登录成功"
+                    self._save_credential()
                     break
                 case QrCodeLoginEvents.CONF:
-                    logger.info("二维码已扫描, 请确认登录")
+                    yield "二维码已扫描, 请确认登录"
                 case QrCodeLoginEvents.TIMEOUT:
-                    logger.warning("二维码登录超时, 请重启机器人")
-                    break
-                case QrCodeLoginEvents.SCAN:
-                    pass
+                    yield "二维码过期, 请重新生成"
             await asyncio.sleep(2)
         else:
-            logger.warning("二维码登录超时, 请重启机器人")
+            yield "二维码登录超时, 请重新生成"
 
-        return self._qr_login.get_credential()
-
-    async def _init_credential(self) -> Credential | None:
+    async def _init_credential(self):
         """初始化哔哩哔哩登录凭证"""
-
-        if pconfig.bili_ck:
+        if pconfig.bili_ck is not None:
             credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
+            if await credential.check_valid():
+                logger.info(f"`parser_bili_ck` 有效, 保存到 {self._cookies_file}")
+                self._credential = credential
+                self._save_credential()
+            else:
+                logger.info(f"`parser_bili_ck` 已过期, 尝试从 {self._cookies_file} 加载")
+                self._load_credential()
         else:
-            credential = await self._get_credential_by_qrcode()
-
-        if await credential.check_valid():
-            logger.info(f"`parser_bili_ck` 有效, 保存到 {self._cookies_file}")
-            self._cookies_file.write_text(json.dumps(credential.get_cookies()))
-        else:
-            logger.info(f"`parser_bili_ck` 已过期, 尝试从 {self._cookies_file} 加载")
-            if self._cookies_file.exists():
-                credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
-
-        return credential
+            self._load_credential()
 
     @property
     async def credential(self) -> Credential | None:
         """哔哩哔哩登录凭证"""
 
         if self._credential is None:
-            self._credential = await self._init_credential()
-            if self._credential is None:
-                return None
+            await self._init_credential()
+            return self._credential
 
         if not await self._credential.check_valid():
-            logger.warning("哔哩哔哩凭证已过期, 请重新配置 `parser_bili_ck`")
-            return self._credential
+            logger.warning("哔哩哔哩凭证已过期, 请重新配置")
+            return None
 
         if await self._credential.check_refresh():
             logger.info("哔哩哔哩凭证需要刷新")
             if self._credential.has_ac_time_value() and self._credential.has_bili_jct():
                 await self._credential.refresh()
                 logger.info(f"哔哩哔哩凭证刷新成功, 保存到 {self._cookies_file}")
-                self._cookies_file.write_text(json.dumps(self._credential.get_cookies()))
+                self._save_credential()
             else:
-                logger.warning("哔哩哔哩凭证刷新需要包含 `SESSDATA`, `ac_time_value`, `bili_jct` 项")
+                logger.warning("哔哩哔哩凭证刷新需要包含 `SESSDATA`, `ac_time_value` 项")
 
         return self._credential

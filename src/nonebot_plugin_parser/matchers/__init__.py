@@ -1,13 +1,19 @@
-"""统一的解析器 matcher"""
+import re
+from typing import TypeVar
 
-from nonebot import logger, get_driver
+from nonebot import logger, get_driver, on_command
+from nonebot.params import CommandArg
+from nonebot.adapters import Message
+from nonebot.permission import SUPERUSER
+from nonebot_plugin_alconna import UniMessage
 
 from .rule import Searched, SearchResult, on_keyword_regex
 from ..utils import LimitedSizeDict
 from ..config import pconfig
 from ..helper import UniHelper
-from ..parsers import BaseParser, ParseResult
+from ..parsers import BaseParser, ParseResult, BilibiliParser
 from ..renders import get_renderer
+from ..download import DOWNLOADER
 
 
 def _get_enabled_parser_classes() -> list[type[BaseParser]]:
@@ -16,8 +22,20 @@ def _get_enabled_parser_classes() -> list[type[BaseParser]]:
     return [_cls for _cls in all_subclass if _cls.platform.name not in disabled_platforms]
 
 
-# 关键词 Parser 映射
+# 关键词 -> Parser 映射
 KEYWORD_PARSER_MAP: dict[str, BaseParser] = {}
+T = TypeVar("T", bound=BaseParser)
+
+
+def get_parser(keyword: str) -> BaseParser:
+    return KEYWORD_PARSER_MAP[keyword]
+
+
+def get_parser_by_type(parser_type: type[T]) -> T:
+    for parser in KEYWORD_PARSER_MAP.values():
+        if isinstance(parser, parser_type):
+            return parser
+    raise ValueError(f"未找到类型为 {parser_type} 的 parser 实例")
 
 
 @get_driver().on_startup
@@ -56,7 +74,7 @@ async def parser_handler(
 
     if result is None:
         # 2. 获取对应平台 parser
-        parser = KEYWORD_PARSER_MAP[sr.keyword]
+        parser = get_parser(sr.keyword)
         result = await parser.parse(sr.keyword, sr.searched)
         logger.debug(f"解析结果: {result}")
     else:
@@ -71,18 +89,6 @@ async def parser_handler(
     _RESULT_CACHE[cache_key] = result
 
 
-import re
-from typing import cast
-
-from nonebot import on_command
-from nonebot.params import CommandArg
-from nonebot.adapters import Message
-from nonebot_plugin_alconna import UniMessage
-
-from ..parsers import BilibiliParser
-from ..download import DOWNLOADER
-
-
 @on_command("bm", priority=3, block=True).handle()
 @UniHelper.with_reaction
 async def _(message: Message = CommandArg()):
@@ -94,8 +100,7 @@ async def _(message: Message = CommandArg()):
     bvid, page_num = matched.group(1), matched.group(2)
     page_idx = int(page_num) if page_num else 0
 
-    parser = KEYWORD_PARSER_MAP["BV"]
-    parser = cast(BilibiliParser, parser)
+    parser = get_parser_by_type(BilibiliParser)
 
     _, audio_url = await parser.extract_download_urls(bvid=bvid, page_index=page_idx)
     if not audio_url:
@@ -119,8 +124,8 @@ if YTDLP_DOWNLOADER is not None:
     @UniHelper.with_reaction
     async def _(message: Message = CommandArg()):
         text = message.extract_plain_text()
-        ytb_parser = cast(YouTubeParser, KEYWORD_PARSER_MAP["youtu.be"])
-        _, matched = ytb_parser.search_url(text)
+        parser = get_parser_by_type(YouTubeParser)
+        _, matched = parser.search_url(text)
         if not matched:
             await UniMessage("请发送正确的油管链接").finish()
 
@@ -131,3 +136,13 @@ if YTDLP_DOWNLOADER is not None:
 
         if pconfig.need_upload:
             await UniMessage(UniHelper.file_seg(audio_path)).send()
+
+
+@on_command("blogin", block=True, permission=SUPERUSER).handle()
+@UniHelper.with_reaction
+async def _():
+    parser = get_parser_by_type(BilibiliParser)
+    qr_pic = await parser.login_with_qrcode()
+    await UniMessage(UniHelper.img_seg(raw=qr_pic)).send()
+    async for msg in parser.check_qr_state():
+        await UniMessage(msg).send()
