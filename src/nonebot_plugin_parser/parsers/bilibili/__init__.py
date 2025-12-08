@@ -452,6 +452,7 @@ class BilibiliParser(BaseParser):
             match state:
                 case QrCodeLoginEvents.DONE:
                     yield "二维码登录成功"
+                    self._credential = self._qr_login.get_credential()
                     self._save_credential()
                     break
                 case QrCodeLoginEvents.CONF:
@@ -464,16 +465,17 @@ class BilibiliParser(BaseParser):
 
     async def _init_credential(self):
         """初始化哔哩哔哩登录凭证"""
-        if pconfig.bili_ck is not None:
-            credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
-            if await credential.check_valid():
-                logger.info(f"`parser_bili_ck` 有效, 保存到 {self._cookies_file}")
-                self._credential = credential
-                self._save_credential()
-            else:
-                logger.info(f"`parser_bili_ck` 已过期, 尝试从 {self._cookies_file} 加载")
-                self._load_credential()
+        if pconfig.bili_ck is None:
+            self._load_credential()
+            return
+
+        credential = Credential.from_cookies(ck2dict(pconfig.bili_ck))
+        if await credential.check_valid():
+            logger.info(f"`parser_bili_ck` 有效, 保存到 {self._cookies_file}")
+            self._credential = credential
+            self._save_credential()
         else:
+            logger.info(f"`parser_bili_ck` 已过期, 尝试从 {self._cookies_file} 加载")
             self._load_credential()
 
     @property
