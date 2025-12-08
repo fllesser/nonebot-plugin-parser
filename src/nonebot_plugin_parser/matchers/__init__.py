@@ -2,14 +2,15 @@ import re
 from typing import TypeVar
 
 from nonebot import logger, get_driver, on_command
+from nonebot.rule import Rule
 from nonebot.params import CommandArg
 from nonebot.adapters import Message
-from nonebot.permission import SUPERUSER
+from nonebot_plugin_uninfo import Session, UniSession
 from nonebot_plugin_alconna import UniMessage
 
 from .rule import Searched, SearchResult, on_keyword_regex
 from ..utils import LimitedSizeDict
-from ..config import pconfig
+from ..config import gconfig, pconfig
 from ..helper import UniHelper
 from ..parsers import BaseParser, ParseResult, BilibiliParser
 from ..renders import get_renderer
@@ -138,11 +139,16 @@ if YTDLP_DOWNLOADER is not None:
             await UniMessage(UniHelper.file_seg(audio_path)).send()
 
 
-@on_command("blogin", block=True, permission=SUPERUSER).handle()
-@UniHelper.with_reaction
+async def is_super_private(sess: Session | None = UniSession()) -> bool:
+    if not sess:
+        return False
+    return sess.scene.is_private and sess.user.id in gconfig.superusers
+
+
+@on_command("blogin", block=True, rule=Rule(is_super_private)).handle()
 async def _():
     parser = get_parser_by_type(BilibiliParser)
-    qr_pic = await parser.login_with_qrcode()
-    await UniMessage(UniHelper.img_seg(raw=qr_pic)).send()
+    qrcode = await parser.login_with_qrcode()
+    await UniMessage(UniHelper.img_seg(raw=qrcode)).send()
     async for msg in parser.check_qr_state():
         await UniMessage(msg).send()

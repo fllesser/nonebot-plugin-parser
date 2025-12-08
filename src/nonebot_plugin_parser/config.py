@@ -11,7 +11,6 @@ from .constants import PlatformEnum
 require("nonebot_plugin_localstore")
 import nonebot_plugin_localstore as _store
 
-_nickname: str = next(iter(get_driver().config.nickname), "")
 _cache_dir: Path = _store.get_plugin_cache_dir()
 _config_dir: Path = _store.get_plugin_config_dir()
 _data_dir: Path = _store.get_plugin_data_dir()
@@ -163,4 +162,8 @@ class Config(BaseModel):
 
 
 pconfig: Config = get_plugin_config(Config)
-"""配置"""
+"""插件配置"""
+gconfig = get_driver().config
+"""全局配置"""
+_nickname: str = next(iter(gconfig.nickname), "nonebot-plugin-parser")
+"""机器人昵称"""
