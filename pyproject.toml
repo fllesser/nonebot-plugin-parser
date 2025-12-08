@@ -74,7 +74,7 @@ dev = [
 ]
 extras = [
   "nonebot-plugin-htmlkit>=0.1.0rc4",
-  "yt-dlp[default]>=2025.11.12",
+  "yt-dlp[default]>=2025.12.8",
   "types-yt-dlp>=2025.11.12.20251115",
 ]
 test = [
