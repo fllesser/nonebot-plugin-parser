@@ -4,6 +4,7 @@
 </a>
 
 ## ✨ [Nonebot2](https://github.com/nonebot/nonebot2) 链接分享自动解析插件 ✨
+
 [![LICENSE](https://img.shields.io/github/license/fllesser/nonebot-plugin-parser.svg)](./LICENSE)
 [![pypi](https://img.shields.io/pypi/v/nonebot-plugin-parser.svg)](https://pypi.python.org/pypi/nonebot-plugin-parser)
 [![python](https://img.shields.io/badge/python-3.10|3.11|3.12|3.13|3.14-blue.svg)](https://python.org)
@@ -13,31 +14,33 @@
 [![pre-commit](https://results.pre-commit.ci/badge/github/fllesser/nonebot-plugin-parser/master.svg)](https://results.pre-commit.ci/latest/github/fllesser/nonebot-plugin-parser/master)
 [![codecov](https://codecov.io/gh/fllesser/nonebot-plugin-parser/graph/badge.svg?token=VCS8IHSO7U)](https://codecov.io/gh/fllesser/nonebot-plugin-parser)
 [![qqgroup](https://img.shields.io/badge/QQ%E7%BE%A4-820082006-orange?style=flat-square)](https://qm.qq.com/q/y4T4CjHimc)
+
 </div>
 
-> [!IMPORTANT]
-> **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～⭐️
+> [!IMPORTANT] > **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～ ⭐️
 
 <img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=fllesser&repo=nonebot-plugin-parser" alt="starify" />
 
 ## 📖 介绍
 
-| 平台    | 触发的消息形态                  | 视频 | 图集 | 音频 |
-| ------- | ------------------------------- | ---- | ---- | ---- |
-| B站     | av号/BV号/链接/短链/卡片/小程序 | ✅​   | ✅​   | ✅​   |
-| 抖音    | 链接(分享链接，兼容电脑端链接)  | ✅​   | ✅​   | ❌️    |
-| 微博    | 链接(博文，视频，show, 文章)    | ✅​   | ✅​   | ❌️    |
-| 小红书  | 链接(含短链)/卡片               | ✅​   | ✅​   | ❌️    |
-| 快手    | 链接(包含标准链接和短链)        | ✅​   | ✅​   | ❌️    |
-| acfun   | 链接                            | ✅​   | ❌️    | ❌️    |
-| youtube | 链接(含短链)                    | ✅​   | ❌️    | ✅​   |
-| tiktok  | 链接                            | ✅​   | ❌️    | ❌️    |
-| twitter | 链接                            | ✅​   | ✅​   | ❌️    |
+| 平台    | 触发的消息形态                    | 视频 | 图集 | 音频 |
+| ------- | --------------------------------- | ---- | ---- | ---- |
+| B 站    | av 号/BV 号/链接/短链/卡片/小程序 | ✅​  | ✅​  | ✅​  |
+| 抖音    | 链接(分享链接，兼容电脑端链接)    | ✅​  | ✅​  | ❌️  |
+| 微博    | 链接(博文，视频，show, 文章)      | ✅​  | ✅​  | ❌️  |
+| 小红书  | 链接(含短链)/卡片                 | ✅​  | ✅​  | ❌️  |
+| 快手    | 链接(包含标准链接和短链)          | ✅​  | ✅​  | ❌️  |
+| acfun   | 链接                              | ✅​  | ❌️  | ❌️  |
+| youtube | 链接(含短链)                      | ✅​  | ❌️  | ✅​  |
+| tiktok  | 链接                              | ✅​  | ❌️  | ❌️  |
+| twitter | 链接                              | ✅​  | ✅​  | ❌️  |
 
 支持的链接，可参考 [测试链接](https://github.com/fllesser/nonebot-plugin-parser/blob/master/tests/others/test_urls.md)
 
 ## 🎨 效果图
+
 插件默认启用 PIL 实现的通用媒体卡片渲染，效果图如下
+
 <div align="center">
 
 <img src="https://raw.githubusercontent.com/fllesser/nonebot-plugin-parser/refs/heads/resources/resources/renderdamine/video.png" width="160" />
@@ -49,8 +52,8 @@
 </div>
 
 ## 💿 安装
-> [!Warning]
-> **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
+
+> [!Warning] > **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
 
 > [!Important]
 > 插件可选依赖 `htmlkit`, `ytdlp`, `all`，分别用于 htmlkit 渲染和 youtube / tiktok 解析，如果需要使用，请在安装时指定，如 `nb plugin install nonebot-plugin-parser[ytdlp]`
@@ -60,12 +63,15 @@
 在 nonebot2 项目的根目录下打开命令行, 输入以下指令即可安装
 
     nb plugin install nonebot-plugin-parser --upgrade
+
 使用 pypi 源更新
 
     nb plugin install nonebot-plugin-parser --upgrade -i https://pypi.org/simple
+
 安装仓库 dev 分支
 
     uv pip install git+https://github.com/fllesser/nonebot-plugin-parser.git@dev
+
 </details>
 
 <details>
@@ -76,26 +82,30 @@
 使用 uv 安装
 
     uv add nonebot-plugin-parser
+
 安装仓库 dev 分支
 
     uv add git+https://github.com/fllesser/nonebot-plugin-parser.git@master
-</details>
 
+</details>
 
 <details>
 <summary>pip</summary>
 
     pip install --upgrade nonebot-plugin-parser
+
 </details>
 <details>
 <summary>pdm</summary>
 
     pdm add nonebot-plugin-parser
+
 </details>
 <details>
 <summary>poetry</summary>
 
     poetry add nonebot-plugin-parser
+
 </details>
 
 打开 nonebot2 项目根目录下的 `pyproject.toml` 文件, 在 `[tool.nonebot]` 部分追加写入
@@ -110,9 +120,11 @@
 [nbr](https://github.com/fllesser/nbr) 是一个基于 uv 的 nb-cli，可以方便地管理 nonebot2
 
     nbr plugin install nonebot-plugin-parser
+
 使用 **pypi** 源安装
 
     nbr plugin install nonebot-plugin-parser -i "https://pypi.org/simple"
+
 使用**清华源**安装
 
     nbr plugin install nonebot-plugin-parser -i "https://pypi.tuna.tsinghua.edu.cn/simple"
@@ -229,16 +241,20 @@ parser_emoji_style="facebook"
 </details>
 
 ## 🎉 使用
-|   指令   |         权限          | 需要@ | 范围  |       说明        |
-| :------: | :-------------------: | :---: | :---: | :---------------: |
-| 开启解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  |     开启解析      |
-| 关闭解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊  |     关闭解析      |
-|    bm    |           -           |  否   | 群聊  |   下载 B 站音频   |
-|    ym    |           -           |  否   | 群聊  | 下载 youtube 音频 |
+
+|   指令   |         权限          | 需要@ | 范围 |       说明        |
+| :------: | :-------------------: | :---: | :--: | :---------------: |
+| 开启解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊 |     开启解析      |
+| 关闭解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊 |     关闭解析      |
+|    bm    |           -           |  否   | 群聊 |   下载 B 站音频   |
+|    ym    |           -           |  否   | 群聊 | 下载 youtube 音频 |
+|  blogin  |           -           |  否   | 群聊 |   登录 B 站账号   |
 
 ## 🧩 扩展
+
 > [!IMPORTANT]
 > 插件自 `v2.2.0` 版本开始支持自定义解析器，通过继承 `BaseParser` 类并实现 `platform`, `handle` 即可
+
 <details>
 <summary>完整示例</summary>
 
@@ -270,7 +286,7 @@ class ExampleParser(BaseParser):
     async def _parse(self, searched: Match[str]):
         # 1. 提取视频 ID
         video_id = searched.group("video_id")
-    
+
         # 2. 请求 API 获取视频信息
         async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
             resp = await client.get(f"https://api.example.com/video/{video_id}")
@@ -306,6 +322,7 @@ class ExampleParser(BaseParser):
         )
 
 ```
+
 </details>
 <details>
 <summary>辅助函数</summary>
@@ -321,6 +338,7 @@ author = self.create_author(
 ```
 
 > 构建视频内容
+
 ```python
 # 方式1：传入 URL，自动下载
 video = self.create_video_content(
@@ -340,6 +358,7 @@ video = self.create_video_content(
 ```
 
 > 构建图集内容
+
 ```python
 # 并发下载图集内容
 images = self.create_image_contents([
@@ -349,6 +368,7 @@ images = self.create_image_contents([
 ```
 
 > 构建图文内容(适用于类似 Bilibili 动态图文混排)
+
 ```python
 graphics = self.create_graphics_content(
     image_url="https://example.com/image.jpg",
@@ -358,13 +378,16 @@ graphics = self.create_graphics_content(
 ```
 
 > 创建动图内容（GIF)，平台一般只提供视频（后续插件会做自动转为 gif 的处理)
+
 ```python
 dynamics = self.create_dynamic_contents([
-    "https://example.com/dynamic1.mp4", 
+    "https://example.com/dynamic1.mp4",
     "https://example.com/dynamic2.mp4",
 ])
 ```
+
 > 重定向 url
+
 ```python
 real_url = await self.get_redirect_url(
     url="https://short.url/abc",
@@ -374,7 +397,7 @@ real_url = await self.get_redirect_url(
 
 </details>
 
-
 ## 🎉 致谢
+
 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
 [parse-video-py](https://github.com/wujunwei928/parse-video-py)
