@@ -248,7 +248,7 @@ parser_emoji_style="facebook"
 | 关闭解析 | SUPERUSER/OWNER/ADMIN |  是   | 群聊 |     关闭解析      |
 |    bm    |           -           |  否   | 群聊 |   下载 B 站音频   |
 |    ym    |           -           |  否   | 群聊 | 下载 youtube 音频 |
-|  blogin  |           -           |  否   | 群聊 |   登录 B 站账号   |
+|  blogin  |       SUPERUSER       |  否   |  -   | 扫码获取 B 站凭证 |
 
 ## 🧩 扩展
 
