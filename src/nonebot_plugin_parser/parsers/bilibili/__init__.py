@@ -431,7 +431,7 @@ class BilibiliParser(BaseParser):
         qrcode_terminal = self._qr_login.get_qrcode_terminal()
         logger.info(f"请扫描以下二维码登录哔哩哔哩(建议使用小号): \n{qrcode_terminal} ")
 
-        for i in range(60):
+        for i in range(30):
             state = await self._qr_login.check_state()
             match state:
                 case QrCodeLoginEvents.DONE:
