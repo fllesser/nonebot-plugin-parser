@@ -28,16 +28,16 @@ async def test_common_video():
         assert await result.cover_path, "封面为空"
         assert result.video_contents, "视频内容为空"
 
-        try:
-            video_path = await result.video_contents[0].get_path()
-        except DownloadException:
-            pytest.skip("抖音视频下载失败, 随机到的 cdn 过期")
+        video_path = await result.video_contents[0].get_path()
 
         assert video_path.exists(), "视频不存在"
         logger.success(f"{url} | 抖音视频解析成功")
 
     for url in common_urls:
-        await test_parse(url)
+        try:
+            await test_parse(url)
+        except DownloadException:
+            pytest.skip("抖音视频下载失败, 随机到的 cdn 过期")
 
 
 @pytest.mark.asyncio
