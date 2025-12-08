@@ -451,7 +451,7 @@ class BilibiliParser(BaseParser):
             state = await self._qr_login.check_state()
             match state:
                 case QrCodeLoginEvents.DONE:
-                    yield "二维码登录成功"
+                    yield "登录成功"
                     self._credential = self._qr_login.get_credential()
                     self._save_credential()
                     break
