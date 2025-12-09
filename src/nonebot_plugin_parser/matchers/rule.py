@@ -94,7 +94,7 @@ def _extract_url(hyper: Hyper) -> str | None:
         ("music", "jumpUrl"),
     ):
         if url := meta.get(key1, {}).get(key2):
-            logger.debug(f"extract url from raw:{key1}:{key2}: {url}")
+            logger.debug(f"extract url from raw:meta:{key1}:{key2}: {url}")
             return url
     return None
 
