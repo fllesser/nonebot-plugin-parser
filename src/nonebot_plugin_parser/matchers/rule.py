@@ -55,7 +55,6 @@ def _escape_raw(raw: str) -> str:
         str: 转义后的字符串
     """
     replacements = [
-        ("&#44;", ","),
         ("\\", ""),
         ("&amp;", "&"),
     ]
@@ -78,8 +77,6 @@ def _extract_url(hyper: Hyper) -> str | None:
 
     if raw_str is None:
         return None
-
-    # raw_str = _escape_raw(raw_str)
 
     try:
         raw: dict[str, Any] = msgspec.json.decode(raw_str)
