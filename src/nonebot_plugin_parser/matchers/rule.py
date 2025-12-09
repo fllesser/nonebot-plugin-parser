@@ -1,7 +1,7 @@
 import re
-import json
 from typing import Any, Literal
 
+import msgspec
 from nonebot import logger
 from nonebot.rule import Rule
 from nonebot.params import Depends
@@ -79,11 +79,11 @@ def _extract_url(hyper: Hyper) -> str | None:
     if raw_str is None:
         return None
 
-    raw_str = _escape_raw(raw_str)
+    # raw_str = _escape_raw(raw_str)
 
     try:
-        raw: dict[str, Any] = json.loads(raw_str)
-    except json.JSONDecodeError:
+        raw: dict[str, Any] = msgspec.json.decode(raw_str)
+    except msgspec.DecodeError:
         logger.exception(f"json 卡片解析失败: {raw_str}")
         return None
 
