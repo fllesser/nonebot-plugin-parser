@@ -17,8 +17,8 @@
 
 </div>
 
-> [!IMPORTANT] > **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～ ⭐️
-
+> [!IMPORTANT]
+> **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～ ⭐️
 <img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=fllesser&repo=nonebot-plugin-parser" alt="starify" />
 
 ## 📖 介绍

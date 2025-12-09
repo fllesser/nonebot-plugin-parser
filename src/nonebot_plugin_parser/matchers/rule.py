@@ -8,9 +8,12 @@ from nonebot.params import Depends
 from nonebot.typing import T_State
 from nonebot.matcher import Matcher
 from nonebot.plugin.on import get_matcher_source
+from nonebot.permission import Permission
+from nonebot_plugin_uninfo import Session, UniSession
 from nonebot_plugin_alconna.uniseg import Hyper, UniMsg
 
 from .filter import is_enabled
+from ..config import gconfig
 
 # 统一的状态键
 PSR_SEARCHED_KEY: Literal["psr-searched"] = "psr-searched"
@@ -81,7 +84,7 @@ def _extract_url(hyper: Hyper) -> str | None:
     try:
         raw: dict[str, Any] = json.loads(raw_str)
     except json.JSONDecodeError:
-        logger.exception("json 卡片解析失败")
+        logger.exception(f"json 卡片解析失败: {raw_str}")
         return None
 
     meta: dict[str, Any] | None = raw.get("meta")
@@ -165,3 +168,12 @@ def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5
         source=get_matcher_source(1),
     )
     return matcher
+
+
+async def _is_super_private(sess: Session | None = UniSession()) -> bool:
+    if not sess:
+        return False
+    return sess.scene.is_private and sess.user.id in gconfig.superusers
+
+
+SUPER_PRIVATE = Permission(_is_super_private)
