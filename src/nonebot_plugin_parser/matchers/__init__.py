@@ -4,14 +4,11 @@ from typing import TypeVar
 from nonebot import logger, get_driver, on_command
 from nonebot.params import CommandArg
 from nonebot.adapters import Message
-from nonebot.permission import Permission
-from nonebot_plugin_uninfo import Session, UniSession
-from nonebot_plugin_alconna import UniMessage
 
-from .rule import Searched, SearchResult, on_keyword_regex
+from .rule import SUPER_PRIVATE, Searched, SearchResult, on_keyword_regex
 from ..utils import LimitedSizeDict
-from ..config import gconfig, pconfig
-from ..helper import UniHelper
+from ..config import pconfig
+from ..helper import UniHelper, UniMessage
 from ..parsers import BaseParser, ParseResult, BilibiliParser
 from ..renders import get_renderer
 from ..download import DOWNLOADER
@@ -139,13 +136,7 @@ if YTDLP_DOWNLOADER is not None:
             await UniMessage(UniHelper.file_seg(audio_path)).send()
 
 
-async def is_super_private(sess: Session | None = UniSession()) -> bool:
-    if not sess:
-        return False
-    return sess.scene.is_private and sess.user.id in gconfig.superusers
-
-
-@on_command("blogin", block=True, permission=Permission(is_super_private)).handle()
+@on_command("blogin", block=True, permission=SUPER_PRIVATE).handle()
 async def _():
     parser = get_parser_by_type(BilibiliParser)
     qrcode = await parser.login_with_qrcode()

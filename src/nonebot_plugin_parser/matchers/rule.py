@@ -1,16 +1,19 @@
 import re
-import json
 from typing import Any, Literal
 
+import msgspec
 from nonebot import logger
 from nonebot.rule import Rule
 from nonebot.params import Depends
 from nonebot.typing import T_State
 from nonebot.matcher import Matcher
 from nonebot.plugin.on import get_matcher_source
+from nonebot.permission import Permission
+from nonebot_plugin_uninfo import Session, UniSession
 from nonebot_plugin_alconna.uniseg import Hyper, UniMsg
 
 from .filter import is_enabled
+from ..config import gconfig
 
 # 统一的状态键
 PSR_SEARCHED_KEY: Literal["psr-searched"] = "psr-searched"
@@ -52,7 +55,6 @@ def _escape_raw(raw: str) -> str:
         str: 转义后的字符串
     """
     replacements = [
-        ("&#44;", ","),
         ("\\", ""),
         ("&amp;", "&"),
     ]
@@ -76,12 +78,10 @@ def _extract_url(hyper: Hyper) -> str | None:
     if raw_str is None:
         return None
 
-    raw_str = _escape_raw(raw_str)
-
     try:
-        raw: dict[str, Any] = json.loads(raw_str)
-    except json.JSONDecodeError:
-        logger.exception("json 卡片解析失败")
+        raw: dict[str, Any] = msgspec.json.decode(raw_str)
+    except msgspec.DecodeError:
+        logger.exception(f"json 卡片解析失败: {raw_str}")
         return None
 
     meta: dict[str, Any] | None = raw.get("meta")
@@ -94,7 +94,7 @@ def _extract_url(hyper: Hyper) -> str | None:
         ("music", "jumpUrl"),
     ):
         if url := meta.get(key1, {}).get(key2):
-            logger.debug(f"extract url from raw:{key1}:{key2}: {url}")
+            logger.debug(f"extract url from raw:meta:{key1}:{key2}: {url}")
             return url
     return None
 
@@ -165,3 +165,12 @@ def on_keyword_regex(*args: tuple[str, str | re.Pattern[str]], priority: int = 5
         source=get_matcher_source(1),
     )
     return matcher
+
+
+async def _is_super_private(sess: Session | None = UniSession()) -> bool:
+    if not sess:
+        return False
+    return sess.scene.is_private and sess.user.id in gconfig.superusers
+
+
+SUPER_PRIVATE = Permission(_is_super_private)
