@@ -2,9 +2,9 @@ import re
 from typing import TypeVar
 
 from nonebot import logger, get_driver, on_command
-from nonebot.rule import Rule
 from nonebot.params import CommandArg
 from nonebot.adapters import Message
+from nonebot.permission import Permission
 from nonebot_plugin_uninfo import Session, UniSession
 from nonebot_plugin_alconna import UniMessage
 
@@ -145,7 +145,7 @@ async def is_super_private(sess: Session | None = UniSession()) -> bool:
     return sess.scene.is_private and sess.user.id in gconfig.superusers
 
 
-@on_command("blogin", block=True, rule=Rule(is_super_private)).handle()
+@on_command("blogin", block=True, permission=Permission(is_super_private)).handle()
 async def _():
     parser = get_parser_by_type(BilibiliParser)
     qrcode = await parser.login_with_qrcode()
