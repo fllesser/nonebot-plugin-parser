@@ -257,6 +257,34 @@ wheels = [
 ]
 
 [[package]]
+name = "cairocffi"
+version = "1.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cffi" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/70/c5/1a4dc131459e68a173cbdab5fad6b524f53f9c1ef7861b7698e998b837cc/cairocffi-1.7.1.tar.gz", hash = "sha256:2e48ee864884ec4a3a34bfa8c9ab9999f688286eb714a15a43ec9d068c36557b", size = 88096, upload-time = "2024-06-18T10:56:06.741Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/93/d8/ba13451aa6b745c49536e87b6bf8f629b950e84bd0e8308f7dc6883b67e2/cairocffi-1.7.1-py3-none-any.whl", hash = "sha256:9803a0e11f6c962f3b0ae2ec8ba6ae45e957a146a004697a1ac1bbf16b073b3f", size = 75611, upload-time = "2024-06-18T10:55:59.489Z" },
+]
+
+[[package]]
+name = "cairosvg"
+version = "2.8.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cairocffi" },
+    { name = "cssselect2" },
+    { name = "defusedxml" },
+    { name = "pillow" },
+    { name = "tinycss2" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ab/b9/5106168bd43d7cd8b7cc2a2ee465b385f14b63f4c092bb89eee2d48c8e67/cairosvg-2.8.2.tar.gz", hash = "sha256:07cbf4e86317b27a92318a4cac2a4bb37a5e9c1b8a27355d06874b22f85bef9f", size = 8398590, upload-time = "2025-05-15T06:56:32.653Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/67/48/816bd4aaae93dbf9e408c58598bc32f4a8c65f4b86ab560864cb3ee60adb/cairosvg-2.8.2-py3-none-any.whl", hash = "sha256:eab46dad4674f33267a671dce39b64be245911c901c70d65d2b7b0821e852bf5", size = 45773, upload-time = "2025-05-15T06:56:28.552Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2025.11.12"
 source = { registry = "https://pypi.org/simple" }
@@ -562,6 +590,19 @@ toml = [
 ]
 
 [[package]]
+name = "cssselect2"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tinycss2" },
+    { name = "webencodings" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9f/86/fd7f58fc498b3166f3a7e8e0cddb6e620fe1da35b02248b1bd59e95dbaaa/cssselect2-0.8.0.tar.gz", hash = "sha256:7674ffb954a3b46162392aee2a3a0aedb2e14ecf99fcc28644900f4e6e3e9d3a", size = 35716, upload-time = "2025-03-05T14:46:07.988Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0f/e7/aa315e6a749d9b96c2504a1ba0ba031ba2d0517e972ce22682e3fccecb09/cssselect2-0.8.0-py3-none-any.whl", hash = "sha256:46fc70ebc41ced7a32cd42d58b1884d72ade23d21e5a4eaaf022401c13f0e76e", size = 15454, upload-time = "2025-03-05T14:46:06.463Z" },
+]
+
+[[package]]
 name = "curl-cffi"
 version = "0.13.0"
 source = { registry = "https://pypi.org/simple" }
@@ -583,12 +624,35 @@ wheels = [
 ]
 
 [[package]]
+name = "defusedxml"
+version = "0.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69", size = 75520, upload-time = "2021-03-08T10:59:26.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61", size = 25604, upload-time = "2021-03-08T10:59:24.45Z" },
+]
+
+[[package]]
 name = "emoji"
 version = "2.15.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a2/78/0d2db9382c92a163d7095fc08efff7800880f830a152cfced40161e7638d/emoji-2.15.0.tar.gz", hash = "sha256:eae4ab7d86456a70a00a985125a03263a5eac54cd55e51d7e184b1ed3b6757e4", size = 615483, upload-time = "2025-09-21T12:13:02.755Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e1/5e/4b5aaaabddfacfe36ba7768817bd1f71a7a810a43705e531f3ae4c690767/emoji-2.15.0-py3-none-any.whl", hash = "sha256:205296793d66a89d88af4688fa57fd6496732eb48917a87175a023c8138995eb", size = 608433, upload-time = "2025-09-21T12:13:01.197Z" },
+]
+
+[[package]]
+name = "emosvg"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cairosvg" },
+    { name = "emoji" },
+    { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c0/33/3979d8220944bf20cddbf88d98661e62875fad9f97aac0d193c9264206a2/emosvg-0.1.0.tar.gz", hash = "sha256:d8778298b56e7f1c6d0fa87bd0c9b3983705cdc27825e12c6c87cad7a4296998", size = 2202283, upload-time = "2025-12-10T14:04:25.561Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9a/7b/4850b570e8d22796be5427427b7da97e02df6f22b47a5a138d248055e187/emosvg-0.1.0-py3-none-any.whl", hash = "sha256:12795b38d2bf7c49b65be398db2eeb8676b6bd8c521fd083e15c6aac97c0092d", size = 5317490, upload-time = "2025-12-10T14:04:23.418Z" },
 ]
 
 [[package]]
@@ -1403,6 +1467,9 @@ all = [
     { name = "nonebot-plugin-htmlkit" },
     { name = "yt-dlp", extra = ["default"] },
 ]
+emosvg = [
+    { name = "emosvg" },
+]
 htmlkit = [
     { name = "nonebot-plugin-htmlkit" },
 ]
@@ -1412,6 +1479,7 @@ ytdlp = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "emosvg" },
     { name = "nonebot-adapter-onebot" },
     { name = "nonebot-plugin-htmlkit" },
     { name = "nonebot2", extra = ["fastapi"] },
@@ -1426,6 +1494,7 @@ dev = [
     { name = "yt-dlp", extra = ["default"] },
 ]
 extras = [
+    { name = "emosvg" },
     { name = "nonebot-plugin-htmlkit" },
     { name = "types-yt-dlp" },
     { name = "yt-dlp", extra = ["default"] },
@@ -1457,6 +1526,7 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
+    { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.20.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4,<1.0.0" },
@@ -1471,10 +1541,11 @@ requires-dist = [
     { name = "yt-dlp", extras = ["default"], marker = "extra == 'all'", specifier = ">=2025.11.12" },
     { name = "yt-dlp", extras = ["default"], marker = "extra == 'ytdlp'", specifier = ">=2025.11.12" },
 ]
-provides-extras = ["all", "htmlkit", "ytdlp"]
+provides-extras = ["all", "htmlkit", "ytdlp", "emosvg"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "emosvg", specifier = ">=0.1.0" },
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
@@ -1485,12 +1556,13 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.8.0,<4.0.0" },
     { name = "respx", specifier = ">=0.22.0" },
     { name = "ruff", specifier = ">=0.14.7,<1.0.0" },
-    { name = "types-yt-dlp", specifier = ">=2025.11.12.20251115" },
+    { name = "types-yt-dlp", specifier = ">=2025.12.8.20251210" },
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
 ]
 extras = [
+    { name = "emosvg", specifier = ">=0.1.0" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
-    { name = "types-yt-dlp", specifier = ">=2025.11.12.20251115" },
+    { name = "types-yt-dlp", specifier = ">=2025.12.8.20251210" },
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
 ]
 pydantic-v1 = [{ name = "pydantic", specifier = "<2.0.0" }]
@@ -2429,6 +2501,18 @@ wheels = [
 ]
 
 [[package]]
+name = "tinycss2"
+version = "1.5.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "webencodings" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a3/ae/2ca4913e5c0f09781d75482874c3a95db9105462a92ddd303c7d285d3df2/tinycss2-1.5.1.tar.gz", hash = "sha256:d339d2b616ba90ccce58da8495a78f46e55d4d25f9fd71dfd526f07e7d53f957", size = 88195, upload-time = "2025-11-23T10:29:10.082Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/45/c7b5c3168458db837e8ceab06dc77824e18202679d0463f0e8f002143a97/tinycss2-1.5.1-py3-none-any.whl", hash = "sha256:3415ba0f5839c062696996998176c4a3751d18b7edaaeeb658c9ce21ec150661", size = 28404, upload-time = "2025-11-23T10:29:08.676Z" },
+]
+
+[[package]]
 name = "tomli"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2491,14 +2575,14 @@ wheels = [
 
 [[package]]
 name = "types-yt-dlp"
-version = "2025.11.12.20251115"
+version = "2025.12.8.20251210"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/57/ee/7f6df9773b2fadf2300b5668aad1676ac1b5c20401bbba2647cf893cfda5/types_yt_dlp-2025.11.12.20251115.tar.gz", hash = "sha256:eac6f0a91a3312a531080d6d1e0d6f396f10366f25c478dd7eaf69fe0c7df97f", size = 42082, upload-time = "2025-11-15T03:00:24.926Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e5/fe/30d3d4a6c62f413369966a4fe549c2ea1bee8a8d590bd4c8d831951a3bbd/types_yt_dlp-2025.12.8.20251210.tar.gz", hash = "sha256:7eda94d9ff745049aa6b624f2bc91b84db5d07141bb3ba7c2223ab9daafd2336", size = 42182, upload-time = "2025-12-10T03:14:36.996Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/32/1cbc426d8f8b305b19d58c5d0ac6546131cc83141ab24817d9130e2f67b0/types_yt_dlp-2025.11.12.20251115-py3-none-any.whl", hash = "sha256:2269eb81f3b7c32cb6acebcb5d7f666197051380676e5f5398d6340d46b0a26a", size = 57365, upload-time = "2025-11-15T03:00:23.931Z" },
+    { url = "https://files.pythonhosted.org/packages/26/41/408aece2675deaf58beadc1be25110adafe957e2da15138d739e5f7f2d18/types_yt_dlp-2025.12.8.20251210-py3-none-any.whl", hash = "sha256:5d8e37032c6dffa3651b1a1706a7eb541ffe5fb187778bbd817cb055d6ac0e70", size = 57367, upload-time = "2025-12-10T03:14:36.134Z" },
 ]
 
 [[package]]
@@ -2722,6 +2806,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/bd/95/615e72cd27b85b61eec764a5ca51bd94d40b5adea5ff47567d9ebc4d275a/watchfiles-1.1.1-pp311-pypy311_pp73-macosx_11_0_arm64.whl", hash = "sha256:89eef07eee5e9d1fda06e38822ad167a044153457e6fd997f8a858ab7564a336", size = 396117, upload-time = "2025-10-14T15:06:11.28Z" },
     { url = "https://files.pythonhosted.org/packages/c9/81/e7fe958ce8a7fb5c73cc9fb07f5aeaf755e6aa72498c57d760af760c91f8/watchfiles-1.1.1-pp311-pypy311_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ce19e06cbda693e9e7686358af9cd6f5d61312ab8b00488bc36f5aabbaf77e24", size = 450493, upload-time = "2025-10-14T15:06:12.321Z" },
     { url = "https://files.pythonhosted.org/packages/6e/d4/ed38dd3b1767193de971e694aa544356e63353c33a85d948166b5ff58b9e/watchfiles-1.1.1-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3e6f39af2eab0118338902798b5aa6664f46ff66bc0280de76fca67a7f262a49", size = 457546, upload-time = "2025-10-14T15:06:13.372Z" },
+]
+
+[[package]]
+name = "webencodings"
+version = "0.5.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/02/ae6ceac1baeda530866a85075641cec12989bd8d31af6d5ab4a3e8c92f47/webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923", size = 9721, upload-time = "2017-04-05T20:21:34.189Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f4/24/2a3e3df732393fed8b3ebf2ec078f05546de641fe1b667ee316ec1dcf3b7/webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78", size = 11774, upload-time = "2017-04-05T20:21:32.581Z" },
 ]
 
 [[package]]

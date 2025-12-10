@@ -21,6 +21,11 @@ T = TypeVar("T")
 Color = tuple[int, int, int]
 PILImage = Image.Image
 
+try:
+    import emosvg
+except ImportError:
+    emosvg = None
+
 
 def suppress_exception(
     func: Callable[P, T],
@@ -355,15 +360,25 @@ class CommonRenderer(ImageRenderer):
         fill: Color,
     ) -> int:
         """绘制文本"""
-        await Apilmoji.text(
-            ctx.image,
-            xy,
-            lines,
-            font.font,
-            fill=fill,
-            line_height=font.line_height,
-            source=cls.EMOJI_SOURCE,
-        )
+        if emosvg is None:
+            await Apilmoji.text(
+                ctx.image,
+                xy,
+                lines,
+                font.font,
+                fill=fill,
+                line_height=font.line_height,
+                source=cls.EMOJI_SOURCE,
+            )
+        else:
+            emosvg.text(
+                ctx.image,
+                xy,
+                lines,
+                font.font,
+                fill=fill,
+                line_height=font.line_height,
+            )
         return font.line_height * len(lines)
 
     @override
