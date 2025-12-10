@@ -61,10 +61,14 @@ Release = "https://github.com/fllesser/nonebot-plugin-parser/releases"
 Repository = "https://github.com/fllesser/nonebot-plugin-parser"
 
 [project.optional-dependencies]
-all = ["nonebot-plugin-htmlkit>=0.1.0rc4", "yt-dlp[default]>=2025.11.12"]
 htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc4"]
 ytdlp = ["yt-dlp[default]>=2025.11.12"]
 emosvg = ["emosvg>=0.1.0"]
+all = [
+  "nonebot-plugin-htmlkit>=0.1.0rc4",
+  "yt-dlp[default]>=2025.11.12",
+  "emosvg>=0.1.1",
+]
 
 [dependency-groups]
 dev = [

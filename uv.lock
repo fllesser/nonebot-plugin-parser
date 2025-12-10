@@ -643,16 +643,16 @@ wheels = [
 
 [[package]]
 name = "emosvg"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cairosvg" },
     { name = "emoji" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c0/33/3979d8220944bf20cddbf88d98661e62875fad9f97aac0d193c9264206a2/emosvg-0.1.0.tar.gz", hash = "sha256:d8778298b56e7f1c6d0fa87bd0c9b3983705cdc27825e12c6c87cad7a4296998", size = 2202283, upload-time = "2025-12-10T14:04:25.561Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/9e/0985083e19b67cfb154e2e3c974e42c7b0b9b8272d961a6340127a468de0/emosvg-0.1.1.tar.gz", hash = "sha256:cba7acaaddef772720121859b0e1c469bd73d38fd0f8172bc8629ff8d6872cb2", size = 2202424, upload-time = "2025-12-10T14:47:34.138Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9a/7b/4850b570e8d22796be5427427b7da97e02df6f22b47a5a138d248055e187/emosvg-0.1.0-py3-none-any.whl", hash = "sha256:12795b38d2bf7c49b65be398db2eeb8676b6bd8c521fd083e15c6aac97c0092d", size = 5317490, upload-time = "2025-12-10T14:04:23.418Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/4b/3f6692d93544615806c9b9c158cfb532662287a587ff7b851a989b211bf5/emosvg-0.1.1-py3-none-any.whl", hash = "sha256:0931ec8aa79a55c1b4b25c15754c8f45ada89e12808f825fe855550623d3bf75", size = 5317634, upload-time = "2025-12-10T14:47:32.307Z" },
 ]
 
 [[package]]
@@ -1464,6 +1464,7 @@ dependencies = [
 
 [package.optional-dependencies]
 all = [
+    { name = "emosvg" },
     { name = "nonebot-plugin-htmlkit" },
     { name = "yt-dlp", extra = ["default"] },
 ]
@@ -1526,6 +1527,7 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
+    { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.1" },
     { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.0" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.20.0,<1.0.0" },
@@ -1541,7 +1543,7 @@ requires-dist = [
     { name = "yt-dlp", extras = ["default"], marker = "extra == 'all'", specifier = ">=2025.11.12" },
     { name = "yt-dlp", extras = ["default"], marker = "extra == 'ytdlp'", specifier = ">=2025.11.12" },
 ]
-provides-extras = ["all", "htmlkit", "ytdlp", "emosvg"]
+provides-extras = ["htmlkit", "ytdlp", "emosvg", "all"]
 
 [package.metadata.requires-dev]
 dev = [
