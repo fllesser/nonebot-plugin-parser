@@ -643,16 +643,16 @@ wheels = [
 
 [[package]]
 name = "emosvg"
-version = "0.1.2"
+version = "0.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cairosvg" },
     { name = "emoji" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c5/8d/40782d171a40e0ea4d0f6f34adfe517d74facc4094fc4beba57a5f9ddb79/emosvg-0.1.2.tar.gz", hash = "sha256:069e46c25a9193665abadc303d0bfbfb24c9ff1d2fbb6c0a926469b0536313c2", size = 2202821, upload-time = "2025-12-10T16:35:12.281Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5b/c6/d7b44223705d78e584e32ecfabc70a596c19f5f1065f62140566da5dc7f8/emosvg-0.1.3.tar.gz", hash = "sha256:ad0725fbd7b99d969950753d1c1303a918492e9593ae82305887f71c8996604d", size = 2202805, upload-time = "2025-12-10T17:20:08.161Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/64/7f/b12060df0985ff98ac9629a17e63476495f72402dc2f588269007198c1eb/emosvg-0.1.2-py3-none-any.whl", hash = "sha256:26cc6f22112e550ffb8e0d29fea43b84ac9cf1b2411dd2fdd1e634f0c3495f92", size = 5318097, upload-time = "2025-12-10T16:35:10.541Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/c2/0c07a5eea77a58218d9366e2c92b2cc3be15b0a8aa7a4f7912f081864779/emosvg-0.1.3-py3-none-any.whl", hash = "sha256:104a320674a6b78ec8f2a45c005c261168d26ea2843d674fbca4c81b4edd4de4", size = 5318096, upload-time = "2025-12-10T17:20:06.371Z" },
 ]
 
 [[package]]
@@ -1527,8 +1527,8 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
-    { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.2" },
-    { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.1" },
+    { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.3" },
+    { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.3" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.20.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4,<1.0.0" },
@@ -1547,7 +1547,7 @@ provides-extras = ["htmlkit", "ytdlp", "emosvg", "all"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "emosvg", specifier = ">=0.1.2" },
+    { name = "emosvg", specifier = ">=0.1.3" },
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
@@ -1562,7 +1562,7 @@ dev = [
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
 ]
 extras = [
-    { name = "emosvg", specifier = ">=0.1.2" },
+    { name = "emosvg", specifier = ">=0.1.3" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "types-yt-dlp", specifier = ">=2025.12.8.20251210" },
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },

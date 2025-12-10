@@ -9,6 +9,7 @@ from typing_extensions import override
 from PIL import Image, ImageDraw, ImageFont
 from nonebot import logger
 from apilmoji import Apilmoji, EmojiCDNSource
+from apilmoji.core import get_font_height
 
 from .base import ParseResult, ImageRenderer
 from ..config import pconfig
@@ -74,9 +75,10 @@ class FontInfo:
     @lru_cache(maxsize=400)
     def get_char_width(self, char: str) -> int:
         """获取字符宽度，使用缓存优化"""
-        bbox = self.font.getbbox(char)
-        width = int(bbox[2] - bbox[0])
-        return width
+        # bbox = self.font.getbbox(char)
+        # width = int(bbox[2] - bbox[0])
+        # return width
+        return int(self.font.getlength(char))
 
     def get_char_width_fast(self, char: str) -> int:
         """快速获取单个字符宽度"""
@@ -129,7 +131,7 @@ class FontSet:
             font = ImageFont.truetype(font_path, size)
             font_infos[f"{name}_font"] = FontInfo(
                 font=font,
-                line_height=size + 4,
+                line_height=get_font_height(font),
                 cjk_width=size,
             )
         return FontSet(**font_infos)
