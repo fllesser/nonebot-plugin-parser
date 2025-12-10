@@ -54,7 +54,7 @@ wheels = [
 
 [[package]]
 name = "apilmoji"
-version = "0.2.2"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -62,9 +62,9 @@ dependencies = [
     { name = "httpx" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/81/9d/e4c9910038e69721d2f0f20324a4429548b4beb7cdb7f6be29b697e74aca/apilmoji-0.2.2.tar.gz", hash = "sha256:e3fa0d9b62380098f3bfa11ebefbe42ad2aa71727fb4c9f8ad3b8f059e5ee7b1", size = 8040, upload-time = "2025-12-10T15:35:24.748Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/e5/c3215c4afa276dc455ffe78b56f06fc975f72154c050a3643967e24119ed/apilmoji-0.2.1.tar.gz", hash = "sha256:5058c45fe326a8722d61f116b9238e2d0cb853d24f3e03ea5c42f933f7e044fa", size = 8240, upload-time = "2025-12-07T04:50:26.956Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/6c/c579aa6800cbe650ea3c116039ac017d90581398dd0c64e82201ee7c1360/apilmoji-0.2.2-py3-none-any.whl", hash = "sha256:016dc65e5d6330934a967a924f3802d1322863a86f4ac43d098d5dc1c88010ed", size = 8222, upload-time = "2025-12-10T15:35:23.496Z" },
+    { url = "https://files.pythonhosted.org/packages/ae/3d/6ee486a3a781bca7eb3314fc2789e2a420fea6d44d3bd53f757e1729f335/apilmoji-0.2.1-py3-none-any.whl", hash = "sha256:6fccd6d5fea82ebf7f722fac1ae4b14607dca08c62f4c74085d07e601b16dcd1", size = 8433, upload-time = "2025-12-07T04:50:27.925Z" },
 ]
 
 [package.optional-dependencies]
@@ -643,16 +643,16 @@ wheels = [
 
 [[package]]
 name = "emosvg"
-version = "0.1.1"
+version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cairosvg" },
     { name = "emoji" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/de/9e/0985083e19b67cfb154e2e3c974e42c7b0b9b8272d961a6340127a468de0/emosvg-0.1.1.tar.gz", hash = "sha256:cba7acaaddef772720121859b0e1c469bd73d38fd0f8172bc8629ff8d6872cb2", size = 2202424, upload-time = "2025-12-10T14:47:34.138Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c5/8d/40782d171a40e0ea4d0f6f34adfe517d74facc4094fc4beba57a5f9ddb79/emosvg-0.1.2.tar.gz", hash = "sha256:069e46c25a9193665abadc303d0bfbfb24c9ff1d2fbb6c0a926469b0536313c2", size = 2202821, upload-time = "2025-12-10T16:35:12.281Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/4b/3f6692d93544615806c9b9c158cfb532662287a587ff7b851a989b211bf5/emosvg-0.1.1-py3-none-any.whl", hash = "sha256:0931ec8aa79a55c1b4b25c15754c8f45ada89e12808f825fe855550623d3bf75", size = 5317634, upload-time = "2025-12-10T14:47:32.307Z" },
+    { url = "https://files.pythonhosted.org/packages/64/7f/b12060df0985ff98ac9629a17e63476495f72402dc2f588269007198c1eb/emosvg-0.1.2-py3-none-any.whl", hash = "sha256:26cc6f22112e550ffb8e0d29fea43b84ac9cf1b2411dd2fdd1e634f0c3495f92", size = 5318097, upload-time = "2025-12-10T16:35:10.541Z" },
 ]
 
 [[package]]
@@ -1523,11 +1523,11 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=25.1.0" },
-    { name = "apilmoji", extras = ["tqdm"], specifier = ">=0.2.2,<1.0.0" },
+    { name = "apilmoji", extras = ["tqdm"], specifier = ">=0.2.1,<1.0.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
-    { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.1" },
+    { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.2" },
     { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.1" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.20.0,<1.0.0" },
@@ -1547,7 +1547,7 @@ provides-extras = ["htmlkit", "ytdlp", "emosvg", "all"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "emosvg", specifier = ">=0.1.1" },
+    { name = "emosvg", specifier = ">=0.1.2" },
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
@@ -1562,7 +1562,7 @@ dev = [
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
 ]
 extras = [
-    { name = "emosvg", specifier = ">=0.1.1" },
+    { name = "emosvg", specifier = ">=0.1.2" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "types-yt-dlp", specifier = ">=2025.12.8.20251210" },
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
