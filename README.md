@@ -53,10 +53,8 @@
 
 ## 💿 安装
 
-> [!Warning] > **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
-
-> [!Important]
-> 插件可选依赖 `htmlkit`, `ytdlp`, `all`，分别用于 htmlkit 渲染和 youtube / tiktok 解析，如果需要使用，请在安装时指定，如 `nb plugin install nonebot-plugin-parser[ytdlp]`
+> [!Warning] 
+> **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
 
 <details>
 <summary>使用 nb-cli 安装/更新</summary>
@@ -128,6 +126,27 @@
 使用**清华源**安装
 
     nbr plugin install nonebot-plugin-parser -i "https://pypi.tuna.tsinghua.edu.cn/simple"
+
+</details>
+
+<details>
+<summary>安装可选依赖</summary>
+
+`ytdlp`, 用于解析 `youtube` 和 `tiktok` 视频
+
+    uv add nonebot-plugin-parser[ytdlp]
+
+[emosvg](https://github.com/fllesser/emosvg) 用于渲染 `emoji` 表情, 基于 `cairo` 和 `svg` 实现，`win/mac` 用户，请确保自己会配置 `cairo`, 插件默认使用的依赖于网络的 `apilmoji`，已缓存的 `emoji` 渲染速度略快于 `emosvg`
+
+    uv add nonebot-plugin-parser[emosvg]
+
+`htmlkit`, 用于渲染 html 内容, 插件目前还没有 html 卡片渲染, 因此可忽略此依赖, 插件目前仅使用 `PIL` 渲染媒体卡片
+
+    uv add nonebot-plugin-parser[htmlkit]
+
+`all` 顾名思义，安装所有可选依赖
+
+    uv add nonebot-plugin-parser[all]
 
 </details>
 

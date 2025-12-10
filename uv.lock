@@ -1528,7 +1528,7 @@ requires-dist = [
     { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
     { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.1" },
-    { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.0" },
+    { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.1" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.20.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4,<1.0.0" },
@@ -1547,7 +1547,7 @@ provides-extras = ["htmlkit", "ytdlp", "emosvg", "all"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "emosvg", specifier = ">=0.1.0" },
+    { name = "emosvg", specifier = ">=0.1.1" },
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
@@ -1562,7 +1562,7 @@ dev = [
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
 ]
 extras = [
-    { name = "emosvg", specifier = ">=0.1.0" },
+    { name = "emosvg", specifier = ">=0.1.1" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "types-yt-dlp", specifier = ">=2025.12.8.20251210" },
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
