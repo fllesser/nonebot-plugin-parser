@@ -1265,7 +1265,7 @@ class CommonRenderer(ImageRenderer):
             width=width,
         )
 
-    def _wrap_text_with_emoji(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
+    def _wrap_text(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
         """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
 
         Args:
@@ -1279,12 +1279,12 @@ class CommonRenderer(ImageRenderer):
         if not text:
             return []
 
-        lines: list[str] = []
-        paragraphs = text.splitlines()
-
         def is_punctuation(char: str) -> bool:
             """判断是否为不能为行首的标点符号"""
-            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·" or char in ",.;:!?)]}"
+            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
+
+        lines: list[str] = []
+        paragraphs = text.splitlines()
 
         for paragraph in paragraphs:
             if not paragraph:
@@ -1354,7 +1354,7 @@ class CommonRenderer(ImageRenderer):
 
         return lines
 
-    def _wrap_text(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
+    def _wrap_text_old(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
         """优化的文本自动换行算法，考虑中英文字符宽度相同
 
         Args:
@@ -1368,12 +1368,12 @@ class CommonRenderer(ImageRenderer):
         if not text:
             return []
 
-        lines: list[str] = []
-        paragraphs = text.splitlines()
-
         def is_punctuation(char: str) -> bool:
             """判断是否为不能为行首的标点符号"""
-            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·" or char in ",.;:!?)]}"
+            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
+
+        lines: list[str] = []
+        paragraphs = text.splitlines()
 
         for paragraph in paragraphs:
             if not paragraph:
