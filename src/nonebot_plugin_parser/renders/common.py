@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from collections.abc import Callable, Awaitable
 from typing_extensions import override
 
+import emoji
 from PIL import Image, ImageDraw, ImageFont
 from nonebot import logger
 from apilmoji import Apilmoji, EmojiCDNSource
@@ -1277,7 +1278,7 @@ class CommonRenderer(ImageRenderer):
         )
 
     def _wrap_text(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
-        """优化的文本自动换行算法，考虑中英文字符宽度相同
+        """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
 
         Args:
             text: 要处理的文本
@@ -1302,25 +1303,48 @@ class CommonRenderer(ImageRenderer):
                 lines.append("")
                 continue
 
+            # 使用 emoji.emoji_list 识别所有 emoji 组合
+            emoji_list = emoji.emoji_list(paragraph)
+
             current_line = ""
             current_line_width = 0
-            remaining_text = paragraph
+            i = 0  # 当前处理的字符索引
 
-            while remaining_text:
-                next_char = remaining_text[0]
-                char_width = font_info.get_char_width_fast(next_char)
+            while i < len(paragraph):
+                # 检查当前位置是否有 emoji
+                emoji_found = False
+                emoji_text = ""
+
+                # 查找当前位置的 emoji
+                for emoji_data in emoji_list:
+                    if emoji_data["match_start"] == i:
+                        emoji_text = emoji_data["emoji"]
+                        emoji_found = True
+                        break
+
+                if emoji_found:
+                    # 处理 emoji 组合
+                    char = emoji_text
+                    i += len(emoji_text)  # 跳过整个 emoji 组合
+
+                    # 计算 emoji 宽度（使用第一个字符的宽度）
+                    char_width = font_info.get_char_width_fast(emoji_text[0])
+                else:
+                    # 处理普通字符
+                    char = paragraph[i]
+                    i += 1
+                    char_width = font_info.get_char_width_fast(char)
+
                 # 如果当前行为空，直接添加字符
                 if not current_line:
-                    current_line = next_char
+                    current_line = char
                     current_line_width = char_width
-                    remaining_text = remaining_text[1:]
                     continue
 
                 # 如果是标点符号，直接添加到当前行（标点符号不应该单独成行）
-                if is_punctuation(next_char):
-                    current_line += next_char
+                if len(char) == 1 and is_punctuation(char):
+                    current_line += char
                     current_line_width += char_width
-                    remaining_text = remaining_text[1:]
                     continue
 
                 # 测试添加下一个字符后的宽度
@@ -1328,15 +1352,13 @@ class CommonRenderer(ImageRenderer):
 
                 if test_width <= max_width:
                     # 宽度合适，继续添加
-                    current_line += next_char
+                    current_line += char
                     current_line_width = test_width
-                    remaining_text = remaining_text[1:]
                 else:
                     # 宽度超限，需要断行
                     lines.append(current_line)
-                    current_line = next_char
+                    current_line = char
                     current_line_width = char_width
-                    remaining_text = remaining_text[1:]
 
             # 保存最后一行
             if current_line:
