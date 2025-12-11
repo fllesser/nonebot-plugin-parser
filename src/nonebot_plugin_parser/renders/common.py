@@ -72,9 +72,6 @@ class FontInfo:
     @lru_cache(maxsize=400)
     def get_char_width(self, char: str) -> int:
         """获取字符宽度，使用缓存优化"""
-        # bbox = self.font.getbbox(char)
-        # width = int(bbox[2] - bbox[0])
-        # return width
         return int(self.font.getlength(char))
 
     def get_char_width_fast(self, char: str) -> int:
@@ -225,6 +222,17 @@ class RenderContext:
     y_pos: int = 0
     """当前绘制位置（绘制阶段使用）"""
 
+    def text(
+        self,
+        pos: tuple[int, int],
+        text: str,
+        font: FontInfo,
+        fill: Color,
+    ) -> int:
+        """绘制单行文本"""
+        self.draw.text(pos, text, font=font.font, fill=fill)
+        return font.line_height
+
 
 class CommonRenderer(ImageRenderer):
     """统一的渲染器，将解析结果转换为消息"""
@@ -347,21 +355,11 @@ class CommonRenderer(ImageRenderer):
         cls,
         ctx: RenderContext,
         xy: tuple[int, int],
-        lines: list[list[Node]] | str,
+        lines: list[list[Node]],
         font: FontInfo,
         fill: Color,
     ) -> int:
         """绘制文本"""
-        if isinstance(lines, str):
-            ctx.draw.text(
-                xy,
-                lines,
-                font=font.font,
-                fill=fill,
-                line_height=font.line_height,
-            )
-            return font.line_height
-
         emosvg.text(
             ctx.image,
             xy,
@@ -932,22 +930,20 @@ class CommonRenderer(ImageRenderer):
         text_y = text_start_y
 
         # 发布者名称（蓝色）
-        text_y += self.text(
-            ctx,
+        text_y += ctx.text(
             (text_x, text_y),
             section.name,
-            self.fontset.name_font,
+            font=self.fontset.name_font,
             fill=self.HEADER_COLOR,
         )
 
         # 时间（灰色）
         if section.time:
             text_y += self.NAME_TIME_GAP
-            text_y += self.text(
-                ctx,
+            text_y += ctx.text(
                 (text_x, text_y),
                 section.time,
-                self.fontset.extra_font,
+                font=self.fontset.extra_font,
                 fill=self.EXTRA_COLOR,
             )
 
@@ -1030,8 +1026,7 @@ class CommonRenderer(ImageRenderer):
             extra_font_info = self.fontset.extra_font
             text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (ctx.content_width - text_width) // 2
-            ctx.y_pos += self.text(
-                ctx,
+            ctx.y_pos += ctx.text(
                 (text_x, ctx.y_pos),
                 section.alt_text,
                 self.fontset.extra_font,
@@ -1249,7 +1244,7 @@ class CommonRenderer(ImageRenderer):
         )
 
     def _wrap_text(self, text: str, max_width: int, font_info: FontInfo) -> list[list[Node]]:
-        return emosvg.wrap_text(text, font_info.font, max_width)
+        return emosvg.wrap_text(text, font_info.font, max_width - self.PADDING * 2)
 
     def _wrap_text_old(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
         """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
