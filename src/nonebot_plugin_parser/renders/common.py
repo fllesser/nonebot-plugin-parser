@@ -7,10 +7,10 @@ from collections.abc import Callable, Awaitable
 from typing_extensions import override
 
 import emoji
-import emosvg
 from PIL import Image, ImageDraw, ImageFont
-from emosvg import Node
 from nonebot import logger
+from apilmoji import Apilmoji, EmojiCDNSource
+from apilmoji.core import get_font_height
 
 from .base import ParseResult, ImageRenderer
 from ..config import pconfig
@@ -23,6 +23,11 @@ T = TypeVar("T")
 Color = tuple[int, int, int]
 PILImage = Image.Image
 PILImageDraw = ImageDraw.ImageDraw
+
+try:
+    import emosvg
+except ImportError:
+    emosvg = None
 
 
 def suppress_exception(
@@ -125,7 +130,7 @@ class FontSet:
             font = ImageFont.truetype(font_path, size)
             font_infos[f"{name}_font"] = FontInfo(
                 font=font,
-                line_height=emosvg.get_font_height(font),
+                line_height=get_font_height(font),
                 cjk_width=size,
             )
         return FontSet(**font_infos)
@@ -152,7 +157,7 @@ class HeaderSectionData(SectionData):
 class TitleSectionData(SectionData):
     """标题部分数据"""
 
-    lines: list[list[Node]]
+    lines: list[str]
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -166,14 +171,14 @@ class CoverSectionData(SectionData):
 class TextSectionData(SectionData):
     """文本部分数据"""
 
-    lines: list[list[Node]]
+    lines: list[str]
 
 
 @dataclass(eq=False, frozen=True, slots=True)
 class ExtraSectionData(SectionData):
     """额外信息部分数据"""
 
-    lines: list[list[Node]]
+    lines: list[str]
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -198,7 +203,7 @@ class ImageGridSectionData(SectionData):
 class GraphicsSectionData(SectionData):
     """图文内容部分数据"""
 
-    text_lines: list[list[Node]]
+    text_lines: list[str]
     image: PILImage
     alt_text: str | None = None
 
@@ -310,6 +315,13 @@ class CommonRenderer(ImageRenderer):
     """默认字体路径"""
     DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / _BUTTON_FILENAME
     """默认视频按钮路径"""
+    EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
+        base_url=pconfig.emoji_cdn,
+        style=pconfig.emoji_style,
+        cache_dir=pconfig.cache_dir / _EMOJIS,
+        enable_tqdm=True,
+    )
+    """Emoji Source"""
 
     @classmethod
     def load_resources(cls):
@@ -351,23 +363,34 @@ class CommonRenderer(ImageRenderer):
                     cls.platform_logos[str(platform_name)] = img.convert("RGBA")
 
     @classmethod
-    def text(
+    async def text(
         cls,
         ctx: RenderContext,
         xy: tuple[int, int],
-        lines: list[list[Node]],
+        lines: list[str],
         font: FontInfo,
         fill: Color,
     ) -> int:
         """绘制文本"""
-        emosvg.text(
-            ctx.image,
-            xy,
-            lines,
-            font.font,
-            fill=fill,
-            line_height=font.line_height,
-        )
+        if emosvg is not None:
+            emosvg.text(
+                ctx.image,
+                xy,
+                lines,
+                font.font,
+                fill=fill,
+                line_height=font.line_height,
+            )
+        else:
+            await Apilmoji.text(
+                ctx.image,
+                xy,
+                lines,
+                font.font,
+                fill=fill,
+                line_height=font.line_height,
+                source=cls.EMOJI_SOURCE,
+            )
         return font.line_height * len(lines)
 
     @override
@@ -531,7 +554,7 @@ class CommonRenderer(ImageRenderer):
         sections: list[SectionData] = []
 
         # 1. Header 部分
-        header_section = await self._calculate_header_section(result, content_width)
+        header_section = await self._calculate_header_section(result)
         if header_section is not None:
             sections.append(header_section)
 
@@ -643,7 +666,6 @@ class CommonRenderer(ImageRenderer):
     async def _calculate_header_section(
         self,
         result: ParseResult,
-        content_width: int,
     ) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
         if result.author is None:
@@ -960,9 +982,9 @@ class CommonRenderer(ImageRenderer):
 
         ctx.y_pos += section.height + self.SECTION_SPACING
 
-    async def _draw_title(self, ctx: RenderContext, lines: list[list[Node]]) -> None:
+    async def _draw_title(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制标题"""
-        ctx.y_pos += self.text(
+        ctx.y_pos += await self.text(
             ctx,
             (self.PADDING, ctx.y_pos),
             lines,
@@ -990,9 +1012,9 @@ class CommonRenderer(ImageRenderer):
 
         ctx.y_pos += cover_img.height + self.SECTION_SPACING
 
-    async def _draw_text(self, ctx: RenderContext, lines: list[list[Node]]) -> None:
+    async def _draw_text(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制文本内容"""
-        ctx.y_pos += self.text(
+        ctx.y_pos += await self.text(
             ctx,
             (self.PADDING, ctx.y_pos),
             lines,
@@ -1005,7 +1027,7 @@ class CommonRenderer(ImageRenderer):
         """绘制图文内容"""
         # 绘制文本内容（如果有）
         if section.text_lines:
-            ctx.y_pos += self.text(
+            ctx.y_pos += await self.text(
                 ctx,
                 (self.PADDING, ctx.y_pos),
                 section.text_lines,
@@ -1035,9 +1057,9 @@ class CommonRenderer(ImageRenderer):
 
         ctx.y_pos += self.SECTION_SPACING
 
-    async def _draw_extra(self, ctx: RenderContext, lines: list[list[Node]]) -> None:
+    async def _draw_extra(self, ctx: RenderContext, lines: list[str]) -> None:
         """绘制额外信息"""
-        ctx.y_pos += self.text(
+        ctx.y_pos += await self.text(
             ctx,
             (self.PADDING, ctx.y_pos),
             lines,
@@ -1243,10 +1265,7 @@ class CommonRenderer(ImageRenderer):
             width=width,
         )
 
-    def _wrap_text(self, text: str, max_width: int, font_info: FontInfo) -> list[list[Node]]:
-        return emosvg.wrap_text(text, font_info.font, max_width - self.PADDING * 2)
-
-    def _wrap_text_old(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
+    def _wrap_text(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
         """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
 
         Args:

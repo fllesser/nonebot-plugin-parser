@@ -112,7 +112,6 @@ conflicts = [
 
 [tool.uv.sources]
 nonebug = { git = "https://github.com/nonebot/nonebug" }
-emosvg = { git = "https://github.com/fllesser/emosvg", rev = "feat/wrap_text" }
 
 [tool.bumpversion]
 tag = true
