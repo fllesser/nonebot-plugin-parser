@@ -77,7 +77,7 @@ class FontInfo:
     @lru_cache(maxsize=400)
     def get_char_width(self, char: str) -> int:
         """获取字符宽度，使用缓存优化"""
-        return int(self.font.getlength(char))
+        return int(self.font.getlength(char, direction="ltr"))
 
     def get_char_width_fast(self, char: str) -> int:
         """快速获取单个字符宽度"""
@@ -1265,7 +1265,7 @@ class CommonRenderer(ImageRenderer):
             width=width,
         )
 
-    def _wrap_text(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
+    def _wrap_text_with_emoji(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
         """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
 
         Args:
@@ -1347,6 +1347,74 @@ class CommonRenderer(ImageRenderer):
                     lines.append(current_line)
                     current_line = char
                     current_line_width = char_width
+
+            # 保存最后一行
+            if current_line:
+                lines.append(current_line)
+
+        return lines
+
+    def _wrap_text(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
+        """优化的文本自动换行算法，考虑中英文字符宽度相同
+
+        Args:
+            text: 要处理的文本
+            max_width: 最大宽度（像素）
+            font_info: 字体信息对象
+
+        Returns:
+            换行后的文本列表
+        """
+        if not text:
+            return []
+
+        lines: list[str] = []
+        paragraphs = text.splitlines()
+
+        def is_punctuation(char: str) -> bool:
+            """判断是否为不能为行首的标点符号"""
+            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·" or char in ",.;:!?)]}"
+
+        for paragraph in paragraphs:
+            if not paragraph:
+                lines.append("")
+                continue
+
+            current_line = ""
+            current_line_width = 0
+            remaining_text = paragraph
+
+            while remaining_text:
+                next_char = remaining_text[0]
+                char_width = font_info.get_char_width_fast(next_char)
+                # 如果当前行为空，直接添加字符
+                if not current_line:
+                    current_line = next_char
+                    current_line_width = char_width
+                    remaining_text = remaining_text[1:]
+                    continue
+
+                # 如果是标点符号，直接添加到当前行（标点符号不应该单独成行）
+                if is_punctuation(next_char):
+                    current_line += next_char
+                    current_line_width += char_width
+                    remaining_text = remaining_text[1:]
+                    continue
+
+                # 测试添加下一个字符后的宽度
+                test_width = current_line_width + char_width
+
+                if test_width <= max_width:
+                    # 宽度合适，继续添加
+                    current_line += next_char
+                    current_line_width = test_width
+                    remaining_text = remaining_text[1:]
+                else:
+                    # 宽度超限，需要断行
+                    lines.append(current_line)
+                    current_line = next_char
+                    current_line_width = char_width
+                    remaining_text = remaining_text[1:]
 
             # 保存最后一行
             if current_line:
