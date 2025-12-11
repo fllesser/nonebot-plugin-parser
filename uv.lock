@@ -644,15 +644,11 @@ wheels = [
 [[package]]
 name = "emosvg"
 version = "0.1.3"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/fllesser/emosvg?rev=feat%2Fwrap_text#69b38830bf1ee6966a44d42829c747f46ba8b002" }
 dependencies = [
     { name = "cairosvg" },
     { name = "emoji" },
     { name = "pillow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/c6/d7b44223705d78e584e32ecfabc70a596c19f5f1065f62140566da5dc7f8/emosvg-0.1.3.tar.gz", hash = "sha256:ad0725fbd7b99d969950753d1c1303a918492e9593ae82305887f71c8996604d", size = 2202805, upload-time = "2025-12-10T17:20:08.161Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/5b/c2/0c07a5eea77a58218d9366e2c92b2cc3be15b0a8aa7a4f7912f081864779/emosvg-0.1.3-py3-none-any.whl", hash = "sha256:104a320674a6b78ec8f2a45c005c261168d26ea2843d674fbca4c81b4edd4de4", size = 5318096, upload-time = "2025-12-10T17:20:06.371Z" },
 ]
 
 [[package]]
@@ -1527,8 +1523,8 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
-    { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.3" },
-    { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.3" },
+    { name = "emosvg", marker = "extra == 'all'", git = "https://github.com/fllesser/emosvg?rev=feat%2Fwrap_text" },
+    { name = "emosvg", marker = "extra == 'emosvg'", git = "https://github.com/fllesser/emosvg?rev=feat%2Fwrap_text" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.20.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4,<1.0.0" },
@@ -1547,7 +1543,7 @@ provides-extras = ["htmlkit", "ytdlp", "emosvg", "all"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "emosvg", specifier = ">=0.1.3" },
+    { name = "emosvg", git = "https://github.com/fllesser/emosvg?rev=feat%2Fwrap_text" },
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
@@ -1562,7 +1558,7 @@ dev = [
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
 ]
 extras = [
-    { name = "emosvg", specifier = ">=0.1.3" },
+    { name = "emosvg", git = "https://github.com/fllesser/emosvg?rev=feat%2Fwrap_text" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "types-yt-dlp", specifier = ">=2025.12.8.20251210" },
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
