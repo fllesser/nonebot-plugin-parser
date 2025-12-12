@@ -1251,27 +1251,20 @@ class CommonRenderer(ImageRenderer):
 
             current_line = ""
             current_line_width = 0
-            i = 0  # 当前处理的字符索引
+            idx = 0  # 当前处理的字符索引
 
-            while i < len(paragraph):
+            while idx < len(paragraph):
                 # 检查当前位置是否有 emoji, 包含组合 emoji
-                emoji_text = None
-
-                # 查找当前位置的 emoji
                 for emoji_data in emoji_list:
-                    if emoji_data["match_start"] == i:
-                        emoji_text = emoji_data["emoji"]
+                    if emoji_data["match_start"] == idx:
+                        char = emoji_data["emoji"]
+                        idx = emoji_data["match_end"]
+                        char_width = font_info.font.size
                         break
-
-                if emoji_text is not None:
-                    # 处理 emoji 字符，包含组合 emoji
-                    char = emoji_text
-                    i += len(emoji_text)  # 跳过整个 emoji 组合
-                    char_width = font_info.font.size
                 else:
                     # 处理普通字符
-                    char = paragraph[i]
-                    i += 1
+                    char = paragraph[idx]
+                    idx += 1
                     char_width = font_info.get_char_width_fast(char)
 
                 # 如果当前行为空，直接添加字符
