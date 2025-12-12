@@ -67,12 +67,13 @@ class FontInfo:
     """字体信息数据类"""
 
     font: ImageFont.FreeTypeFont
+    fill: Color
     line_height: int
     cjk_width: int
 
     def __hash__(self) -> int:
         """实现哈希方法以支持 @lru_cache"""
-        return hash((id(self.font), self.line_height, self.cjk_width))
+        return hash((id(self.font), self.line_height, self.cjk_width, self.fill))
 
     @lru_cache(maxsize=400)
     def get_char_width(self, char: str) -> int:
@@ -108,28 +109,29 @@ class FontInfo:
 class FontSet:
     """字体集数据类"""
 
-    _FONT_SIZES = (
-        ("name", 28),
-        ("title", 30),
-        ("text", 24),
-        ("extra", 24),
-        ("indicator", 60),
+    _FONT_INFOS = (
+        ("name", 28, (0, 122, 255)),
+        ("title", 30, (102, 51, 153)),
+        ("text", 24, (51, 51, 51)),
+        ("extra", 24, (136, 136, 136)),
+        ("indicator", 60, (255, 255, 255)),
     )
-    """字体大小"""
+    """字体信息"""
 
-    name_font: FontInfo
-    title_font: FontInfo
-    text_font: FontInfo
-    extra_font: FontInfo
-    indicator_font: FontInfo
+    name: FontInfo
+    title: FontInfo
+    text: FontInfo
+    extra: FontInfo
+    indicator: FontInfo
 
     @classmethod
     def new(cls, font_path: Path):
         font_infos: dict[str, FontInfo] = {}
-        for name, size in cls._FONT_SIZES:
+        for name, size, fill in cls._FONT_INFOS:
             font = ImageFont.truetype(font_path, size)
-            font_infos[f"{name}_font"] = FontInfo(
+            font_infos[name] = FontInfo(
                 font=font,
+                fill=fill,
                 line_height=get_font_height(font),
                 cjk_width=size,
             )
@@ -286,12 +288,6 @@ class CommonRenderer(ImageRenderer):
     # 颜色配置
     BG_COLOR: ClassVar[Color] = (255, 255, 255)
     """背景色"""
-    TEXT_COLOR: ClassVar[Color] = (51, 51, 51)
-    """文本色"""
-    HEADER_COLOR: ClassVar[Color] = (0, 122, 255)
-    """标题色"""
-    EXTRA_COLOR: ClassVar[Color] = (136, 136, 136)
-    """额外信息色"""
     REPOST_BG_COLOR: ClassVar[Color] = (247, 247, 247)
     """转发背景色"""
     REPOST_BORDER_COLOR: ClassVar[Color] = (230, 230, 230)
@@ -358,27 +354,13 @@ class CommonRenderer(ImageRenderer):
         xy: tuple[int, int],
         lines: list[str],
         font: FontInfo,
-        fill: Color,
     ) -> int:
         """绘制文本"""
         if emosvg is not None:
-            emosvg.text(
-                ctx.image,
-                xy,
-                lines,
-                font.font,
-                fill=fill,
-                line_height=font.line_height,
-            )
+            emosvg.text(ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height)
         else:
             await Apilmoji.text(
-                ctx.image,
-                xy,
-                lines,
-                font.font,
-                fill=fill,
-                line_height=font.line_height,
-                source=cls.EMOJI_SOURCE,
+                ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height, source=cls.EMOJI_SOURCE
             )
         return font.line_height * len(lines)
 
@@ -388,15 +370,9 @@ class CommonRenderer(ImageRenderer):
         xy: tuple[int, int],
         line: str,
         font: FontInfo,
-        fill: Color,
     ) -> int:
         """绘制单行文本"""
-        ctx.draw.text(
-            xy,
-            line,
-            font=font.font,
-            fill=fill,
-        )
+        ctx.draw.text(xy, line, font=font.font, fill=font.fill)
         return font.line_height
 
     @override
@@ -569,9 +545,9 @@ class CommonRenderer(ImageRenderer):
             title_lines = self._wrap_text(
                 result.title,
                 content_width,
-                self.fontset.title_font,
+                self.fontset.title,
             )
-            title_height = len(title_lines) * self.fontset.title_font.line_height
+            title_height = len(title_lines) * self.fontset.title.line_height
             sections.append(TitleSectionData(height=title_height, lines=title_lines))
 
         # 3. 封面，图集，图文内容
@@ -602,9 +578,9 @@ class CommonRenderer(ImageRenderer):
             text_lines = self._wrap_text(
                 result.text,
                 content_width,
-                self.fontset.text_font,
+                self.fontset.text,
             )
-            text_height = len(text_lines) * self.fontset.text_font.line_height
+            text_height = len(text_lines) * self.fontset.text.line_height
             sections.append(TextSectionData(height=text_height, lines=text_lines))
 
         # 6. 额外信息
@@ -612,9 +588,9 @@ class CommonRenderer(ImageRenderer):
             extra_lines = self._wrap_text(
                 result.extra_info,
                 content_width,
-                self.fontset.extra_font,
+                self.fontset.extra,
             )
-            extra_height = len(extra_lines) * self.fontset.extra_font.line_height
+            extra_height = len(extra_lines) * self.fontset.extra.line_height
             sections.append(ExtraSectionData(height=extra_height, lines=extra_lines))
 
         # 7. 转发内容
@@ -650,12 +626,12 @@ class CommonRenderer(ImageRenderer):
                 text_lines = self._wrap_text(
                     graphics_content.text,
                     content_width,
-                    self.fontset.text_font,
+                    self.fontset.text,
                 )
 
             # 计算总高度：文本高度 + 图片高度 + alt文本高度 + 间距
-            text_height = len(text_lines) * self.fontset.text_font.line_height if text_lines else 0
-            alt_height = self.fontset.extra_font.line_height if graphics_content.alt else 0
+            text_height = len(text_lines) * self.fontset.text.line_height if text_lines else 0
+            alt_height = self.fontset.extra.line_height if graphics_content.alt else 0
             total_height = text_height + image.height + alt_height
             if text_lines:
                 total_height += self.SECTION_SPACING  # 文本和图片之间的间距
@@ -680,10 +656,10 @@ class CommonRenderer(ImageRenderer):
         # 加载头像
         avatar_img = self._load_and_process_avatar(await result.author.get_avatar_path())
 
-        text_height = self.fontset.name_font.line_height
+        text_height = self.fontset.name.line_height
         time = result.formartted_datetime
         if time:
-            text_height += self.NAME_TIME_GAP + self.fontset.extra_font.line_height
+            text_height += self.NAME_TIME_GAP + self.fontset.extra.line_height
 
         header_height = max(self.AVATAR_SIZE, text_height)
 
@@ -962,8 +938,7 @@ class CommonRenderer(ImageRenderer):
             ctx,
             (text_x, text_y),
             section.name,
-            font=self.fontset.name_font,
-            fill=self.HEADER_COLOR,
+            font=self.fontset.name,
         )
 
         # 时间（灰色）
@@ -973,8 +948,7 @@ class CommonRenderer(ImageRenderer):
                 ctx,
                 (text_x, text_y),
                 section.time,
-                font=self.fontset.extra_font,
-                fill=self.EXTRA_COLOR,
+                font=self.fontset.extra,
             )
 
         # 在右侧绘制平台 logo（仅在非转发内容时绘制）
@@ -996,8 +970,7 @@ class CommonRenderer(ImageRenderer):
             ctx,
             (self.PADDING, ctx.y_pos),
             lines,
-            self.fontset.title_font,
-            self.TEXT_COLOR,
+            self.fontset.title,
         )
 
         ctx.y_pos += self.SECTION_SPACING
@@ -1026,8 +999,7 @@ class CommonRenderer(ImageRenderer):
             ctx,
             (self.PADDING, ctx.y_pos),
             lines,
-            self.fontset.text_font,
-            fill=self.TEXT_COLOR,
+            self.fontset.text,
         )
         ctx.y_pos += self.SECTION_SPACING
 
@@ -1039,8 +1011,7 @@ class CommonRenderer(ImageRenderer):
                 ctx,
                 (self.PADDING, ctx.y_pos),
                 section.text_lines,
-                self.fontset.text_font,
-                fill=self.TEXT_COLOR,
+                self.fontset.text,
             )
             ctx.y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
 
@@ -1053,15 +1024,14 @@ class CommonRenderer(ImageRenderer):
         if section.alt_text:
             ctx.y_pos += self.SECTION_SPACING  # 图片和alt文本之间的间距
             # 计算文本居中位置
-            extra_font_info = self.fontset.extra_font
+            extra_font_info = self.fontset.extra
             text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (ctx.content_width - text_width) // 2
             ctx.y_pos += self.text_single_line(
                 ctx,
                 (text_x, ctx.y_pos),
                 section.alt_text,
-                self.fontset.extra_font,
-                fill=self.EXTRA_COLOR,
+                self.fontset.extra,
             )
 
         ctx.y_pos += self.SECTION_SPACING
@@ -1072,8 +1042,7 @@ class CommonRenderer(ImageRenderer):
             ctx,
             (self.PADDING, ctx.y_pos),
             lines,
-            self.fontset.extra_font,
-            fill=self.EXTRA_COLOR,
+            self.fontset.extra,
         )
 
     def _draw_repost(self, ctx: RenderContext, section: RepostSectionData) -> None:
@@ -1197,14 +1166,14 @@ class CommonRenderer(ImageRenderer):
 
         # 绘制+N文字
         text = f"+{count}"
-        font_info = self.fontset.indicator_font
+        indicator_font = self.fontset.indicator
         # 计算文字位置（居中）
-        text_width = font_info.get_text_width(text)
+        text_width = indicator_font.get_text_width(text)
         text_x = img_x + (img_width - text_width) // 2
-        text_y = img_y + (img_height - font_info.line_height) // 2
+        text_y = img_y + (img_height - indicator_font.line_height) // 2
 
         # 绘制50%透明白色文字
-        draw.text((text_x, text_y), text, fill=(255, 255, 255), font=font_info.font)
+        draw.text((text_x, text_y), text, fill=indicator_font.fill, font=indicator_font.font)
 
     def _draw_rounded_rectangle(
         self,
