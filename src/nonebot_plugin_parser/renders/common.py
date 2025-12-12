@@ -129,10 +129,11 @@ class FontSet:
         font_infos: dict[str, FontInfo] = {}
         for name, size, fill in cls._FONT_INFOS:
             font = ImageFont.truetype(font_path, size)
+            height = get_font_height(font)
             font_infos[name] = FontInfo(
                 font=font,
                 fill=fill,
-                line_height=get_font_height(font),
+                line_height=height,
                 cjk_width=size,
             )
         return FontSet(**font_infos)
@@ -1253,24 +1254,20 @@ class CommonRenderer(ImageRenderer):
             i = 0  # 当前处理的字符索引
 
             while i < len(paragraph):
-                # 检查当前位置是否有 emoji
-                emoji_found = False
-                emoji_text = ""
+                # 检查当前位置是否有 emoji, 包含组合 emoji
+                emoji_text = None
 
                 # 查找当前位置的 emoji
                 for emoji_data in emoji_list:
                     if emoji_data["match_start"] == i:
                         emoji_text = emoji_data["emoji"]
-                        emoji_found = True
                         break
 
-                if emoji_found:
-                    # 处理 emoji 组合
+                if emoji_text is not None:
+                    # 处理 emoji 字符，包含组合 emoji
                     char = emoji_text
                     i += len(emoji_text)  # 跳过整个 emoji 组合
-
-                    # 计算 emoji 宽度（使用第一个字符的宽度）
-                    char_width = font_info.get_char_width_fast(emoji_text[0])
+                    char_width = font_info.font.size
                 else:
                     # 处理普通字符
                     char = paragraph[i]
