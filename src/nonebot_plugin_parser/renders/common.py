@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from collections.abc import Callable, Awaitable
 from typing_extensions import override
 
+import emoji
 from PIL import Image, ImageDraw, ImageFont
 from nonebot import logger
 from apilmoji import Apilmoji, EmojiCDNSource
@@ -21,6 +22,7 @@ T = TypeVar("T")
 
 Color = tuple[int, int, int]
 PILImage = Image.Image
+PILImageDraw = ImageDraw.ImageDraw
 
 try:
     import emosvg
@@ -65,20 +67,18 @@ class FontInfo:
     """字体信息数据类"""
 
     font: ImageFont.FreeTypeFont
+    fill: Color
     line_height: int
     cjk_width: int
 
     def __hash__(self) -> int:
         """实现哈希方法以支持 @lru_cache"""
-        return hash((id(self.font), self.line_height, self.cjk_width))
+        return hash((id(self.font), self.line_height, self.cjk_width, self.fill))
 
     @lru_cache(maxsize=400)
     def get_char_width(self, char: str) -> int:
         """获取字符宽度，使用缓存优化"""
-        # bbox = self.font.getbbox(char)
-        # width = int(bbox[2] - bbox[0])
-        # return width
-        return int(self.font.getlength(char))
+        return int(self.font.getlength(char, direction="ltr"))
 
     def get_char_width_fast(self, char: str) -> int:
         """快速获取单个字符宽度"""
@@ -109,29 +109,31 @@ class FontInfo:
 class FontSet:
     """字体集数据类"""
 
-    _FONT_SIZES = (
-        ("name", 28),
-        ("title", 30),
-        ("text", 24),
-        ("extra", 24),
-        ("indicator", 60),
+    _FONT_INFOS = (
+        ("name", 28, (0, 122, 255)),
+        ("title", 30, (102, 51, 153)),
+        ("text", 24, (51, 51, 51)),
+        ("extra", 24, (136, 136, 136)),
+        ("indicator", 60, (255, 255, 255)),
     )
-    """字体大小"""
+    """字体信息"""
 
-    name_font: FontInfo
-    title_font: FontInfo
-    text_font: FontInfo
-    extra_font: FontInfo
-    indicator_font: FontInfo
+    name: FontInfo
+    title: FontInfo
+    text: FontInfo
+    extra: FontInfo
+    indicator: FontInfo
 
     @classmethod
     def new(cls, font_path: Path):
         font_infos: dict[str, FontInfo] = {}
-        for name, size in cls._FONT_SIZES:
+        for name, size, fill in cls._FONT_INFOS:
             font = ImageFont.truetype(font_path, size)
-            font_infos[f"{name}_font"] = FontInfo(
+            height = get_font_height(font)
+            font_infos[name] = FontInfo(
                 font=font,
-                line_height=get_font_height(font),
+                fill=fill,
+                line_height=height,
                 cjk_width=size,
             )
         return FontSet(**font_infos)
@@ -149,8 +151,8 @@ class HeaderSectionData(SectionData):
     """Header 部分数据"""
 
     avatar: PILImage | None
-    name_lines: list[str]
-    time_lines: list[str]
+    name: str
+    time: str | None
     text_height: int
 
 
@@ -221,7 +223,7 @@ class RenderContext:
     """内容宽度"""
     image: PILImage
     """当前图像"""
-    draw: ImageDraw.ImageDraw
+    draw: PILImageDraw
     """绘图对象"""
     not_repost: bool = True
     """是否为非转发内容"""
@@ -287,12 +289,6 @@ class CommonRenderer(ImageRenderer):
     # 颜色配置
     BG_COLOR: ClassVar[Color] = (255, 255, 255)
     """背景色"""
-    TEXT_COLOR: ClassVar[Color] = (51, 51, 51)
-    """文本色"""
-    HEADER_COLOR: ClassVar[Color] = (0, 122, 255)
-    """标题色"""
-    EXTRA_COLOR: ClassVar[Color] = (136, 136, 136)
-    """额外信息色"""
     REPOST_BG_COLOR: ClassVar[Color] = (247, 247, 247)
     """转发背景色"""
     REPOST_BORDER_COLOR: ClassVar[Color] = (230, 230, 230)
@@ -359,29 +355,26 @@ class CommonRenderer(ImageRenderer):
         xy: tuple[int, int],
         lines: list[str],
         font: FontInfo,
-        fill: Color,
     ) -> int:
         """绘制文本"""
-        if emosvg is None:
-            await Apilmoji.text(
-                ctx.image,
-                xy,
-                lines,
-                font.font,
-                fill=fill,
-                line_height=font.line_height,
-                source=cls.EMOJI_SOURCE,
-            )
+        if emosvg is not None:
+            emosvg.text(ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height)
         else:
-            emosvg.text(
-                ctx.image,
-                xy,
-                lines,
-                font.font,
-                fill=fill,
-                line_height=font.line_height,
+            await Apilmoji.text(
+                ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height, source=cls.EMOJI_SOURCE
             )
         return font.line_height * len(lines)
+
+    @staticmethod
+    def text_single_line(
+        ctx: RenderContext,
+        xy: tuple[int, int],
+        line: str,
+        font: FontInfo,
+    ) -> int:
+        """绘制单行文本"""
+        ctx.draw.text(xy, line, font=font.font, fill=font.fill)
+        return font.line_height
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
@@ -544,7 +537,7 @@ class CommonRenderer(ImageRenderer):
         sections: list[SectionData] = []
 
         # 1. Header 部分
-        header_section = await self._calculate_header_section(result, content_width)
+        header_section = await self._calculate_header_section(result)
         if header_section is not None:
             sections.append(header_section)
 
@@ -553,9 +546,9 @@ class CommonRenderer(ImageRenderer):
             title_lines = self._wrap_text(
                 result.title,
                 content_width,
-                self.fontset.title_font,
+                self.fontset.title,
             )
-            title_height = len(title_lines) * self.fontset.title_font.line_height
+            title_height = len(title_lines) * self.fontset.title.line_height
             sections.append(TitleSectionData(height=title_height, lines=title_lines))
 
         # 3. 封面，图集，图文内容
@@ -586,9 +579,9 @@ class CommonRenderer(ImageRenderer):
             text_lines = self._wrap_text(
                 result.text,
                 content_width,
-                self.fontset.text_font,
+                self.fontset.text,
             )
-            text_height = len(text_lines) * self.fontset.text_font.line_height
+            text_height = len(text_lines) * self.fontset.text.line_height
             sections.append(TextSectionData(height=text_height, lines=text_lines))
 
         # 6. 额外信息
@@ -596,9 +589,9 @@ class CommonRenderer(ImageRenderer):
             extra_lines = self._wrap_text(
                 result.extra_info,
                 content_width,
-                self.fontset.extra_font,
+                self.fontset.extra,
             )
-            extra_height = len(extra_lines) * self.fontset.extra_font.line_height
+            extra_height = len(extra_lines) * self.fontset.extra.line_height
             sections.append(ExtraSectionData(height=extra_height, lines=extra_lines))
 
         # 7. 转发内容
@@ -634,12 +627,12 @@ class CommonRenderer(ImageRenderer):
                 text_lines = self._wrap_text(
                     graphics_content.text,
                     content_width,
-                    self.fontset.text_font,
+                    self.fontset.text,
                 )
 
             # 计算总高度：文本高度 + 图片高度 + alt文本高度 + 间距
-            text_height = len(text_lines) * self.fontset.text_font.line_height if text_lines else 0
-            alt_height = self.fontset.extra_font.line_height if graphics_content.alt else 0
+            text_height = len(text_lines) * self.fontset.text.line_height if text_lines else 0
+            alt_height = self.fontset.extra.line_height if graphics_content.alt else 0
             total_height = text_height + image.height + alt_height
             if text_lines:
                 total_height += self.SECTION_SPACING  # 文本和图片之间的间距
@@ -656,7 +649,6 @@ class CommonRenderer(ImageRenderer):
     async def _calculate_header_section(
         self,
         result: ParseResult,
-        content_width: int,
     ) -> HeaderSectionData | None:
         """计算 header 部分的高度和内容"""
         if result.author is None:
@@ -665,35 +657,18 @@ class CommonRenderer(ImageRenderer):
         # 加载头像
         avatar_img = self._load_and_process_avatar(await result.author.get_avatar_path())
 
-        # 计算文字区域宽度（始终预留头像空间）
-        text_area_width = content_width - (self.AVATAR_SIZE + self.AVATAR_TEXT_GAP)
+        text_height = self.fontset.name.line_height
+        time = result.formartted_datetime
+        if time:
+            text_height += self.NAME_TIME_GAP + self.fontset.extra.line_height
 
-        # 发布者名称
-        name_lines = self._wrap_text(
-            result.author.name,
-            text_area_width,
-            self.fontset.name_font,
-        )
-
-        # 时间
-        time_text = result.formartted_datetime
-        time_lines = self._wrap_text(
-            time_text,
-            text_area_width,
-            self.fontset.extra_font,
-        )
-
-        # 计算 header 高度（取头像和文字中较大者）
-        text_height = len(name_lines) * self.fontset.name_font.line_height
-        if time_lines:
-            text_height += self.NAME_TIME_GAP + len(time_lines) * self.fontset.extra_font.line_height
         header_height = max(self.AVATAR_SIZE, text_height)
 
         return HeaderSectionData(
             height=header_height,
             avatar=avatar_img,
-            name_lines=name_lines,
-            time_lines=time_lines,
+            name=result.author.name,
+            time=result.formartted_datetime,
             text_height=text_height,
         )
 
@@ -960,23 +935,21 @@ class CommonRenderer(ImageRenderer):
         text_y = text_start_y
 
         # 发布者名称（蓝色）
-        text_y += await self.text(
+        text_y += self.text_single_line(
             ctx,
             (text_x, text_y),
-            section.name_lines,
-            self.fontset.name_font,
-            fill=self.HEADER_COLOR,
+            section.name,
+            font=self.fontset.name,
         )
 
         # 时间（灰色）
-        if section.time_lines:
+        if section.time:
             text_y += self.NAME_TIME_GAP
-            text_y += await self.text(
+            text_y += self.text_single_line(
                 ctx,
                 (text_x, text_y),
-                section.time_lines,
-                self.fontset.extra_font,
-                fill=self.EXTRA_COLOR,
+                section.time,
+                font=self.fontset.extra,
             )
 
         # 在右侧绘制平台 logo（仅在非转发内容时绘制）
@@ -998,8 +971,7 @@ class CommonRenderer(ImageRenderer):
             ctx,
             (self.PADDING, ctx.y_pos),
             lines,
-            self.fontset.title_font,
-            self.TEXT_COLOR,
+            self.fontset.title,
         )
 
         ctx.y_pos += self.SECTION_SPACING
@@ -1028,8 +1000,7 @@ class CommonRenderer(ImageRenderer):
             ctx,
             (self.PADDING, ctx.y_pos),
             lines,
-            self.fontset.text_font,
-            fill=self.TEXT_COLOR,
+            self.fontset.text,
         )
         ctx.y_pos += self.SECTION_SPACING
 
@@ -1041,8 +1012,7 @@ class CommonRenderer(ImageRenderer):
                 ctx,
                 (self.PADDING, ctx.y_pos),
                 section.text_lines,
-                self.fontset.text_font,
-                fill=self.TEXT_COLOR,
+                self.fontset.text,
             )
             ctx.y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
 
@@ -1055,15 +1025,14 @@ class CommonRenderer(ImageRenderer):
         if section.alt_text:
             ctx.y_pos += self.SECTION_SPACING  # 图片和alt文本之间的间距
             # 计算文本居中位置
-            extra_font_info = self.fontset.extra_font
+            extra_font_info = self.fontset.extra
             text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (ctx.content_width - text_width) // 2
-            ctx.y_pos += await self.text(
+            ctx.y_pos += self.text_single_line(
                 ctx,
                 (text_x, ctx.y_pos),
-                [section.alt_text],
-                self.fontset.extra_font,
-                fill=self.EXTRA_COLOR,
+                section.alt_text,
+                self.fontset.extra,
             )
 
         ctx.y_pos += self.SECTION_SPACING
@@ -1074,8 +1043,7 @@ class CommonRenderer(ImageRenderer):
             ctx,
             (self.PADDING, ctx.y_pos),
             lines,
-            self.fontset.extra_font,
-            fill=self.EXTRA_COLOR,
+            self.fontset.extra,
         )
 
     def _draw_repost(self, ctx: RenderContext, section: RepostSectionData) -> None:
@@ -1198,15 +1166,15 @@ class CommonRenderer(ImageRenderer):
         image.paste(overlay, (img_x, img_y), overlay)
 
         # 绘制+N文字
-        text = f"+{count}"
-        font_info = self.fontset.indicator_font
+        text = "+" + str(count)
+        indicator_font = self.fontset.indicator
         # 计算文字位置（居中）
-        text_width = font_info.get_text_width(text)
+        text_width = indicator_font.get_text_width(text)
         text_x = img_x + (img_width - text_width) // 2
-        text_y = img_y + (img_height - font_info.line_height) // 2
+        text_y = img_y + (img_height - indicator_font.line_height) // 2
 
         # 绘制50%透明白色文字
-        draw.text((text_x, text_y), text, fill=(255, 255, 255), font=font_info.font)
+        draw.text((text_x, text_y), text, fill=indicator_font.fill, font=indicator_font.font)
 
     def _draw_rounded_rectangle(
         self,
@@ -1231,7 +1199,7 @@ class CommonRenderer(ImageRenderer):
 
     def _draw_rounded_rectangle_border(
         self,
-        draw: ImageDraw.ImageDraw,
+        draw: PILImageDraw,
         bbox: tuple[int, int, int, int],
         border_color: Color,
         radius: int = 8,
@@ -1247,36 +1215,90 @@ class CommonRenderer(ImageRenderer):
         draw.rectangle((x2 - width, y1 + radius, x2, y2 - radius), fill=border_color)  # 右
 
         # 绘制四个圆角边框
-        draw.arc(
-            (x1, y1, x1 + 2 * radius, y1 + 2 * radius),
-            180,
-            270,
-            fill=border_color,
-            width=width,
-        )
-        draw.arc(
-            (x2 - 2 * radius, y1, x2, y1 + 2 * radius),
-            270,
-            360,
-            fill=border_color,
-            width=width,
-        )
-        draw.arc(
-            (x1, y2 - 2 * radius, x1 + 2 * radius, y2),
-            90,
-            180,
-            fill=border_color,
-            width=width,
-        )
-        draw.arc(
-            (x2 - 2 * radius, y2 - 2 * radius, x2, y2),
-            0,
-            90,
-            fill=border_color,
-            width=width,
-        )
+        draw.arc((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=border_color, width=width)
+        draw.arc((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=border_color, width=width)
+        draw.arc((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=border_color, width=width)
+        draw.arc((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=border_color, width=width)
 
-    def _wrap_text(self, text: str | None, max_width: int, font_info: FontInfo) -> list[str]:
+    def _wrap_text(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
+        """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
+
+        Args:
+            text: 要处理的文本
+            max_width: 最大宽度（像素）
+            font_info: 字体信息对象
+
+        Returns:
+            换行后的文本列表
+        """
+        if not text:
+            return []
+
+        def is_punctuation(char: str) -> bool:
+            """判断是否为不能为行首的标点符号"""
+            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
+
+        lines: list[str] = []
+        paragraphs = text.splitlines()
+
+        for paragraph in paragraphs:
+            if not paragraph:
+                lines.append("")
+                continue
+
+            # 使用 emoji.emoji_list 识别所有 emoji 组合
+            emoji_list = emoji.emoji_list(paragraph)
+
+            current_line = ""
+            current_line_width = 0
+            idx = 0  # 当前处理的字符索引
+
+            while idx < len(paragraph):
+                # 检查当前位置是否有 emoji, 包含组合 emoji
+                for emoji_data in emoji_list:
+                    if emoji_data["match_start"] == idx:
+                        char = emoji_data["emoji"]
+                        idx = emoji_data["match_end"]
+                        char_width = font_info.font.size
+                        break
+                else:
+                    # 处理普通字符
+                    char = paragraph[idx]
+                    idx += 1
+                    char_width = font_info.get_char_width_fast(char)
+
+                # 如果当前行为空，直接添加字符
+                if not current_line:
+                    current_line = char
+                    current_line_width = char_width
+                    continue
+
+                # 如果是标点符号，直接添加到当前行（标点符号不应该单独成行）
+                if len(char) == 1 and is_punctuation(char):
+                    current_line += char
+                    current_line_width += char_width
+                    continue
+
+                # 测试添加下一个字符后的宽度
+                test_width = current_line_width + char_width
+
+                if test_width <= max_width:
+                    # 宽度合适，继续添加
+                    current_line += char
+                    current_line_width = test_width
+                else:
+                    # 宽度超限，需要断行
+                    lines.append(current_line)
+                    current_line = char
+                    current_line_width = char_width
+
+            # 保存最后一行
+            if current_line:
+                lines.append(current_line)
+
+        return lines
+
+    def _wrap_text_old(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
         """优化的文本自动换行算法，考虑中英文字符宽度相同
 
         Args:
@@ -1290,12 +1312,12 @@ class CommonRenderer(ImageRenderer):
         if not text:
             return []
 
-        lines: list[str] = []
-        paragraphs = text.splitlines()
-
         def is_punctuation(char: str) -> bool:
             """判断是否为不能为行首的标点符号"""
-            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·" or char in ",.;:!?)]}"
+            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
+
+        lines: list[str] = []
+        paragraphs = text.splitlines()
 
         for paragraph in paragraphs:
             if not paragraph:
