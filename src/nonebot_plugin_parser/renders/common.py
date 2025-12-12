@@ -227,17 +227,6 @@ class RenderContext:
     y_pos: int = 0
     """当前绘制位置（绘制阶段使用）"""
 
-    def text(
-        self,
-        pos: tuple[int, int],
-        text: str,
-        font: FontInfo,
-        fill: Color,
-    ) -> int:
-        """绘制单行文本"""
-        self.draw.text(pos, text, font=font.font, fill=fill)
-        return font.line_height
-
 
 class CommonRenderer(ImageRenderer):
     """统一的渲染器，将解析结果转换为消息"""
@@ -392,6 +381,23 @@ class CommonRenderer(ImageRenderer):
                 source=cls.EMOJI_SOURCE,
             )
         return font.line_height * len(lines)
+
+    @staticmethod
+    def text_single_line(
+        ctx: RenderContext,
+        xy: tuple[int, int],
+        line: str,
+        font: FontInfo,
+        fill: Color,
+    ) -> int:
+        """绘制单行文本"""
+        ctx.draw.text(
+            xy,
+            line,
+            font=font.font,
+            fill=fill,
+        )
+        return font.line_height
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
@@ -952,7 +958,8 @@ class CommonRenderer(ImageRenderer):
         text_y = text_start_y
 
         # 发布者名称（蓝色）
-        text_y += ctx.text(
+        text_y += self.text_single_line(
+            ctx,
             (text_x, text_y),
             section.name,
             font=self.fontset.name_font,
@@ -962,7 +969,8 @@ class CommonRenderer(ImageRenderer):
         # 时间（灰色）
         if section.time:
             text_y += self.NAME_TIME_GAP
-            text_y += ctx.text(
+            text_y += self.text_single_line(
+                ctx,
                 (text_x, text_y),
                 section.time,
                 font=self.fontset.extra_font,
@@ -1048,7 +1056,8 @@ class CommonRenderer(ImageRenderer):
             extra_font_info = self.fontset.extra_font
             text_width = extra_font_info.get_text_width(section.alt_text)
             text_x = self.PADDING + (ctx.content_width - text_width) // 2
-            ctx.y_pos += ctx.text(
+            ctx.y_pos += self.text_single_line(
+                ctx,
                 (text_x, ctx.y_pos),
                 section.alt_text,
                 self.fontset.extra_font,
@@ -1236,34 +1245,10 @@ class CommonRenderer(ImageRenderer):
         draw.rectangle((x2 - width, y1 + radius, x2, y2 - radius), fill=border_color)  # 右
 
         # 绘制四个圆角边框
-        draw.arc(
-            (x1, y1, x1 + 2 * radius, y1 + 2 * radius),
-            180,
-            270,
-            fill=border_color,
-            width=width,
-        )
-        draw.arc(
-            (x2 - 2 * radius, y1, x2, y1 + 2 * radius),
-            270,
-            360,
-            fill=border_color,
-            width=width,
-        )
-        draw.arc(
-            (x1, y2 - 2 * radius, x1 + 2 * radius, y2),
-            90,
-            180,
-            fill=border_color,
-            width=width,
-        )
-        draw.arc(
-            (x2 - 2 * radius, y2 - 2 * radius, x2, y2),
-            0,
-            90,
-            fill=border_color,
-            width=width,
-        )
+        draw.arc((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=border_color, width=width)
+        draw.arc((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=border_color, width=width)
+        draw.arc((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=border_color, width=width)
+        draw.arc((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=border_color, width=width)
 
     def _wrap_text(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
         """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
