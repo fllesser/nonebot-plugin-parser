@@ -1165,7 +1165,7 @@ class CommonRenderer(ImageRenderer):
         image.paste(overlay, (img_x, img_y), overlay)
 
         # 绘制+N文字
-        text = f"+{count}"
+        text = "+" + str(count)
         indicator_font = self.fontset.indicator
         # 计算文字位置（居中）
         text_width = indicator_font.get_text_width(text)
