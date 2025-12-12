@@ -4,7 +4,7 @@ from nonebot import logger
 def test_font():
     from nonebot_plugin_parser.renders import CommonRenderer
 
-    font = CommonRenderer.fontset.text_font
+    font = CommonRenderer.fontset.text
     chars = ["中", "A", "1", "a", ",", "。"]
     for char in chars:
         logger.info(f"{char}: {font.get_char_width(char)}")
@@ -16,7 +16,7 @@ def test_font():
 def test_cjk_width():
     from nonebot_plugin_parser.renders import CommonRenderer
 
-    font = CommonRenderer.fontset.name_font
+    font = CommonRenderer.fontset.name
     count = 0
     for char_ord in range(ord("\u4e00"), ord("\u9fff")):
         char = chr(char_ord)
