@@ -23,7 +23,9 @@ async def _(searched: re.Match[str] = KeyPatternMatched()):
     if prefix == "vt" or prefix == "vm":
         async with httpx.AsyncClient(follow_redirects=True, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(url)
-            url = response.headers.get("Location")
+            # 使用 response.url 获取最终重定向后的 URL
+            # 因为 follow_redirects=True 时会自动跟随重定向，最终响应没有 Location 头
+            url = str(response.url)
 
     pub_prefix = f"{NICKNAME}解析 | TikTok - "
     if not url:
