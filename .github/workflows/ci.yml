@@ -87,7 +87,7 @@ jobs:
         with:
           env_vars: PYTHON,PYDANTIC
           use_oidc: true
-          report_type: "test-results"
+          report_type: "test_results"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -141,7 +141,7 @@ jobs:
         with:
           env_vars: PYTHON
           use_oidc: true
-          report_type: "test-results"
+          report_type: "test_results"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -202,13 +202,7 @@ jobs:
         with:
           env_vars: PYTHON
           use_oidc: true
-          report_type: "test-results"
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          env_vars: PYTHON
-          use_oidc: true
+          report_type: "test_results"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -230,22 +224,5 @@ jobs:
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: render_result.md
+          body-path: render_result_combined.md
           edit-mode: replace
-
-      - name: Find or Create Comment
-        if: ${{ github.event.pull_request.number }}
-        uses: peter-evans/find-comment@v4
-        id: fc2
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: "github-actions[bot]"
-
-      - name: Update Comment for Htmlrender
-        if: ${{ github.event.pull_request.number }}
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          comment-id: ${{ steps.fc2.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: render_result_html.md
-          edit-mode: append

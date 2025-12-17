@@ -8,22 +8,24 @@ _COMMON_RENDERER = CommonRenderer()
 _DEFAULT_RENDERER = DefaultRenderer()
 
 if importlib.util.find_spec("nonebot_plugin_htmlrender") is None:
-    _HTML_RENDERER = None
+    _htmlrender_available = False
 else:
-    from .htmlrender import HtmlRenderer
-
-    _HTML_RENDERER = HtmlRenderer()
+    _htmlrender_available = True
 
 from ..config import pconfig
 from ..constants import RenderType
+
+RENDERER = None
 
 match pconfig.render_type:
     case RenderType.common:
         RENDERER = _COMMON_RENDERER
     case RenderType.default:
         RENDERER = _DEFAULT_RENDERER
-    case RenderType.htmlrender:
-        RENDERER = _COMMON_RENDERER if _HTML_RENDERER is None else _HTML_RENDERER
+    case RenderType.htmlrender if _htmlrender_available:
+        from .htmlrender import HtmlRenderer
+
+        RENDERER = HtmlRenderer()
     case RenderType.htmlkit:
         RENDERER = None
 
