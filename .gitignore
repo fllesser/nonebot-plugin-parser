@@ -161,3 +161,4 @@ coverage*.xml
 !.env.test
 .env.*
 render_result.md
+render_result_html.md

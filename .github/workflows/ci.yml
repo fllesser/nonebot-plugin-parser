@@ -218,3 +218,12 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body-path: render_result.md
           edit-mode: replace
+
+      - name: Update Comment for Htmlrender
+        if: ${{ github.event.pull_request.number }}
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: render_result_html.md
+          edit-mode: append
