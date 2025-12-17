@@ -64,6 +64,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        position: relative; /* For absolute positioning of logo */
       }
 
       .avatar {
@@ -92,6 +93,16 @@
         font-size: 12px;
         color: var(--text-secondary);
         margin-top: 2px;
+      }
+      
+      .platform-logo {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 24px;
+        width: auto;
+        opacity: 0.8;
       }
 
       /* Content */
@@ -203,21 +214,10 @@
         padding-top: 12px;
         border-top: 1px solid var(--border-color);
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end; /* Align extra info to right */
         align-items: center;
         font-size: 12px;
         color: var(--text-secondary);
-      }
-
-      .platform-tag {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 8px;
-        background-color: #eff6ff;
-        color: var(--accent-color);
-        border-radius: 999px;
-        font-weight: 500;
-        font-size: 11px;
       }
 
       .extra-info {
@@ -243,6 +243,11 @@
           <div class="time">{{ result.formartted_datetime }}</div>
           {% endif %}
         </div>
+        
+        {# Platform Logo #}
+        {% if not is_repost and result.platform and result.platform.logo_path %}
+        <img src="{{ result.platform.logo_path }}" class="platform-logo" alt="{{ result.platform.display_name }}">
+        {% endif %}
       </div>
       {% endif %}
 
@@ -295,18 +300,9 @@
       </div>
 
         {# Footer / Extra #}
-        {% if not is_repost and result.platform %}
+        {% if not is_repost and result.extra_info %}
         <div class="footer">
-            <div class="platform-tag">
-                {% if result.platform.logo_path %}
-                <img src="{{ result.platform.logo_path }}" class="platform-icon" alt="{{ result.platform.display_name }}">
-                {% else %}
-                {{ result.platform.display_name }}
-                {% endif %}
-            </div>
-            {% if result.extra_info %}
             <div class="extra-info">{{ result.extra_info }}</div>
-            {% endif %}
         </div>
         {% endif %}
     </div>
