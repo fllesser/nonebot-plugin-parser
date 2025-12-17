@@ -10,7 +10,7 @@ from nonebot_plugin_htmlrender import template_to_pic
 from .base import ParseResult, ImageRenderer
 
 
-class HTMLRenderer(ImageRenderer):
+class HtmlRenderer(ImageRenderer):
     """HTML 渲染器"""
 
     @override

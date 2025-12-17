@@ -39,9 +39,9 @@ async def render_collected_results(result_collections: list[Result]):
     import aiofiles
 
     from nonebot_plugin_parser import pconfig
-    from nonebot_plugin_parser.renders.htmlrender import HTMLRenderer
+    from nonebot_plugin_parser.renders.htmlrender import HtmlRenderer
 
-    renderer = HTMLRenderer()
+    renderer = HtmlRenderer()
 
     result_file = "render_result_html.md"
 

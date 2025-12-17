@@ -39,7 +39,7 @@ async def render_collected_results(result_collections: list[Result]):
     import aiofiles
 
     from nonebot_plugin_parser import pconfig
-    from nonebot_plugin_parser.renders import _CommonRenderer as renderer
+    from nonebot_plugin_parser.renders import _COMMON_RENDERER as renderer
 
     result_file = "render_result.md"
 
