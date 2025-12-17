@@ -179,6 +179,20 @@ jobs:
       - name: Install Dependencies
         run: uv sync --locked
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/work/nonebot-plugin-parser/nonebot-plugin-parser/data/nonebot_plugin_htmlrender
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/uv.lock') }}
+          restore-keys: ${{ runner.os }}-playwright-
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: uv run playwright install chromium-headless-shell --with-deps
+
       - name: Run Pytest Render
         run: uv run poe ${{ env.TASK }}
 
