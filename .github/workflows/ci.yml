@@ -219,11 +219,19 @@ jobs:
           body-path: render_result.md
           edit-mode: replace
 
+      - name: Find or Create Comment
+        if: ${{ github.event.pull_request.number }}
+        uses: peter-evans/find-comment@v4
+        id: fc2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+
       - name: Update Comment for Htmlrender
         if: ${{ github.event.pull_request.number }}
         uses: peter-evans/create-or-update-comment@v5
         with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
+          comment-id: ${{ steps.fc2.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body-path: render_result_html.md
           edit-mode: append
