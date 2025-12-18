@@ -5,22 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Media Card</title>
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap");
 
       :root {
-        --bg-color: #ffffff;
+        /* Color Palette - Slate & Indigo */
+        --bg-color: #f1f5f9;
         --card-bg: #ffffff;
-        --repost-bg: #f9f9f9;
-        --text-primary: #1f2937;
-        --text-secondary: #6b7280;
-        --accent-color: #3b82f6;
-        --border-color: #e5e7eb;
-        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-          0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --radius-lg: 16px;
-        --radius-md: 12px;
-        --radius-sm: 8px;
+        --text-primary: #1e293b; /* Slate 800 */
+        --text-secondary: #64748b; /* Slate 500 */
+        --accent-color: #6366f1; /* Indigo 500 */
+        --border-color: #e2e8f0; /* Slate 200 */
+        --repost-bg: #f8fafc; /* Slate 50 */
+        
+        /* Shadows */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        
+        /* Radius */
+        --radius-2xl: 24px;
+        --radius-xl: 16px;
+        --radius-lg: 12px;
+        --radius-md: 8px;
       }
 
       * {
@@ -30,109 +36,132 @@
       }
 
       body {
-        font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        background-color: transparent;
-        width: 800px; /* Match viewport width */
-        padding: 20px;
+        font-family: "Inter", "Noto Sans SC", system-ui, -apple-system, sans-serif;
+        background-color: var(--bg-color);
+        /* Subtle mesh gradient background */
+        background-image: 
+          radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+          radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+          radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+        background-image: 
+          radial-gradient(at 40% 20%, hsla(28,100%,74%,1) 0px, transparent 50%),
+          radial-gradient(at 80% 0%, hsla(189,100%,56%,1) 0px, transparent 50%),
+          radial-gradient(at 0% 50%, hsla(355,100%,93%,1) 0px, transparent 50%);
+        background-size: 100% 100%;
+        background-attachment: fixed;
+        
+        width: 800px;
+        padding: 60px;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
         -webkit-font-smoothing: antialiased;
       }
 
       .card {
-        background-color: var(--card-bg);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-md);
-        padding: 24px;
+        background-color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border-radius: var(--radius-2xl);
+        box-shadow: var(--shadow-xl);
+        padding: 40px;
         display: flex;
         flex-direction: column;
-        gap: 16px;
-        overflow: hidden;
-        border: 1px solid rgba(0, 0, 0, 0.03);
-      }
-
-      /* Repost Styling */
-      .card.repost {
-        background-color: var(--repost-bg);
-        box-shadow: none;
-        border: 1px solid var(--border-color);
-        margin-top: 8px;
-        padding: 16px;
+        gap: 24px;
+        width: 100%;
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.5);
       }
 
       /* Header */
       .header {
         display: flex;
         align-items: center;
-        gap: 12px;
-        position: relative; /* For absolute positioning of logo */
+        gap: 16px;
+        position: relative;
       }
 
       .avatar {
-        width: 48px;
-        height: 48px;
+        width: 64px;
+        height: 64px;
         border-radius: 50%;
         object-fit: cover;
-        border: 2px solid #fff;
-        box-shadow: var(--shadow-sm);
+        border: 4px solid rgba(255, 255, 255, 0.8);
+        box-shadow: var(--shadow-md);
       }
 
       .user-info {
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        gap: 4px;
       }
 
       .username {
-        font-size: 16px;
+        font-size: 20px;
         font-weight: 700;
         color: var(--text-primary);
         line-height: 1.2;
+        letter-spacing: -0.02em;
       }
 
       .time {
-        font-size: 12px;
+        font-size: 14px;
         color: var(--text-secondary);
-        margin-top: 2px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
       
+      .time::before {
+        content: "";
+        display: block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: var(--accent-color);
+        opacity: 0.5;
+      }
+
       .platform-logo {
         position: absolute;
         right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        height: 24px;
+        top: 0;
+        height: 28px;
         width: auto;
-        opacity: 0.8;
       }
 
       /* Content */
       .content-body {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 20px;
       }
 
       .title {
-        font-size: 18px;
-        font-weight: 700;
+        font-size: 22px;
+        font-weight: 800;
         color: var(--text-primary);
         line-height: 1.4;
+        letter-spacing: -0.02em;
       }
 
       .text {
-        font-size: 15px;
+        font-size: 17px;
         color: var(--text-primary);
-        line-height: 1.6;
+        line-height: 1.75;
         white-space: pre-wrap;
         word-wrap: break-word;
+        font-weight: 400;
       }
 
       /* Images */
       .image-container {
         width: 100%;
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-xl);
         overflow: hidden;
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid rgba(0,0,0,0.04);
       }
 
       .single-image {
@@ -143,26 +172,21 @@
 
       .image-grid {
         display: grid;
-        gap: 4px;
+        gap: 8px;
         width: 100%;
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-xl);
         overflow: hidden;
       }
 
-      .image-grid.cols-1 {
-        grid-template-columns: 1fr;
-      }
-      .image-grid.cols-2 {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .image-grid.cols-3 {
-        grid-template-columns: repeat(3, 1fr);
-      }
+      .image-grid.cols-1 { grid-template-columns: 1fr; }
+      .image-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .image-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
 
       .grid-item {
         position: relative;
-        padding-bottom: 100%; /* Square aspect ratio */
-        background-color: #f3f4f6;
+        padding-bottom: 100%;
+        background-color: #f1f5f9;
+        overflow: hidden;
       }
 
       .grid-item img {
@@ -172,7 +196,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: transform 0.3s ease;
+        transition: transform 0.5s ease;
       }
 
       .more-count {
@@ -181,47 +205,95 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(2px);
+        background-color: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
+        font-size: 32px;
         font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      /* Repost */
+      .card.repost {
+        background-color: var(--repost-bg);
+        box-shadow: none;
+        border: none;
+        border-left: 4px solid var(--border-color);
+        border-radius: 4px var(--radius-lg) var(--radius-lg) 4px;
+        padding: 24px;
+        margin-top: 8px;
+      }
+      
+      .card.repost .header {
+        margin-bottom: 8px;
+      }
+      
+      .card.repost .avatar {
+        width: 40px;
+        height: 40px;
+        border-width: 2px;
+      }
+      
+      .card.repost .username {
+        font-size: 16px;
+      }
+      
+      .card.repost .text {
+        font-size: 15px;
       }
 
       /* Graphics Content */
       .graphics-item {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        padding: 12px;
+        gap: 12px;
+        padding: 20px;
         background-color: #f8fafc;
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-color);
       }
 
       .graphics-alt {
-        font-size: 12px;
+        font-size: 13px;
         color: var(--text-secondary);
         text-align: center;
-        margin-top: 4px;
+        margin-top: 8px;
+        font-style: italic;
       }
 
       /* Footer */
       .footer {
-        margin-top: 4px;
-        padding-top: 12px;
+        margin-top: 12px;
+        padding-top: 24px;
         border-top: 1px solid var(--border-color);
         display: flex;
-        justify-content: flex-end; /* Align extra info to right */
+        justify-content: flex-end;
         align-items: center;
-        font-size: 12px;
+        font-size: 13px;
         color: var(--text-secondary);
+        font-weight: 500;
+      }
+      
+      .footer-brand {
+        font-weight: 600;
+        color: var(--text-primary);
+        opacity: 0.4;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 11px;
       }
 
       .extra-info {
+        background: #f1f5f9;
+        padding: 6px 16px;
+        border-radius: 999px;
         font-variant-numeric: tabular-nums;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 600;
       }
     </style>
   </head>
@@ -254,9 +326,13 @@
       <div class="content-body">
         {# Title #} {% if result.title %}
         <div class="title">{{ result.title }}</div>
-        {% endif %} {# Text #} {% if result.text %}
+        {% endif %} 
+        
+        {# Text #} {% if result.text %}
         <div class="text">{{ result.text }}</div>
-        {% endif %} {# Images / Cover #} {% if result.cover_path %}
+        {% endif %} 
+        
+        {# Images / Cover #} {% if result.cover_path %}
         <div class="image-container">
           <img src="{{ result.cover_path }}" class="single-image" alt="cover" />
         </div>
@@ -278,7 +354,10 @@
           </div>
           {% endfor %}
         </div>
-        {% endif %} {% elif result.graphics_contents %} {% for graphics in
+        {% endif %} 
+        
+        {# Graphics #}
+        {% elif result.graphics_contents %} {% for graphics in
         result.graphics_contents %}
         <div class="graphics-item">
           {% if graphics.text %}
@@ -295,14 +374,19 @@
           <div class="graphics-alt">{{ graphics.alt }}</div>
           {% endif %}
         </div>
-        {% endfor %} {% endif %} {# Repost #} {% if result.repost %} {{
+        {% endfor %} {% endif %} 
+        
+        {# Repost #} {% if result.repost %} {{
         render_card(result.repost, is_repost=True) }} {% endif %}
       </div>
 
         {# Footer / Extra #}
-        {% if not is_repost and result.extra_info %}
+        {% if not is_repost %}
         <div class="footer">
+
+            {% if result.extra_info %}
             <div class="extra-info">{{ result.extra_info }}</div>
+            {% endif %}
         </div>
         {% endif %}
     </div>
