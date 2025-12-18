@@ -69,7 +69,7 @@ async def render_collected_results(result_collections: list[Result]):
             total_size = media_sizes[i] if not isinstance(media_sizes[i], Exception) else 0.0
 
             # 使用 common renderer 渲染
-            logger.info(f"common | {item.url} | 开始渲染")
+            logger.info(f"PIL {item.url} | 开始渲染")
             common_start = time.time()
             common_image_raw = await common_renderer.render_image(item.parse_result)
             common_time = time.time() - common_start
@@ -82,10 +82,10 @@ async def render_collected_results(result_collections: list[Result]):
 
             common_render_size = common_image_path.stat().st_size / 1024 / 1024
 
-            logger.success(f"common | {item.url} | 渲染成功，耗时: {common_time:.3f}s")
+            logger.success(f"PIL {item.url} | 渲染成功，耗时: {common_time:.3f}s")
 
             # 使用 html renderer 渲染
-            logger.info(f"html | {item.url} | 开始渲染")
+            logger.info(f"htmlrender {item.url} | 开始渲染")
             html_start = time.time()
             html_image_raw = await html_renderer.render_image(item.parse_result)
             html_time = time.time() - html_start
@@ -98,7 +98,7 @@ async def render_collected_results(result_collections: list[Result]):
 
             html_render_size = html_image_path.stat().st_size / 1024 / 1024
 
-            logger.success(f"html | {item.url} | 渲染成功，耗时: {html_time:.3f}s")
+            logger.success(f"htmlrender {item.url} | 渲染成功，耗时: {html_time:.3f}s")
 
             render_data.append(
                 {
