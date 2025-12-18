@@ -47,8 +47,10 @@ async def render_collected_results(result_collections: list[Result]):
 
     # 写入表头
     async with aiofiles.open(result_file, "w") as f:
-        await f.write("| 类型 | PIL 耗时(秒) | HTML 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB) |\n")
-        await f.write("| --- | --- | --- | --- | --- |\n")
+        await f.write(
+            "| 类型 | PIL 耗时(秒) | HTML 耗时(秒) | 渲染所用图片总大小(MB) | PIL 导出图片大小(MB) | HTML 导出图片大小(MB) |\n"  # noqa: E501
+        )
+        await f.write("| --- | --- | --- | --- | --- | --- |\n")
 
     # 第一阶段：并发下载所有结果的媒体资源
     logger.info(f"开始并发下载 {len(result_collections)} 个结果的媒体资源")
@@ -121,8 +123,7 @@ async def render_collected_results(result_collections: list[Result]):
             for item in sorted_data:
                 await f.write(f"| [{item['url_type']}]({item['url']}) | {item['common_cost']:.5f} ")
                 await f.write(f"| {item['html_cost']:.5f} | {item['media_size']:.5f} | ")
-                # 选择导出图片大小（这里使用 common renderer 的大小，或者可以显示两个值）
-                await f.write(f"{item['common_render_size']:.5f} |\n")
+                await f.write(f"{item['common_render_size']:.5f} | {item['html_render_size']:.5f} |\n")
         logger.success(f"所有测试结果已写入 {result_file}")
 
 
