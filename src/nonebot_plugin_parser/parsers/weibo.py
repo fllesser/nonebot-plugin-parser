@@ -41,7 +41,8 @@ class WeiBoParser(BaseParser):
 
     # https://m.weibo.cn/status/5234367615996775
     # https://m.weibo.cn/detail/4976424138313924
-    @handle("m.weibo.cn", r"m\.weibo\.cn/(?:status|detail)/(?P<wid>\d+)")
+    # https://m.weibo.cn/status/Q0KtXh6z2
+    @handle("m.weibo.cn", r"weibo\.cn/(?:status|detail)/(?P<wid>[0-9a-zA-Z]+)")
     # https://weibo.com/7207262816/P5kWdcfDe
     @handle("weibo.com", r"weibo\.com/\d+/(?P<wid>[0-9a-zA-Z]+)")
     async def _parse_m_weibo_cn(self, searched: Match[str]):
@@ -49,7 +50,7 @@ class WeiBoParser(BaseParser):
         return await self.parse_weibo_id(wid)
 
     # https://mapp.api.weibo.cn/fx/233911ddcc6bffea835a55e725fb0ebc.html
-    @handle("mapp.api.weibo", r"mapp\.api\.weibo\.cn/fx/[A-Za-z\d]+\.html")
+    @handle("mapp.api.weibo", r"mapp\.api\.weibo\.cn/fx/[0-9A-Za-z]+\.html")
     async def _parse_mapp_api_weibo(self, searched: Match[str]):
         url = f"https://{searched.group(0)}"
         return await self.parse_with_redirect(url)
