@@ -132,14 +132,6 @@ jobs:
       - name: Install Dependencies
         run: uv sync --locked
 
-      - name: Cache Medias
-        uses: actions/cache@v5
-        id: media-cache
-        with:
-          path: ~/work/nonebot-plugin-parser/nonebot-plugin-parser/cache
-          key: ${{ runner.os }}-medias-parsers
-          restore-keys: ${{ runner.os }}-medias-
-
       - name: Run Pytest Parsers
         run: uv run poe ${{ env.TEST }}
 
