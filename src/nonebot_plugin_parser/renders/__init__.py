@@ -1,35 +1,28 @@
-import importlib.util
+import importlib
 
 from nonebot import get_driver
 
+from .. import utils
 from .base import BaseRenderer
 from .common import CommonRenderer
 from .default import DefaultRenderer
 
-if importlib.util.find_spec("nonebot_plugin_htmlrender") is None:
-    _HTML_RENDERER_AVAILABLE = False
-else:
-    _HTML_RENDERER_AVAILABLE = True
-
-if importlib.util.find_spec("nonebot_plugin_htmlkit") is None:
-    _HTMLKIT_AVAILABLE = False
-else:
-    _HTMLKIT_AVAILABLE = True
-
-
-from ..config import pconfig
-from ..constants import RenderType
+_HTML_RENDER_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlrender")
+_HTMLKIT_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlkit")
 
 _COMMON_RENDERER = CommonRenderer()
 _DEFAULT_RENDERER = DefaultRenderer()
 RENDERER = None
+
+from ..config import pconfig
+from ..constants import RenderType
 
 match pconfig.render_type:
     case RenderType.common:
         RENDERER = _COMMON_RENDERER
     case RenderType.default:
         RENDERER = _DEFAULT_RENDERER
-    case RenderType.htmlrender if _HTML_RENDERER_AVAILABLE:
+    case RenderType.htmlrender if _HTML_RENDER_AVAILABLE:
         from .htmlrender import HtmlRenderer
 
         RENDERER = HtmlRenderer()
