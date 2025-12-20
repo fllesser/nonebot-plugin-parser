@@ -20,9 +20,9 @@ else:
 from ..config import pconfig
 from ..constants import RenderType
 
-RENDERER = None
 _COMMON_RENDERER = CommonRenderer()
 _DEFAULT_RENDERER = DefaultRenderer()
+RENDERER = None
 
 match pconfig.render_type:
     case RenderType.common:
@@ -43,7 +43,6 @@ def get_renderer(platform: str) -> BaseRenderer:
         return RENDERER
 
     if not _HTMLKIT_AVAILABLE:
-        # fallback to default renderer
         return _COMMON_RENDERER
     else:
         module = importlib.import_module("." + platform, package=__name__)
