@@ -7,9 +7,14 @@ from .common import CommonRenderer
 from .default import DefaultRenderer
 
 if importlib.util.find_spec("nonebot_plugin_htmlrender") is None:
-    _htmlrender_available = False
+    _HTML_RENDERER_AVAILABLE = False
 else:
-    _htmlrender_available = True
+    _HTML_RENDERER_AVAILABLE = True
+
+if importlib.util.find_spec("nonebot_plugin_htmlkit") is None:
+    _HTMLKIT_AVAILABLE = False
+else:
+    _HTMLKIT_AVAILABLE = True
 
 
 from ..config import pconfig
@@ -24,7 +29,7 @@ match pconfig.render_type:
         RENDERER = _COMMON_RENDERER
     case RenderType.default:
         RENDERER = _DEFAULT_RENDERER
-    case RenderType.htmlrender if _htmlrender_available:
+    case RenderType.htmlrender if _HTML_RENDERER_AVAILABLE:
         from .htmlrender import HtmlRenderer
 
         RENDERER = HtmlRenderer()
@@ -37,7 +42,7 @@ def get_renderer(platform: str) -> BaseRenderer:
     if RENDERER:
         return RENDERER
 
-    if importlib.util.find_spec("nonebot_plugin_htmlkit") is None:
+    if not _HTMLKIT_AVAILABLE:
         # fallback to default renderer
         return _COMMON_RENDERER
     else:
