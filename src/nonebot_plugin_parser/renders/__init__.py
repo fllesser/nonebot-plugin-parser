@@ -40,7 +40,7 @@ def get_renderer(platform: str) -> BaseRenderer:
         return _COMMON_RENDERER
     else:
         module = importlib.import_module("." + platform, package=__name__)
-        renderer_class = getattr(module, "Renderer")
+        renderer_class: type[BaseRenderer] = getattr(module, "Renderer")
         return renderer_class()
 
 
