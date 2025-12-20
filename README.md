@@ -17,7 +17,8 @@
 
 </div>
 
-> [!IMPORTANT] > **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～ ⭐️
+> [!IMPORTANT] 
+> **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～ ⭐️
 > <img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=fllesser&repo=nonebot-plugin-parser" alt="starify" />
 
 ## 📖 介绍
@@ -52,7 +53,8 @@
 
 ## 💿 安装
 
-> [!Warning] > **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
+> [!Warning] 
+> **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
 
 <details>
 <summary>使用 nb-cli 安装/更新</summary>
