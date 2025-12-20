@@ -1,21 +1,23 @@
 import importlib.util
 
+from nonebot import get_driver
+
 from .base import BaseRenderer
 from .common import CommonRenderer
 from .default import DefaultRenderer
-
-_COMMON_RENDERER = CommonRenderer()
-_DEFAULT_RENDERER = DefaultRenderer()
 
 if importlib.util.find_spec("nonebot_plugin_htmlrender") is None:
     _htmlrender_available = False
 else:
     _htmlrender_available = True
 
+
 from ..config import pconfig
 from ..constants import RenderType
 
 RENDERER = None
+_COMMON_RENDERER = CommonRenderer()
+_DEFAULT_RENDERER = DefaultRenderer()
 
 match pconfig.render_type:
     case RenderType.common:
@@ -42,9 +44,6 @@ def get_renderer(platform: str) -> BaseRenderer:
         module = importlib.import_module("." + platform, package=__name__)
         renderer_class: type[BaseRenderer] = getattr(module, "Renderer")
         return renderer_class()
-
-
-from nonebot import get_driver
 
 
 @get_driver().on_startup
