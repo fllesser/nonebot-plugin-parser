@@ -1620,8 +1620,8 @@ requires-dist = [
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
     { name = "tqdm", specifier = ">=4.67.1,<5.0.0" },
-    { name = "yt-dlp", extras = ["default"], marker = "extra == 'all'", specifier = ">=2025.11.12" },
-    { name = "yt-dlp", extras = ["default"], marker = "extra == 'ytdlp'", specifier = ">=2025.11.12" },
+    { name = "yt-dlp", extras = ["default"], marker = "extra == 'all'", specifier = ">=2025.12.8" },
+    { name = "yt-dlp", extras = ["default"], marker = "extra == 'ytdlp'", specifier = ">=2025.12.8" },
 ]
 provides-extras = ["htmlkit", "htmlrender", "ytdlp", "emosvg", "all"]
 
