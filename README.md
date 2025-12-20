@@ -17,9 +17,8 @@
 
 </div>
 
-> [!IMPORTANT]
-> **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～ ⭐️
-<img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=fllesser&repo=nonebot-plugin-parser" alt="starify" />
+> [!IMPORTANT] > **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～ ⭐️
+> <img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=fllesser&repo=nonebot-plugin-parser" alt="starify" />
 
 ## 📖 介绍
 
@@ -53,8 +52,7 @@
 
 ## 💿 安装
 
-> [!Warning] 
-> **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
+> [!Warning] > **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
 
 <details>
 <summary>使用 nb-cli 安装/更新</summary>
@@ -227,7 +225,7 @@ parser_max_size=90
 parser_disabled_platforms='["twitter"]'
 
 # [可选] 渲染器类型
-# 可选 "default"(无图片渲染), "common"(PIL 通用图片渲染), "htmlkit"(htmlkit, 暂不可用)
+# 可选 "default"(无图片渲染), "common"(PIL 通用图片渲染), "htmlrender"(htmlrender), "htmlkit"(htmlkit, 暂不可用)
 parser_render_type="common"
 
 # [可选] 是否在解析结果中附加原始URL
