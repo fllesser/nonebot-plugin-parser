@@ -87,7 +87,7 @@ jobs:
         with:
           env_vars: PYTHON,PYDANTIC
           use_oidc: true
-          report_type: "test-results"
+          report_type: "test_results"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -141,7 +141,7 @@ jobs:
         with:
           env_vars: PYTHON
           use_oidc: true
-          report_type: "test-results"
+          report_type: "test_results"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -179,6 +179,20 @@ jobs:
       - name: Install Dependencies
         run: uv sync --locked
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/work/nonebot-plugin-parser/nonebot-plugin-parser/data/nonebot_plugin_htmlrender
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/uv.lock') }}
+          restore-keys: ${{ runner.os }}-playwright-
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: uv run playwright install chromium-headless-shell --with-deps
+
       - name: Run Pytest Render
         run: uv run poe ${{ env.TASK }}
 
@@ -188,13 +202,7 @@ jobs:
         with:
           env_vars: PYTHON
           use_oidc: true
-          report_type: "test-results"
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          env_vars: PYTHON
-          use_oidc: true
+          report_type: "test_results"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -216,5 +224,5 @@ jobs:
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
-          body-path: render_result.md
+          body-path: render_result_combined.md
           edit-mode: replace

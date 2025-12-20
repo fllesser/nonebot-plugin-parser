@@ -1,18 +1,31 @@
 import importlib
 
+from nonebot import get_driver
+
+from .. import utils
 from .base import BaseRenderer
 from .common import CommonRenderer
-from ..config import RenderType, pconfig
 from .default import DefaultRenderer
 
-_CommonRenderer = CommonRenderer()
-_DefaultRenderer = DefaultRenderer()
+_HTML_RENDER_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlrender")
+_HTMLKIT_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlkit")
+
+_COMMON_RENDERER = CommonRenderer()
+_DEFAULT_RENDERER = DefaultRenderer()
+RENDERER = None
+
+from ..config import pconfig
+from ..constants import RenderType
 
 match pconfig.render_type:
     case RenderType.common:
-        RENDERER = _CommonRenderer
+        RENDERER = _COMMON_RENDERER
     case RenderType.default:
-        RENDERER = _DefaultRenderer
+        RENDERER = _DEFAULT_RENDERER
+    case RenderType.htmlrender if _HTML_RENDER_AVAILABLE:
+        from .htmlrender import HtmlRenderer
+
+        RENDERER = HtmlRenderer()
     case RenderType.htmlkit:
         RENDERER = None
 
@@ -22,16 +35,12 @@ def get_renderer(platform: str) -> BaseRenderer:
     if RENDERER:
         return RENDERER
 
-    try:
+    if not _HTMLKIT_AVAILABLE:
+        return _COMMON_RENDERER
+    else:
         module = importlib.import_module("." + platform, package=__name__)
-        renderer_class = getattr(module, "Renderer")
+        renderer_class: type[BaseRenderer] = getattr(module, "Renderer")
         return renderer_class()
-    except (ImportError, AttributeError):
-        # fallback to default renderer
-        return _CommonRenderer
-
-
-from nonebot import get_driver
 
 
 @get_driver().on_startup

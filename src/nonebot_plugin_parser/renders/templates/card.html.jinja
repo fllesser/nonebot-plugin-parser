@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Media Card</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap");
+
+      :root {
+        /* Color Palette - Slate & Indigo */
+        --bg-color: #f1f5f9;
+        --card-bg: #ffffff;
+        --text-primary: #1e293b; /* Slate 800 */
+        --text-secondary: #64748b; /* Slate 500 */
+        --accent-color: #6366f1; /* Indigo 500 */
+        --border-color: #e2e8f0; /* Slate 200 */
+        --repost-bg: #f8fafc; /* Slate 50 */
+        
+        /* Shadows */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        
+        /* Radius */
+        --radius-2xl: 24px;
+        --radius-xl: 16px;
+        --radius-lg: 12px;
+        --radius-md: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Inter", "Noto Sans SC", system-ui, -apple-system, sans-serif;
+        background-color: var(--bg-color);
+        /* Subtle mesh gradient background */
+        background-image: 
+          radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+          radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+          radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+        background-image: 
+          radial-gradient(at 40% 20%, hsla(28,100%,74%,1) 0px, transparent 50%),
+          radial-gradient(at 80% 0%, hsla(189,100%,56%,1) 0px, transparent 50%),
+          radial-gradient(at 0% 50%, hsla(355,100%,93%,1) 0px, transparent 50%);
+        background-size: 100% 100%;
+        background-attachment: fixed;
+        
+        width: 800px;
+        padding: 60px;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .card {
+        background-color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        border-radius: var(--radius-2xl);
+        box-shadow: var(--shadow-xl);
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        width: 100%;
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+
+      /* Header */
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+      }
+
+      .avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid rgba(255, 255, 255, 0.8);
+        box-shadow: var(--shadow-md);
+      }
+
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .username {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+
+      .time {
+        font-size: 14px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      
+      .time::before {
+        content: "";
+        display: block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: var(--accent-color);
+        opacity: 0.5;
+      }
+
+      .platform-logo {
+        position: absolute;
+        right: 0;
+        top: 0;
+        height: 28px;
+        width: auto;
+      }
+
+      /* Content */
+      .content-body {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .title {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.4;
+        letter-spacing: -0.02em;
+      }
+
+      .text {
+        font-size: 17px;
+        color: var(--text-primary);
+        line-height: 1.75;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-weight: 400;
+      }
+
+      /* Images */
+      .image-container {
+        width: 100%;
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid rgba(0,0,0,0.04);
+      }
+
+      .single-image {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .image-grid {
+        display: grid;
+        gap: 8px;
+        width: 100%;
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+      }
+
+      .image-grid.cols-1 { grid-template-columns: 1fr; }
+      .image-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .image-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+
+      .grid-item {
+        position: relative;
+        padding-bottom: 100%;
+        background-color: #f1f5f9;
+        overflow: hidden;
+      }
+
+      .grid-item img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+
+      .more-count {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      /* Repost */
+      .card.repost {
+        background-color: var(--repost-bg);
+        box-shadow: none;
+        border: none;
+        border-radius: 4px var(--radius-lg) var(--radius-lg) 4px;
+        padding: 24px;
+        margin-top: 8px;
+      }
+      
+      .card.repost .header {
+        margin-bottom: 8px;
+      }
+      
+      .card.repost .avatar {
+        width: 40px;
+        height: 40px;
+        border-width: 2px;
+      }
+      
+      .card.repost .username {
+        font-size: 16px;
+      }
+      
+      .card.repost .text {
+        font-size: 15px;
+      }
+
+      /* Graphics Content */
+      .graphics-item {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 20px;
+        background-color: #f8fafc;
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-color);
+      }
+
+      .graphics-alt {
+        font-size: 13px;
+        color: var(--text-secondary);
+        text-align: center;
+        margin-top: 8px;
+        font-style: italic;
+      }
+
+      /* Footer */
+      .footer {
+        margin-top: 12px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+      
+      .footer-brand {
+        font-weight: 600;
+        color: var(--text-primary);
+        opacity: 0.4;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 11px;
+      }
+
+      .extra-info {
+        background: #f1f5f9;
+        padding: 6px 16px;
+        border-radius: 999px;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    {% macro render_card(result, is_repost=False) %}
+    <div class="card {% if is_repost %}repost{% endif %}">
+      {# Header #} {% if result.author %}
+      <div class="header">
+        {% if result.author.avatar_path %}
+        <img
+          src="{{ result.author.avatar_path }}"
+          class="avatar"
+          alt="avatar"
+        />
+        {% endif %}
+        <div class="user-info">
+          <div class="username">{{ result.author.name }}</div>
+          {% if result.formartted_datetime %}
+          <div class="time">{{ result.formartted_datetime }}</div>
+          {% endif %}
+        </div>
+        
+        {# Platform Logo #}
+        {% if not is_repost and result.platform and result.platform.logo_path %}
+        <img src="{{ result.platform.logo_path }}" class="platform-logo" alt="{{ result.platform.display_name }}">
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="content-body">
+        {# Title #} {% if result.title %}
+        <div class="title">{{ result.title }}</div>
+        {% endif %} 
+        
+        {# Text #} {% if result.text %}
+        <div class="text">{{ result.text }}</div>
+        {% endif %} 
+        
+        {# Images / Cover #} {% if result.cover_path %}
+        <div class="image-container">
+          <img src="{{ result.cover_path }}" class="single-image" alt="cover" />
+        </div>
+        {% elif result.img_contents %} {% set imgs = result.img_contents %} {%
+        set count = imgs|length %} {% if count == 1 %}
+        <div class="image-container">
+          <img src="{{ imgs[0].path }}" class="single-image" alt="image" />
+        </div>
+        {% else %} {% set cols = 3 %} {% if count == 2 or count == 4 %} {% set
+        cols = 2 %} {% endif %}
+
+        <div class="image-grid cols-{{ cols }}">
+          {% for img in imgs[:9] %}
+          <div class="grid-item">
+            <img src="{{ img.path }}" alt="image" />
+            {% if loop.last and count > 9 %}
+            <div class="more-count">+{{ count - 9 }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %} 
+        
+        {# Graphics #}
+        {% elif result.graphics_contents %} {% for graphics in
+        result.graphics_contents %}
+        <div class="graphics-item">
+          {% if graphics.text %}
+          <div class="text">{{ graphics.text }}</div>
+          {% endif %}
+          <div class="image-container">
+            <img
+              src="{{ graphics.path }}"
+              class="single-image"
+              alt="graphics"
+            />
+          </div>
+          {% if graphics.alt %}
+          <div class="graphics-alt">{{ graphics.alt }}</div>
+          {% endif %}
+        </div>
+        {% endfor %} {% endif %} 
+        
+        {# Repost #} {% if result.repost %} {{
+        render_card(result.repost, is_repost=True) }} {% endif %}
+      </div>
+
+        {# Footer / Extra #}
+        {% if not is_repost %}
+        <div class="footer">
+
+            {% if result.extra_info %}
+            <div class="extra-info">{{ result.extra_info }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endmacro %} {{ render_card(result) }}
+  </body>
+</html>

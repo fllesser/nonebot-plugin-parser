@@ -25,7 +25,7 @@ def result_collections():
 
 @pytest.fixture(scope="module", autouse=True)
 async def render_collected_results(result_collections: list[Result]):
-    """在所有测试完成后，先并发下载，再顺序渲染"""
+    """在所有测试完成后，使用两种渲染器分别渲染并对比结果"""
     yield
 
     if not result_collections:
@@ -39,14 +39,18 @@ async def render_collected_results(result_collections: list[Result]):
     import aiofiles
 
     from nonebot_plugin_parser import pconfig
-    from nonebot_plugin_parser.renders import _CommonRenderer as renderer
+    from nonebot_plugin_parser.renders import _COMMON_RENDERER as common_renderer
+    from nonebot_plugin_parser.renders.htmlrender import HtmlRenderer
 
-    result_file = "render_result.md"
+    html_renderer = HtmlRenderer()
+    result_file = "render_result_combined.md"
 
     # 写入表头
     async with aiofiles.open(result_file, "w") as f:
-        await f.write("| 类型 | 耗时(秒) | 渲染所用图片总大小(MB) | 导出图片大小(MB) |\n")
-        await f.write("| --- | --- | --- | --- |\n")
+        await f.write(
+            "| 类型 | PIL 耗时(秒) | HTML 耗时(秒) | 渲染所用图片总大小(MB) | PIL 导出图片大小(MB) | HTML 导出图片大小(MB) |\n"  # noqa: E501
+        )
+        await f.write("| --- | --- | --- | --- | --- | --- |\n")
 
     # 第一阶段：并发下载所有结果的媒体资源
     logger.info(f"开始并发下载 {len(result_collections)} 个结果的媒体资源")
@@ -58,8 +62,7 @@ async def render_collected_results(result_collections: list[Result]):
     download_time = time.time() - download_start
     logger.info(f"所有媒体资源下载完成，耗时: {download_time:.3f} 秒")
 
-    # 第二阶段：顺序渲染所有结果
-    logger.info(f"开始顺序渲染 {len(result_collections)} 个结果")
+    # 第二阶段：使用两种渲染器分别渲染所有结果
     render_data = []
 
     for i, item in enumerate(result_collections):
@@ -67,42 +70,60 @@ async def render_collected_results(result_collections: list[Result]):
             # 获取下载的媒体大小
             total_size = media_sizes[i] if not isinstance(media_sizes[i], Exception) else 0.0
 
-            logger.info(f"{item.url} | 开始渲染")
+            # 使用 common renderer 渲染
+            logger.info(f"PIL {item.url} | 开始渲染")
+            common_start = time.time()
+            common_image_raw = await common_renderer.render_image(item.parse_result)
+            common_time = time.time() - common_start
 
-            # 渲染图片
-            render_start = time.time()
-            image_raw = await renderer.render_image(item.parse_result)
-            render_time = time.time() - render_start
+            # 保存 common renderer 图片
+            common_image_path = pconfig.cache_dir / "common" / f"{item.url_type}.png"
+            common_image_path.parent.mkdir(parents=True, exist_ok=True)
+            async with aiofiles.open(common_image_path, "wb") as f:
+                await f.write(common_image_raw)
 
-            # 保存图片
-            image_path = pconfig.cache_dir / "test_renders" / f"{item.url_type}.png"
-            image_path.parent.mkdir(parents=True, exist_ok=True)
-            async with aiofiles.open(image_path, "wb") as f:
-                await f.write(image_raw)
+            common_render_size = common_image_path.stat().st_size / 1024 / 1024
 
-            render_size = image_path.stat().st_size / 1024 / 1024
+            logger.success(f"PIL {item.url} | 渲染成功，耗时: {common_time:.3f}s")
 
-            logger.success(f"{item.url} | 渲染成功，耗时: {render_time:.3f}s, 媒体大小: {total_size:.2f}MB")
+            # 使用 html renderer 渲染
+            logger.info(f"htmlrender {item.url} | 开始渲染")
+            html_start = time.time()
+            html_image_raw = await html_renderer.render_image(item.parse_result)
+            html_time = time.time() - html_start
+
+            # 保存 html renderer 图片
+            html_image_path = pconfig.cache_dir / "htmlrender" / f"{item.url_type}.png"
+            html_image_path.parent.mkdir(parents=True, exist_ok=True)
+            async with aiofiles.open(html_image_path, "wb") as f:
+                await f.write(html_image_raw)
+
+            html_render_size = html_image_path.stat().st_size / 1024 / 1024
+
+            logger.success(f"htmlrender {item.url} | 渲染成功，耗时: {html_time:.3f}s")
 
             render_data.append(
                 {
                     "url": item.url,
                     "url_type": item.url_type,
-                    "cost": render_time,
+                    "common_cost": common_time,
+                    "html_cost": html_time,
                     "media_size": total_size,
-                    "render_size": render_size,
+                    "common_render_size": common_render_size,
+                    "html_render_size": html_render_size,
                 }
             )
-        except Exception:
-            logger.exception(f"{item.url} | 渲染失败")
+        except Exception as e:
+            logger.exception(f"{item.url} | 渲染失败: {e}")
 
-    # 按耗时排序并写入结果
+    # 按 common 渲染器耗时排序并写入结果
     if render_data:
-        sorted_data = sorted(render_data, key=lambda x: x["cost"])
+        sorted_data = sorted(render_data, key=lambda x: x["common_cost"])
         async with aiofiles.open(result_file, "a") as f:
             for item in sorted_data:
-                await f.write(f"| [{item['url_type']}]({item['url']}) | {item['cost']:.5f} ")
-                await f.write(f"| {item['media_size']:.5f} | {item['render_size']:.5f} |\n")
+                await f.write(f"| [{item['url_type']}]({item['url']}) | {item['common_cost']:.5f} ")
+                await f.write(f"| {item['html_cost']:.5f} | {item['media_size']:.5f} | ")
+                await f.write(f"{item['common_render_size']:.5f} | {item['html_render_size']:.5f} |\n")
         logger.success(f"所有测试结果已写入 {result_file}")
 
 
@@ -181,6 +202,7 @@ async def _download_all_media(result) -> float:
     return total_size
 
 
+# 测试用例部分 - 从两个原始文件中复制所有测试用例
 @pytest.mark.asyncio
 async def test_bilibili_opus_with_emoji(result_collections: list[Result]):
     """测试解析哔哩哔哩动态（包含 emoji）"""
@@ -188,8 +210,6 @@ async def test_bilibili_opus_with_emoji(result_collections: list[Result]):
 
     parser = BilibiliParser()
     url = "https://b23.tv/GwiHK6N"
-    # url = "https://www.bilibili.com/opus/1053279032168153105"
-    # url = "https://www.bilibili.com/opus/771299341168017431"
     keyword, searched = parser.search_url(url)
     assert searched, f"无法匹配 URL: {url}"
 
