@@ -54,7 +54,7 @@ wheels = [
 
 [[package]]
 name = "apilmoji"
-version = "0.2.3"
+version = "0.2.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -62,9 +62,9 @@ dependencies = [
     { name = "httpx" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/15/1a7c474a64920691ea649a76e63d6964efe2c63fcb7c3855b9b2827415d3/apilmoji-0.2.3.tar.gz", hash = "sha256:744ed123c88edeb954e98dc0cea775dfee7894eb49df1401b00f1e012afed86b", size = 8314, upload-time = "2025-12-10T16:54:00.246Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/83/708aa87dc4a099a5a248672996c5974932491ba867c2cd0235db0199a89f/apilmoji-0.2.4.tar.gz", hash = "sha256:4bbf767b5f414f5a5fe42f7172c9d210ca393c7730a0816ad0a4b276900381c4", size = 8460, upload-time = "2025-12-20T05:46:27.644Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6f/50/37dfc418db7adf0487afdfc2081d544359b862cd46b77ad90588e091bf72/apilmoji-0.2.3-py3-none-any.whl", hash = "sha256:54aa7b5fc9d74c295903e75db4839c4057497d0d0c5c50e8e17d6e3ecdd211b1", size = 8482, upload-time = "2025-12-10T16:54:01.671Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/d6/4a2c058e585ef403ba118dc756259cf63dc3b8d660528257a16f182f2b36/apilmoji-0.2.4-py3-none-any.whl", hash = "sha256:ec22f32bae6d0938c40bcac0a48e264be9fff55ed3629666820ed31671f78c4f", size = 9036, upload-time = "2025-12-20T05:46:26.333Z" },
 ]
 
 [package.optional-dependencies]
@@ -643,16 +643,16 @@ wheels = [
 
 [[package]]
 name = "emosvg"
-version = "0.1.5"
+version = "0.1.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cairosvg" },
     { name = "emoji" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9f/dd/40f6239f04c20fe4519fdf65ed11dcd71ebd035a6984ff93e224a5174ece/emosvg-0.1.5.tar.gz", hash = "sha256:676030496e194da19fcb36af32620ec990e42e41772c17a032bf6ee7c0b1d8c4", size = 2203299, upload-time = "2025-12-12T10:50:58.999Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e2/a6/acaeb04feecf0430ec1b1bc38825bd30df94e48168f30f886f70f9e77e1d/emosvg-0.1.6.tar.gz", hash = "sha256:6d2d5ff42ba5239b3e924dd54dd2d9898d3d8207da42dc0ca700effc7690a6da", size = 2198882, upload-time = "2025-12-20T03:26:37.253Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c4/ad/96d2d693c5c0fcf67488e516f491c960e8f25a01d5156e741fdcd3c68a4a/emosvg-0.1.5-py3-none-any.whl", hash = "sha256:7a7882ad05ec5ca5e2b60714f52f64cf716ac44b47431dda1dd4eae9259258e2", size = 5318836, upload-time = "2025-12-12T10:50:56.936Z" },
+    { url = "https://files.pythonhosted.org/packages/23/08/966a2e0da02acf20b3f2fccb8be887b8ebf411a88dbe9c82a32ba27435ea/emosvg-0.1.6-py3-none-any.whl", hash = "sha256:2a77c1def4305ee132268f1a0b5564ba89e6ce88e8bce8f3799dbd1bcde4f6ec", size = 5319194, upload-time = "2025-12-20T03:26:39.623Z" },
 ]
 
 [[package]]
@@ -1521,12 +1521,12 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=25.1.0" },
-    { name = "apilmoji", extras = ["tqdm"], specifier = ">=0.2.3,<1.0.0" },
+    { name = "apilmoji", extras = ["tqdm"], specifier = ">=0.2.4,<1.0.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
-    { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.5" },
-    { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.5" },
+    { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.6" },
+    { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.6" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.20.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.59.4,<1.0.0" },
@@ -1545,7 +1545,7 @@ provides-extras = ["htmlkit", "ytdlp", "emosvg", "all"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "emosvg", specifier = ">=0.1.5" },
+    { name = "emosvg", specifier = ">=0.1.6" },
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
@@ -1560,7 +1560,7 @@ dev = [
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
 ]
 extras = [
-    { name = "emosvg", specifier = ">=0.1.5" },
+    { name = "emosvg", specifier = ">=0.1.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "types-yt-dlp", specifier = ">=2025.12.8.20251210" },
     { name = "yt-dlp", extras = ["default"], specifier = ">=2025.12.8" },
@@ -1999,10 +1999,10 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "annotated-types" },
-    { name = "pydantic-core" },
-    { name = "typing-extensions" },
-    { name = "typing-inspection" },
+    { name = "annotated-types", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "pydantic-core", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
+    { name = "typing-inspection", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/69/44/36f1a6e523abc58ae5f928898e4aca2e0ea509b5aa6f6f392a5d882be928/pydantic-2.12.5.tar.gz", hash = "sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49", size = 821591, upload-time = "2025-11-26T15:11:46.471Z" }
 wheels = [
@@ -2014,7 +2014,7 @@ name = "pydantic-core"
 version = "2.41.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/71/70/23b021c950c2addd24ec408e9ab05d59b035b39d97cdc1130e1bce647bb6/pydantic_core-2.41.5.tar.gz", hash = "sha256:08daa51ea16ad373ffd5e7606252cc32f07bc72b28284b6bc9c6df804816476e", size = 460952, upload-time = "2025-11-04T13:43:49.098Z" }
 wheels = [
@@ -2597,7 +2597,7 @@ name = "typing-inspection"
 version = "0.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "extra == 'group-21-nonebot-plugin-parser-pydantic-v2' or extra == 'group-21-nonebot-plugin-parser-telegram' or extra != 'group-21-nonebot-plugin-parser-pydantic-v1'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/55/e3/70399cb7dd41c10ac53367ae42139cf4b1ca5f36bb3dc6c9d33acdb43655/typing_inspection-0.4.2.tar.gz", hash = "sha256:ba561c48a67c5958007083d386c3295464928b01faa735ab8547c5692e87f464", size = 75949, upload-time = "2025-10-01T02:14:41.687Z" }
 wheels = [
