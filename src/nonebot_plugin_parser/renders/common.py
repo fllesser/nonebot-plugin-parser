@@ -75,10 +75,12 @@ class FontInfo:
         """实现哈希方法以支持 @lru_cache"""
         return hash((id(self.font), self.line_height, self.cjk_width, self.fill))
 
-    @lru_cache(maxsize=400)
+    @lru_cache(maxsize=500)
     def get_char_width(self, char: str) -> int:
         """获取字符宽度，使用缓存优化"""
-        return int(self.font.getlength(char, direction="ltr"))
+        # return int(self.font.getlength(char, direction="ltr"))
+        bbox = self.font.getbbox(char)
+        return int(bbox[2] - bbox[0])
 
     def get_char_width_fast(self, char: str) -> int:
         """快速获取单个字符宽度"""
