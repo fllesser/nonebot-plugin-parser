@@ -135,19 +135,23 @@
 
 `ytdlp`, 用于解析 `youtube` 和 `tiktok` 视频
 
-    uv add nonebot-plugin-parser[ytdlp]
+    uv add "nonebot-plugin-parser[ytdlp]"
 
 [emosvg](https://github.com/fllesser/emosvg) 用于渲染 `emoji` 表情, 基于 `cairo` 和 `svg` 实现，`win/mac` 用户，请确保自己会配置 `cairo`, 插件默认使用的依赖于网络的 `apilmoji`，已缓存的 `emoji` 渲染速度略快于 `emosvg`
 
-    uv add nonebot-plugin-parser[emosvg]
+    uv add "nonebot-plugin-parser[emosvg]"
 
 `htmlkit`, 用于渲染 html 内容, 插件目前还没有 html 卡片渲染, 因此可忽略此依赖, 插件目前仅使用 `PIL` 渲染媒体卡片
 
-    uv add nonebot-plugin-parser[htmlkit]
+    uv add "nonebot-plugin-parser[htmlkit]"
+
+现版本推荐组合
+
+    uv add "nonebot-plugin-parser[ytdlp,emosvg]"
 
 `all` 顾名思义，安装所有可选依赖
 
-    uv add nonebot-plugin-parser[all]
+    uv add "nonebot-plugin-parser[all]"
 
 </details>
 
