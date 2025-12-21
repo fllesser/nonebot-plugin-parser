@@ -141,9 +141,13 @@
 
     uv add "nonebot-plugin-parser[emosvg]"
 
-`htmlkit`, 用于渲染 html 内容, 插件目前还没有 html 卡片渲染, 因此可忽略此依赖, 插件目前仅使用 `PIL` 渲染媒体卡片
+`htmlkit`, 无 js 渲染 `html`, 插件目前还没有供 `htmlkit` 使用的模版, 因此可忽略此依赖
 
     uv add "nonebot-plugin-parser[htmlkit]"
+
+`htmlrender`, 使用 `playwright` 渲染 `html`, 插件现有模版有点问题，并且极其丑陋，不建议使用
+
+    uv add "nonebot-plugin-parser[htmlrender]"
 
 现版本推荐组合
 
