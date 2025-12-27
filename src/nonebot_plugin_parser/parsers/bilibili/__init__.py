@@ -3,6 +3,7 @@ import asyncio
 from re import Match
 from typing import ClassVar
 from collections.abc import AsyncGenerator
+from typing_extensions import deprecated
 
 from msgspec import convert
 from nonebot import logger
@@ -88,7 +89,7 @@ class BilibiliParser(BaseParser):
     async def _parse_read(self, searched: Match[str]):
         """解析专栏信息"""
         read_id = int(searched.group("read_id"))
-        return await self.parse_read(read_id)
+        return await self.parse_read_with_opus(read_id)
 
     @handle("/opus/", r"bilibili\.com/opus/(?P<opus_id>\d+)")
     async def _parse_opus(self, searched: Match[str]):
@@ -208,8 +209,8 @@ class BilibiliParser(BaseParser):
         opus = Opus(opus_id, await self.credential)
         return await self._parse_opus_obj(opus)
 
-    async def parse_read_old(self, read_id: int):
-        """解析专栏信息, 已废弃
+    async def parse_read_with_opus(self, read_id: int):
+        """解析专栏信息, 使用 Opus 接口
 
         Args:
             read_id (int): 专栏 id
@@ -297,6 +298,7 @@ class BilibiliParser(BaseParser):
             author=author,
         )
 
+    @deprecated("老版专栏网页已废弃", category=DeprecationWarning)
     async def parse_read(self, read_id: int):
         """专栏解析
 

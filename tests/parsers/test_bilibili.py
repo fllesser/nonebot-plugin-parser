@@ -43,7 +43,7 @@ async def test_read():
     parser = BilibiliParser()
     _, searched = parser.search_url(url)
     read_id = int(searched.group("read_id"))
-    result = await parser.parse_read(read_id)
+    result = await parser.parse_read_with_opus(read_id)
     logger.debug(f"result: {result}")
     assert result.title, "标题为空"
     assert result.author, "作者为空"
