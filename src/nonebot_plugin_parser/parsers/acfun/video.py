@@ -40,7 +40,7 @@ class CurrentVideoInfo(Struct):
 
 class VideoInfo(Struct, kw_only=True):
     title: str
-    description: str
+    description: str | None
     createTime: str
     user: User
     currentVideoInfo: CurrentVideoInfo
