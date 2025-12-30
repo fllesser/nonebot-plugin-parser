@@ -82,7 +82,7 @@ class AcfunParser(BaseParser):
 
         raw = str(matched.group(1))
         raw = re.sub(r'\\{1,4}"', '"', raw)
-        raw = raw.replace(r'"{', "{").replace(r'}"', "}")
+        raw = raw.replace('"{', "{").replace('}"', "}")
         return video.decoder.decode(raw)
 
     async def download_video(self, m3u8_url: str, file_name: str, duration: int) -> Path:
