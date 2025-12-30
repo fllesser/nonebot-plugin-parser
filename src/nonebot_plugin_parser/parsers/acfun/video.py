@@ -55,8 +55,8 @@ class VideoInfo(Struct, kw_only=True):
         return self.user.headUrl
 
     @property
-    def text(self) -> str:
-        return f"简介: {self.description}"
+    def text(self) -> str | None:
+        return f"简介: {self.description}" if self.description else None
 
     @property
     def timestamp(self) -> int:
