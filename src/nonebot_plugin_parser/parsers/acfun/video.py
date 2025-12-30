@@ -1,5 +1,3 @@
-import time
-
 from msgspec import Struct
 from msgspec.json import Decoder
 
@@ -11,6 +9,7 @@ class User(Struct):
 
 class Representation(Struct):
     url: str
+    qualityType: str
 
 
 class AdaptationSet(Struct):
@@ -26,6 +25,7 @@ _ks_play_decoder = Decoder(KsPlay)
 
 class CurrentVideoInfo(Struct):
     ksPlayJson: KsPlay | str
+    durationMillis: int
 
     def __post_init__(self):
         # 如果 ksPlayJson 是字符串，则解析为 KsPlay 对象
@@ -41,7 +41,7 @@ class CurrentVideoInfo(Struct):
 class VideoInfo(Struct, kw_only=True):
     title: str
     description: str | None
-    createTime: str
+    createTimeMillis: int
     user: User
     currentVideoInfo: CurrentVideoInfo
     coverUrl: str
@@ -60,13 +60,22 @@ class VideoInfo(Struct, kw_only=True):
 
     @property
     def timestamp(self) -> int:
-        return int(time.mktime(time.strptime(self.createTime, "%Y-%m-%d")))
+        return self.createTimeMillis // 1000
+
+    @property
+    def duration(self) -> int:
+        return self.currentVideoInfo.durationMillis // 1000
 
     @property
     def m3u8s_url(self) -> str:
         representations = self.currentVideoInfo.representations
-        # 这里[d.url for d in representations]，从 4k ~ 360，此处默认720p
-        return [d.url for d in representations][3]
+
+        quality_types = ("1080p", "720p", "480p", "360p")
+        for r in representations:
+            if r.qualityType in quality_types:
+                return r.url
+
+        return representations[0].url
 
 
 decoder = Decoder(VideoInfo)

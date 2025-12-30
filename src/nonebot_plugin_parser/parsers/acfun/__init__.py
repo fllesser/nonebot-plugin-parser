@@ -16,10 +16,10 @@ from ..base import (
     PlatformEnum,
     ParseException,
     DownloadException,
+    DurationLimitException,
     handle,
     pconfig,
 )
-from ...utils import safe_unlink
 
 
 class AcfunParser(BaseParser):
@@ -40,7 +40,7 @@ class AcfunParser(BaseParser):
 
         # 下载视频
         video_task = asyncio.create_task(
-            self.download_video(video_info.m3u8s_url, acid),
+            self.download_video(video_info.m3u8s_url, acid, video_info.duration),
         )
 
         video_content = self.create_video_content(video_task, cover_url=video_info.coverUrl)
@@ -80,7 +80,7 @@ class AcfunParser(BaseParser):
         raw = raw.replace('\\\\"', '\\"').replace('\\"', '"')
         return video.decoder.decode(raw)
 
-    async def download_video(self, m3u8s_url: str, acid: int) -> Path:
+    async def download_video(self, m3u8s_url: str, acid: int, duration: int) -> Path:
         """下载acfun视频
 
         Args:
@@ -91,13 +91,15 @@ class AcfunParser(BaseParser):
             Path: 下载的mp4文件
         """
 
+        if duration >= pconfig.duration_maximum:
+            raise DurationLimitException
+
         m3u8_full_urls = await self._parse_m3u8(m3u8s_url)
         video_file = pconfig.cache_dir / f"acfun_{acid}.mp4"
         if video_file.exists():
             return video_file
 
         try:
-            max_size_in_bytes = pconfig.max_size * 1024 * 1024
             async with (
                 aiofiles.open(video_file, "wb") as f,
                 AsyncClient(headers=self.headers, timeout=DOWNLOAD_TIMEOUT) as client,
@@ -110,11 +112,8 @@ class AcfunParser(BaseParser):
                                 await f.write(chunk)
                                 total_size += len(chunk)
                                 bar.update(len(chunk))
-                        if total_size > max_size_in_bytes:
-                            # 直接截断
-                            break
         except HTTPError:
-            await safe_unlink(video_file)
+            video_file.unlink(missing_ok=True)
             logger.exception("视频下载失败")
             raise DownloadException("视频下载失败")
         return video_file
@@ -142,6 +141,6 @@ class AcfunParser(BaseParser):
 
         # 完整链接，直接加 m3u8Url 的通用前缀
         m3u8_prefix = "/".join(m3u8_url.split("/")[0:-1])
-        m3u8_full_urls = [f"{m3u8_prefix}/{d}" for d in m3u8_relative_links]
+        m3u8_full_urls = [f"{m3u8_prefix}/{d.strip()}" for d in m3u8_relative_links]
 
         return m3u8_full_urls
