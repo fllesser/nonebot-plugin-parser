@@ -43,12 +43,14 @@ class AcfunParser(BaseParser):
             self.download_video(video_info.m3u8s_url, acid),
         )
 
+        video_content = self.create_video_content(video_task, cover_url=video_info.coverUrl)
+
         return self.result(
             title=video_info.title,
             text=video_info.text,
             author=author,
             timestamp=video_info.timestamp,
-            contents=[self.create_video_content(video_task)],
+            contents=[video_content],
         )
 
     async def parse_video_info(self, url: str):

@@ -44,6 +44,7 @@ class VideoInfo(Struct, kw_only=True):
     createTime: str
     user: User
     currentVideoInfo: CurrentVideoInfo
+    coverUrl: str
 
     @property
     def name(self) -> str:
