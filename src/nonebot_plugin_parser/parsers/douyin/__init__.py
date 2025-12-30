@@ -1,7 +1,6 @@
 import re
 from typing import ClassVar
 
-import msgspec
 from httpx import AsyncClient
 from nonebot import logger
 
@@ -61,6 +60,8 @@ class DouyinParser(BaseParser):
         return f"https://m.douyin.com/share/{ty}/{vid}"
 
     async def parse_video(self, url: str):
+        from . import video
+
         async with AsyncClient(
             headers=self.ios_headers,
             timeout=COMMON_TIMEOUT,
@@ -81,9 +82,7 @@ class DouyinParser(BaseParser):
         if not matched or not matched.group(1):
             raise ParseException("can't find _ROUTER_DATA in html")
 
-        from .video import RouterData
-
-        video_data = msgspec.json.decode(matched.group(1).strip(), type=RouterData).video_data
+        video_data = video.decoder.decode(matched.group(1).strip()).video_data
         # 使用新的简洁构建方式
         contents = []
 
@@ -108,6 +107,8 @@ class DouyinParser(BaseParser):
         )
 
     async def parse_slides(self, video_id: str):
+        from . import slides
+
         url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
         params = {
             "aweme_ids": f"[{video_id}]",
@@ -117,9 +118,7 @@ class DouyinParser(BaseParser):
             response = await client.get(url, params=params)
             response.raise_for_status()
 
-        from .slides import SlidesInfo
-
-        slides_data = msgspec.json.decode(response.content, type=SlidesInfo).aweme_details[0]
+        slides_data = slides.decoder.decode(response.content).aweme_details[0]
         contents = []
 
         # 添加图片内容
