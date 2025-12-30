@@ -39,9 +39,12 @@ class AcfunParser(BaseParser):
         video_info = await self.parse_video_info(url)
         author = self.create_author(video_info.name, video_info.avatar_url)
 
-        # 下载视频
         video_task = asyncio.create_task(
-            self.download_video(video_info.m3u8_url, acid, video_info.duration),
+            self.download_video(
+                video_info.m3u8_url,
+                f"acfun_{acid}.mp4",
+                video_info.duration,
+            )
         )
 
         video_content = self.create_video_content(video_task, cover_url=video_info.coverUrl)
@@ -78,15 +81,17 @@ class AcfunParser(BaseParser):
             raise ParseException("解析 acfun 视频信息失败")
 
         raw = str(matched.group(1))
-        raw = raw.replace('\\\\"', '\\"').replace('\\"', '"')
+        raw = re.sub(r'\\{1,4}"', '"', raw)
+        raw = raw.replace(r'"{', "{").replace(r'}"', "}")
         return video.decoder.decode(raw)
 
-    async def download_video(self, m3u8_url: str, acid: int, duration: int) -> Path:
+    async def download_video(self, m3u8_url: str, file_name: str, duration: int) -> Path:
         """下载acfun视频
 
         Args:
-            m3u8s_url (str): m3u8链接
-            acid (int): acid
+            m3u8_url (str): m3u8链接
+            file_name (str): 文件名
+            duration (int): 视频时长(秒)
 
         Returns:
             Path: 下载的mp4文件
@@ -95,10 +100,11 @@ class AcfunParser(BaseParser):
         if duration >= pconfig.duration_maximum:
             raise DurationLimitException
 
-        m3u8_full_urls = await self._parse_m3u8(m3u8_url)
-        video_file = pconfig.cache_dir / f"acfun_{acid}.mp4"
+        video_file = pconfig.cache_dir / file_name
         if video_file.exists():
             return video_file
+
+        m3u8_slices = await self._get_m3u8_slices(m3u8_url)
 
         try:
             async with (
@@ -106,8 +112,8 @@ class AcfunParser(BaseParser):
                 AsyncClient(headers=self.headers, timeout=DOWNLOAD_TIMEOUT) as client,
             ):
                 total_size = 0
-                with DOWNLOADER.get_progress_bar(video_file.name) as bar:
-                    for url in m3u8_full_urls:
+                with DOWNLOADER.get_progress_bar(file_name) as bar:
+                    for url in m3u8_slices:
                         async with client.stream("GET", url) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
                                 await f.write(chunk)
@@ -119,11 +125,12 @@ class AcfunParser(BaseParser):
             raise DownloadException("视频下载失败")
         return video_file
 
-    async def _parse_m3u8(self, m3u8_url: str):
-        """解析m3u8链接
+    async def _get_m3u8_slices(self, m3u8_url: str):
+        """拼接m3u8链接
 
         Args:
             m3u8_url (str): m3u8链接
+            m3u8_slice (str): m3u8切片
 
         Returns:
             list[str]: 视频链接
@@ -132,14 +139,13 @@ class AcfunParser(BaseParser):
             response = await client.get(m3u8_url)
             response.raise_for_status()
 
-        m3u8_files = response.text
-        lines = m3u8_files.splitlines()
+        slices_text = response.text
 
-        ts_urls: list[str] = []
-        for line in lines:
+        slices: list[str] = []
+        for line in slices_text.splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            ts_urls.append(urljoin(m3u8_url, line))
+            slices.append(urljoin(m3u8_url, line))
 
-        return ts_urls
+        return slices

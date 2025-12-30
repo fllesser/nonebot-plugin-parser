@@ -9,7 +9,12 @@ class User(Struct):
 
 class Representation(Struct):
     url: str
+    m3u8Slice: str
     qualityType: str
+
+    @property
+    def m3u8_slice(self) -> str:
+        return self.m3u8Slice.replace("\\\\n", "\n")
 
 
 class AdaptationSet(Struct):
@@ -20,21 +25,12 @@ class KsPlay(Struct):
     adaptationSet: list[AdaptationSet]
 
 
-_ks_play_decoder = Decoder(KsPlay)
-
-
 class CurrentVideoInfo(Struct):
-    ksPlayJson: KsPlay | str
+    ksPlayJson: KsPlay
     durationMillis: int
-
-    def __post_init__(self):
-        # 如果 ksPlayJson 是字符串，则解析为 KsPlay 对象
-        if isinstance(self.ksPlayJson, str):
-            self.ksPlayJson = _ks_play_decoder.decode(self.ksPlayJson)
 
     @property
     def representations(self) -> list[Representation]:
-        assert isinstance(self.ksPlayJson, KsPlay)
         return self.ksPlayJson.adaptationSet[0].representation
 
 
