@@ -1,6 +1,4 @@
 import re
-import json
-import time
 import asyncio
 from typing import ClassVar
 from pathlib import Path
@@ -9,10 +7,19 @@ import aiofiles
 from httpx import HTTPError, AsyncClient
 from nonebot import logger
 
-from .base import DOWNLOADER, Platform, BaseParser, PlatformEnum, handle, pconfig
-from ..utils import safe_unlink
-from ..constants import COMMON_TIMEOUT, DOWNLOAD_TIMEOUT
-from ..exception import ParseException, DownloadException
+from ..base import (
+    DOWNLOADER,
+    COMMON_TIMEOUT,
+    DOWNLOAD_TIMEOUT,
+    Platform,
+    BaseParser,
+    PlatformEnum,
+    ParseException,
+    DownloadException,
+    handle,
+    pconfig,
+)
+from ...utils import safe_unlink
 
 
 class AcfunParser(BaseParser):
@@ -28,33 +35,32 @@ class AcfunParser(BaseParser):
         acid = int(searched.group("acid"))
         url = f"https://www.acfun.cn/v/ac{acid}"
 
-        m3u8_url, title, description, author, upload_time = await self.parse_video_info(url)
-        author = self.create_author(author) if author else None
-
-        # 2024-12-1 -> timestamp
-        timestamp = int(time.mktime(time.strptime(upload_time, "%Y-%m-%d")))
-        text = f"简介: {description}"
+        video_info = await self.parse_video_info(url)
+        author = self.create_author(video_info.name, video_info.avatar_url)
 
         # 下载视频
-        video_task = asyncio.create_task(self.download_video(m3u8_url, acid))
+        video_task = asyncio.create_task(
+            self.download_video(video_info.m3u8s_url, acid),
+        )
 
         return self.result(
-            title=title,
-            text=text,
+            title=video_info.title,
+            text=video_info.text,
             author=author,
-            timestamp=timestamp,
+            timestamp=video_info.timestamp,
             contents=[self.create_video_content(video_task)],
         )
 
-    async def parse_video_info(self, url: str) -> tuple[str, str, str, str, str]:
+    async def parse_video_info(self, url: str):
         """解析acfun链接获取详细信息
 
         Args:
             url (str): 链接
 
         Returns:
-            tuple: (m3u8_url, title, description, author, upload_time)
+            video.VideoInfo
         """
+        from . import video
 
         # 拼接查询参数
         url = f"{url}?quickViewId=videoInfo_new&ajaxpipe=1"
@@ -67,22 +73,10 @@ class AcfunParser(BaseParser):
         matched = re.search(r"window\.videoInfo =(.*?)</script>", raw)
         if not matched:
             raise ParseException("解析 acfun 视频信息失败")
-        json_str = str(matched.group(1))
-        json_str = json_str.replace('\\\\"', '\\"').replace('\\"', '"')
-        video_info = json.loads(json_str)
 
-        title = video_info.get("title", "")
-        description = video_info.get("description", "")
-        author = video_info.get("user", {}).get("name", "")
-        upload_time = video_info.get("createTime", "")
-
-        ks_play_json = video_info["currentVideoInfo"]["ksPlayJson"]
-        ks_play = json.loads(ks_play_json)
-        representations = ks_play["adaptationSet"][0]["representation"]
-        # 这里[d['url'] for d in representations]，从 4k ~ 360，此处默认720p
-        m3u8_url = [d["url"] for d in representations][3]
-
-        return m3u8_url, title, description, author, upload_time
+        raw = str(matched.group(1))
+        raw = raw.replace('\\\\"', '\\"').replace('\\"', '"')
+        return video.decoder.decode(raw)
 
     async def download_video(self, m3u8s_url: str, acid: int) -> Path:
         """下载acfun视频
