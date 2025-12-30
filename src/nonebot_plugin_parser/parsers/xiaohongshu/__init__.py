@@ -37,7 +37,7 @@ class XiaoHongShuParser(BaseParser):
 
     # https://www.xiaohongshu.com/explore/68feefe40000000007030c4a?xsec_token=ABjAKjfMHJ7ck4UjPlugzVqMb35utHMRe_vrgGJ2AwJnc=&xsec_source=pc_feed
     @handle(
-        "hongshu.com/explore",
+        "shu.com/explore",
         r"explore/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*",
     )
     async def _parse_explore(self, searched: re.Match[str]):
@@ -47,7 +47,7 @@ class XiaoHongShuParser(BaseParser):
 
     # https://www.xiaohongshu.com/discovery/item/68e8e3fa00000000030342ec?app_platform=android&ignoreEngage=true&app_version=9.6.0&share_from_user_hidden=true&xsec_source=app_share&type=normal&xsec_token=CBW9rwIV2qhcCD-JsQAOSHd2tTW9jXAtzqlgVXp6c52Sw%3D&author_share=1&xhsshare=QQ&shareRedId=ODs3RUk5ND42NzUyOTgwNjY3OTo8S0tK&apptime=1761372823&share_id=3b61945239ac403db86bea84a4f15124&share_channel=qq
     @handle(
-        "hongshu.com/discovery/item/",
+        "shu.com/discovery",
         r"discovery/item/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*",
     )
     async def _parse_discovery(self, searched: re.Match[str]):
@@ -66,7 +66,9 @@ class XiaoHongShuParser(BaseParser):
 
         async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
             response = await client.get(url)
-            response.raise_for_status()
+            # may be 302
+            if response.status_code > 400:
+                response.raise_for_status()
 
         html = response.text
         raw = self._extract_initial_state_raw(html)
@@ -113,6 +115,7 @@ class XiaoHongShuParser(BaseParser):
             trust_env=False,
         ) as client:
             response = await client.get(url)
+            response.raise_for_status()
             html = response.text
 
         raw = self._extract_initial_state_raw(html)
