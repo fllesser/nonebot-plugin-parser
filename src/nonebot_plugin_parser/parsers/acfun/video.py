@@ -67,7 +67,7 @@ class VideoInfo(Struct, kw_only=True):
         return self.currentVideoInfo.durationMillis // 1000
 
     @property
-    def m3u8s_url(self) -> str:
+    def m3u8_url(self) -> str:
         representations = self.currentVideoInfo.representations
 
         quality_types = ("1080p", "720p", "480p", "360p")

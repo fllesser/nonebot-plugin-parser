@@ -2,6 +2,7 @@ import re
 import asyncio
 from typing import ClassVar
 from pathlib import Path
+from urllib.parse import urljoin
 
 import aiofiles
 from httpx import HTTPError, AsyncClient
@@ -40,7 +41,7 @@ class AcfunParser(BaseParser):
 
         # 下载视频
         video_task = asyncio.create_task(
-            self.download_video(video_info.m3u8s_url, acid, video_info.duration),
+            self.download_video(video_info.m3u8_url, acid, video_info.duration),
         )
 
         video_content = self.create_video_content(video_task, cover_url=video_info.coverUrl)
@@ -80,7 +81,7 @@ class AcfunParser(BaseParser):
         raw = raw.replace('\\\\"', '\\"').replace('\\"', '"')
         return video.decoder.decode(raw)
 
-    async def download_video(self, m3u8s_url: str, acid: int, duration: int) -> Path:
+    async def download_video(self, m3u8_url: str, acid: int, duration: int) -> Path:
         """下载acfun视频
 
         Args:
@@ -94,7 +95,7 @@ class AcfunParser(BaseParser):
         if duration >= pconfig.duration_maximum:
             raise DurationLimitException
 
-        m3u8_full_urls = await self._parse_m3u8(m3u8s_url)
+        m3u8_full_urls = await self._parse_m3u8(m3u8_url)
         video_file = pconfig.cache_dir / f"acfun_{acid}.mp4"
         if video_file.exists():
             return video_file
@@ -129,18 +130,16 @@ class AcfunParser(BaseParser):
         """
         async with AsyncClient(headers=self.headers, timeout=COMMON_TIMEOUT) as client:
             response = await client.get(m3u8_url)
-            m3u8_file = response.text
-        # 分离ts文件链接
-        raw_pieces = re.split(r"\n#EXTINF:.{8},\n", m3u8_file)
-        # 过滤头部\
-        m3u8_relative_links = raw_pieces[1:]
+            response.raise_for_status()
 
-        # 修改尾部 去掉尾部多余的结束符
-        patched_tail = m3u8_relative_links[-1].split("\n")[0]
-        m3u8_relative_links[-1] = patched_tail
+        m3u8_files = response.text
+        lines = m3u8_files.splitlines()
 
-        # 完整链接，直接加 m3u8Url 的通用前缀
-        m3u8_prefix = "/".join(m3u8_url.split("/")[0:-1])
-        m3u8_full_urls = [f"{m3u8_prefix}/{d.strip()}" for d in m3u8_relative_links]
+        ts_urls: list[str] = []
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            ts_urls.append(urljoin(m3u8_url, line))
 
-        return m3u8_full_urls
+        return ts_urls
