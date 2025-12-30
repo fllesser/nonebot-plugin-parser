@@ -1,12 +1,11 @@
 import re
-import json
-from typing import Any, ClassVar
+from typing import ClassVar
 
 from httpx import Cookies, AsyncClient
-from msgspec import Struct, field, convert
 from nonebot import logger
 
-from .base import Platform, BaseParser, PlatformEnum, ParseException, handle
+from ..base import Platform, BaseParser, PlatformEnum, ParseException, handle
+from ..data import MediaContent
 
 
 class XiaoHongShuParser(BaseParser):
@@ -63,55 +62,24 @@ class XiaoHongShuParser(BaseParser):
             return await self.parse_discovery(f"https://www.xiaohongshu.com/{route}")
 
     async def parse_explore(self, url: str, xhs_id: str):
-        async with AsyncClient(
-            headers=self.headers,
-            timeout=self.timeout,
-        ) as client:
+        from . import explore
+
+        async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
             response = await client.get(url)
-            html = response.text
-            logger.debug(f"url: {response.url} | status_code: {response.status_code}")
+            response.raise_for_status()
 
-        json_obj = self._extract_initial_state_json(html)
+        html = response.text
+        raw = self._extract_initial_state_raw(html)
 
-        # ["note"]["noteDetailMap"][xhs_id]["note"]
-        note_data = json_obj.get("note", {}).get("noteDetailMap", {}).get(xhs_id, {}).get("note", {})
-        if not note_data:
-            raise ParseException("can't find note detail in json_obj")
+        # Decode the JSON into InitialState struct
+        init_state = explore.decoder.decode(raw)
 
-        class Image(Struct):
-            urlDefault: str
+        # Access: ["note"]["noteDetailMap"][xhs_id]["note"]
+        note_detail_wrapper = init_state.note.noteDetailMap.get(xhs_id)
+        if not note_detail_wrapper:
+            raise ParseException(f"can't find note detail for xhs_id: {xhs_id}")
 
-        class User(Struct):
-            nickname: str
-            avatar: str
-
-        class NoteDetail(Struct):
-            type: str
-            title: str
-            desc: str
-            user: User
-            imageList: list[Image] = field(default_factory=list)
-            video: Video | None = None
-
-            @property
-            def nickname(self) -> str:
-                return self.user.nickname
-
-            @property
-            def avatar_url(self) -> str:
-                return self.user.avatar
-
-            @property
-            def image_urls(self) -> list[str]:
-                return [item.urlDefault for item in self.imageList]
-
-            @property
-            def video_url(self) -> str | None:
-                if self.type != "video" or not self.video:
-                    return None
-                return self.video.video_url
-
-        note_detail = convert(note_data, type=NoteDetail)
+        note_detail = note_detail_wrapper.note
 
         contents = []
         # 添加视频内容
@@ -135,6 +103,8 @@ class XiaoHongShuParser(BaseParser):
         )
 
     async def parse_discovery(self, url: str):
+        from . import discovery
+
         async with AsyncClient(
             headers=self.ios_headers,
             timeout=self.timeout,
@@ -145,58 +115,14 @@ class XiaoHongShuParser(BaseParser):
             response = await client.get(url)
             html = response.text
 
-        json_obj = self._extract_initial_state_json(html)
-        note_data = json_obj.get("noteData")
-        if not note_data:
-            raise ParseException("can't find noteData in json_obj")
-        preload_data = note_data.get("normalNotePreloadData", {})
-        note_data = note_data.get("data", {}).get("noteData", {})
-        if not note_data:
-            raise ParseException("can't find noteData in noteData.data")
+        raw = self._extract_initial_state_raw(html)
+        init_state = discovery.decoder.decode(raw)
+        note_data = init_state.noteData.data.noteData
+        preload_data = init_state.noteData.normalNotePreloadData
 
-        class Image(Struct):
-            url: str
-            urlSizeLarge: str | None = None
-
-        class User(Struct):
-            nickName: str
-            avatar: str
-
-        class NoteData(Struct):
-            type: str
-            title: str
-            desc: str
-            user: User
-            time: int
-            lastUpdateTime: int
-            imageList: list[Image] = []  # 有水印
-            video: Video | None = None
-
-            @property
-            def image_urls(self) -> list[str]:
-                return [item.url for item in self.imageList]
-
-            @property
-            def video_url(self) -> str | None:
-                if self.type != "video" or not self.video:
-                    return None
-                return self.video.video_url
-
-        class NormalNotePreloadData(Struct):
-            title: str
-            desc: str
-            imagesList: list[Image] = []  # 无水印, 但只有一只，用于视频封面
-
-            @property
-            def image_urls(self) -> list[str]:
-                return [item.urlSizeLarge or item.url for item in self.imagesList]
-
-        note_data = convert(note_data, type=NoteData)
-
-        contents = []
+        contents: list[MediaContent] = []
         if video_url := note_data.video_url:
             if preload_data:
-                preload_data = convert(preload_data, type=NormalNotePreloadData)
                 img_urls = preload_data.image_urls
             else:
                 img_urls = note_data.image_urls
@@ -204,49 +130,20 @@ class XiaoHongShuParser(BaseParser):
         elif img_urls := note_data.image_urls:
             contents.extend(self.create_image_contents(img_urls))
 
+        author = self.create_author(note_data.user.nickName, note_data.user.avatar)
+
         return self.result(
             title=note_data.title,
-            author=self.create_author(note_data.user.nickName, note_data.user.avatar),
+            author=author,
             contents=contents,
             text=note_data.desc,
             timestamp=note_data.time // 1000,
         )
 
-    def _extract_initial_state_json(self, html: str) -> dict[str, Any]:
+    def _extract_initial_state_raw(self, html: str) -> str:
         pattern = r"window\.__INITIAL_STATE__=(.*?)</script>"
         matched = re.search(pattern, html)
         if not matched:
             raise ParseException("小红书分享链接失效或内容已删除")
 
-        json_str = matched.group(1).replace("undefined", "null")
-        return json.loads(json_str)
-
-
-class Stream(Struct):
-    h264: list[dict[str, Any]] | None = None
-    h265: list[dict[str, Any]] | None = None
-    av1: list[dict[str, Any]] | None = None
-    h266: list[dict[str, Any]] | None = None
-
-
-class Media(Struct):
-    stream: Stream
-
-
-class Video(Struct):
-    media: Media
-
-    @property
-    def video_url(self) -> str | None:
-        stream = self.media.stream
-
-        # h264 有水印，h265 无水印
-        if stream.h265:
-            return stream.h265[0]["masterUrl"]
-        elif stream.h264:
-            return stream.h264[0]["masterUrl"]
-        elif stream.av1:
-            return stream.av1[0]["masterUrl"]
-        elif stream.h266:
-            return stream.h266[0]["masterUrl"]
-        return None
+        return matched.group(1).replace("undefined", "null")
