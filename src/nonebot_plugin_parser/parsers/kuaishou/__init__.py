@@ -48,9 +48,9 @@ class KuaiShouParser(BaseParser):
             raise ParseException("failed to parse video JSON info from HTML")
 
         raw = matched.group(1).strip()
-        datas = states.decoder.decode(raw)
+        data_map = states.decoder.decode(raw)
 
-        photo = next((d.photo for d in datas.values() if d.photo is not None), None)
+        photo = next((d.photo for d in data_map.values() if d.photo is not None), None)
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
