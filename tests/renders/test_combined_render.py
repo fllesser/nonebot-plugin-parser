@@ -246,7 +246,7 @@ async def test_bilibili_opus_graphics(result_collections: list[Result]):
         pytest.skip(str(e))
 
 
-@pytest.mark.asyncio
+@pytest.mark.xfail(reason="老版专栏已废弃")
 async def test_bilibili_read(result_collections: list[Result]):
     """测试解析哔哩哔哩专栏"""
     from nonebot_plugin_parser.parsers import BilibiliParser

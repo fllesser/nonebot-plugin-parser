@@ -34,7 +34,7 @@ async def test_live():
     logger.success("B站直播解析成功")
 
 
-@pytest.mark.asyncio
+@pytest.mark.xfail(reason="老版专栏已废弃")
 async def test_read():
     logger.info("开始解析B站图文 https://www.bilibili.com/read/cv523868")
     from nonebot_plugin_parser.parsers import BilibiliParser
@@ -43,7 +43,7 @@ async def test_read():
     parser = BilibiliParser()
     _, searched = parser.search_url(url)
     read_id = int(searched.group("read_id"))
-    result = await parser.parse_read(read_id)
+    result = await parser.parse_read_with_opus(read_id)
     logger.debug(f"result: {result}")
     assert result.title, "标题为空"
     assert result.author, "作者为空"

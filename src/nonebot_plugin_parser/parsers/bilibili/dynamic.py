@@ -191,7 +191,7 @@ class DynamicInfo(Struct):
         return None
 
 
-class DynamicItem(Struct):
+class DynamicData(Struct):
     """动态项目"""
 
     item: DynamicInfo
