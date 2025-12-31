@@ -25,12 +25,10 @@ class YouTubeParser(BaseParser):
     @handle("youtu", r"youtu\.be/[A-Za-z\d\._\?%&\+\-=/#]+")
     @handle("youtube", r"youtube\.com/(?:watch|shorts)(?:/[A-Za-z\d_\-]+|\?v=[A-Za-z\d_\-]+)")
     async def _parse_video(self, searched: re.Match[str]):
-        return await self.parse_video(searched)
+        url = f"https://{searched.group(0)}"
+        return await self.parse_video(url)
 
-    async def parse_video(self, searched: re.Match[str]):
-        # 从匹配对象中获取原始URL
-        url = searched.group(0)
-
+    async def parse_video(self, url: str):
         video_info = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
         author = await self._fetch_author_info(video_info.channel_id)
 
