@@ -157,7 +157,7 @@ wheels = [
 
 [[package]]
 name = "bilibili-api-python"
-version = "17.4.0"
+version = "17.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "apscheduler" },
@@ -173,9 +173,9 @@ dependencies = [
     { name = "qrcode-terminal" },
     { name = "yarl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/54/b3/ca6c715311d80604ad37437bc1422c4bec7159db6ab49a311478f38e45ed/bilibili_api_python-17.4.0.tar.gz", hash = "sha256:396310c1820fd931a46a10c6115233be250e8db315a266eea608c0f625cdf1ef", size = 1417870, upload-time = "2025-10-08T05:26:35.474Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/16/475f1fdb841d2fad6223ef2eab9c1ec99d680a4271505946c25855265065/bilibili_api_python-17.4.1.tar.gz", hash = "sha256:5b0f16468cfbb3ee801c7d7cc970f9082252f6758c6d8c48c5d8dac42235cb62", size = 1420338, upload-time = "2025-12-20T10:59:40.299Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/1d/71e2a56f25effbc4e2618a49e55015928748a1c47dda3271d9274cf1f206/bilibili_api_python-17.4.0-py3-none-any.whl", hash = "sha256:79881aa011c23d74c0562765aee707d5fc410a02649091ec6aecf83f990fbdc5", size = 385523, upload-time = "2025-10-08T05:26:33.753Z" },
+    { url = "https://files.pythonhosted.org/packages/07/50/520f98ef607687d686c9170b3ff2db944152bb0dc43bef0df7b4face8c5b/bilibili_api_python-17.4.1-py3-none-any.whl", hash = "sha256:3054b824f0f7ac81917329f19909f39d24fb3b7d9de1672c6dd4cb9fa6e5757d", size = 387124, upload-time = "2025-12-20T10:59:38.974Z" },
 ]
 
 [[package]]
@@ -1603,8 +1603,8 @@ requires-dist = [
     { name = "aiofiles", specifier = ">=25.1.0" },
     { name = "apilmoji", extras = ["tqdm"], specifier = ">=0.2.4,<1.0.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
-    { name = "bilibili-api-python", specifier = ">=17.4.0,<18.0.0" },
-    { name = "curl-cffi", specifier = ">=0.13.0,<1.0.0" },
+    { name = "bilibili-api-python", specifier = ">=17.4.1,<18.0.0" },
+    { name = "curl-cffi", specifier = ">=0.13.0,!=0.14.0,<1.0.0" },
     { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.6" },
     { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.6" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
