@@ -1,12 +1,11 @@
 import re
 from typing import ClassVar
 
-import msgspec
 from httpx import AsyncClient
 
-from .base import Platform, BaseParser, PlatformEnum, handle, pconfig
-from .cookie import save_cookies_with_netscape
-from ..download import YTDLP_DOWNLOADER
+from ..base import Platform, BaseParser, PlatformEnum, handle, pconfig
+from ..cookie import save_cookies_with_netscape
+from ...download import YTDLP_DOWNLOADER
 
 
 class YouTubeParser(BaseParser):
@@ -86,6 +85,8 @@ class YouTubeParser(BaseParser):
         )
 
     async def _fetch_author_info(self, channel_id: str):
+        from . import meta
+
         url = "https://www.youtube.com/youtubei/v1/browse?prettyPrint=false"
         payload = {
             "context": {
@@ -108,51 +109,10 @@ class YouTubeParser(BaseParser):
             },
             "browseId": channel_id,
         }
+
         async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
             response = await client.post(url, json=payload)
             response.raise_for_status()
 
-        browse = msgspec.json.decode(response.content, type=BrowseResponse)
+        browse = meta.decoder.decode(response.content)
         return self.create_author(browse.name, browse.avatar_url, browse.description)
-
-
-from msgspec import Struct
-
-
-class Thumbnail(Struct):
-    url: str
-
-
-class AvatarInfo(Struct):
-    thumbnails: list[Thumbnail]
-
-
-class ChannelMetadataRenderer(Struct):
-    title: str
-    description: str
-    avatar: AvatarInfo
-
-
-class Metadata(Struct):
-    channelMetadataRenderer: ChannelMetadataRenderer
-
-
-class Avatar(Struct):
-    thumbnails: list[Thumbnail]
-
-
-class BrowseResponse(Struct):
-    metadata: Metadata
-
-    @property
-    def name(self) -> str:
-        return self.metadata.channelMetadataRenderer.title
-
-    @property
-    def avatar_url(self) -> str | None:
-        thumbnails = self.metadata.channelMetadataRenderer.avatar.thumbnails
-        return thumbnails[0].url if thumbnails else None
-
-    @property
-    def description(self) -> str:
-        return self.metadata.channelMetadataRenderer.description

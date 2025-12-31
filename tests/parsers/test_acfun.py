@@ -7,7 +7,8 @@ async def test_parse():
     from nonebot_plugin_parser.utils import fmt_size
     from nonebot_plugin_parser.parsers import AcfunParser
 
-    url = "https://www.acfun.cn/v/ac46593564"
+    # url = "https://www.acfun.cn/v/ac46593564"
+    url = "https://www.acfun.cn/v/ac11348130"
     parser = AcfunParser()
 
     async def parse_acfun_url(url: str) -> None:

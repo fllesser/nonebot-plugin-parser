@@ -58,7 +58,7 @@ class VideoContent(MediaContent):
         return f"时长: {minutes}:{seconds:02d}"
 
     def __repr__(self) -> str:
-        repr = f"VideoContent(path={repr_path_task(self.path_task)}"
+        repr = f"VideoContent({repr_path_task(self.path_task)}"
         if self.cover is not None:
             repr += f", cover={repr_path_task(self.cover)}"
         return repr + ")"
@@ -88,7 +88,7 @@ class GraphicsContent(MediaContent):
     """图片描述 渲染时居中显示"""
 
     def __repr__(self) -> str:
-        repr = f"GraphicsContent(path={repr_path_task(self.path_task)}"
+        repr = f"GraphicsContent({repr_path_task(self.path_task)}"
         if self.text:
             repr += f", text={self.text}"
         if self.alt:

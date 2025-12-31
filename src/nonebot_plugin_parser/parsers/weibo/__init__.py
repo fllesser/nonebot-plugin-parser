@@ -3,12 +3,12 @@ from time import time
 from uuid import uuid4
 from typing import ClassVar
 
-import msgspec
 from bs4 import Tag, BeautifulSoup
 from httpx import Cookies, AsyncClient
 
-from .base import Platform, BaseParser, PlatformEnum, ParseException, handle
-from .data import MediaContent
+from . import common, article
+from ..base import Platform, BaseParser, PlatformEnum, ParseException, handle
+from ..data import MediaContent
 
 
 class WeiBoParser(BaseParser):
@@ -66,22 +66,6 @@ class WeiBoParser(BaseParser):
         return await self.parse_article(_id)
 
     async def parse_article(self, _id: str):
-        class UserInfo(Struct):
-            screen_name: str
-            profile_image_url: str
-
-        class Data(Struct):
-            url: str
-            title: str
-            content: str
-            userinfo: UserInfo
-            create_at_unix: int
-
-        class Detail(Struct):
-            code: str
-            msg: str
-            data: Data
-
         url = "https://card.weibo.com/article/m/aj/detail"
         params = {
             "_rid": str(uuid4()),
@@ -95,7 +79,8 @@ class WeiBoParser(BaseParser):
         ) as client:
             response = await client.get(url, params=params)
             response.raise_for_status()
-            detail = msgspec.json.decode(response.content, type=Detail)
+
+        detail = article.decoder.decode(response.content)
 
         if detail.msg != "success":
             raise ParseException("请求失败")
@@ -240,12 +225,11 @@ class WeiBoParser(BaseParser):
             if "application/json" not in ctype:
                 raise ParseException(f"获取数据失败 content-type is not application/json (got: {ctype})")
 
-        # 用 bytes 更稳，避免编码歧义
-        weibo_data = msgspec.json.decode(response.content, type=WeiboResponse).data
+        weibo_data = common.decoder.decode(response.content).data
 
         return self.build_weibo_data(weibo_data)
 
-    def build_weibo_data(self, data: "WeiboData"):
+    def build_weibo_data(self, data: common.WeiboData):
         contents = []
 
         # 添加视频内容
@@ -306,110 +290,3 @@ class WeiBoParser(BaseParser):
 
         result.reverse()  # 反转结果数组
         return "".join(result)  # 将结果数组连接成字符串
-
-
-from msgspec import Struct
-
-
-class LargeInPic(Struct):
-    url: str
-
-
-class Pic(Struct):
-    url: str
-    large: LargeInPic
-
-
-class Urls(Struct):
-    mp4_720p_mp4: str | None = None
-    mp4_hd_mp4: str | None = None
-    mp4_ld_mp4: str | None = None
-
-    def get_video_url(self) -> str | None:
-        return self.mp4_720p_mp4 or self.mp4_hd_mp4 or self.mp4_ld_mp4 or None
-
-
-class PagePic(Struct):
-    url: str
-
-
-class PageInfo(Struct):
-    title: str | None = None
-    urls: Urls | None = None
-    page_pic: PagePic | None = None
-
-
-class User(Struct):
-    id: int
-    screen_name: str
-    """用户昵称"""
-    profile_image_url: str
-    """头像"""
-
-
-class WeiboData(Struct):
-    user: User
-    text: str
-    # source: str  # 如 微博网页版
-    # region_name: str | None = None
-
-    bid: str
-    created_at: str
-    """发布时间 格式: `Thu Oct 02 14:39:33 +0800 2025`"""
-
-    status_title: str | None = None
-    pics: list[Pic] | None = None
-    page_info: PageInfo | None = None
-    retweeted_status: "WeiboData | None" = None  # 转发微博
-
-    @property
-    def title(self) -> str | None:
-        return self.page_info.title if self.page_info else None
-
-    @property
-    def display_name(self) -> str:
-        return self.user.screen_name
-
-    @property
-    def text_content(self) -> str:
-        # 将 <br /> 转换为 \n
-        text = self.text.replace("<br />", "\n")
-        # 去除 html 标签
-        text = sub(r"<[^>]*>", "", text)
-        return text
-
-    @property
-    def cover_url(self) -> str | None:
-        if self.page_info is None:
-            return None
-        if self.page_info.page_pic:
-            return self.page_info.page_pic.url
-        return None
-
-    @property
-    def video_url(self) -> str | None:
-        if self.page_info and self.page_info.urls:
-            return self.page_info.urls.get_video_url()
-        return None
-
-    @property
-    def image_urls(self) -> list[str]:
-        if self.pics:
-            return [x.large.url for x in self.pics]
-        return []
-
-    @property
-    def url(self) -> str:
-        return f"https://weibo.com/{self.user.id}/{self.bid}"
-
-    @property
-    def timestamp(self) -> int:
-        from time import mktime, strptime
-
-        create_at = strptime(self.created_at, "%a %b %d %H:%M:%S %z %Y")
-        return int(mktime(create_at))
-
-
-class WeiboResponse(Struct):
-    ok: int
-    data: WeiboData

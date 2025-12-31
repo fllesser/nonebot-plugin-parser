@@ -1,5 +1,5 @@
 import re
-from typing import Any, Literal
+from typing import Literal
 
 import msgspec
 from nonebot import logger
@@ -17,6 +17,32 @@ from ..config import gconfig
 
 # 统一的状态键
 PSR_SEARCHED_KEY: Literal["psr-searched"] = "psr-searched"
+
+
+# 定义 JSON 卡片的数据结构
+class MetaDetail(msgspec.Struct):
+    qqdocurl: str | None = None
+
+
+class MetaNews(msgspec.Struct):
+    jumpUrl: str | None = None
+
+
+class MetaMusic(msgspec.Struct):
+    jumpUrl: str | None = None
+
+
+class Meta(msgspec.Struct):
+    detail_1: MetaDetail | None = None
+    news: MetaNews | None = None
+    music: MetaMusic | None = None
+
+
+class RawData(msgspec.Struct):
+    meta: Meta | None = None
+
+
+raw_decoder = msgspec.json.Decoder(RawData)
 
 
 class SearchResult:
@@ -45,24 +71,6 @@ def _searched(state: T_State) -> SearchResult | None:
     return state.get(PSR_SEARCHED_KEY)
 
 
-def _escape_raw(raw: str) -> str:
-    """
-    转义原始字符串中的特殊字符
-    Args:
-        raw: 原始字符串
-
-    Returns:
-        str: 转义后的字符串
-    """
-    replacements = [
-        ("\\", ""),
-        ("&amp;", "&"),
-    ]
-    for old, new in replacements:
-        raw = raw.replace(old, new)
-    return raw
-
-
 def _extract_url(hyper: Hyper) -> str | None:
     """处理 JSON 类型的消息段，提取 URL
 
@@ -79,24 +87,25 @@ def _extract_url(hyper: Hyper) -> str | None:
         return None
 
     try:
-        raw: dict[str, Any] = msgspec.json.decode(raw_str)
+        raw = raw_decoder.decode(raw_str)
     except msgspec.DecodeError:
         logger.exception(f"json 卡片解析失败: {raw_str}")
         return None
 
-    meta: dict[str, Any] | None = raw.get("meta")
-    if not meta:
+    if not raw.meta:
         return None
 
-    for key1, key2 in (
-        ("detail_1", "qqdocurl"),
-        ("news", "jumpUrl"),
-        ("music", "jumpUrl"),
-    ):
-        if url := meta.get(key1, {}).get(key2):
-            logger.debug(f"extract url from raw:meta:{key1}:{key2}: {url}")
-            return url
-    return None
+    meta, url = raw.meta, None
+
+    if meta.detail_1:
+        url = meta.detail_1.qqdocurl
+    elif meta.news:
+        url = meta.news.jumpUrl
+    elif meta.music:
+        url = meta.music.jumpUrl
+
+    logger.debug(f"extract url[{url}] from raw#meta[{meta}]")
+    return url
 
 
 def _extract_text(message: UniMsg) -> str | None:
