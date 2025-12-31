@@ -34,7 +34,7 @@ async def test_live():
     logger.success("B站直播解析成功")
 
 
-@pytest.mark.asyncio
+@pytest.mark.xfail(reason="老版专栏已废弃")
 async def test_read():
     logger.info("开始解析B站图文 https://www.bilibili.com/read/cv523868")
     from nonebot_plugin_parser.parsers import BilibiliParser
