@@ -128,9 +128,15 @@ class FontSet:
 
     @classmethod
     def new(cls, font_path: Path):
+        # 预加载字体文件到内存,避免持续占用文件句柄
+        with open(font_path, "rb") as f:
+            font_data = BytesIO(f.read())
+
         font_infos: dict[str, FontInfo] = {}
         for name, size, fill in cls._FONT_INFOS:
-            font = ImageFont.truetype(font_path, size)
+            # 每次使用都需要 seek(0) 重置指针,因为多个 truetype 调用共享同一个 BytesIO 对象
+            font_data.seek(0)
+            font = ImageFont.truetype(font_data, size)
             height = get_font_height(font)
             font_infos[name] = FontInfo(
                 font=font,

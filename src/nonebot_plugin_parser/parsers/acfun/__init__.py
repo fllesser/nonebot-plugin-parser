@@ -139,10 +139,8 @@ class AcfunParser(BaseParser):
             response = await client.get(m3u8_url)
             response.raise_for_status()
 
-        slices_text = response.text
-
         slices: list[str] = []
-        for line in slices_text.splitlines():
+        for line in response.text.splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
