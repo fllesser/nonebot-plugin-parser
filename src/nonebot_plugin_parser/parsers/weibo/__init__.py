@@ -189,7 +189,7 @@ class WeiBoParser(BaseParser):
             response = await client.get(url)
             if response.status_code != 200:
                 if response.status_code in (403, 418):
-                    raise ParseException(f"被风控拦截（{response.status_code}），可尝试更换 UA/Referer 或稍后重试")
+                    raise ParseException(f"被风控拦截({response.status_code}), 可尝试更换 UA/Referer 或稍后重试")
                 raise ParseException(f"获取数据失败 {response.status_code} {response.reason_phrase}")
 
             ctype = response.headers.get("content-type", "")
