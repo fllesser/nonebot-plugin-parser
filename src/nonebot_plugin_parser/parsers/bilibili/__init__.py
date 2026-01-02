@@ -408,7 +408,7 @@ class BilibiliParser(BaseParser):
         '''
         extra_data = {
             "type": "live",
-            "type_tag": f"直播·{room_data.parent_area_name}",
+            "type_tag": f"直播·{room_data.room_info.parent_area_name}",
             "type_icon": "fa-tower-broadcast",
             "content_id": f"ROOM{room_id}", # 传递房间号
             "tags": str(room_data.room_info.tags),
