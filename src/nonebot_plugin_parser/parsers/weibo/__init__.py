@@ -198,9 +198,9 @@ class WeiBoParser(BaseParser):
 
         weibo_data = common.decoder.decode(response.content).data
 
-        return self.build_weibo_data(weibo_data)
+        return self._collect_result(weibo_data)
 
-    def build_weibo_data(self, data: common.WeiboData):
+    def _collect_result(self, data: common.WeiboData):
         contents = []
 
         # 添加视频内容
@@ -216,7 +216,7 @@ class WeiBoParser(BaseParser):
         author = self.create_author(data.display_name, data.user.profile_image_url)
         repost = None
         if data.retweeted_status:
-            repost = self.build_weibo_data(data.retweeted_status)
+            repost = self._collect_result(data.retweeted_status)
 
         return self.result(
             title=data.title,
