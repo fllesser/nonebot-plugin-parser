@@ -1,7 +1,7 @@
 import json
 import asyncio
 from re import Match
-from typing import ClassVar, Any
+from typing import Any, ClassVar
 from collections.abc import AsyncGenerator
 
 from msgspec import convert
@@ -33,10 +33,7 @@ request_settings.set("impersonate", "chrome131")
 
 class BilibiliParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(
-        name=PlatformEnum.BILIBILI, 
-        display_name="哔哩哔哩"
-    )
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
 
     def __init__(self):
         self.headers = HEADERS.copy()
@@ -123,7 +120,7 @@ class BilibiliParser(BaseParser):
         video = await self._get_video(bvid=bvid, avid=avid)
         info_data = await video.get_info()
         video_info = convert(info_data, VideoInfo)
-        
+
         # 1. 提取统计数据
         stats = {}
         try:
@@ -143,7 +140,7 @@ class BilibiliParser(BaseParser):
 
         # 获取简介
         text = f"简介: {video_info.desc}" if video_info.desc else None
-        
+
         # 使用位置参数调用 create_author
         author = self.create_author(video_info.owner.name, video_info.owner.face)
 
@@ -190,7 +187,7 @@ class BilibiliParser(BaseParser):
             page_info.cover,
             page_info.duration,
         )
-        
+
         # 构造 extra_data
         extra_data = {
             "info": ai_summary,
@@ -211,7 +208,7 @@ class BilibiliParser(BaseParser):
             author=author,
             contents=[video_content],
         )
-        
+
         # 注入 extra
         res.extra = extra_data
         logger.debug(f"Video extra data: {extra_data}")
@@ -220,12 +217,13 @@ class BilibiliParser(BaseParser):
     async def parse_dynamic(self, dynamic_id: int):
         """解析动态信息"""
         from bilibili_api.dynamic import Dynamic
+
         from .dynamic import DynamicData
 
         dynamic = Dynamic(dynamic_id, await self.credential)
         dynamic_data = convert(await dynamic.get_info(), DynamicData)
         dynamic_info = dynamic_data.item
-        
+
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
 
         # 提取动态统计数据
@@ -246,7 +244,7 @@ class BilibiliParser(BaseParser):
         for image_url in dynamic_info.image_urls:
             img_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
             contents.append(ImageContent(img_task))
-        
+
         extra_data = {
             "stats": stats,
             "type": "dynamic",
@@ -274,6 +272,7 @@ class BilibiliParser(BaseParser):
     async def parse_read(self, read_id: int):
         """解析专栏信息 (Article API)"""
         from bilibili_api.article import Article
+
         from .article import TextNode, ImageNode, ArticleInfo
 
         ar = Article(read_id)
@@ -281,7 +280,7 @@ class BilibiliParser(BaseParser):
         await ar.fetch_content()
         data = ar.json()
         article_info = convert(data, ArticleInfo)
-        
+
         stats = {}
         try:
             if article_info.stats:
@@ -306,7 +305,7 @@ class BilibiliParser(BaseParser):
                 current_text += child.text
 
         author = self.create_author(*article_info.author_info)
-        
+
         extra_data = {
             "stats": stats,
             "type": "article",
@@ -315,7 +314,7 @@ class BilibiliParser(BaseParser):
             "author_id": str(article_info.meta.author.mid),
             "content_id": f"CV{read_id}",
         }
-        
+
         res = self.result(
             title=article_info.title,
             timestamp=article_info.timestamp,
@@ -340,10 +339,10 @@ class BilibiliParser(BaseParser):
         opus_info = await bili_opus.get_info()
         if not isinstance(opus_info, dict):
             raise ParseException("获取图文动态信息失败")
-        
+
         opus_data = convert(opus_info, OpusItem)
         logger.debug(f"opus_data: {opus_data}")
-        
+
         # 使用位置参数解包
         author = self.create_author(*opus_data.name_avatar)
 
@@ -368,6 +367,7 @@ class BilibiliParser(BaseParser):
     async def parse_live(self, room_id: int):
         """解析直播信息"""
         from bilibili_api.live import LiveRoom
+
         from .live import RoomData
 
         room = LiveRoom(room_display_id=room_id, credential=await self.credential)
@@ -386,7 +386,7 @@ class BilibiliParser(BaseParser):
         author = self.create_author(room_data.name, room_data.avatar)
 
         url = f"https://www.bilibili.com/blackboard/live/live-activity-player.html?enterTheRoom=0&cid={room_id}"
-        
+
         extra_data = {
             "type": "live",
             "type_tag": f"直播·{room_data.room_info.parent_area_name}",
@@ -396,10 +396,10 @@ class BilibiliParser(BaseParser):
             "live_info": {
                 "level": str(room_data.anchor_info.live_info.level),
                 "level_color": str(room_data.anchor_info.live_info.level_color),
-                "score": str(room_data.anchor_info.live_info.score)
-            }
+                "score": str(room_data.anchor_info.live_info.score),
+            },
         }
-        
+
         res = self.result(
             url=url,
             title=room_data.title,
@@ -413,6 +413,7 @@ class BilibiliParser(BaseParser):
     async def parse_favlist(self, fav_id: int):
         """解析收藏夹信息"""
         from bilibili_api.favorite_list import get_video_favorite_list_content
+
         from .favlist import FavData
 
         # 只会取一页，20 个
