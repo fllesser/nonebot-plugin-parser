@@ -1,7 +1,7 @@
 import json
 import asyncio
 from re import Match
-from typing import ClassVar, Any
+from typing import Any, ClassVar
 from collections.abc import AsyncGenerator
 
 from msgspec import convert
@@ -33,7 +33,7 @@ request_settings.set("impersonate", "chrome131")
 class BilibiliParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(
-        name=PlatformEnum.BILIBILI, 
+        name=PlatformEnum.BILIBILI,
         display_name="哔哩哔哩",
     )
 
@@ -121,7 +121,7 @@ class BilibiliParser(BaseParser):
         video = await self._get_video(bvid=bvid, avid=avid)
         info_data = await video.get_info()
         video_info = convert(info_data, VideoInfo)
-        
+
         # 1. 提取统计数据
         stats = {}
         try:
@@ -141,7 +141,7 @@ class BilibiliParser(BaseParser):
 
         # 获取简介
         text = f"简介: {video_info.desc}" if video_info.desc else None
-        
+
         # --- [修复] 使用位置参数调用 create_author ---
         author = self.create_author(video_info.owner.name, video_info.owner.face)
 
@@ -196,8 +196,8 @@ class BilibiliParser(BaseParser):
             "type": "video",
             "type_tag": "视频",
             "type_icon": "fa-circle-play",
-            "author_id": str(video_info.owner.mid), # 强制通过 extra 传递 UID
-            "content_id": video_info.bvid,          # 传递 BV 号
+            "author_id": str(video_info.owner.mid),  # 强制通过 extra 传递 UID
+            "content_id": video_info.bvid,  # 传递 BV 号
         }
 
         # 创建结果
@@ -209,7 +209,7 @@ class BilibiliParser(BaseParser):
             author=author,
             contents=[video_content],
         )
-        
+
         # 强制注入 extra
         res.extra = extra_data
         logger.info(extra_data)
@@ -218,12 +218,13 @@ class BilibiliParser(BaseParser):
     # --- 修改 parse_dynamic ---
     async def parse_dynamic(self, dynamic_id: int):
         from bilibili_api.dynamic import Dynamic
+
         from .dynamic import DynamicItem
 
         dynamic = Dynamic(dynamic_id, await self.credential)
         dynamic_data = convert(await dynamic.get_info(), DynamicItem)
         dynamic_info = dynamic_data.item
-        
+
         # 使用位置参数
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
 
@@ -251,7 +252,7 @@ class BilibiliParser(BaseParser):
             "type_tag": "动态",
             "type_icon": "fa-quote-left",
             "author_id": str(dynamic_info.modules.module_author.mid),
-            "content_id": str(dynamic_id), # 传递动态 ID
+            "content_id": str(dynamic_id),  # 传递动态 ID
         }
 
         res = self.result(
@@ -270,6 +271,7 @@ class BilibiliParser(BaseParser):
 
     async def parse_read_old(self, read_id: int):
         from bilibili_api.article import Article
+
         article = Article(read_id)
         return await self._parse_opus_obj(await article.turn_to_opus())
 
@@ -279,10 +281,10 @@ class BilibiliParser(BaseParser):
         opus_info = await bili_opus.get_info()
         if not isinstance(opus_info, dict):
             raise ParseException("获取图文动态信息失败")
-        
+
         opus_data = convert(opus_info, OpusItem)
         logger.debug(f"opus_data: {opus_data}")
-        
+
         # 使用位置参数解包
         author = self.create_author(*opus_data.name_avatar)
 
@@ -308,13 +310,14 @@ class BilibiliParser(BaseParser):
     # --- 修改 parse_read (专栏) ---
     async def parse_read(self, read_id: int):
         from bilibili_api.article import Article
+
         from .article import TextNode, ImageNode, ArticleInfo
 
         ar = Article(read_id)
         await ar.fetch_content()
         data = ar.json()
         article_info = convert(data, ArticleInfo)
-        
+
         stats = {}
         try:
             if article_info.stats:
@@ -340,14 +343,14 @@ class BilibiliParser(BaseParser):
 
         # 使用位置参数解包
         author = self.create_author(*article_info.author_info)
-        
+
         extra_data = {
             "stats": stats,
             "type": "article",
             "type_tag": "专栏",
             "type_icon": "fa-newspaper",
             "author_id": str(article_info.meta.author.mid),
-            "content_id": f"CV{read_id}", # 传递 cv 号
+            "content_id": f"CV{read_id}",  # 传递 cv 号
         }
         logger.debug(f"article_info: {article_info}")
         res = self.result(
@@ -362,6 +365,7 @@ class BilibiliParser(BaseParser):
 
     async def parse_live(self, room_id: int):
         from bilibili_api.live import LiveRoom
+
         from .live import RoomData
 
         room = LiveRoom(room_display_id=room_id, credential=await self.credential)
@@ -382,7 +386,7 @@ class BilibiliParser(BaseParser):
 
         url = f"https://www.bilibili.com/blackboard/live/live-activity-player.html?enterTheRoom=0&cid={room_id}"
         logger.debug(f"room_data: {room_data}")
-        '''
+        """
         room_data: RoomData(
             room_info=RoomInfo(
                 title='【榜金】你的好友正在炫耀大金', 
@@ -405,20 +409,20 @@ class BilibiliParser(BaseParser):
                 )
             )
         )
-        '''
+        """
         extra_data = {
             "type": "live",
             "type_tag": f"直播·{room_data.room_info.parent_area_name}",
             "type_icon": "fa-tower-broadcast",
-            "content_id": f"ROOM{room_id}", # 传递房间号
+            "content_id": f"ROOM{room_id}",  # 传递房间号
             "tags": str(room_data.room_info.tags),
             "live_info": {
                 "level": str(room_data.anchor_info.live_info.level),
                 "level_color": str(room_data.anchor_info.live_info.level_color),
-                "score": str(room_data.anchor_info.live_info.score)
-            }
+                "score": str(room_data.anchor_info.live_info.score),
+            },
         }
-        
+
         res = self.result(
             url=url,
             title=room_data.title,
@@ -431,6 +435,7 @@ class BilibiliParser(BaseParser):
 
     async def parse_favlist(self, fav_id: int):
         from bilibili_api.favorite_list import get_video_favorite_list_content
+
         from .favlist import FavData
 
         fav_dict = await get_video_favorite_list_content(fav_id)

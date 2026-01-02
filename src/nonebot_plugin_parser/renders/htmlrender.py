@@ -19,15 +19,15 @@ class HtmlRenderer(ImageRenderer):
         # 准备模板数据
         template_data = await self._resolve_parse_result(result)
 
-        #处理模板针对
+        # 处理模板针对
         template_name = "card.html.jinja"
         if result.platform:
-            #添加存在性验证
+            # 添加存在性验证
             file_name = f"{str(result.platform.name).lower()}.html.jinja"
             if (self.templates_dir / file_name).exists():
                 template_name = file_name
             else:
-                logger.debug(f"不存在对应平台模板，忽略回退")
+                logger.debug("不存在对应平台模板，忽略回退")
 
         # 渲染图片
         return await template_to_pic(
@@ -42,13 +42,13 @@ class HtmlRenderer(ImageRenderer):
 
     async def _resolve_parse_result(self, result: ParseResult) -> dict[str, Any]:
         """解析 ParseResult 为模板可用的字典数据"""
-        
+
         data: dict[str, Any] = {
             "title": result.title,
             "text": result.text,
             "formartted_datetime": result.formartted_datetime,
             "extra_info": result.extra_info,
-            "extra": result.extra 
+            "extra": result.extra,
         }
 
         if result.platform:
@@ -72,7 +72,7 @@ class HtmlRenderer(ImageRenderer):
 
             data["author"] = {
                 "name": result.author.name,
-                "id": author_id, # 传递 UID
+                "id": author_id,  # 传递 UID
                 "avatar_path": avatar_path.as_uri() if avatar_path else None,
             }
 
