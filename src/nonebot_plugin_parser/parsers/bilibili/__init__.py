@@ -217,6 +217,7 @@ class BilibiliParser(BaseParser):
     async def parse_dynamic(self, dynamic_id: int):
         """解析动态信息"""
         from bilibili_api.dynamic import Dynamic
+
         from .dynamic import DynamicData
 
         dynamic = Dynamic(dynamic_id, await self.credential)
@@ -224,7 +225,7 @@ class BilibiliParser(BaseParser):
         logger.debug(f"dynamic_data: {dynamic_data}")
         dynamic_info = dynamic_data.item
         logger.debug(f"dynamic_info: {dynamic_info}")
-        
+
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
 
         # 提取当前动态的统计数据
@@ -245,7 +246,7 @@ class BilibiliParser(BaseParser):
         for image_url in dynamic_info.image_urls:
             img_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
             contents.append(ImageContent(img_task))
-        
+
         # --- 基础 extra 数据 ---
         extra_data = {
             "stats": stats,
@@ -259,7 +260,7 @@ class BilibiliParser(BaseParser):
         # --- 新增：处理转发内容 (叠加到 extra) ---
         if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig:
             orig_item = dynamic_info.orig
-            
+
             if orig_item.visible:
                 # 尝试获取源内容的类型标签
                 orig_type_tag = "动态"
@@ -278,13 +279,13 @@ class BilibiliParser(BaseParser):
 
                 # 构造 origin 字典
                 extra_data["origin"] = {
-                    "exists": True,                 # 标记源动态存在
-                    "author": orig_item.name,       # 源作者名
-                    "title": orig_item.title,       # 源标题 (如视频标题)
-                    "text": orig_item.text,         # 源文本 (如视频简介或动态正文)
-                    "cover": orig_cover,            # 源封面/配图 URL (字符串)
-                    "type_tag": orig_type_tag,      # 类型标签
-                    "mid": str(orig_item.modules.module_author.mid) # 源作者ID
+                    "exists": True,  # 标记源动态存在
+                    "author": orig_item.name,  # 源作者名
+                    "title": orig_item.title,  # 源标题 (如视频标题)
+                    "text": orig_item.text,  # 源文本 (如视频简介或动态正文)
+                    "cover": orig_cover,  # 源封面/配图 URL (字符串)
+                    "type_tag": orig_type_tag,  # 类型标签
+                    "mid": str(orig_item.modules.module_author.mid),  # 源作者ID
                 }
             else:
                 # 源动态已失效
@@ -292,17 +293,17 @@ class BilibiliParser(BaseParser):
                     "exists": False,
                     "text": "源动态已被删除或不可见",
                     "author": "未知",
-                    "title": "资源失效"
+                    "title": "资源失效",
                 }
 
         res = self.result(
             title=dynamic_info.title or "B站动态",
-            text=dynamic_info.text, 
+            text=dynamic_info.text,
             timestamp=dynamic_info.timestamp,
             author=author,
             contents=contents,
         )
-        
+
         # 将构造好的 extra_data (包含 origin) 注入结果
         res.extra = extra_data
         return res
