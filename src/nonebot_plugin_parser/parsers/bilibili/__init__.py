@@ -386,30 +386,6 @@ class BilibiliParser(BaseParser):
 
         url = f"https://www.bilibili.com/blackboard/live/live-activity-player.html?enterTheRoom=0&cid={room_id}"
         logger.debug(f"room_data: {room_data}")
-        """
-        room_data: RoomData(
-            room_info=RoomInfo(
-                title='【榜金】你的好友正在炫耀大金', 
-                cover='https://i0.hdslb.com/bfs/live/new_room_cover/921dc312abf6e0d3f27f9b29c01f89cc1441ceaa.jpg', 
-                keyframe='https://i0.hdslb.com/bfs/live-key-frame/keyframe01022106001874910174skt0t2.jpg', 
-                tags='逃出惊魂夜,蛋仔派对,惊魂寻宝队', 
-                area_name='蛋仔派对', 
-                parent_area_name='手游'
-            ), 
-            anchor_info=AnchorInfo(
-                base_info=BaseInfo(
-                    uname='粒粒强且自知', 
-                    face='https://i2.hdslb.com/bfs/face/596cce2ca8bfed7fb2aafaec262f8d4c5d03e7b5.jpg', 
-                    gender='女'
-                ), 
-                live_info=LiveInfo(
-                    level=21, 
-                    level_color=10512625, 
-                    score=1049292
-                )
-            )
-        )
-        """
         extra_data = {
             "type": "live",
             "type_tag": f"直播·{room_data.room_info.parent_area_name}",
