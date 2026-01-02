@@ -54,13 +54,10 @@ class HtmlRenderer(ImageRenderer):
                 "display_name": result.platform.display_name,
                 "name": result.platform.name,
             }
-            if hasattr(result.platform, "logo_path") and result.platform.logo_path:
-                data["platform"]["logo_path"] = result.platform.logo_path
-            else:
-                # 回退到本地资源查找
-                logo_path = Path(__file__).parent / "resources" / f"{result.platform.name}.png"
-                if logo_path.exists():
-                    data["platform"]["logo_path"] = logo_path.as_uri()
+            # 尝试获取平台 logo
+            logo_path = Path(__file__).parent / "resources" / f"{result.platform.name}.png"
+            if logo_path.exists():
+                data["platform"]["logo_path"] = logo_path.as_uri()
 
         if result.author:
             avatar_path = await result.author.get_avatar_path()
