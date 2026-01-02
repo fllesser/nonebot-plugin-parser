@@ -169,7 +169,7 @@ class DynamicInfo(Struct):
         if major_info:
             major = convert(major_info, DynamicMajor)
             return major.text
-            
+
         return None
 
     @property
