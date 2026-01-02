@@ -340,9 +340,12 @@
         .repost-media img {
             width: 100%;
             height: auto;
-            max-height: 300px;
-            object-fit: cover;
+            /* 移除 max-height 防止长图被截断 */
+            /* max-height: 300px; */ 
+            /* 移除 object-fit 防止内容被裁剪 */
+            /* object-fit: cover; */
             display: block;
+            border-radius: 6px; /* 保持圆角 */
         }
 
         .repost-deleted {
@@ -594,7 +597,7 @@
         <div class="footer-section">
             <div class="footer-brand">
                 <i class="fas fa-layer-group"></i>
-                <span>NB Parser || Designed By LoCCai</span>
+                <span>QIQI Parser || Designed By LoCCai</span>
             </div>
             <div class="footer-info">
                 {% if extra.render_info %}
