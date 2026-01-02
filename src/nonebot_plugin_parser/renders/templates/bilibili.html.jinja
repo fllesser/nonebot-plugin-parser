@@ -31,7 +31,6 @@
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            /* 透明背景，方便截图工具处理 */
             background: transparent; 
             padding: 20px;
         }
@@ -62,7 +61,6 @@
         .cover-section {
             position: relative;
             width: 100%;
-            /* 限制最大高度，防止长图占满屏幕 */
             max-height: 400px; 
             background-color: #f0f2f5;
             overflow: hidden;
@@ -110,10 +108,6 @@
         .platform-tag {
             right: 20px;
             border-left: 3px solid var(--secondary-color);
-        }
-
-        .platform-logo-img {
-            
         }
 
         /* 播放按钮装饰 */
@@ -170,16 +164,29 @@
             font-size: 13px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         
-        .mid-badge {
+        .info-badge {
             background-color: #f1f8ff;
             padding: 2px 8px;
             border-radius: 6px;
-            color: var(--secondary-color);
             font-weight: 600;
-            font-family: monospace;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 12px;
+        }
+
+        .info-badge.uid { color: var(--secondary-color); background-color: #eaf4fc; }
+        .info-badge.content-id { color: #e67e22; background-color: #fdf2e9; }
+        
+        .time-text {
+            display: flex; align-items: center; gap: 4px;
+        }
+        .time-text::before {
+            content: "\f017";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 400;
         }
 
         .qrcode-placeholder {
@@ -188,7 +195,7 @@
         }
         .qrcode-icon { font-size: 32px; color: #eee; }
         
-        /* 统计数据区域 - 网格布局 */
+        /* 统计数据区域 */
         .stats-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -206,12 +213,12 @@
             border-left: 4px solid transparent;
         }
         
-        .stat-item:nth-child(1) { border-left-color: #e74c3c; } /* Play */
-        .stat-item:nth-child(2) { border-left-color: #3498db; } /* Like */
-        .stat-item:nth-child(3) { border-left-color: #2ecc71; } /* Reply */
-        .stat-item:nth-child(4) { border-left-color: #f39c12; } /* Fav */
-        .stat-item:nth-child(5) { border-left-color: #9b59b6; } /* Share */
-        .stat-item:nth-child(6) { border-left-color: #1abc9c; } /* Coin/Danmaku */
+        .stat-item:nth-child(1) { border-left-color: #e74c3c; }
+        .stat-item:nth-child(2) { border-left-color: #3498db; }
+        .stat-item:nth-child(3) { border-left-color: #2ecc71; }
+        .stat-item:nth-child(4) { border-left-color: #f39c12; }
+        .stat-item:nth-child(5) { border-left-color: #9b59b6; }
+        .stat-item:nth-child(6) { border-left-color: #1abc9c; }
         
         .stat-icon {
             width: 36px; height: 36px;
@@ -242,38 +249,7 @@
             padding-left: 12px;
             border-left: 4px solid var(--secondary-color);
         }
-        /* 优化作者信息栏的 Badge 样式 */
-        .author-meta {
-            color: var(--gray-color);
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap; /* 防止太长换行难看 */
-        }
-        
-        .info-badge {
-            background-color: #f1f8ff;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-family: Consolas, Monaco, monospace; /* 使用等宽字体显示 ID */
-            font-size: 12px;
-        }
 
-        /* 区分一下颜色 */
-        .info-badge.uid { color: var(--secondary-color); background-color: #eaf4fc; }
-        .info-badge.content-id { color: #e67e22; background-color: #fdf2e9; }
-        
-        .time-text {
-            display: flex; align-items: center; gap: 4px;
-        }
-        .time-text::before {
-            content: "\f017"; /* fa-clock */
-            font-family: "Font Awesome 6 Free";
-            font-weight: 400;
-        }
-        /* AI 总结样式 */
         .ai-summary {
             background-color: #f8faff;
             padding: 16px 20px;
@@ -301,6 +277,88 @@
             white-space: pre-wrap;
         }
         
+        /* -----------------------
+           【新增】转发区域样式 
+           ----------------------- */
+        .repost-box {
+            background-color: #f7f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            border: 1px solid #e1e4e8;
+            position: relative;
+        }
+        
+        .repost-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .repost-tag {
+            background-color: var(--secondary-color);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .repost-author {
+            color: var(--secondary-color);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .repost-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .repost-content {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+        }
+
+        .repost-media {
+            width: 100%;
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: #eee;
+            margin-top: 10px;
+        }
+        
+        .repost-media img {
+            width: 100%;
+            height: auto;
+            max-height: 300px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .repost-deleted {
+            background-color: #f8eeee;
+            color: #999;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            border: 1px dashed #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
         /* 图片展示区域 */
         .images-container { margin: 20px 0; }
         .images-header {
@@ -328,20 +386,6 @@
             font-size: 28px; font-weight: bold;
         }
         
-        /* 转发卡片样式 */
-        .repost-container {
-            margin-top: 20px;
-            border: 1px solid #eee;
-            background-color: #fafbfc;
-            border-radius: 8px;
-            padding: 15px;
-        }
-        .repost-container .card {
-            width: 100%; box-shadow: none; border: none; margin: 0; background: transparent;
-        }
-        .repost-container .content-section { padding: 0; }
-        .repost-container .cover-section { border-radius: 8px; margin-bottom: 15px; }
-
         /* 底部信息栏 */
         .footer-section {
             background-color: var(--dark-color);
@@ -361,11 +405,9 @@
     {# === 宏定义：渲染卡片 === #}
     {% macro render_card(result, is_repost=False) %}
     
-    {# 提取 Extra 数据 (由 Parser 修改后注入) #}
-    {# 获取变量 #}
+    {# 变量定义 #}
     {% set extra = result.extra if result.extra else {} %}
     {% set platform = result.platform if result.platform else {} %}
-    {# 获取 Content ID #}
     {% set content_id = extra.content_id %}
     {% set stats = extra.stats if extra.stats else {} %}
     {% set type_tag = extra.type_tag if extra.type_tag else "B站" %}
@@ -373,13 +415,11 @@
     {% set type = extra.type if extra.type else "video" %}
 
     <div class="card">
-        {# 仅主卡片显示顶部彩条 #}
         {% if not is_repost %}
         <div class="decorative-stripe"></div>
         {% endif %}
 
         {# --- 封面区域 --- #}
-        {# 优先使用提取到的封面，如果是 repost 且没有封面，尝试使用第一张图片 #}
         {% set cover_url = result.cover_path %}
         {% if not cover_url and result.img_contents and result.img_contents|length > 0 %}
             {% set cover_url = result.img_contents[0].path %}
@@ -390,8 +430,6 @@
             <img src="{{ cover_url }}" class="cover-image" alt="Cover">
             <div class="cover-overlay"></div>
             
-            {# 【修改点 1】只有 B 站才显示左侧的 类型标签 (视频/专栏等) #}
-            {# 因为其他平台可能没有 type_tag 这个字段或者不需要显示 #}
             {% if platform.name == 'bilibili' and extra.type_tag %}
             <div class="tag type-tag">
                 <i class="fa-solid {{ extra.type_icon }}"></i>
@@ -399,7 +437,6 @@
             </div>
             {% endif %}
             
-            {# 右上角：平台标签 (一直显示) #}
             {% if platform %}
             <div class="tag platform-tag">
                 {% if result.platform.logo_path %}
@@ -410,7 +447,6 @@
             </div>
             {% endif %}
 
-            {# 中间：播放按钮装饰 (仅视频/音频) #}
             {% if type in ['video', 'live'] %}
             <div class="play-btn-overlay">
                 <i class="fas fa-play" style="margin-left: 4px;"></i>
@@ -425,101 +461,48 @@
             <div class="author-qr-row">
                 <div class="author-info">
                     <img src="{{ result.author.avatar_path or '' }}" class="author-avatar">
-                    
                     <div class="author-details">
                         <h3>{{ result.author.name }}</h3>
                         <div class="author-meta">
-                            {# 显示 UID #}
                             {% if extra.author_id %}
                             <span class="info-badge uid">UID: {{ extra.author_id }}</span>
                             {% endif %}
-                            
-                            {# 【修改点 2】显示内容 ID (BV/CV/RoomID) #}
                             {% if content_id %}
                             <span class="info-badge content-id">{{ content_id }}</span>
                             {% endif %}
-                            
-                            {# 时间 #}
                             {% if result.formartted_datetime %}
                             <span class="time-text">{{ result.formartted_datetime }}</span>
                             {% endif %}
                         </div>
                     </div>
                 </div>
-                
-                {# 装饰性二维码图标 #}
                 <div class="qrcode-placeholder">
                     <i class="fas fa-qrcode qrcode-icon"></i>
                 </div>
             </div>
             {% endif %}
 
-            {# --- 统计数据网格 (仅主卡片显示) --- #}
+            {# --- 统计数据 --- #}
             {% if stats and not is_repost %}
             <div class="stats-container">
-                <!-- 播放 -->
+                <div class="stat-item"><div class="stat-icon play"><i class="fas fa-eye"></i></div><div class="stat-content"><div class="stat-value">{{ stats.play or '-' }}</div><div class="stat-label">播放</div></div></div>
+                <div class="stat-item"><div class="stat-icon like"><i class="fas fa-thumbs-up"></i></div><div class="stat-content"><div class="stat-value">{{ stats.like or '-' }}</div><div class="stat-label">点赞</div></div></div>
+                <div class="stat-item"><div class="stat-icon reply"><i class="fas fa-comment"></i></div><div class="stat-content"><div class="stat-value">{{ stats.reply or '-' }}</div><div class="stat-label">评论</div></div></div>
+                <div class="stat-item"><div class="stat-icon fav"><i class="fas fa-star"></i></div><div class="stat-content"><div class="stat-value">{{ stats.favorite or '-' }}</div><div class="stat-label">收藏</div></div></div>
+                <div class="stat-item"><div class="stat-icon share"><i class="fas fa-share"></i></div><div class="stat-content"><div class="stat-value">{{ stats.share or '-' }}</div><div class="stat-label">分享</div></div></div>
                 <div class="stat-item">
-                    <div class="stat-icon play"><i class="fas fa-eye"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-value">{{ stats.play or '-' }}</div>
-                        <div class="stat-label">播放</div>
-                    </div>
-                </div>
-                <!-- 点赞 -->
-                <div class="stat-item">
-                    <div class="stat-icon like"><i class="fas fa-thumbs-up"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-value">{{ stats.like or '-' }}</div>
-                        <div class="stat-label">点赞</div>
-                    </div>
-                </div>
-                <!-- 评论 -->
-                <div class="stat-item">
-                    <div class="stat-icon reply"><i class="fas fa-comment"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-value">{{ stats.reply or '-' }}</div>
-                        <div class="stat-label">评论</div>
-                    </div>
-                </div>
-                <!-- 收藏 -->
-                <div class="stat-item">
-                    <div class="stat-icon fav"><i class="fas fa-star"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-value">{{ stats.favorite or '-' }}</div>
-                        <div class="stat-label">收藏</div>
-                    </div>
-                </div>
-                <!-- 分享 -->
-                <div class="stat-item">
-                    <div class="stat-icon share"><i class="fas fa-share"></i></div>
-                    <div class="stat-content">
-                        <div class="stat-value">{{ stats.share or '-' }}</div>
-                        <div class="stat-label">分享</div>
-                    </div>
-                </div>
-                <!-- 硬币/弹幕 -->
-                <div class="stat-item">
-                    <div class="stat-icon coin">
-                        {% if stats.coin %}
-                        <i class="fas fa-coins"></i>
-                        {% else %}
-                        <i class="fas fa-comment-dots"></i>
-                        {% endif %}
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-value">{{ stats.coin or stats.danmaku or '-' }}</div>
-                        <div class="stat-label">{{ '硬币' if stats.coin else '弹幕' }}</div>
-                    </div>
+                    <div class="stat-icon coin">{% if stats.coin %}<i class="fas fa-coins"></i>{% else %}<i class="fas fa-comment-dots"></i>{% endif %}</div>
+                    <div class="stat-content"><div class="stat-value">{{ stats.coin or stats.danmaku or '-' }}</div><div class="stat-label">{{ '硬币' if stats.coin else '弹幕' }}</div></div>
                 </div>
             </div>
             {% endif %}
 
-            {# --- 主要内容 --- #}
+            {# --- 主要标题 --- #}
             {% if result.title %}
             <div class="content-title">{{ result.title }}</div>
             {% endif %}
 
-            {# AI 总结 #}
+            {# --- AI 总结 --- #}
             {% if extra.info %}
             <div class="ai-summary">
                 <h4><i class="fas fa-robot"></i> AI 内容总结</h4>
@@ -527,24 +510,54 @@
             </div>
             {% endif %}
 
-            {# 正文描述 #}
+            {# --- 正文描述 --- #}
             {% if result.text %}
             <div class="description">{{ result.text }}</div>
             {% endif %}
 
-            {# --- 图片网格 (除去封面) --- #}
-            {# 如果第一张图被用作封面了，这里可能需要排除它，但通常动态图多张都需要展示 #}
-            {# 这里逻辑：如果有图片内容，且不是视频(视频封面已在上面展示) #}
+            {# --- 【新增】Extra Origin 转发区域 --- #}
+            {% if result.extra.origin %}
+                <div class="repost-box">
+                    {% if result.extra.origin.exists %}
+                        <div class="repost-header">
+                            <span class="repost-tag">{{ result.extra.origin.type_tag }}</span>
+                            <span class="repost-author">@{{ result.extra.origin.author }}</span>
+                            {% if result.extra.origin.mid %}
+                            <span style="font-size: 12px; color: #999;">(UID: {{ result.extra.origin.mid }})</span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if result.extra.origin.title %}
+                            <div class="repost-title">{{ result.extra.origin.title }}</div>
+                        {% endif %}
+
+                        {% if result.extra.origin.text %}
+                            <div class="repost-content">{{ result.extra.origin.text }}</div>
+                        {% endif %}
+
+                        {% if result.extra.origin.cover %}
+                            <div class="repost-media">
+                                <img src="{{ result.extra.origin.cover }}" referrerpolicy="no-referrer" alt="转发图片">
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <!-- 资源失效显示 -->
+                        <div class="repost-deleted">
+                            <i class="fas fa-triangle-exclamation"></i>
+                            <span>{{ result.extra.origin.text or '源动态已被删除或不可见' }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {# --- 图片网格 --- #}
             {% if result.img_contents %}
                 {% set imgs = result.img_contents %}
-                {# 如果是视频/专栏，可能封面就是第一张图，这里根据实际情况可以切片 imgs[1:]，目前全显示 #}
-                
                 {% set count = imgs|length %}
                 {% if count > 0 %}
                     <div class="images-container">
                         <div class="images-header"><i class="fas fa-images" style="color:#2ecc71"></i> 内容预览</div>
                         
-                        {# 计算网格类名 #}
                         {% set grid_class = 'single' %}
                         {% if count == 2 %}{% set grid_class = 'double' %}
                         {% elif count == 4 %}{% set grid_class = 'quad' %}
@@ -552,7 +565,6 @@
                         {% endif %}
 
                         <div class="images-grid {{ grid_class }}">
-                            {# 限制最多显示9张 #}
                             {% for img in imgs[:9] %}
                             <div class="image-item">
                                 <img src="{{ img.path }}">
@@ -566,18 +578,18 @@
                 {% endif %}
             {% endif %}
 
-            {# --- 嵌套转发内容 --- #}
+            {# --- 旧版 Repost (保留兼容性) --- #}
             {% if result.repost %}
-            <div class="repost-container">
+            <div style="margin-top: 20px; border: 1px solid #eee; background-color: #fafbfc; border-radius: 8px; padding: 15px;">
                 <div style="margin-bottom:10px; color:#666; font-size:14px; font-weight:600;">
-                    <i class="fas fa-share" style="margin-right:5px;"></i> 转发内容
+                    <i class="fas fa-share" style="margin-right:5px;"></i> 转发内容 (Legacy)
                 </div>
                 {{ render_card(result.repost, is_repost=True) }}
             </div>
             {% endif %}
         </div>
 
-        {# --- 底部信息栏 --- #}
+        {# --- 底部 --- #}
         {% if not is_repost %}
         <div class="footer-section">
             <div class="footer-brand">
@@ -595,7 +607,6 @@
     </div>
     {% endmacro %}
 
-    {# 执行宏渲染 #}
     {{ render_card(result) }}
 
 </body>
