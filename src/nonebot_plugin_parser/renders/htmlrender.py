@@ -19,10 +19,20 @@ class HtmlRenderer(ImageRenderer):
         # 准备模板数据
         template_data = await self._resolve_parse_result(result)
 
+        #处理模板针对
+        template_name = "card.html.jinja"
+        if result.platform:
+            #添加存在性验证
+            file_name = f"{str(result.platform.name).lower()}.html.jinja"
+            if (self.templates_dir / file_name).exists():
+                template_name = file_name
+            else:
+                logger.debug(f"不存在对应平台模板，忽略回退")
+
         # 渲染图片
         return await template_to_pic(
             template_path=str(self.templates_dir),
-            template_name="card.html.jinja",
+            template_name=template_name,
             templates={"result": template_data},
             pages={
                 "viewport": {"width": 800, "height": 100},
