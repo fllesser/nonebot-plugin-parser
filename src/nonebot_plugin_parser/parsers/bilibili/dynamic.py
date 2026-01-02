@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from msgspec import Struct, convert
 
@@ -11,11 +11,6 @@ class AuthorInfo(Struct):
     mid: int
     pub_time: str
     pub_ts: int
-    # jump_url: str
-    # following: bool = False
-    # official_verify: dict[str, Any] | None = None
-    # vip: dict[str, Any] | None = None
-    # pendant: dict[str, Any] | None = None
 
 
 class VideoArchive(Struct):
@@ -26,28 +21,18 @@ class VideoArchive(Struct):
     title: str
     desc: str
     cover: str
-    # duration_text: str
-    # jump_url: str
-    # stat: dict[str, str]
-    # badge: dict[str, Any] | None = None
 
 
 class OpusImage(Struct):
     """图文动态图片信息"""
 
     url: str
-    # width: int
-    # height: int
-    # size: float
-    # aigc: dict[str, Any] | None = None
-    # live_url: str | None = None
 
 
 class OpusSummary(Struct):
     """图文动态摘要"""
 
     text: str
-    # rich_text_nodes: list[dict[str, Any]]
 
 
 class OpusContent(Struct):
@@ -57,11 +42,10 @@ class OpusContent(Struct):
     pics: list[OpusImage]
     summary: OpusSummary
     title: str | None = None
-    # fold_action: list[str] | None = None
 
 
 class DynamicMajor(Struct):
-    """动态主要内容"""
+    """动态主要内容 (Major)"""
 
     type: str
     archive: VideoArchive | None = None
@@ -138,6 +122,8 @@ class DynamicInfo(Struct):
     visible: bool
     modules: DynamicModule
     basic: dict[str, Any] | None = None
+    # 【关键修改】添加 orig 字段以支持转发内容 (递归结构)
+    orig: Optional["DynamicInfo"] = None
 
     @property
     def name(self) -> str:
@@ -161,15 +147,29 @@ class DynamicInfo(Struct):
         if major_info:
             major = convert(major_info, DynamicMajor)
             return major.title
+        # 如果是转发动态且没有 major title，可以返回默认值
+        if self.type == "DYNAMIC_TYPE_FORWARD":
+            return "转发动态"
         return None
 
     @property
     def text(self) -> str | None:
         """获取文本内容"""
+        # 【关键修改】优先从 modules.module_dynamic.desc.text 获取
+        # 这是用户发布的文字（包括转发时的评论）
+        if self.modules.module_dynamic:
+            desc = self.modules.module_dynamic.get("desc")
+            if desc and isinstance(desc, dict):
+                text_content = desc.get("text")
+                if text_content:
+                    return text_content
+
+        # 如果没有直接的 desc 文本，尝试从 major 中获取 (例如纯视频投稿的简介)
         major_info = self.modules.major_info
         if major_info:
             major = convert(major_info, DynamicMajor)
             return major.text
+            
         return None
 
     @property
