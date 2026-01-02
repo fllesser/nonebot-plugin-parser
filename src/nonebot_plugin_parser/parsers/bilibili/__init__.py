@@ -219,10 +219,10 @@ class BilibiliParser(BaseParser):
     async def parse_dynamic(self, dynamic_id: int):
         from bilibili_api.dynamic import Dynamic
 
-        from .dynamic import DynamicItem
+        from .dynamic import DynamicData
 
         dynamic = Dynamic(dynamic_id, await self.credential)
-        dynamic_data = convert(await dynamic.get_info(), DynamicItem)
+        dynamic_data = convert(await dynamic.get_info(), DynamicData)
         dynamic_info = dynamic_data.item
 
         # 使用位置参数
