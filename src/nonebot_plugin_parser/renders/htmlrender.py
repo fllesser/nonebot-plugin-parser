@@ -26,8 +26,6 @@ class HtmlRenderer(ImageRenderer):
             file_name = f"{str(result.platform.name).lower()}.html.jinja"
             if (self.templates_dir / file_name).exists():
                 template_name = file_name
-            else:
-                logger.debug("不存在对应平台模板，忽略回退")
 
         # 渲染图片
         return await template_to_pic(
