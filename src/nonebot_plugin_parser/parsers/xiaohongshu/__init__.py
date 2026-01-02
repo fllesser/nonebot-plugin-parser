@@ -30,36 +30,23 @@ class XiaoHongShuParser(BaseParser):
         }
         self.ios_headers.update(discovery_headers)
 
-    @handle("xhslink.com", r"xhslink\.com/[A-Za-z0-9._?%&+=/#@-]*")
+    @handle("xhslink.com", r"xhslink\.com/[A-Za-z0-9._?%&+=/#@-]+")
     async def _parse_short_link(self, searched: re.Match[str]):
         url = f"https://{searched.group(0)}"
         return await self.parse_with_redirect(url, self.ios_headers)
 
     # https://www.xiaohongshu.com/explore/68feefe40000000007030c4a?xsec_token=ABjAKjfMHJ7ck4UjPlugzVqMb35utHMRe_vrgGJ2AwJnc=&xsec_source=pc_feed
-    @handle(
-        "shu.com/explore",
-        r"explore/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*",
-    )
-    async def _parse_explore(self, searched: re.Match[str]):
-        url = f"https://www.xiaohongshu.com/{searched.group(0)}"
-        xhs_id = searched.group("xhs_id")
-        return await self.parse_explore(url, xhs_id)
-
     # https://www.xiaohongshu.com/discovery/item/68e8e3fa00000000030342ec?app_platform=android&ignoreEngage=true&app_version=9.6.0&share_from_user_hidden=true&xsec_source=app_share&type=normal&xsec_token=CBW9rwIV2qhcCD-JsQAOSHd2tTW9jXAtzqlgVXp6c52Sw%3D&author_share=1&xhsshare=QQ&shareRedId=ODs3RUk5ND42NzUyOTgwNjY3OTo8S0tK&apptime=1761372823&share_id=3b61945239ac403db86bea84a4f15124&share_channel=qq
-    @handle(
-        "shu.com/discovery",
-        r"discovery/item/(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]*",
-    )
-    async def _parse_discovery(self, searched: re.Match[str]):
-        route = searched.group(0)
-        explore_route = route.replace("discovery/item", "explore", 1)
-        xhs_id = searched.group("xhs_id")
+    @handle("xiaohongshu.com", r"(explore|discovery/item)/(?P<query>(?P<xhs_id>[0-9a-zA-Z]+)\?[A-Za-z0-9._%&+=/#@-]+)")
+    async def _parse_common(self, searched: re.Match[str]):
+        xhs_domain = "https://www.xiaohongshu.com"
+        query, xhs_id = searched.group("query", "xhs_id")
 
         try:
-            return await self.parse_explore(f"https://www.xiaohongshu.com/{explore_route}", xhs_id)
-        except ParseException:
-            logger.debug("parse_explore failed, fallback to parse_discovery")
-            return await self.parse_discovery(f"https://www.xiaohongshu.com/{route}")
+            return await self.parse_explore(f"{xhs_domain}/explore/{query}", xhs_id)
+        except Exception as e:
+            logger.warning(f"parse_explore failed, error: {e}, fallback to parse_discovery")
+            return await self.parse_discovery(f"{xhs_domain}/discovery/item/{query}")
 
     async def parse_explore(self, url: str, xhs_id: str):
         from . import explore

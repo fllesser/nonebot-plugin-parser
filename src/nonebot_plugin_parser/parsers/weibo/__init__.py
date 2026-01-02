@@ -1,4 +1,4 @@
-from re import Match, sub
+from re import Match
 from time import time
 from uuid import uuid4
 from typing import ClassVar
@@ -125,9 +125,8 @@ class WeiBoParser(BaseParser):
         )
 
     async def parse_fid(self, fid: str):
-        """
-        解析带 fid 的微博视频
-        """
+        """解析 show (带 fid)"""
+        from . import show
 
         req_url = f"https://h5.video.weibo.com/api/component?page=/show/{fid}"
         headers = {
@@ -140,53 +139,25 @@ class WeiBoParser(BaseParser):
         async with AsyncClient(headers=headers, timeout=self.timeout) as client:
             response = await client.post(req_url, content=post_content)
             response.raise_for_status()
-            json_data = response.json()
 
-        data = json_data.get("data", {}).get("Component_Play_Playinfo", {})
-        if not data:
-            raise ParseException("Component_Play_Playinfo 数据为空")
-        # 提取作者
-        user = data.get("reward", {}).get("user", {})
-        author_name, avatar, description = (
-            user.get("name", "未知"),
-            user.get("profile_image_url"),
-            user.get("description"),
+        data = show.decoder.decode(response.content).data
+        play_info = data.Component_Play_Playinfo
+        author = self.create_author(
+            play_info.name,
+            play_info.avatar,
+            play_info.description,
         )
-        author = self.create_author(author_name, avatar, description)
-
-        # 提取标题和文本
-        title, text = data.get("title", ""), data.get("text", "")
-        if text:
-            text = sub(r"<[^>]*>", "", text)
-            text = text.replace("\n\n", "").strip()
-
-        # 获取封面
-        cover_url = data.get("cover_image")
-        if cover_url:
-            cover_url = "https:" + cover_url
-
-        # 获取视频下载链接
-        contents = []
-        video_url_dict = data.get("urls")
-        if video_url_dict and isinstance(video_url_dict, dict):
-            # stream_url码率最低，urls中第一条码率最高
-            first_mp4_url: str = next(iter(video_url_dict.values()))
-            video_url = "https:" + first_mp4_url
-        else:
-            video_url = data.get("stream_url")
-
-        if video_url:
-            contents.append(self.create_video_content(video_url, cover_url))
-
-        # 时间戳
-        timestamp = data.get("real_date")
+        video_content = self.create_video_content(
+            play_info.video_url,
+            play_info.cover_url,
+        )
 
         return self.result(
-            title=title,
-            text=text,
+            title=play_info.title,
+            text=play_info.text,
             author=author,
-            contents=contents,
-            timestamp=timestamp,
+            contents=[video_content],
+            timestamp=play_info.real_date,
         )
 
     async def parse_weibo_id(self, weibo_id: str):
@@ -218,7 +189,7 @@ class WeiBoParser(BaseParser):
             response = await client.get(url)
             if response.status_code != 200:
                 if response.status_code in (403, 418):
-                    raise ParseException(f"被风控拦截（{response.status_code}），可尝试更换 UA/Referer 或稍后重试")
+                    raise ParseException(f"被风控拦截({response.status_code}), 可尝试更换 UA/Referer 或稍后重试")
                 raise ParseException(f"获取数据失败 {response.status_code} {response.reason_phrase}")
 
             ctype = response.headers.get("content-type", "")
@@ -227,9 +198,9 @@ class WeiBoParser(BaseParser):
 
         weibo_data = common.decoder.decode(response.content).data
 
-        return self.build_weibo_data(weibo_data)
+        return self._collect_result(weibo_data)
 
-    def build_weibo_data(self, data: common.WeiboData):
+    def _collect_result(self, data: common.WeiboData):
         contents = []
 
         # 添加视频内容
@@ -245,7 +216,7 @@ class WeiBoParser(BaseParser):
         author = self.create_author(data.display_name, data.user.profile_image_url)
         repost = None
         if data.retweeted_status:
-            repost = self.build_weibo_data(data.retweeted_status)
+            repost = self._collect_result(data.retweeted_status)
 
         return self.result(
             title=data.title,
