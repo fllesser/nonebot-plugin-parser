@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilibili Card</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Segoe+UI:wght@400;600;700&display=swap");
+
+        :root {
+            --primary-color: #e74c3c;
+            --secondary-color: #3498db;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --gray-color: #95a5a6;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Noto Sans SC', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            /* 透明背景，方便截图工具处理 */
+            background: transparent; 
+            padding: 20px;
+        }
+        
+        .card {
+            width: 750px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+        
+        /* 装饰性条纹 */
+        .decorative-stripe {
+            position: absolute;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 50%, #9b59b6 100%);
+            top: 0;
+            left: 0;
+            z-index: 5;
+        }
+        
+        /* 顶部封面区域 */
+        .cover-section {
+            position: relative;
+            width: 100%;
+            /* 限制最大高度，防止长图占满屏幕 */
+            max-height: 400px; 
+            background-color: #f0f2f5;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cover-image {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+        
+        .cover-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 70%, rgba(0,0,0,0.3) 100%);
+            pointer-events: none;
+        }
+        
+        /* 封面上的标签 */
+        .tag {
+            position: absolute;
+            top: 20px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+            background-color: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        
+        .type-tag {
+            left: 20px;
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .platform-tag {
+            right: 20px;
+            border-left: 3px solid var(--secondary-color);
+        }
+
+        .platform-logo-img {
+            
+        }
+
+        /* 播放按钮装饰 */
+        .play-btn-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 64px; height: 64px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* 中部内容区域 */
+        .content-section {
+            padding: 30px;
+        }
+        
+        /* 作者信息与二维码区域 */
+        .author-qr-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #eee;
+        }
+        
+        .author-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .author-avatar {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .author-details h3 {
+            font-size: 19px;
+            margin-bottom: 6px;
+            color: var(--dark-color);
+            font-weight: 700;
+        }
+        
+        .author-meta {
+            color: var(--gray-color);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .mid-badge {
+            background-color: #f1f8ff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            color: var(--secondary-color);
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .qrcode-placeholder {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+            color: #ddd;
+        }
+        .qrcode-icon { font-size: 32px; color: #eee; }
+        
+        /* 统计数据区域 - 网格布局 */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid transparent;
+        }
+        
+        .stat-item:nth-child(1) { border-left-color: #e74c3c; } /* Play */
+        .stat-item:nth-child(2) { border-left-color: #3498db; } /* Like */
+        .stat-item:nth-child(3) { border-left-color: #2ecc71; } /* Reply */
+        .stat-item:nth-child(4) { border-left-color: #f39c12; } /* Fav */
+        .stat-item:nth-child(5) { border-left-color: #9b59b6; } /* Share */
+        .stat-item:nth-child(6) { border-left-color: #1abc9c; } /* Coin/Danmaku */
+        
+        .stat-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; color: white;
+            flex-shrink: 0;
+        }
+        
+        .stat-icon.play { background-color: #e74c3c; }
+        .stat-icon.like { background-color: #3498db; }
+        .stat-icon.reply { background-color: #2ecc71; }
+        .stat-icon.fav { background-color: #f39c12; }
+        .stat-icon.share { background-color: #9b59b6; }
+        .stat-icon.coin { background-color: #1abc9c; }
+        
+        .stat-content { display: flex; flex-direction: column; }
+        .stat-value { font-size: 17px; font-weight: 700; color: var(--dark-color); line-height: 1.1; }
+        .stat-label { font-size: 12px; color: var(--gray-color); margin-top: 2px; }
+
+        /* 内容文本 */
+        .content-title {
+            font-size: 22px;
+            color: var(--dark-color);
+            margin-bottom: 16px;
+            line-height: 1.4;
+            font-weight: 700;
+            padding-left: 12px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        /* 优化作者信息栏的 Badge 样式 */
+        .author-meta {
+            color: var(--gray-color);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap; /* 防止太长换行难看 */
+        }
+        
+        .info-badge {
+            background-color: #f1f8ff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-family: Consolas, Monaco, monospace; /* 使用等宽字体显示 ID */
+            font-size: 12px;
+        }
+
+        /* 区分一下颜色 */
+        .info-badge.uid { color: var(--secondary-color); background-color: #eaf4fc; }
+        .info-badge.content-id { color: #e67e22; background-color: #fdf2e9; }
+        
+        .time-text {
+            display: flex; align-items: center; gap: 4px;
+        }
+        .time-text::before {
+            content: "\f017"; /* fa-clock */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 400;
+        }
+        /* AI 总结样式 */
+        .ai-summary {
+            background-color: #f8faff;
+            padding: 16px 20px;
+            border-radius: 10px;
+            border: 1px solid #e1e8ed;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .ai-summary h4 {
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 15px; font-weight: 700;
+        }
+        .ai-summary p {
+            color: #505c6b; font-size: 14px; line-height: 1.6;
+            text-align: justify;
+        }
+
+        .description {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #444;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+        
+        /* 图片展示区域 */
+        .images-container { margin: 20px 0; }
+        .images-header {
+            font-size: 14px; color: var(--dark-color); font-weight: 600; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .images-grid {
+            display: grid; gap: 6px; width: 100%; border-radius: 8px; overflow: hidden;
+        }
+        .images-grid.single { grid-template-columns: 1fr; }
+        .images-grid.single .image-item { max-height: 400px; }
+        .images-grid.double { grid-template-columns: 1fr 1fr; }
+        .images-grid.double .image-item { aspect-ratio: 16/9; }
+        .images-grid.quad { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .images-grid.quad .image-item { aspect-ratio: 1/1; }
+        .images-grid.nine { grid-template-columns: repeat(3, 1fr); }
+        .images-grid.nine .image-item { aspect-ratio: 1/1; }
+        
+        .image-item { position: relative; overflow: hidden; background: #eee; }
+        .image-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .more-count {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px);
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-size: 28px; font-weight: bold;
+        }
+        
+        /* 转发卡片样式 */
+        .repost-container {
+            margin-top: 20px;
+            border: 1px solid #eee;
+            background-color: #fafbfc;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .repost-container .card {
+            width: 100%; box-shadow: none; border: none; margin: 0; background: transparent;
+        }
+        .repost-container .content-section { padding: 0; }
+        .repost-container .cover-section { border-radius: 8px; margin-bottom: 15px; }
+
+        /* 底部信息栏 */
+        .footer-section {
+            background-color: var(--dark-color);
+            color: rgba(255,255,255,0.8);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+        .footer-info { display: flex; gap: 15px; align-items: center; }
+        .footer-brand { font-weight: 600; letter-spacing: 0.5px; color: white; display: flex; gap: 8px; align-items: center;}
+    </style>
+</head>
+<body>
+
+    {# === 宏定义：渲染卡片 === #}
+    {% macro render_card(result, is_repost=False) %}
+    
+    {# 提取 Extra 数据 (由 Parser 修改后注入) #}
+    {# 获取变量 #}
+    {% set extra = result.extra if result.extra else {} %}
+    {% set platform = result.platform if result.platform else {} %}
+    {# 获取 Content ID #}
+    {% set content_id = extra.content_id %}
+    {% set stats = extra.stats if extra.stats else {} %}
+    {% set type_tag = extra.type_tag if extra.type_tag else "B站" %}
+    {% set type_icon = extra.type_icon if extra.type_icon else "fa-brands fa-bilibili" %}
+    {% set type = extra.type if extra.type else "video" %}
+
+    <div class="card">
+        {# 仅主卡片显示顶部彩条 #}
+        {% if not is_repost %}
+        <div class="decorative-stripe"></div>
+        {% endif %}
+
+        {# --- 封面区域 --- #}
+        {# 优先使用提取到的封面，如果是 repost 且没有封面，尝试使用第一张图片 #}
+        {% set cover_url = result.cover_path %}
+        {% if not cover_url and result.img_contents and result.img_contents|length > 0 %}
+            {% set cover_url = result.img_contents[0].path %}
+        {% endif %}
+
+        {% if cover_url %}
+        <div class="cover-section">
+            <img src="{{ cover_url }}" class="cover-image" alt="Cover">
+            <div class="cover-overlay"></div>
+            
+            {# 【修改点 1】只有 B 站才显示左侧的 类型标签 (视频/专栏等) #}
+            {# 因为其他平台可能没有 type_tag 这个字段或者不需要显示 #}
+            {% if platform.name == 'bilibili' and extra.type_tag %}
+            <div class="tag type-tag">
+                <i class="fa-solid {{ extra.type_icon }}"></i>
+                <span>{{ extra.type_tag }}</span>
+            </div>
+            {% endif %}
+            
+            {# 右上角：平台标签 (一直显示) #}
+            {% if platform %}
+            <div class="tag platform-tag">
+                {% if result.platform.logo_path %}
+                <img src="{{ result.platform.logo_path }}" class="platform-logo-img">
+                {% else %}
+                <i class="fa-solid fa-share-nodes"></i>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {# 中间：播放按钮装饰 (仅视频/音频) #}
+            {% if type in ['video', 'live'] %}
+            <div class="play-btn-overlay">
+                <i class="fas fa-play" style="margin-left: 4px;"></i>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="content-section">
+            {# --- 作者信息行 --- #}
+            {% if result.author %}
+            <div class="author-qr-row">
+                <div class="author-info">
+                    <img src="{{ result.author.avatar_path or '' }}" class="author-avatar">
+                    
+                    <div class="author-details">
+                        <h3>{{ result.author.name }}</h3>
+                        <div class="author-meta">
+                            {# 显示 UID #}
+                            {% if extra.author_id %}
+                            <span class="info-badge uid">UID: {{ extra.author_id }}</span>
+                            {% endif %}
+                            
+                            {# 【修改点 2】显示内容 ID (BV/CV/RoomID) #}
+                            {% if content_id %}
+                            <span class="info-badge content-id">{{ content_id }}</span>
+                            {% endif %}
+                            
+                            {# 时间 #}
+                            {% if result.formartted_datetime %}
+                            <span class="time-text">{{ result.formartted_datetime }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {# 装饰性二维码图标 #}
+                <div class="qrcode-placeholder">
+                    <i class="fas fa-qrcode qrcode-icon"></i>
+                </div>
+            </div>
+            {% endif %}
+
+            {# --- 统计数据网格 (仅主卡片显示) --- #}
+            {% if stats and not is_repost %}
+            <div class="stats-container">
+                <!-- 播放 -->
+                <div class="stat-item">
+                    <div class="stat-icon play"><i class="fas fa-eye"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ stats.play or '-' }}</div>
+                        <div class="stat-label">播放</div>
+                    </div>
+                </div>
+                <!-- 点赞 -->
+                <div class="stat-item">
+                    <div class="stat-icon like"><i class="fas fa-thumbs-up"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ stats.like or '-' }}</div>
+                        <div class="stat-label">点赞</div>
+                    </div>
+                </div>
+                <!-- 评论 -->
+                <div class="stat-item">
+                    <div class="stat-icon reply"><i class="fas fa-comment"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ stats.reply or '-' }}</div>
+                        <div class="stat-label">评论</div>
+                    </div>
+                </div>
+                <!-- 收藏 -->
+                <div class="stat-item">
+                    <div class="stat-icon fav"><i class="fas fa-star"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ stats.favorite or '-' }}</div>
+                        <div class="stat-label">收藏</div>
+                    </div>
+                </div>
+                <!-- 分享 -->
+                <div class="stat-item">
+                    <div class="stat-icon share"><i class="fas fa-share"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ stats.share or '-' }}</div>
+                        <div class="stat-label">分享</div>
+                    </div>
+                </div>
+                <!-- 硬币/弹幕 -->
+                <div class="stat-item">
+                    <div class="stat-icon coin">
+                        {% if stats.coin %}
+                        <i class="fas fa-coins"></i>
+                        {% else %}
+                        <i class="fas fa-comment-dots"></i>
+                        {% endif %}
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value">{{ stats.coin or stats.danmaku or '-' }}</div>
+                        <div class="stat-label">{{ '硬币' if stats.coin else '弹幕' }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# --- 主要内容 --- #}
+            {% if result.title %}
+            <div class="content-title">{{ result.title }}</div>
+            {% endif %}
+
+            {# AI 总结 #}
+            {% if extra.info %}
+            <div class="ai-summary">
+                <h4><i class="fas fa-robot"></i> AI 内容总结</h4>
+                <p>{{ extra.info }}</p>
+            </div>
+            {% endif %}
+
+            {# 正文描述 #}
+            {% if result.text %}
+            <div class="description">{{ result.text }}</div>
+            {% endif %}
+
+            {# --- 图片网格 (除去封面) --- #}
+            {# 如果第一张图被用作封面了，这里可能需要排除它，但通常动态图多张都需要展示 #}
+            {# 这里逻辑：如果有图片内容，且不是视频(视频封面已在上面展示) #}
+            {% if result.img_contents %}
+                {% set imgs = result.img_contents %}
+                {# 如果是视频/专栏，可能封面就是第一张图，这里根据实际情况可以切片 imgs[1:]，目前全显示 #}
+                
+                {% set count = imgs|length %}
+                {% if count > 0 %}
+                    <div class="images-container">
+                        <div class="images-header"><i class="fas fa-images" style="color:#2ecc71"></i> 内容预览</div>
+                        
+                        {# 计算网格类名 #}
+                        {% set grid_class = 'single' %}
+                        {% if count == 2 %}{% set grid_class = 'double' %}
+                        {% elif count == 4 %}{% set grid_class = 'quad' %}
+                        {% elif count >= 3 %}{% set grid_class = 'nine' %}
+                        {% endif %}
+
+                        <div class="images-grid {{ grid_class }}">
+                            {# 限制最多显示9张 #}
+                            {% for img in imgs[:9] %}
+                            <div class="image-item">
+                                <img src="{{ img.path }}">
+                                {% if loop.last and count > 9 %}
+                                <div class="more-count">+{{ count - 9 }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            {# --- 嵌套转发内容 --- #}
+            {% if result.repost %}
+            <div class="repost-container">
+                <div style="margin-bottom:10px; color:#666; font-size:14px; font-weight:600;">
+                    <i class="fas fa-share" style="margin-right:5px;"></i> 转发内容
+                </div>
+                {{ render_card(result.repost, is_repost=True) }}
+            </div>
+            {% endif %}
+        </div>
+
+        {# --- 底部信息栏 --- #}
+        {% if not is_repost %}
+        <div class="footer-section">
+            <div class="footer-brand">
+                <i class="fas fa-layer-group"></i>
+                <span>NB Parser || Designed By LoCCai</span>
+            </div>
+            <div class="footer-info">
+                {% if extra.render_info %}
+                <span><i class="fas fa-microchip"></i> {{ extra.render_info.engine }}</span>
+                {% endif %}
+                <span>Generated at {{ result.formartted_datetime.split(' ')[0] if result.formartted_datetime else 'Now' }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endmacro %}
+
+    {# 执行宏渲染 #}
+    {{ render_card(result) }}
+
+</body>
+</html>
