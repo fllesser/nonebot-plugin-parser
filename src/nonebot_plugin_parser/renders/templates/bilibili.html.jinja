@@ -335,16 +335,14 @@
             overflow: hidden;
             background-color: #eee;
             margin-top: 10px;
+            position: relative;
         }
         
         .repost-media img {
             width: 100%;
             height: auto;
-            /* 移除 max-height 防止长图被截断 */
-            /* max-height: 300px; */ 
-            /* 移除 object-fit 防止内容被裁剪 */
-            /* object-fit: cover; */
-            display: block;
+            object-fit: contain; /* 确保图片内容完全显示，不裁剪 */
+            max-height: none;    /* 取消高度限制 */
             border-radius: 6px; /* 保持圆角 */
         }
 
@@ -372,7 +370,7 @@
             display: grid; gap: 6px; width: 100%; border-radius: 8px; overflow: hidden;
         }
         .images-grid.single { grid-template-columns: 1fr; }
-        .images-grid.single .image-item { max-height: 400px; }
+        .images-grid.single .image-item { max-height: none; /* 取消高度限制 */ }
         .images-grid.double { grid-template-columns: 1fr 1fr; }
         .images-grid.double .image-item { aspect-ratio: 16/9; }
         .images-grid.quad { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
@@ -538,9 +536,40 @@
                             <div class="repost-content">{{ result.extra.origin.text }}</div>
                         {% endif %}
 
-                        {% if result.extra.origin.cover %}
-                            <div class="repost-media">
+                        {# --- 图片展示逻辑优化 --- #}
+                        {% set orig_imgs = result.extra.origin.images %}
+                        {% set is_video = result.extra.origin.type_tag == '视频' %}
+
+                        {# 情况1：视频内容，或者只有一张图 -> 显示大图(原有逻辑) #}
+                        {% if is_video or (orig_imgs and orig_imgs|length == 1) %}
+                                <div class="repost-media">
                                 <img src="{{ result.extra.origin.cover }}" referrerpolicy="no-referrer" alt="转发图片">
+                                {% if is_video %}
+                                    <!-- 可选：加个播放按钮图标提示这是视频 -->
+                                    <div class="play-btn-overlay" style="width:40px;height:40px;font-size:16px;">
+                                        <i class="fas fa-play" style="margin-left:2px;"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                        {# 情况2：多图 -> 显示九宫格 #}
+                        {% elif orig_imgs and orig_imgs|length > 1 %}
+                            {% set count = orig_imgs|length %}
+                            {% set grid_class = 'double' %}
+                            {% if count >= 3 %}{% set grid_class = 'nine' %}
+                            {% elif count == 4 %}{% set grid_class = 'quad' %}{% endif %}
+                            
+                            <div class="images-container" style="margin-top: 10px; margin-bottom: 0;">
+                                <div class="images-grid {{ grid_class }}">
+                                    {% for img_url in orig_imgs[:9] %}
+                                    <div class="image-item">
+                                        <img src="{{ img_url }}" referrerpolicy="no-referrer">
+                                        {% if loop.last and count > 9 %}
+                                        <div class="more-count">+{{ count - 9 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         {% endif %}
                     {% else %}
@@ -597,13 +626,13 @@
         <div class="footer-section">
             <div class="footer-brand">
                 <i class="fas fa-layer-group"></i>
-                <span>QIQI Parser || Designed By LoCCai</span>
+                <span>NB Parser || Designed By LoCCai</span>
             </div>
             <div class="footer-info">
                 {% if extra.render_info %}
                 <span><i class="fas fa-microchip"></i> {{ extra.render_info.engine }}</span>
                 {% endif %}
-                <span>Generated at {{ result.formartted_datetime.split(' ')[0] if result.formartted_datetime else 'Now' }}</span>
+                <span>Rendering at {{ rendering_time }}</span>
             </div>
         </div>
         {% endif %}
