@@ -217,7 +217,6 @@ class BilibiliParser(BaseParser):
     async def parse_dynamic(self, dynamic_id: int):
         """解析动态信息"""
         from bilibili_api.dynamic import Dynamic
-
         from .dynamic import DynamicData
 
         dynamic = Dynamic(dynamic_id, await self.credential)
@@ -225,7 +224,7 @@ class BilibiliParser(BaseParser):
         logger.debug(f"dynamic_data: {dynamic_data}")
         dynamic_info = dynamic_data.item
         logger.debug(f"dynamic_info: {dynamic_info}")
-
+        
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
 
         # 提取当前动态的统计数据
@@ -246,7 +245,7 @@ class BilibiliParser(BaseParser):
         for image_url in dynamic_info.image_urls:
             img_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
             contents.append(ImageContent(img_task))
-
+        
         # --- 基础 extra 数据 ---
         extra_data = {
             "stats": stats,
@@ -260,32 +259,42 @@ class BilibiliParser(BaseParser):
         # --- 新增：处理转发内容 (叠加到 extra) ---
         if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig:
             orig_item = dynamic_info.orig
-
+            
             if orig_item.visible:
-                # 尝试获取源内容的类型标签
                 orig_type_tag = "动态"
                 major_info = orig_item.modules.major_info
+                
+                # 尝试判断源动态类型
                 if major_info:
                     major_type = major_info.get("type")
                     if major_type == "MAJOR_TYPE_ARCHIVE":
                         orig_type_tag = "视频"
                     elif major_type == "MAJOR_TYPE_OPUS":
-                        orig_type_tag = "专栏"
+                        # OPUS 可能是专栏文章，也可能是画册(九宫格)
+                        # 这里统称为 图文 比较合适
+                        orig_type_tag = "图文"
+                    elif major_type == "MAJOR_TYPE_DRAW": # 旧版画册类型
+                        orig_type_tag = "图文"
 
-                # 获取封面图：优先取视频/专栏封面，没有则取第一张配图
+                # 获取源动态封面 (优先取视频封面，否则取第一张图)
                 orig_cover = orig_item.cover_url
                 if not orig_cover and orig_item.image_urls:
                     orig_cover = orig_item.image_urls[0]
 
+                # 【新增】获取源动态的所有图片列表
+                # 这样前端就可以渲染九宫格了
+                orig_images = orig_item.image_urls
+
                 # 构造 origin 字典
                 extra_data["origin"] = {
-                    "exists": True,  # 标记源动态存在
-                    "author": orig_item.name,  # 源作者名
-                    "title": orig_item.title,  # 源标题 (如视频标题)
-                    "text": orig_item.text,  # 源文本 (如视频简介或动态正文)
-                    "cover": orig_cover,  # 源封面/配图 URL (字符串)
-                    "type_tag": orig_type_tag,  # 类型标签
-                    "mid": str(orig_item.modules.module_author.mid),  # 源作者ID
+                    "exists": True,
+                    "author": orig_item.name,
+                    "title": orig_item.title,
+                    "text": orig_item.text,
+                    "cover": orig_cover,
+                    "images": orig_images,  # <--- 将图片列表传给前端
+                    "type_tag": orig_type_tag,
+                    "mid": str(orig_item.modules.module_author.mid)
                 }
             else:
                 # 源动态已失效
@@ -293,17 +302,17 @@ class BilibiliParser(BaseParser):
                     "exists": False,
                     "text": "源动态已被删除或不可见",
                     "author": "未知",
-                    "title": "资源失效",
+                    "title": "资源失效"
                 }
 
         res = self.result(
             title=dynamic_info.title or "B站动态",
-            text=dynamic_info.text,
+            text=dynamic_info.text, 
             timestamp=dynamic_info.timestamp,
             author=author,
             contents=contents,
         )
-
+        
         # 将构造好的 extra_data (包含 origin) 注入结果
         res.extra = extra_data
         return res
@@ -383,30 +392,79 @@ class BilibiliParser(BaseParser):
         opus_info = await bili_opus.get_info()
         if not isinstance(opus_info, dict):
             raise ParseException("获取图文动态信息失败")
-
+        
         opus_data = convert(opus_info, OpusItem)
         logger.debug(f"opus_data: {opus_data}")
+        
+        # 提取作者信息
+        author_name = ""
+        author_face = ""
+        author_mid = ""
+        
+        if hasattr(opus_data.item, "modules"):
+            for module in opus_data.item.modules:
+                if module.module_type == "MODULE_TYPE_AUTHOR" and module.module_author:
+                    author_name = module.module_author.name
+                    author_face = module.module_author.face
+                    author_mid = str(module.module_author.mid)
+                    break
+        
+        if not author_name and hasattr(opus_data, "name_avatar"):
+             author_name, author_face = opus_data.name_avatar
 
-        # 使用位置参数解包
-        author = self.create_author(*opus_data.name_avatar)
+        author = self.create_author(author_name, author_face)
 
+        # 处理内容（分离图和文）
         contents: list[MediaContent] = []
-        current_text = ""
+        full_text_list = [] 
 
         for node in opus_data.gen_text_img():
             if isinstance(node, ImageNode):
-                contents.append(self.create_graphics_content(node.url, current_text.strip(), node.alt))
-                current_text = ""
+                # 使用 DOWNLOADER 下载并封装为 ImageContent
+                img_task = DOWNLOADER.download_img(node.url, ext_headers=self.headers)
+                contents.append(ImageContent(img_task))
+                
             elif isinstance(node, TextNode):
-                current_text += node.text
+                full_text_list.append(node.text)
 
-        return self.result(
-            title=opus_data.title,
+        full_text = "\n".join(full_text_list).strip()
+
+        # 提取统计数据
+        stats = {}
+        try:
+            if hasattr(opus_data.item, "modules"):
+                for module in opus_data.item.modules:
+                    if module.module_type == "MODULE_TYPE_STAT" and module.module_stat:
+                        st = module.module_stat
+                        stats = {
+                            "like": self._format_stat(st.get("like", {}).get("count", 0)),
+                            "reply": self._format_stat(st.get("comment", {}).get("count", 0)),
+                            "share": self._format_stat(st.get("forward", {}).get("count", 0)),
+                        }
+                        break
+        except Exception:
+            pass
+            
+        # 构造 Extra 数据
+        extra_data = {
+            "stats": stats,
+            "type": "opus",
+            "type_tag": "图文",
+            "type_icon": "fa-file-pen", 
+            "author_id": author_mid,
+            "content_id": str(opus_data.item.id_str)
+        }
+
+        res = self.result(
+            title=opus_data.title or f"{author_name}的图文动态",
             author=author,
             timestamp=opus_data.timestamp,
             contents=contents,
-            text=current_text.strip(),
+            text=full_text, 
         )
+        
+        res.extra = extra_data
+        return res
 
     async def parse_live(self, room_id: int):
         """解析直播信息"""
