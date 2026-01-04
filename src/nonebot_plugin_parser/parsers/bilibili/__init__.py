@@ -40,14 +40,12 @@ class BilibiliParser(BaseParser):
         self._credential: Credential | None = None
         self._cookies_file = pconfig.config_dir / "bilibili_cookies.json"
 
-    # --- 辅助方法：格式化数字 ---
     def _format_stat(self, num: int | None) -> str:
         """将数字格式化为 1.2万 的形式"""
         if num is None:
             return "0"
-        if num >= 10000:
-            return f"{num / 10000:.1f}万"
-        return str(num)
+        format_num = str(num) if num < 10000 else f"{num / 10000:.1f}万"
+        return format_num
 
     @handle("b23.tv", r"b23\.tv/[A-Za-z\d\._?%&+\-=/#]+")
     @handle("bili2233", r"bili2233\.cn/[A-Za-z\d\._?%&+\-=/#]+")
@@ -96,10 +94,8 @@ class BilibiliParser(BaseParser):
     @handle("/read/", r"bilibili\.com/read/cv(?P<read_id>\d+)")
     async def _parse_read(self, searched: Match[str]):
         """解析专栏信息"""
-        # 注意：这里改回了调用 parse_read 而不是 parse_read_with_opus
-        # 以保留你自定义的 stats 提取逻辑
         read_id = int(searched.group("read_id"))
-        return await self.parse_read(read_id)
+        return await self.parse_read_with_opus(read_id)
 
     @handle("/opus/", r"bilibili\.com/opus/(?P<opus_id>\d+)")
     async def _parse_opus(self, searched: Match[str]):
@@ -114,54 +110,34 @@ class BilibiliParser(BaseParser):
         avid: int | None = None,
         page_num: int = 1,
     ):
-        """解析视频信息"""
+        """解析视频信息
+
+        Args:
+            bvid (str | None): bvid
+            avid (int | None): avid
+            page_num (int): 页码
+        """
+
         from .video import VideoInfo, AIConclusion
 
         video = await self._get_video(bvid=bvid, avid=avid)
-        info_data = await video.get_info()
-        video_info = convert(info_data, VideoInfo)
-
-        # 1. 提取统计数据
-        stats = {}
-        try:
-            if video_info.stat:
-                stats = {
-                    "play": self._format_stat(video_info.stat.view),
-                    "danmaku": self._format_stat(video_info.stat.danmaku),
-                    "like": self._format_stat(video_info.stat.like),
-                    "coin": self._format_stat(video_info.stat.coin),
-                    "favorite": self._format_stat(video_info.stat.favorite),
-                    "share": self._format_stat(video_info.stat.share),
-                    "reply": self._format_stat(video_info.stat.reply),
-                }
-                logger.debug(f"[BiliParser] 视频统计数据: {stats}")
-        except Exception as e:
-            logger.warning(f"[BiliParser] 统计数据提取异常: {e}")
-
+        # 转换为 msgspec struct
+        video_info = convert(await video.get_info(), VideoInfo)
         # 获取简介
         text = f"简介: {video_info.desc}" if video_info.desc else None
-
-        # 使用位置参数调用 create_author
+        # up
         author = self.create_author(video_info.owner.name, video_info.owner.face)
-
-        # 分P信息
+        # 处理分 p
         page_info = video_info.extract_info_with_page(page_num)
 
-        # AI 总结
-        ai_summary = None
+        # 获取 AI 总结
         if self._credential:
-            try:
-                cid = await video.get_cid(page_info.index)
-                try:
-                    ai_res = await video.get_ai_conclusion(cid)
-                    ai_conclusion = convert(ai_res, AIConclusion)
-                    ai_summary = ai_conclusion.summary
-                except Exception:
-                    ai_summary = None
-            except Exception as e:
-                logger.warning(f"[BiliParser] AI总结获取失败: {e}")
+            cid = await video.get_cid(page_info.index)
+            ai_conclusion = await video.get_ai_conclusion(cid)
+            ai_conclusion = convert(ai_conclusion, AIConclusion)
+            ai_summary = ai_conclusion.summary
         else:
-            ai_summary = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
+            ai_summary: str = "哔哩哔哩 cookie 未配置或失效, 无法使用 AI 总结"
 
         url = f"https://bilibili.com/{video_info.bvid}"
         url += f"?p={page_info.index + 1}" if page_info.index > 0 else ""
@@ -188,6 +164,23 @@ class BilibiliParser(BaseParser):
             page_info.duration,
         )
 
+        # 提取统计数据
+        stats = {}
+        try:
+            if video_info.stat:
+                stats = {
+                    "play": self._format_stat(video_info.stat.view),
+                    "danmaku": self._format_stat(video_info.stat.danmaku),
+                    "like": self._format_stat(video_info.stat.like),
+                    "coin": self._format_stat(video_info.stat.coin),
+                    "favorite": self._format_stat(video_info.stat.favorite),
+                    "share": self._format_stat(video_info.stat.share),
+                    "reply": self._format_stat(video_info.stat.reply),
+                }
+                logger.debug(f"[BiliParser] 视频统计数据: {stats}")
+        except Exception as e:
+            logger.warning(f"[BiliParser] 统计数据提取异常: {e}")
+
         # 构造 extra_data
         extra_data = {
             "info": ai_summary,
@@ -198,35 +191,38 @@ class BilibiliParser(BaseParser):
             "author_id": str(video_info.owner.mid),
             "content_id": video_info.bvid,
         }
+        logger.debug(f"Video extra data: {extra_data}")
 
-        # 创建结果
-        res = self.result(
+        return self.result(
             url=url,
             title=page_info.title,
             timestamp=page_info.timestamp,
             text=text,
             author=author,
             contents=[video_content],
+            extra = extra_data
         )
 
-        # 注入 extra
-        res.extra = extra_data
-        logger.debug(f"Video extra data: {extra_data}")
-        return res
-
     async def parse_dynamic(self, dynamic_id: int):
-        """解析动态信息"""
+        """解析动态信息
+
+        Args:
+            url (str): 动态链接
+        """
         from bilibili_api.dynamic import Dynamic
 
         from .dynamic import DynamicData
 
         dynamic = Dynamic(dynamic_id, await self.credential)
-        dynamic_data = convert(await dynamic.get_info(), DynamicData)
-        logger.debug(f"dynamic_data: {dynamic_data}")
-        dynamic_info = dynamic_data.item
-        logger.debug(f"dynamic_info: {dynamic_info}")
+        dynamic_info = convert(await dynamic.get_info(), DynamicData).item
 
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
+
+        # 下载图片
+        contents: list[MediaContent] = []
+        for image_url in dynamic_info.image_urls:
+            img_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
+            contents.append(ImageContent(img_task))
 
         # 提取当前动态的统计数据
         stats = {}
@@ -241,12 +237,6 @@ class BilibiliParser(BaseParser):
         except Exception:
             pass
 
-        # 下载当前动态的图片
-        contents: list[MediaContent] = []
-        for image_url in dynamic_info.image_urls:
-            img_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
-            contents.append(ImageContent(img_task))
-
         # --- 基础 extra 数据 ---
         extra_data = {
             "stats": stats,
@@ -260,21 +250,19 @@ class BilibiliParser(BaseParser):
         # --- 新增：处理转发内容 (叠加到 extra) ---
         if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig:
             orig_item = dynamic_info.orig
-
+            
             if orig_item.visible:
                 orig_type_tag = "动态"
                 major_info = orig_item.modules.major_info
-
+                
                 # 尝试判断源动态类型
                 if major_info:
                     major_type = major_info.get("type")
                     if major_type == "MAJOR_TYPE_ARCHIVE":
                         orig_type_tag = "视频"
                     elif major_type == "MAJOR_TYPE_OPUS":
-                        # OPUS 可能是专栏文章，也可能是画册(九宫格)
-                        # 这里统称为 图文 比较合适
                         orig_type_tag = "图文"
-                    elif major_type == "MAJOR_TYPE_DRAW":  # 旧版画册类型
+                    elif major_type == "MAJOR_TYPE_DRAW":
                         orig_type_tag = "图文"
 
                 # 获取源动态封面 (优先取视频封面，否则取第一张图)
@@ -282,8 +270,7 @@ class BilibiliParser(BaseParser):
                 if not orig_cover and orig_item.image_urls:
                     orig_cover = orig_item.image_urls[0]
 
-                # 【新增】获取源动态的所有图片列表
-                # 这样前端就可以渲染九宫格了
+                # 获取源动态的所有图片列表
                 orig_images = orig_item.image_urls
 
                 # 构造 origin 字典
@@ -293,9 +280,9 @@ class BilibiliParser(BaseParser):
                     "title": orig_item.title,
                     "text": orig_item.text,
                     "cover": orig_cover,
-                    "images": orig_images,  # <--- 将图片列表传给前端
+                    "images": orig_images,
                     "type_tag": orig_type_tag,
-                    "mid": str(orig_item.modules.module_author.mid),
+                    "mid": str(orig_item.modules.module_author.mid)
                 }
             else:
                 # 源动态已失效
@@ -303,105 +290,62 @@ class BilibiliParser(BaseParser):
                     "exists": False,
                     "text": "源动态已被删除或不可见",
                     "author": "未知",
-                    "title": "资源失效",
+                    "title": "资源失效"
                 }
 
-        res = self.result(
+        return self.result(
             title=dynamic_info.title or "B站动态",
-            text=dynamic_info.text,
+            text=dynamic_info.text, 
             timestamp=dynamic_info.timestamp,
             author=author,
             contents=contents,
+            extra = extra_data
         )
 
-        # 将构造好的 extra_data (包含 origin) 注入结果
-        res.extra = extra_data
-        return res
-
     async def parse_opus(self, opus_id: int):
-        """解析图文动态信息 (Opus)"""
+        """解析图文动态信息
+
+        Args:
+            opus_id (int): 图文动态 id
+        """
         opus = Opus(opus_id, await self.credential)
         return await self._parse_opus_obj(opus)
 
-    async def parse_read(self, read_id: int):
-        """解析专栏信息 (Article API)"""
-        from bilibili_api.article import Article
-
-        from .article import TextNode, ImageNode, ArticleInfo
-
-        ar = Article(read_id)
-        # 获取内容，这里需要注意 bilibili-api 的版本，部分版本是 fetch_content
-        await ar.fetch_content()
-        data = ar.json()
-        article_info = convert(data, ArticleInfo)
-
-        stats = {}
-        try:
-            if article_info.stats:
-                stats = {
-                    "play": self._format_stat(article_info.stats.view),
-                    "like": self._format_stat(article_info.stats.like),
-                    "reply": self._format_stat(article_info.stats.reply),
-                    "favorite": self._format_stat(article_info.stats.favorite),
-                    "share": self._format_stat(article_info.stats.share),
-                    "coin": self._format_stat(article_info.stats.coin),
-                }
-        except Exception:
-            pass
-
-        contents: list[MediaContent] = []
-        current_text = ""
-        for child in article_info.gen_text_img():
-            if isinstance(child, ImageNode):
-                contents.append(self.create_graphics_content(child.url, current_text.strip(), child.alt))
-                current_text = ""
-            elif isinstance(child, TextNode):
-                current_text += child.text
-
-        author = self.create_author(*article_info.author_info)
-
-        extra_data = {
-            "stats": stats,
-            "type": "article",
-            "type_tag": "专栏",
-            "type_icon": "fa-newspaper",
-            "author_id": str(article_info.meta.author.mid),
-            "content_id": f"CV{read_id}",
-        }
-
-        res = self.result(
-            title=article_info.title,
-            timestamp=article_info.timestamp,
-            text=current_text.strip(),
-            author=author,
-            contents=contents,
-        )
-        res.extra = extra_data
-        return res
-
     async def parse_read_with_opus(self, read_id: int):
-        """解析专栏信息, 使用 Opus 接口 (保留备用)"""
+        """解析专栏信息, 使用 Opus 接口
+
+        Args:
+            read_id (int): 专栏 id
+        """
         from bilibili_api.article import Article
 
         article = Article(read_id)
         return await self._parse_opus_obj(await article.turn_to_opus())
 
     async def _parse_opus_obj(self, bili_opus: Opus):
-        """解析图文动态/Opus对象"""
+        """解析图文动态信息
+
+        Args:
+            opus_id (int): 图文动态 id
+
+        Returns:
+            ParseResult: 解析结果
+        """
+
         from .opus import OpusItem, TextNode, ImageNode
 
         opus_info = await bili_opus.get_info()
         if not isinstance(opus_info, dict):
             raise ParseException("获取图文动态信息失败")
-
+        # 转换为结构体
         opus_data = convert(opus_info, OpusItem)
         logger.debug(f"opus_data: {opus_data}")
-
+        
         # 提取作者信息
         author_name = ""
         author_face = ""
         author_mid = ""
-
+        
         if hasattr(opus_data.item, "modules"):
             for module in opus_data.item.modules:
                 if module.module_type == "MODULE_TYPE_AUTHOR" and module.module_author:
@@ -409,22 +353,22 @@ class BilibiliParser(BaseParser):
                     author_face = module.module_author.face
                     author_mid = str(module.module_author.mid)
                     break
-
+        
         if not author_name and hasattr(opus_data, "name_avatar"):
-            author_name, author_face = opus_data.name_avatar
+             author_name, author_face = opus_data.name_avatar
 
         author = self.create_author(author_name, author_face)
 
-        # 处理内容（分离图和文）
+        # 按顺序处理图文内容（参考 parse_read 的逻辑）
         contents: list[MediaContent] = []
-        full_text_list = []
+        full_text_list = [] 
 
         for node in opus_data.gen_text_img():
             if isinstance(node, ImageNode):
                 # 使用 DOWNLOADER 下载并封装为 ImageContent
                 img_task = DOWNLOADER.download_img(node.url, ext_headers=self.headers)
                 contents.append(ImageContent(img_task))
-
+                
             elif isinstance(node, TextNode):
                 full_text_list.append(node.text)
 
@@ -445,30 +389,35 @@ class BilibiliParser(BaseParser):
                         break
         except Exception:
             pass
-
+            
         # 构造 Extra 数据
         extra_data = {
             "stats": stats,
             "type": "opus",
             "type_tag": "图文",
-            "type_icon": "fa-file-pen",
+            "type_icon": "fa-file-pen", 
             "author_id": author_mid,
-            "content_id": str(opus_data.item.id_str),
+            "content_id": str(opus_data.item.id_str)
         }
 
-        res = self.result(
+        return self.result(
             title=opus_data.title or f"{author_name}的图文动态",
             author=author,
             timestamp=opus_data.timestamp,
             contents=contents,
-            text=full_text,
+            text=full_text, 
+            extra=extra_data
         )
 
-        res.extra = extra_data
-        return res
-
     async def parse_live(self, room_id: int):
-        """解析直播信息"""
+        """解析直播信息
+
+        Args:
+            room_id (int): 直播 id
+
+        Returns:
+            ParseResult: 解析结果
+        """
         from bilibili_api.live import LiveRoom
 
         from .live import RoomData
@@ -478,10 +427,12 @@ class BilibiliParser(BaseParser):
 
         room_data = convert(info_dict, RoomData)
         contents: list[MediaContent] = []
+        # 下载封面
         if cover := room_data.cover:
             cover_task = DOWNLOADER.download_img(cover, ext_headers=self.headers)
             contents.append(ImageContent(cover_task))
 
+        # 下载关键帧
         if keyframe := room_data.keyframe:
             keyframe_task = DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
             contents.append(ImageContent(keyframe_task))
@@ -499,24 +450,29 @@ class BilibiliParser(BaseParser):
             "live_info": {
                 "level": str(room_data.anchor_info.live_info.level),
                 "level_color": str(room_data.anchor_info.live_info.level_color),
-                "score": str(room_data.anchor_info.live_info.score),
-            },
+                "score": str(room_data.anchor_info.live_info.score)
+            }
         }
 
-        res = self.result(
+        return self.result(
             url=url,
             title=room_data.title,
             text=room_data.detail,
             contents=contents,
             author=author,
+            extra = extra_data
         )
-        res.extra = extra_data
-        return res
 
     async def parse_favlist(self, fav_id: int):
-        """解析收藏夹信息"""
-        from bilibili_api.favorite_list import get_video_favorite_list_content
+        """解析收藏夹信息
 
+        Args:
+            fav_id (int): 收藏夹 id
+
+        Returns:
+            list[GraphicsContent]: 图文内容列表
+        """
+        from bilibili_api.favorite_list import get_video_favorite_list_content
         from .favlist import FavData
 
         # 只会取一页，20 个
@@ -527,17 +483,20 @@ class BilibiliParser(BaseParser):
 
         favdata = convert(fav_dict, FavData)
 
-        author = self.create_author(favdata.info.upper.name, favdata.info.upper.face)
-
         return self.result(
             title=favdata.title,
             timestamp=favdata.timestamp,
-            author=author,
+            author=self.create_author(favdata.info.upper.name, favdata.info.upper.face),
             contents=[self.create_graphics_content(fav.cover, fav.desc) for fav in favdata.medias],
         )
 
     async def _get_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
-        """获取 Video 对象 (通用 helper)"""
+        """解析视频信息
+
+        Args:
+            bvid (str | None): bvid
+            avid (int | None): avid
+        """
         if avid:
             return Video(aid=avid, credential=await self.credential)
         elif bvid:
@@ -553,7 +512,13 @@ class BilibiliParser(BaseParser):
         avid: int | None = None,
         page_index: int = 0,
     ) -> tuple[str, str | None]:
-        """解析视频下载链接 (保持最新逻辑)"""
+        """解析视频下载链接
+
+        Args:
+            bvid (str | None): bvid
+            avid (int | None): avid
+            page_index (int): 页索引 = 页码 - 1
+        """
 
         from bilibili_api.video import (
             AudioStreamDownloadURL,
