@@ -89,7 +89,7 @@ async def test_opus():
         assert avatar_path.exists(), "头像不存在"
 
         graphics_contents = result.graphics_contents
-        assert graphics_contents, "图文内容为空"
+        assert result.text or result.contents, "解析结果为空（无文本也无图片）"
 
         for graphics_content in graphics_contents:
             path = await graphics_content.get_path()

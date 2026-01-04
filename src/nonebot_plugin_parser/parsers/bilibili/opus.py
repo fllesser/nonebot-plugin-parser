@@ -84,7 +84,7 @@ class Module(Struct):
     module_type: str
     module_author: Author | None = None
     module_content: Content | None = None
-    # module_stat: OpusStat | None = None
+    module_stat: dict[str, Any] | None = None
 
 
 class Basic(Struct):
