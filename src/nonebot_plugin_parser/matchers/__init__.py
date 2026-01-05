@@ -5,10 +5,9 @@ from nonebot import logger, get_driver, on_command
 from nonebot.rule import Rule
 from nonebot.params import CommandArg
 from nonebot.typing import T_State
-from nonebot.matcher import Matcher, current_event
+from nonebot.matcher import Matcher
 from nonebot.adapters import Message
 from nonebot.plugin.on import get_matcher_source
-from nonebot_plugin_uninfo import UniSession
 from nonebot_plugin_alconna.uniseg import UniMsg
 
 from .rule import SUPER_PRIVATE, Searched, SearchResult, on_keyword_regex
@@ -216,8 +215,6 @@ on_notice_ = on_notice(priority=1, block=False)
 
 @on_notice_.handle()
 async def handle_group_msg_emoji_like(event):
-    from nonebot.adapters import Event as BaseEvent
-
     from ..helper import UniHelper, UniMessage
 
     # 检查是否是group_msg_emoji_like事件
