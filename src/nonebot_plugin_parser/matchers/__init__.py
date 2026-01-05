@@ -259,7 +259,7 @@ async def handle_group_msg_emoji_like(event):
             await message_reaction("282", message_id=str(liked_message_id))
     except Exception as e:
         logger.warning(f"Failed to send resolving reaction: {e}")
-    
+
     try:
         # 获取最新的解析结果
         if not _RESULT_CACHE:
@@ -270,11 +270,11 @@ async def handle_group_msg_emoji_like(event):
             except Exception as e:
                 logger.warning(f"Failed to send fail reaction: {e}")
             return
-        
+
         # 获取最近的解析结果
         latest_url = next(reversed(_RESULT_CACHE.keys()))
         result = _RESULT_CACHE[latest_url]
-        
+
         # 发送延迟的媒体内容
         sent = False
         for media_type, path in result.media_contents:
@@ -284,10 +284,10 @@ async def handle_group_msg_emoji_like(event):
             elif media_type == AudioContent:
                 await UniMessage(UniHelper.record_seg(path)).send()
                 sent = True
-        
+
         # 清空当前结果的媒体内容
         result.media_contents.clear()
-        
+
         # 发送对应的表情
         if sent:
             # 发送"完成"的表情（使用用户指定的表情ID 124）
