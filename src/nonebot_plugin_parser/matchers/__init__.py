@@ -95,7 +95,7 @@ async def parser_handler(
             # 保存消息ID与解析结果的关联
             if msg_sent:
                 # 添加详细调试日志，查看msg_sent的类型和属性
-                logger.debug(f"消息发送返回对象: type={type(msg_sent)}, repr={repr(msg_sent)}")
+                logger.debug(f"消息发送返回对象: type={type(msg_sent)}, repr={msg_sent!r}")
                 logger.debug(f"msg_sent属性: {dir(msg_sent)}")
                 try:
                     # 尝试获取消息ID
@@ -103,6 +103,7 @@ async def parser_handler(
                     # 检查是否为Event类型
                     if hasattr(msg_sent, "get_event_name"):
                         from nonebot_plugin_alconna.uniseg import get_message_id
+
                         try:
                             msg_id = get_message_id(msg_sent)  # type: ignore
                             logger.debug(f"通过get_message_id获取到消息ID: {msg_id}")
@@ -138,7 +139,7 @@ async def parser_handler(
                             else:
                                 msg_id = str(receipt_msg_ids)  # type: ignore
                                 logger.debug(f"通过Receipt.msg_ids获取到消息ID: {msg_id}")
-                    
+
                     if msg_id:
                         _MSG_ID_RESULT_MAP[msg_id] = result
                         logger.debug(f"保存消息ID与解析结果的关联: msg_id={msg_id}, url={cache_key}")
@@ -319,7 +320,7 @@ async def handle_group_msg_emoji_like(event):
     try:
         logger.debug(f"收到表情点赞事件: emoji_id={emoji_id}, message_id={liked_message_id}, event={event}")
         logger.debug(f"当前_MSG_ID_RESULT_MAP: {list(_MSG_ID_RESULT_MAP.keys())}")
-        
+
         # 根据消息ID获取对应的解析结果
         result = _MSG_ID_RESULT_MAP.get(str(liked_message_id))
         if not result:
