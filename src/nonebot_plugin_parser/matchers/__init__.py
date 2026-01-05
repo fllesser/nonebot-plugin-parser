@@ -96,10 +96,33 @@ async def parser_handler(
             # 保存消息ID与解析结果的关联
             if msg_sent:
                 try:
+<<<<<<< HEAD
                     # 不直接访问Receipt类的属性，避免类型错误
                     # 消息发送成功后，不保存消息ID，直接使用URL作为缓存键
                     # 这样可以避免Receipt类型相关的类型错误
                     pass
+=======
+                    # 使用消息ID从消息对象中获取，而不是从Receipt对象
+                    if hasattr(msg_sent, "id"):
+                        msg_id = str(msg_sent.id)
+                        _MSG_ID_RESULT_MAP[msg_id] = result
+                    elif hasattr(msg_sent, "message_id"):
+                        msg_id = str(msg_sent.message_id)
+                        _MSG_ID_RESULT_MAP[msg_id] = result
+                    else:
+                        # 尝试使用其他方式获取消息ID
+                        try:
+                            from nonebot_plugin_alconna.uniseg import get_message_id
+
+                            # 只有当msg_sent是Event类型时才调用get_message_id
+                            if hasattr(msg_sent, "get_event_name"):
+                                msg_id = get_message_id(msg_sent)
+                                if msg_id:
+                                    _MSG_ID_RESULT_MAP[msg_id] = result
+                        except (NotImplementedError, TypeError):
+                            # 某些适配器可能不支持获取消息ID，忽略此错误
+                            pass
+>>>>>>> fa2c896e13a91a9e5ca9c0e5e5f56955d06f0b15
                 except Exception:
                     # 忽略任何获取消息ID的错误
                     pass
@@ -230,8 +253,9 @@ on_notice_ = on_notice(priority=1, block=False)
 @on_notice_.handle()
 async def handle_group_msg_emoji_like(event):
     from nonebot.adapters import Event as BaseEvent
-    from ..helper import UniMessage, UniHelper
-    
+
+    from ..helper import UniHelper, UniMessage
+
     # 检查是否是group_msg_emoji_like事件
     is_group_emoji_like = False
     emoji_id = ""
