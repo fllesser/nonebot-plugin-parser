@@ -1,3 +1,5 @@
+import datetime
+
 from typing import Any
 from pathlib import Path
 from typing_extensions import override
@@ -31,7 +33,7 @@ class HtmlRenderer(ImageRenderer):
         return await template_to_pic(
             template_path=str(self.templates_dir),
             template_name=template_name,
-            templates={"result": template_data},
+            templates={"result": template_data,"rendering_time":datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')},
             pages={
                 "viewport": {"width": 800, "height": 100},
                 "base_url": f"file://{self.templates_dir}",

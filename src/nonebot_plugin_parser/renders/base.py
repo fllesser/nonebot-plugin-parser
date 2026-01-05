@@ -1,5 +1,6 @@
 import uuid
 from abc import ABC, abstractmethod
+from nonebot import logger
 from typing import Any, ClassVar
 from pathlib import Path
 from itertools import chain
@@ -67,16 +68,22 @@ class BaseRenderer(ABC):
 
             match cont:
                 case VideoContent():
+                    logger.debug(f"处理VideoContent，delay_send_media={pconfig.delay_send_media}")
                     if pconfig.delay_send_media:
                         # 延迟发送，先缓存
+                        logger.debug(f"延迟发送视频，缓存路径: {path}")
                         media_contents.append((VideoContent, path))
                     else:
+                        logger.debug(f"立即发送视频: {path}")
                         yield UniMessage(UniHelper.video_seg(path))
                 case AudioContent():
+                    logger.debug(f"处理AudioContent，delay_send_media={pconfig.delay_send_media}")
                     if pconfig.delay_send_media:
                         # 延迟发送，先缓存
+                        logger.debug(f"延迟发送音频，缓存路径: {path}")
                         media_contents.append((AudioContent, path))
                     else:
+                        logger.debug(f"立即发送音频: {path}")
                         yield UniMessage(UniHelper.record_seg(path))
                 case ImageContent():
                     forwardable_segs.append(UniHelper.img_seg(path))

@@ -94,6 +94,9 @@ async def parser_handler(
             msg_sent = await message.send()
             # 保存消息ID与解析结果的关联
             if msg_sent:
+                # 添加详细调试日志，查看msg_sent的类型和属性
+                logger.debug(f"消息发送返回对象: type={type(msg_sent)}, repr={repr(msg_sent)}")
+                logger.debug(f"msg_sent属性: {dir(msg_sent)}")
                 try:
                     # 尝试获取消息ID
                     msg_id = None
@@ -102,20 +105,49 @@ async def parser_handler(
                         from nonebot_plugin_alconna.uniseg import get_message_id
                         try:
                             msg_id = get_message_id(msg_sent)  # type: ignore
-                        except TypeError:
+                            logger.debug(f"通过get_message_id获取到消息ID: {msg_id}")
+                        except TypeError as e:
                             # 如果不是Event类型，跳过
-                            pass
+                            logger.debug(f"get_message_id类型错误: {e}")
                     # 尝试直接从对象获取id或message_id属性
                     if hasattr(msg_sent, "id"):
                         msg_id = str(msg_sent.id)  # type: ignore
+                        logger.debug(f"通过id属性获取到消息ID: {msg_id}")
                     elif hasattr(msg_sent, "message_id"):
                         msg_id = str(msg_sent.message_id)  # type: ignore
+                        logger.debug(f"通过message_id属性获取到消息ID: {msg_id}")
+                    elif hasattr(msg_sent, "message_ids"):
+                        # 处理可能返回多个消息ID的情况
+                        msg_ids = getattr(msg_sent, "message_ids")
+                        if msg_ids:
+                            msg_id = str(msg_ids[0])  # type: ignore
+                            logger.debug(f"通过message_ids属性获取到消息ID: {msg_id}")
+                    elif hasattr(msg_sent, "msg_ids"):
+                        # 处理Receipt对象的msg_ids属性
+                        receipt_msg_ids = getattr(msg_sent, "msg_ids")
+                        logger.debug(f"Receipt.msg_ids: {receipt_msg_ids}")
+                        if receipt_msg_ids:
+                            # 处理msg_ids是列表的情况
+                            if isinstance(receipt_msg_ids, list):
+                                for msg_id_info in receipt_msg_ids:
+                                    if isinstance(msg_id_info, dict) and "message_id" in msg_id_info:
+                                        msg_id = str(msg_id_info["message_id"])
+                                        logger.debug(f"通过Receipt.msg_ids[0]['message_id']获取到消息ID: {msg_id}")
+                                        break
+                            # 处理msg_ids是单个消息ID的情况
+                            else:
+                                msg_id = str(receipt_msg_ids)  # type: ignore
+                                logger.debug(f"通过Receipt.msg_ids获取到消息ID: {msg_id}")
                     
                     if msg_id:
                         _MSG_ID_RESULT_MAP[msg_id] = result
-                except (NotImplementedError, TypeError, AttributeError):
+                        logger.debug(f"保存消息ID与解析结果的关联: msg_id={msg_id}, url={cache_key}")
+                        logger.debug(f"当前_MSG_ID_RESULT_MAP大小: {len(_MSG_ID_RESULT_MAP)}")
+                    else:
+                        logger.debug("未获取到消息ID")
+                except (NotImplementedError, TypeError, AttributeError) as e:
                     # 某些适配器可能不支持获取消息ID，忽略此错误
-                    pass
+                    logger.debug(f"获取消息ID失败: {e}")
     except Exception as e:
         # 渲染失败时，尝试直接发送解析结果
         logger.error(f"渲染失败: {e}")
@@ -285,10 +317,14 @@ async def handle_group_msg_emoji_like(event):
         logger.warning(f"Failed to send resolving reaction: {e}")
 
     try:
+        logger.debug(f"收到表情点赞事件: emoji_id={emoji_id}, message_id={liked_message_id}, event={event}")
+        logger.debug(f"当前_MSG_ID_RESULT_MAP: {list(_MSG_ID_RESULT_MAP.keys())}")
+        
         # 根据消息ID获取对应的解析结果
         result = _MSG_ID_RESULT_MAP.get(str(liked_message_id))
         if not result:
             # 发送"失败"的表情（使用用户指定的表情ID 10060）
+            logger.debug(f"未找到消息ID {liked_message_id} 对应的解析结果")
             try:
                 if liked_message_id:
                     await message_reaction("10060", message_id=str(liked_message_id))
