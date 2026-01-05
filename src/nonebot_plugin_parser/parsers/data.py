@@ -226,7 +226,7 @@ class ParseResult:
             f"author: {self.author}, "
             f"contents: {self.contents}, "
             f"extra: {self.extra}, "
-            f"repost: <<<<<<<{self.repost}>>>>>>, "
+            f"repost: {self.repost}, "
             f"render_image: {self.render_image.name if self.render_image else 'None'}"
         )
 
