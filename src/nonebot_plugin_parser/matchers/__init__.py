@@ -62,13 +62,10 @@ def register_parser_matcher():
 
 # 缓存结果
 _RESULT_CACHE = LimitedSizeDict[str, ParseResult](max_size=50)
-# 消息ID与解析结果的关联缓存
-_MSG_ID_RESULT_MAP = LimitedSizeDict[str, ParseResult](max_size=100)
 
 
 def clear_result_cache():
     _RESULT_CACHE.clear()
-    _MSG_ID_RESULT_MAP.clear()
 
 
 @UniHelper.with_reaction
@@ -92,40 +89,7 @@ async def parser_handler(
     renderer = get_renderer(result.platform.name)
     try:
         async for message in renderer.render_messages(result):
-            msg_sent = await message.send()
-            # 保存消息ID与解析结果的关联
-            if msg_sent:
-                try:
-<<<<<<< HEAD
-                    # 不直接访问Receipt类的属性，避免类型错误
-                    # 消息发送成功后，不保存消息ID，直接使用URL作为缓存键
-                    # 这样可以避免Receipt类型相关的类型错误
-                    pass
-=======
-                    # 使用消息ID从消息对象中获取，而不是从Receipt对象
-                    if hasattr(msg_sent, "id"):
-                        msg_id = str(msg_sent.id)
-                        _MSG_ID_RESULT_MAP[msg_id] = result
-                    elif hasattr(msg_sent, "message_id"):
-                        msg_id = str(msg_sent.message_id)
-                        _MSG_ID_RESULT_MAP[msg_id] = result
-                    else:
-                        # 尝试使用其他方式获取消息ID
-                        try:
-                            from nonebot_plugin_alconna.uniseg import get_message_id
-
-                            # 只有当msg_sent是Event类型时才调用get_message_id
-                            if hasattr(msg_sent, "get_event_name"):
-                                msg_id = get_message_id(msg_sent)
-                                if msg_id:
-                                    _MSG_ID_RESULT_MAP[msg_id] = result
-                        except (NotImplementedError, TypeError):
-                            # 某些适配器可能不支持获取消息ID，忽略此错误
-                            pass
->>>>>>> fa2c896e13a91a9e5ca9c0e5e5f56955d06f0b15
-                except Exception:
-                    # 忽略任何获取消息ID的错误
-                    pass
+            await message.send()
     except Exception as e:
         # 渲染失败时，尝试直接发送解析结果
         logger.error(f"渲染失败: {e}")
@@ -297,7 +261,7 @@ async def handle_group_msg_emoji_like(event):
         logger.warning(f"Failed to send resolving reaction: {e}")
     
     try:
-        # 获取最新的解析结果（不再使用message_id获取，避免类型错误）
+        # 获取最新的解析结果
         if not _RESULT_CACHE:
             # 发送"失败"的表情（使用用户指定的表情ID 10060）
             try:
