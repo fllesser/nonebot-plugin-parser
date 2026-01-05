@@ -107,6 +107,7 @@ async def parser_handler(
                         # 尝试使用其他方式获取消息ID
                         try:
                             from nonebot_plugin_alconna.uniseg import get_message_id
+
                             # 只有当msg_sent是Event类型时才调用get_message_id
                             if hasattr(msg_sent, "get_event_name"):
                                 msg_id = get_message_id(msg_sent)
@@ -245,8 +246,9 @@ on_notice_ = on_notice(priority=1, block=False)
 @on_notice_.handle()
 async def handle_group_msg_emoji_like(event):
     from nonebot.adapters import Event as BaseEvent
-    from ..helper import UniMessage, UniHelper
-    
+
+    from ..helper import UniHelper, UniMessage
+
     # 检查是否是group_msg_emoji_like事件
     is_group_emoji_like = False
     emoji_id = ""
