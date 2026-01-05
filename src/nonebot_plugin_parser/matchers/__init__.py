@@ -96,12 +96,27 @@ async def parser_handler(
             # 保存消息ID与解析结果的关联
             if msg_sent:
                 try:
-                    from nonebot_plugin_alconna.uniseg import get_message_id
-                    msg_id = get_message_id(msg_sent)
-                    if msg_id:
+                    # 使用消息ID从消息对象中获取，而不是从Receipt对象
+                    if hasattr(msg_sent, "id"):
+                        msg_id = str(msg_sent.id)
                         _MSG_ID_RESULT_MAP[msg_id] = result
-                except NotImplementedError:
-                    # 某些适配器可能不支持获取消息ID，忽略此错误
+                    elif hasattr(msg_sent, "message_id"):
+                        msg_id = str(msg_sent.message_id)
+                        _MSG_ID_RESULT_MAP[msg_id] = result
+                    else:
+                        # 尝试使用其他方式获取消息ID
+                        from nonebot_plugin_alconna.uniseg import get_message_id
+                        try:
+                            # 只有当msg_sent是Event类型时才调用get_message_id
+                            if hasattr(msg_sent, "get_event_name"):
+                                msg_id = get_message_id(msg_sent)
+                                if msg_id:
+                                    _MSG_ID_RESULT_MAP[msg_id] = result
+                        except NotImplementedError:
+                            # 某些适配器可能不支持获取消息ID，忽略此错误
+                            pass
+                except Exception:
+                    # 忽略任何获取消息ID的错误
                     pass
     except Exception as e:
         # 渲染失败时，尝试直接发送解析结果
@@ -217,6 +232,7 @@ async def delay_media_trigger_handler():
 
 # 监听group_msg_emoji_like事件，处理点赞触发
 from nonebot import on_notice
+from nonebot_plugin_alconna.uniseg import message_reaction
 
 on_notice_ = on_notice(priority=1, block=False)
 
@@ -224,7 +240,6 @@ on_notice_ = on_notice(priority=1, block=False)
 async def handle_group_msg_emoji_like(event):
     from nonebot.adapters import Event as BaseEvent
     from ..helper import UniMessage, UniHelper
-    from nonebot_plugin_alconna.uniseg import get_message_id
     
     # 检查是否是group_msg_emoji_like事件
     is_group_emoji_like = False
@@ -260,7 +275,6 @@ async def handle_group_msg_emoji_like(event):
     
     # 发送"听到需求"的表情（使用用户指定的表情ID 282）
     try:
-        from nonebot_plugin_alconna.uniseg import message_reaction
         await message_reaction("282", message_id=str(liked_message_id))
     except Exception as e:
         logger.warning(f"Failed to send resolving reaction: {e}")
