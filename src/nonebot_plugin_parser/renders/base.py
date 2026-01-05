@@ -51,6 +51,7 @@ class BaseRenderer(ABC):
         failed_count = 0
         forwardable_segs: list[ForwardNodeInner] = []
         dynamic_segs: list[ForwardNodeInner] = []
+        media_contents: list[tuple[type, Path]] = []
 
         for cont in chain(result.contents, result.repost.contents if result.repost else ()):
             try:
@@ -66,9 +67,17 @@ class BaseRenderer(ABC):
 
             match cont:
                 case VideoContent():
-                    yield UniMessage(UniHelper.video_seg(path))
+                    if pconfig.delay_send_media:
+                        # 延迟发送，先缓存
+                        media_contents.append((VideoContent, path))
+                    else:
+                        yield UniMessage(UniHelper.video_seg(path))
                 case AudioContent():
-                    yield UniMessage(UniHelper.record_seg(path))
+                    if pconfig.delay_send_media:
+                        # 延迟发送，先缓存
+                        media_contents.append((AudioContent, path))
+                    else:
+                        yield UniMessage(UniHelper.record_seg(path))
                 case ImageContent():
                     forwardable_segs.append(UniHelper.img_seg(path))
                 case DynamicContent():
@@ -80,6 +89,10 @@ class BaseRenderer(ABC):
                     if graphics.alt is not None:
                         graphics_msg = graphics_msg + graphics.alt
                     forwardable_segs.append(graphics_msg)
+
+        # 如果有延迟发送的媒体，存储到解析结果中
+        if media_contents:
+            result.media_contents = media_contents
 
         if forwardable_segs:
             if result.text:

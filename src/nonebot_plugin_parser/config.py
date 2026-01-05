@@ -52,6 +52,12 @@ class Config(BaseModel):
     """Pilmoji 表情 CDN"""
     parser_emoji_style: EmojiStyle = EmojiStyle.FACEBOOK
     """Pilmoji 表情样式"""
+    parser_delay_send_media: bool = False
+    """是否延迟发送视频/音频，需要用户发送特定表情或点赞特定表情后才发送"""
+    parser_delay_send_emoji: str = "🎬"
+    """触发延迟发送视频的表情"""
+    parser_delay_send_emoji_ids: list[str] = ["128077"]
+    """触发延迟发送视频的表情ID列表，用于监听group_msg_emoji_like事件"""
 
     @property
     def nickname(self) -> str:
@@ -152,6 +158,21 @@ class Config(BaseModel):
     def emoji_style(self) -> EmojiStyle:
         """Pilmoji 表情样式"""
         return self.parser_emoji_style
+
+    @property
+    def delay_send_media(self) -> bool:
+        """是否延迟发送视频/音频"""
+        return self.parser_delay_send_media
+
+    @property
+    def delay_send_emoji(self) -> str:
+        """触发延迟发送视频的表情"""
+        return self.parser_delay_send_emoji
+
+    @property
+    def delay_send_emoji_ids(self) -> list[str]:
+        """触发延迟发送视频的表情ID列表"""
+        return self.parser_delay_send_emoji_ids
 
 
 pconfig: Config = get_plugin_config(Config)
