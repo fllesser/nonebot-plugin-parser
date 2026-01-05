@@ -96,25 +96,10 @@ async def parser_handler(
             # 保存消息ID与解析结果的关联
             if msg_sent:
                 try:
-                    # 使用消息ID从消息对象中获取，而不是从Receipt对象
-                    if hasattr(msg_sent, "id"):
-                        msg_id = str(msg_sent.id)
-                        _MSG_ID_RESULT_MAP[msg_id] = result
-                    elif hasattr(msg_sent, "message_id"):
-                        msg_id = str(msg_sent.message_id)
-                        _MSG_ID_RESULT_MAP[msg_id] = result
-                    else:
-                        # 尝试使用其他方式获取消息ID
-                        try:
-                            from nonebot_plugin_alconna.uniseg import get_message_id
-                            # 只有当msg_sent是Event类型时才调用get_message_id
-                            if hasattr(msg_sent, "get_event_name"):
-                                msg_id = get_message_id(msg_sent)
-                                if msg_id:
-                                    _MSG_ID_RESULT_MAP[msg_id] = result
-                        except (NotImplementedError, TypeError):
-                            # 某些适配器可能不支持获取消息ID，忽略此错误
-                            pass
+                    # 不直接访问Receipt类的属性，避免类型错误
+                    # 消息发送成功后，不保存消息ID，直接使用URL作为缓存键
+                    # 这样可以避免Receipt类型相关的类型错误
+                    pass
                 except Exception:
                     # 忽略任何获取消息ID的错误
                     pass
@@ -281,25 +266,27 @@ async def handle_group_msg_emoji_like(event):
 
     # 发送"听到需求"的表情（使用用户指定的表情ID 282）
     try:
-        await message_reaction("282", message_id=str(liked_message_id))
+        # 只有当liked_message_id有效时，才发送表情反馈
+        if liked_message_id:
+            await message_reaction("282", message_id=str(liked_message_id))
     except Exception as e:
         logger.warning(f"Failed to send resolving reaction: {e}")
-
+    
     try:
-        # 根据被点赞的消息ID获取对应的解析结果
-        result = _MSG_ID_RESULT_MAP.get(str(liked_message_id))
-        if not result:
-            # 如果没有找到对应的解析结果，获取最新的解析结果
-            if not _RESULT_CACHE:
-                # 发送"失败"的表情（使用用户指定的表情ID 10060）
-                try:
+        # 获取最新的解析结果（不再使用message_id获取，避免类型错误）
+        if not _RESULT_CACHE:
+            # 发送"失败"的表情（使用用户指定的表情ID 10060）
+            try:
+                if liked_message_id:
                     await message_reaction("10060", message_id=str(liked_message_id))
-                except Exception as e:
-                    logger.warning(f"Failed to send fail reaction: {e}")
-                return
-            latest_url = next(reversed(_RESULT_CACHE.keys()))
-            result = _RESULT_CACHE[latest_url]
-
+            except Exception as e:
+                logger.warning(f"Failed to send fail reaction: {e}")
+            return
+        
+        # 获取最近的解析结果
+        latest_url = next(reversed(_RESULT_CACHE.keys()))
+        result = _RESULT_CACHE[latest_url]
+        
         # 发送延迟的媒体内容
         sent = False
         for media_type, path in result.media_contents:
@@ -309,27 +296,30 @@ async def handle_group_msg_emoji_like(event):
             elif media_type == AudioContent:
                 await UniMessage(UniHelper.record_seg(path)).send()
                 sent = True
-
+        
         # 清空当前结果的媒体内容
         result.media_contents.clear()
-
+        
         # 发送对应的表情
         if sent:
             # 发送"完成"的表情（使用用户指定的表情ID 124）
             try:
-                await message_reaction("124", message_id=str(liked_message_id))
+                if liked_message_id:
+                    await message_reaction("124", message_id=str(liked_message_id))
             except Exception as e:
                 logger.warning(f"Failed to send done reaction: {e}")
         else:
             # 没有可发送的媒体内容，发送"失败"的表情（使用用户指定的表情ID 10060）
             try:
-                await message_reaction("10060", message_id=str(liked_message_id))
+                if liked_message_id:
+                    await message_reaction("10060", message_id=str(liked_message_id))
             except Exception as e:
                 logger.warning(f"Failed to send fail reaction: {e}")
     except Exception as e:
         # 发送"失败"的表情（使用用户指定的表情ID 10060）
         try:
-            await message_reaction("10060", message_id=str(liked_message_id))
+            if liked_message_id:
+                await message_reaction("10060", message_id=str(liked_message_id))
         except Exception as reaction_e:
             logger.warning(f"Failed to send fail reaction: {reaction_e}")
         logger.error(f"Failed to send media content: {e}")
