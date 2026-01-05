@@ -2,23 +2,23 @@ import re
 from typing import TypeVar
 
 from nonebot import logger, get_driver, on_command
-from nonebot.matcher import current_event, Matcher
-from nonebot.params import CommandArg
-from nonebot.adapters import Message
 from nonebot.rule import Rule
-from nonebot.plugin.on import get_matcher_source
+from nonebot.params import CommandArg
 from nonebot.typing import T_State
-from nonebot_plugin_alconna.uniseg import UniMsg
+from nonebot.matcher import Matcher, current_event
+from nonebot.adapters import Message
+from nonebot.plugin.on import get_matcher_source
 from nonebot_plugin_uninfo import UniSession
+from nonebot_plugin_alconna.uniseg import UniMsg
 
 from .rule import SUPER_PRIVATE, Searched, SearchResult, on_keyword_regex
 from ..utils import LimitedSizeDict
 from ..config import pconfig
 from ..helper import UniHelper, UniMessage
 from ..parsers import BaseParser, ParseResult, BilibiliParser
-from ..parsers.data import VideoContent, AudioContent
 from ..renders import get_renderer
 from ..download import DOWNLOADER
+from ..parsers.data import AudioContent, VideoContent
 
 
 def _get_enabled_parser_classes() -> list[type[BaseParser]]:
@@ -105,14 +105,14 @@ async def parser_handler(
                         _MSG_ID_RESULT_MAP[msg_id] = result
                     else:
                         # 尝试使用其他方式获取消息ID
-                        from nonebot_plugin_alconna.uniseg import get_message_id
                         try:
+                            from nonebot_plugin_alconna.uniseg import get_message_id
                             # 只有当msg_sent是Event类型时才调用get_message_id
                             if hasattr(msg_sent, "get_event_name"):
                                 msg_id = get_message_id(msg_sent)
                                 if msg_id:
                                     _MSG_ID_RESULT_MAP[msg_id] = result
-                        except NotImplementedError:
+                        except (NotImplementedError, TypeError):
                             # 某些适配器可能不支持获取消息ID，忽略此错误
                             pass
                 except Exception:
@@ -122,7 +122,8 @@ async def parser_handler(
         # 渲染失败时，尝试直接发送解析结果
         logger.error(f"渲染失败: {e}")
         from ..helper import UniMessage
-        await UniMessage(f"解析成功，但渲染失败: {str(e)}").send()
+
+        await UniMessage(f"解析成功，但渲染失败: {e!s}").send()
 
     # 4. 缓存解析结果
     _RESULT_CACHE[cache_key] = result
@@ -189,15 +190,17 @@ async def _():
 # 监听特定表情，触发延迟发送的媒体内容
 class EmojiTriggerRule:
     """表情触发规则类"""
-    
+
     async def __call__(self, message: UniMsg, state: T_State) -> bool:
         """检查消息是否是触发表情"""
         text = message.extract_plain_text().strip()
         return text == pconfig.delay_send_emoji
 
+
 def emoji_trigger_rule() -> Rule:
     """创建表情触发规则"""
     return Rule(EmojiTriggerRule())
+
 
 # 创建表情触发的消息处理器
 delay_send_matcher = Matcher.new(
@@ -208,33 +211,36 @@ delay_send_matcher = Matcher.new(
     source=get_matcher_source(1),
 )
 
+
 @delay_send_matcher.handle()
 async def delay_media_trigger_handler():
-    from ..helper import UniMessage, UniHelper
-    
+    from ..helper import UniHelper, UniMessage
+
     # 获取最新的解析结果
     if not _RESULT_CACHE:
         return
-    
+
     # 获取最近的解析结果
     latest_url = next(reversed(_RESULT_CACHE.keys()))
     result = _RESULT_CACHE[latest_url]
-    
+
     # 发送延迟的媒体内容
     for media_type, path in result.media_contents:
         if media_type == VideoContent:
             await UniMessage(UniHelper.video_seg(path)).send()
         elif media_type == AudioContent:
             await UniMessage(UniHelper.record_seg(path)).send()
-    
+
     # 清空当前结果的媒体内容
     result.media_contents.clear()
+
 
 # 监听group_msg_emoji_like事件，处理点赞触发
 from nonebot import on_notice
 from nonebot_plugin_alconna.uniseg import message_reaction
 
 on_notice_ = on_notice(priority=1, block=False)
+
 
 @on_notice_.handle()
 async def handle_group_msg_emoji_like(event):
@@ -245,7 +251,7 @@ async def handle_group_msg_emoji_like(event):
     is_group_emoji_like = False
     emoji_id = ""
     liked_message_id = ""
-    
+
     # 处理不同形式的事件对象（字典或对象）
     if isinstance(event, dict):
         # 字典形式的事件
@@ -255,30 +261,30 @@ async def handle_group_msg_emoji_like(event):
             liked_message_id = event["message_id"]
     else:
         # 对象形式的事件
-        if hasattr(event, 'notice_type') and event.notice_type == 'group_msg_emoji_like':
+        if hasattr(event, "notice_type") and event.notice_type == "group_msg_emoji_like":
             is_group_emoji_like = True
-            if hasattr(event, 'likes') and event.likes:
+            if hasattr(event, "likes") and event.likes:
                 if isinstance(event.likes[0], dict):
                     emoji_id = event.likes[0].get("emoji_id", "")
                 else:
                     emoji_id = event.likes[0].emoji_id
-            if hasattr(event, 'message_id'):
+            if hasattr(event, "message_id"):
                 liked_message_id = event.message_id
-    
+
     # 检查是否是group_msg_emoji_like事件且表情ID有效
     if not is_group_emoji_like or not emoji_id:
         return
-    
+
     # 检查表情ID是否在配置列表中
     if emoji_id not in pconfig.delay_send_emoji_ids:
         return
-    
+
     # 发送"听到需求"的表情（使用用户指定的表情ID 282）
     try:
         await message_reaction("282", message_id=str(liked_message_id))
     except Exception as e:
         logger.warning(f"Failed to send resolving reaction: {e}")
-    
+
     try:
         # 根据被点赞的消息ID获取对应的解析结果
         result = _MSG_ID_RESULT_MAP.get(str(liked_message_id))
@@ -293,7 +299,7 @@ async def handle_group_msg_emoji_like(event):
                 return
             latest_url = next(reversed(_RESULT_CACHE.keys()))
             result = _RESULT_CACHE[latest_url]
-        
+
         # 发送延迟的媒体内容
         sent = False
         for media_type, path in result.media_contents:
@@ -303,10 +309,10 @@ async def handle_group_msg_emoji_like(event):
             elif media_type == AudioContent:
                 await UniMessage(UniHelper.record_seg(path)).send()
                 sent = True
-        
+
         # 清空当前结果的媒体内容
         result.media_contents.clear()
-        
+
         # 发送对应的表情
         if sent:
             # 发送"完成"的表情（使用用户指定的表情ID 124）
