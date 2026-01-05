@@ -256,6 +256,15 @@ parser_emoji_cdn="https://emojicdn.elk.sh"
 
 # [可选] emoji 渲染样式 "apple", "google", "twitter", "facebook"(默认)
 parser_emoji_style="facebook"
+
+# [可选] 是否延迟发送视频/音频，需要用户发送特定表情或点赞特定表情后才发送
+parser_delay_send_media=False
+
+# [可选] 触发延迟发送视频的表情
+parser_delay_send_emoji="🎬"
+
+# [可选] 触发延迟发送视频的表情ID列表，用于监听group_msg_emoji_like事件
+parser_delay_send_emoji_ids='["128077"]'
 ```
 
 </details>
