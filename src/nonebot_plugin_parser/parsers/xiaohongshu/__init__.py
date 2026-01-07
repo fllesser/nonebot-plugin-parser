@@ -4,7 +4,7 @@ from typing import ClassVar
 from httpx import Cookies, AsyncClient
 from nonebot import logger
 
-from ..base import Platform, BaseParser, PlatformEnum, ParseException, handle
+from ..base import Platform, BaseParser, PlatformEnum, ParseException, handle, pconfig
 from ..data import MediaContent
 
 
@@ -21,6 +21,7 @@ class XiaoHongShuParser(BaseParser):
             )
         }
         self.headers.update(explore_headers)
+
         discovery_headers = {
             "origin": "https://www.xiaohongshu.com",
             "x-requested-with": "XMLHttpRequest",
@@ -29,6 +30,10 @@ class XiaoHongShuParser(BaseParser):
             "sec-fetch-dest": "empty",
         }
         self.ios_headers.update(discovery_headers)
+
+        if pconfig.xhs_ck:
+            self.headers["cookie"] = pconfig.xhs_ck
+            self.ios_headers["cookie"] = pconfig.xhs_ck
 
     @handle("xhslink.com", r"xhslink\.com/[A-Za-z0-9._?%&+=/#@-]+")
     async def _parse_short_link(self, searched: re.Match[str]):
