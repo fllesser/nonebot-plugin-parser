@@ -31,9 +31,9 @@ class XiaoHongShuParser(BaseParser):
         }
         self.ios_headers.update(discovery_headers)
 
-        if pconfig.parser_xhs_ck:
-            self.headers["cookie"] = pconfig.parser_xhs_ck
-            self.ios_headers["cookie"] = pconfig.parser_xhs_ck
+        if pconfig.xhs_ck:
+            self.headers["cookie"] = pconfig.xhs_ck
+            self.ios_headers["cookie"] = pconfig.xhs_ck
 
     @handle("xhslink.com", r"xhslink\.com/[A-Za-z0-9._?%&+=/#@-]+")
     async def _parse_short_link(self, searched: re.Match[str]):
