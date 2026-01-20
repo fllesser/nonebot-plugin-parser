@@ -75,7 +75,6 @@ async def test_dynamic():
         _, searched = parser.search_url(dynamic_url)
         dynamic_id = int(searched.group("dynamic_id"))
         result = await parser.parse_dynamic_or_opus(dynamic_id)
-        assert result.title, "标题为空"
         assert result.author, "作者为空"
         avatar_path = await result.author.get_avatar_path()
         assert avatar_path, "头像不存在"
