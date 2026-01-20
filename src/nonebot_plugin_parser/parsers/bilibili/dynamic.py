@@ -129,7 +129,7 @@ class DynamicModule(Struct):
     def major_info(self) -> dict[str, Any] | None:
         """获取主要内容信息"""
         if self.module_dynamic:
-            if major:= self.module_dynamic.get("major"):
+            if major := self.module_dynamic.get("major"):
                 return major
             # 转发类型动态没有 major
             return self.module_dynamic

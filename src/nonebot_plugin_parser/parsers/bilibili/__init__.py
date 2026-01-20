@@ -33,9 +33,7 @@ request_settings.set("impersonate", "chrome131")
 
 class BilibiliParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(
-        name=PlatformEnum.BILIBILI, display_name="哔哩哔哩"
-    )
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
 
     def __init__(self):
         self.headers = HEADERS.copy()
@@ -143,9 +141,7 @@ class BilibiliParser(BaseParser):
             output_path = pconfig.cache_dir / f"{video_info.bvid}-{page_num}.mp4"
             if output_path.exists():
                 return output_path
-            v_url, a_url = await self.extract_download_urls(
-                video=video, page_index=page_info.index
-            )
+            v_url, a_url = await self.extract_download_urls(video=video, page_index=page_info.index)
             if page_info.duration > pconfig.duration_maximum:
                 raise DurationLimitException
             if a_url is not None:
@@ -153,9 +149,7 @@ class BilibiliParser(BaseParser):
                     v_url, a_url, output_path=output_path, ext_headers=self.headers
                 )
             else:
-                return await DOWNLOADER.streamd(
-                    v_url, file_name=output_path.name, ext_headers=self.headers
-                )
+                return await DOWNLOADER.streamd(v_url, file_name=output_path.name, ext_headers=self.headers)
 
         video_task = asyncio.create_task(download_video())
         video_content = self.create_video_content(
@@ -251,11 +245,7 @@ class BilibiliParser(BaseParser):
 
         for node in opus_data.gen_text_img():
             if isinstance(node, ImageNode):
-                contents.append(
-                    self.create_graphics_content(
-                        node.url, current_text.strip(), node.alt
-                    )
-                )
+                contents.append(self.create_graphics_content(node.url, current_text.strip(), node.alt))
                 current_text = ""
             elif isinstance(node, TextNode):
                 current_text += node.text
@@ -332,15 +322,10 @@ class BilibiliParser(BaseParser):
             title=favdata.title,
             timestamp=favdata.timestamp,
             author=self.create_author(favdata.info.upper.name, favdata.info.upper.face),
-            contents=[
-                self.create_graphics_content(fav.cover, fav.desc)
-                for fav in favdata.medias
-            ],
+            contents=[self.create_graphics_content(fav.cover, fav.desc) for fav in favdata.medias],
         )
 
-    async def _get_video(
-        self, *, bvid: str | None = None, avid: int | None = None
-    ) -> Video:
+    async def _get_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
         """解析视频信息
 
         Args:
@@ -391,9 +376,7 @@ class BilibiliParser(BaseParser):
         video_stream = streams[0]
         if not isinstance(video_stream, VideoStreamDownloadURL):
             raise DownloadException("未找到可下载的视频流")
-        logger.debug(
-            f"视频流质量: {video_stream.video_quality.name}, 编码: {video_stream.video_codecs}"
-        )
+        logger.debug(f"视频流质量: {video_stream.video_quality.name}, 编码: {video_stream.video_codecs}")
 
         audio_stream = streams[1]
         if not isinstance(audio_stream, AudioStreamDownloadURL):
@@ -413,9 +396,7 @@ class BilibiliParser(BaseParser):
         if not self._cookies_file.exists():
             return
 
-        self._credential = Credential.from_cookies(
-            json.loads(self._cookies_file.read_text())
-        )
+        self._credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
 
     async def login_with_qrcode(self) -> bytes:
         """通过二维码登录获取哔哩哔哩登录凭证"""
@@ -482,8 +463,6 @@ class BilibiliParser(BaseParser):
                 logger.info(f"哔哩哔哩凭证刷新成功, 保存到 {self._cookies_file}")
                 self._save_credential()
             else:
-                logger.warning(
-                    "哔哩哔哩凭证刷新需要包含 `SESSDATA`, `ac_time_value` 项"
-                )
+                logger.warning("哔哩哔哩凭证刷新需要包含 `SESSDATA`, `ac_time_value` 项")
 
         return self._credential
