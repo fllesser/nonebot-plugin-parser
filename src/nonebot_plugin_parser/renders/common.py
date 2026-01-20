@@ -130,7 +130,9 @@ class FontSet:
     def new(cls, font_path: Path):
         font_infos: dict[str, FontInfo] = {}
         for name, size, fill in cls._FONT_INFOS:
-            font = ImageFont.truetype(font_path, size)
+            with open(font_path, "rb") as f:
+                font_bytes = BytesIO(f.read())
+            font = ImageFont.truetype(font_bytes, size, encoding="utf-8")
             height = get_font_height(font)
             font_infos[name] = FontInfo(
                 font=font,
@@ -360,10 +362,23 @@ class CommonRenderer(ImageRenderer):
     ) -> int:
         """绘制文本"""
         if emosvg is not None:
-            emosvg.text(ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height)
+            emosvg.text(
+                ctx.image,
+                xy,
+                lines,
+                font.font,
+                fill=font.fill,
+                line_height=font.line_height,
+            )
         else:
             await Apilmoji.text(
-                ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height, source=cls.EMOJI_SOURCE
+                ctx.image,
+                xy,
+                lines,
+                font.font,
+                fill=font.fill,
+                line_height=font.line_height,
+                source=cls.EMOJI_SOURCE,
             )
         return font.line_height * len(lines)
 
@@ -534,7 +549,9 @@ class CommonRenderer(ImageRenderer):
 
             return output_avatar
 
-    async def _calculate_sections(self, result: ParseResult, content_width: int) -> list[SectionData]:
+    async def _calculate_sections(
+        self, result: ParseResult, content_width: int
+    ) -> list[SectionData]:
         """计算各部分内容的高度和数据"""
         sections: list[SectionData] = []
 
@@ -558,7 +575,9 @@ class CommonRenderer(ImageRenderer):
             await result.cover_path,
             content_width=content_width,
         ):
-            sections.append(CoverSectionData(height=cover_img.height, cover_img=cover_img))
+            sections.append(
+                CoverSectionData(height=cover_img.height, cover_img=cover_img)
+            )
         elif result.img_contents:
             # 如果没有封面但有图片，处理图片列表
             img_grid_section = await self._calculate_image_grid_section(
@@ -633,7 +652,9 @@ class CommonRenderer(ImageRenderer):
                 )
 
             # 计算总高度：文本高度 + 图片高度 + alt文本高度 + 间距
-            text_height = len(text_lines) * self.fontset.text.line_height if text_lines else 0
+            text_height = (
+                len(text_lines) * self.fontset.text.line_height if text_lines else 0
+            )
             alt_height = self.fontset.extra.line_height if graphics_content.alt else 0
             total_height = text_height + image.height + alt_height
             if text_lines:
@@ -657,7 +678,9 @@ class CommonRenderer(ImageRenderer):
             return None
 
         # 加载头像
-        avatar_img = self._load_and_process_avatar(await result.author.get_avatar_path())
+        avatar_img = self._load_and_process_avatar(
+            await result.author.get_avatar_path()
+        )
 
         text_height = self.fontset.name.line_height
         time = result.formartted_datetime
@@ -715,7 +738,9 @@ class CommonRenderer(ImageRenderer):
         for img_content in img_contents:
             img_path = await img_content.get_path()
             # 使用装饰器保护的方法，失败会返回 None
-            img = await self._load_and_process_grid_image(img_path, content_width, img_count)
+            img = await self._load_and_process_grid_image(
+                img_path, content_width, img_count
+            )
             if img is not None:
                 processed_images.append(img)
 
@@ -743,7 +768,9 @@ class CommonRenderer(ImageRenderer):
             grid_height = max_img_height
         else:
             # 多张图片：上间距 + (图片 + 间距) * 行数
-            grid_height = self.IMAGE_GRID_SPACING + rows * (max_img_height + self.IMAGE_GRID_SPACING)
+            grid_height = self.IMAGE_GRID_SPACING + rows * (
+                max_img_height + self.IMAGE_GRID_SPACING
+            )
 
         return ImageGridSectionData(
             height=grid_height,
@@ -804,7 +831,9 @@ class CommonRenderer(ImageRenderer):
                 else:
                     # 多张图片，使用3列布局
                     num_gaps = self.IMAGE_GRID_COLS + 1
-                    max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // self.IMAGE_GRID_COLS
+                    max_size = (
+                        content_width - self.IMAGE_GRID_SPACING * num_gaps
+                    ) // self.IMAGE_GRID_COLS
                     max_size = min(max_size, self.IMAGE_3_GRID_SIZE)
 
                 # 调整多张图片的尺寸
@@ -836,7 +865,9 @@ class CommonRenderer(ImageRenderer):
             bottom = top + width
             return img.crop((0, top, width, bottom))
 
-    async def _draw_sections(self, ctx: RenderContext, sections: list[SectionData]) -> None:
+    async def _draw_sections(
+        self, ctx: RenderContext, sections: list[SectionData]
+    ) -> None:
         """绘制所有内容到画布上"""
         for section in sections:
             match section:
@@ -920,7 +951,9 @@ class CommonRenderer(ImageRenderer):
         placeholder.putalpha(mask)
         return placeholder
 
-    async def _draw_header(self, ctx: RenderContext, section: HeaderSectionData) -> None:
+    async def _draw_header(
+        self, ctx: RenderContext, section: HeaderSectionData
+    ) -> None:
         """绘制 header 部分"""
         x_pos = self.PADDING
 
@@ -1006,7 +1039,9 @@ class CommonRenderer(ImageRenderer):
         )
         ctx.y_pos += self.SECTION_SPACING
 
-    async def _draw_graphics(self, ctx: RenderContext, section: GraphicsSectionData) -> None:
+    async def _draw_graphics(
+        self, ctx: RenderContext, section: GraphicsSectionData
+    ) -> None:
         """绘制图文内容"""
         # 绘制文本内容（如果有）
         if section.text_lines:
@@ -1085,7 +1120,9 @@ class CommonRenderer(ImageRenderer):
 
         ctx.y_pos += repost_height + self.SECTION_SPACING
 
-    def _draw_image_grid(self, ctx: RenderContext, section: ImageGridSectionData) -> None:
+    def _draw_image_grid(
+        self, ctx: RenderContext, section: ImageGridSectionData
+    ) -> None:
         """绘制图片网格"""
         images = section.images
         cols = section.cols
@@ -1108,7 +1145,9 @@ class CommonRenderer(ImageRenderer):
             # 多张图片，统一使用间距计算，确保所有间距相同
             num_gaps = cols + 1  # 2列有3个间距，3列有4个间距
             calculated_size = (available_width - img_spacing * num_gaps) // cols
-            max_img_size = self.IMAGE_2_GRID_SIZE if cols == 2 else self.IMAGE_3_GRID_SIZE
+            max_img_size = (
+                self.IMAGE_2_GRID_SIZE if cols == 2 else self.IMAGE_3_GRID_SIZE
+            )
             max_img_size = min(calculated_size, max_img_size)
 
         current_y = ctx.y_pos
@@ -1133,7 +1172,12 @@ class CommonRenderer(ImageRenderer):
                 ctx.image.paste(img, (img_x, img_y + y_offset))
 
                 # 如果是最后一张图片且有更多图片，绘制+N效果
-                if has_more and row == rows - 1 and i == len(row_images) - 1 and len(images) == self.MAX_IMAGES_DISPLAY:
+                if (
+                    has_more
+                    and row == rows - 1
+                    and i == len(row_images) - 1
+                    and len(images) == self.MAX_IMAGES_DISPLAY
+                ):
                     self._draw_more_indicator(
                         ctx.image,
                         img_x,
@@ -1162,7 +1206,9 @@ class CommonRenderer(ImageRenderer):
         # 创建半透明黑色遮罩（透明度 1/4）
         overlay = Image.new("RGBA", (img_width, img_height), (0, 0, 0, 0))
         overlay_draw = ImageDraw.Draw(overlay)
-        overlay_draw.rectangle((0, 0, img_width - 1, img_height - 1), fill=(0, 0, 0, 100))
+        overlay_draw.rectangle(
+            (0, 0, img_width - 1, img_height - 1), fill=(0, 0, 0, 100)
+        )
 
         # 将遮罩贴到图片上
         image.paste(overlay, (img_x, img_y), overlay)
@@ -1176,7 +1222,9 @@ class CommonRenderer(ImageRenderer):
         text_y = img_y + (img_height - indicator_font.line_height) // 2
 
         # 绘制50%透明白色文字
-        draw.text((text_x, text_y), text, fill=indicator_font.fill, font=indicator_font.font)
+        draw.text(
+            (text_x, text_y), text, fill=indicator_font.fill, font=indicator_font.font
+        )
 
     def _draw_rounded_rectangle(
         self,
@@ -1194,10 +1242,18 @@ class CommonRenderer(ImageRenderer):
         draw.rectangle((x1, y1 + radius, x2, y2 - radius), fill=fill_color)
 
         # 绘制四个圆角
-        draw.pieslice((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=fill_color)
-        draw.pieslice((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=fill_color)
-        draw.pieslice((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=fill_color)
-        draw.pieslice((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=fill_color)
+        draw.pieslice(
+            (x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=fill_color
+        )
+        draw.pieslice(
+            (x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=fill_color
+        )
+        draw.pieslice(
+            (x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=fill_color
+        )
+        draw.pieslice(
+            (x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=fill_color
+        )
 
     def _draw_rounded_rectangle_border(
         self,
@@ -1211,16 +1267,48 @@ class CommonRenderer(ImageRenderer):
         x1, y1, x2, y2 = bbox
 
         # 绘制主体边框
-        draw.rectangle((x1 + radius, y1, x2 - radius, y1 + width), fill=border_color)  # 上
-        draw.rectangle((x1 + radius, y2 - width, x2 - radius, y2), fill=border_color)  # 下
-        draw.rectangle((x1, y1 + radius, x1 + width, y2 - radius), fill=border_color)  # 左
-        draw.rectangle((x2 - width, y1 + radius, x2, y2 - radius), fill=border_color)  # 右
+        draw.rectangle(
+            (x1 + radius, y1, x2 - radius, y1 + width), fill=border_color
+        )  # 上
+        draw.rectangle(
+            (x1 + radius, y2 - width, x2 - radius, y2), fill=border_color
+        )  # 下
+        draw.rectangle(
+            (x1, y1 + radius, x1 + width, y2 - radius), fill=border_color
+        )  # 左
+        draw.rectangle(
+            (x2 - width, y1 + radius, x2, y2 - radius), fill=border_color
+        )  # 右
 
         # 绘制四个圆角边框
-        draw.arc((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=border_color, width=width)
-        draw.arc((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=border_color, width=width)
-        draw.arc((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=border_color, width=width)
-        draw.arc((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=border_color, width=width)
+        draw.arc(
+            (x1, y1, x1 + 2 * radius, y1 + 2 * radius),
+            180,
+            270,
+            fill=border_color,
+            width=width,
+        )
+        draw.arc(
+            (x2 - 2 * radius, y1, x2, y1 + 2 * radius),
+            270,
+            360,
+            fill=border_color,
+            width=width,
+        )
+        draw.arc(
+            (x1, y2 - 2 * radius, x1 + 2 * radius, y2),
+            90,
+            180,
+            fill=border_color,
+            width=width,
+        )
+        draw.arc(
+            (x2 - 2 * radius, y2 - 2 * radius, x2, y2),
+            0,
+            90,
+            fill=border_color,
+            width=width,
+        )
 
     def _wrap_text(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
         """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
@@ -1300,7 +1388,9 @@ class CommonRenderer(ImageRenderer):
 
         return lines
 
-    def _wrap_text_old(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
+    def _wrap_text_old(
+        self, text: str, max_width: int, font_info: FontInfo
+    ) -> list[str]:
         """优化的文本自动换行算法，考虑中英文字符宽度相同
 
         Args:

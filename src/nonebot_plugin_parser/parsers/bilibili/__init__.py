@@ -33,7 +33,9 @@ request_settings.set("impersonate", "chrome131")
 
 class BilibiliParser(BaseParser):
     # 平台信息
-    platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
+    platform: ClassVar[Platform] = Platform(
+        name=PlatformEnum.BILIBILI, display_name="哔哩哔哩"
+    )
 
     def __init__(self):
         self.headers = HEADERS.copy()
@@ -48,7 +50,10 @@ class BilibiliParser(BaseParser):
         return await self.parse_with_redirect(url)
 
     @handle("BV", r"^(?P<bvid>BV[0-9a-zA-Z]{10})(?:\s)?(?P<page_num>\d{1,3})?$")
-    @handle("/BV", r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9a-zA-Z]{10})(?:\?p=(?P<page_num>\d{1,3}))?")
+    @handle(
+        "/BV",
+        r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9a-zA-Z]{10})(?:\?p=(?P<page_num>\d{1,3}))?",
+    )
     async def _parse_bv(self, searched: Match[str]):
         """解析视频信息"""
         bvid = str(searched.group("bvid"))
@@ -57,7 +62,10 @@ class BilibiliParser(BaseParser):
         return await self.parse_video(bvid=bvid, page_num=page_num)
 
     @handle("av", r"^av(?P<avid>\d{6,})(?:\s)?(?P<page_num>\d{1,3})?$")
-    @handle("/av", r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:\?p=(?P<page_num>\d{1,3}))?")
+    @handle(
+        "/av",
+        r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:\?p=(?P<page_num>\d{1,3}))?",
+    )
     async def _parse_av(self, searched: Match[str]):
         """解析视频信息"""
         avid = int(searched.group("avid"))
@@ -67,10 +75,11 @@ class BilibiliParser(BaseParser):
 
     @handle("/dynamic/", r"bilibili\.com/dynamic/(?P<dynamic_id>\d+)")
     @handle("t.bili", r"t\.bilibili\.com/(?P<dynamic_id>\d+)")
+    @handle("/opus/", r"bilibili\.com/opus/(?P<dynamic_id>\d+)")
     async def _parse_dynamic(self, searched: Match[str]):
         """解析动态信息"""
         dynamic_id = int(searched.group("dynamic_id"))
-        return await self.parse_dynamic(dynamic_id)
+        return await self.parse_dynamic_or_opus(dynamic_id)
 
     @handle("live.bili", r"live\.bilibili\.com/(?P<room_id>\d+)")
     async def _parse_live(self, searched: Match[str]):
@@ -88,13 +97,7 @@ class BilibiliParser(BaseParser):
     async def _parse_read(self, searched: Match[str]):
         """解析专栏信息"""
         read_id = int(searched.group("read_id"))
-        return await self.parse_read_with_opus(read_id)
-
-    @handle("/opus/", r"bilibili\.com/opus/(?P<opus_id>\d+)")
-    async def _parse_opus(self, searched: Match[str]):
-        """解析图文动态信息"""
-        opus_id = int(searched.group("opus_id"))
-        return await self.parse_opus(opus_id)
+        return await self.parse_read(read_id)
 
     async def parse_video(
         self,
@@ -140,7 +143,9 @@ class BilibiliParser(BaseParser):
             output_path = pconfig.cache_dir / f"{video_info.bvid}-{page_num}.mp4"
             if output_path.exists():
                 return output_path
-            v_url, a_url = await self.extract_download_urls(video=video, page_index=page_info.index)
+            v_url, a_url = await self.extract_download_urls(
+                video=video, page_index=page_info.index
+            )
             if page_info.duration > pconfig.duration_maximum:
                 raise DurationLimitException
             if a_url is not None:
@@ -148,7 +153,9 @@ class BilibiliParser(BaseParser):
                     v_url, a_url, output_path=output_path, ext_headers=self.headers
                 )
             else:
-                return await DOWNLOADER.streamd(v_url, file_name=output_path.name, ext_headers=self.headers)
+                return await DOWNLOADER.streamd(
+                    v_url, file_name=output_path.name, ext_headers=self.headers
+                )
 
         video_task = asyncio.create_task(download_video())
         video_content = self.create_video_content(
@@ -167,8 +174,8 @@ class BilibiliParser(BaseParser):
             extra={"info": ai_summary},
         )
 
-    async def parse_dynamic(self, dynamic_id: int):
-        """解析动态信息
+    async def parse_dynamic_or_opus(self, dynamic_id: int):
+        """解析动态和图文信息
 
         Args:
             url (str): 动态链接
@@ -178,6 +185,8 @@ class BilibiliParser(BaseParser):
         from .dynamic import DynamicData
 
         dynamic = Dynamic(dynamic_id, await self.credential)
+        if await dynamic.is_article():
+            return await self._parse_opus_obj(dynamic.turn_to_opus())
         dynamic_info = convert(await dynamic.get_info(), DynamicData).item
 
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
@@ -205,7 +214,7 @@ class BilibiliParser(BaseParser):
         opus = Opus(opus_id, await self.credential)
         return await self._parse_opus_obj(opus)
 
-    async def parse_read_with_opus(self, read_id: int):
+    async def parse_read(self, read_id: int):
         """解析专栏信息, 使用 Opus 接口
 
         Args:
@@ -242,7 +251,11 @@ class BilibiliParser(BaseParser):
 
         for node in opus_data.gen_text_img():
             if isinstance(node, ImageNode):
-                contents.append(self.create_graphics_content(node.url, current_text.strip(), node.alt))
+                contents.append(
+                    self.create_graphics_content(
+                        node.url, current_text.strip(), node.alt
+                    )
+                )
                 current_text = ""
             elif isinstance(node, TextNode):
                 current_text += node.text
@@ -319,10 +332,15 @@ class BilibiliParser(BaseParser):
             title=favdata.title,
             timestamp=favdata.timestamp,
             author=self.create_author(favdata.info.upper.name, favdata.info.upper.face),
-            contents=[self.create_graphics_content(fav.cover, fav.desc) for fav in favdata.medias],
+            contents=[
+                self.create_graphics_content(fav.cover, fav.desc)
+                for fav in favdata.medias
+            ],
         )
 
-    async def _get_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
+    async def _get_video(
+        self, *, bvid: str | None = None, avid: int | None = None
+    ) -> Video:
         """解析视频信息
 
         Args:
@@ -373,7 +391,9 @@ class BilibiliParser(BaseParser):
         video_stream = streams[0]
         if not isinstance(video_stream, VideoStreamDownloadURL):
             raise DownloadException("未找到可下载的视频流")
-        logger.debug(f"视频流质量: {video_stream.video_quality.name}, 编码: {video_stream.video_codecs}")
+        logger.debug(
+            f"视频流质量: {video_stream.video_quality.name}, 编码: {video_stream.video_codecs}"
+        )
 
         audio_stream = streams[1]
         if not isinstance(audio_stream, AudioStreamDownloadURL):
@@ -393,7 +413,9 @@ class BilibiliParser(BaseParser):
         if not self._cookies_file.exists():
             return
 
-        self._credential = Credential.from_cookies(json.loads(self._cookies_file.read_text()))
+        self._credential = Credential.from_cookies(
+            json.loads(self._cookies_file.read_text())
+        )
 
     async def login_with_qrcode(self) -> bytes:
         """通过二维码登录获取哔哩哔哩登录凭证"""
@@ -460,6 +482,8 @@ class BilibiliParser(BaseParser):
                 logger.info(f"哔哩哔哩凭证刷新成功, 保存到 {self._cookies_file}")
                 self._save_credential()
             else:
-                logger.warning("哔哩哔哩凭证刷新需要包含 `SESSDATA`, `ac_time_value` 项")
+                logger.warning(
+                    "哔哩哔哩凭证刷新需要包含 `SESSDATA`, `ac_time_value` 项"
+                )
 
         return self._credential

@@ -63,9 +63,10 @@ class OpusContent(Struct):
 class DynamicMajor(Struct):
     """动态主要内容"""
 
-    type: str
+    type: str | None = None
     archive: VideoArchive | None = None
     opus: OpusContent | None = None
+    desc: OpusSummary | None = None
 
     @property
     def title(self) -> str | None:
@@ -81,6 +82,8 @@ class DynamicMajor(Struct):
             return self.archive.desc
         elif self.type == "MAJOR_TYPE_OPUS" and self.opus:
             return self.opus.summary.text
+        elif self.desc:
+            return self.desc.text
         return None
 
     @property
@@ -126,7 +129,10 @@ class DynamicModule(Struct):
     def major_info(self) -> dict[str, Any] | None:
         """获取主要内容信息"""
         if self.module_dynamic:
-            return self.module_dynamic.get("major")
+            if major:= self.module_dynamic.get("major"):
+                return major
+            # 转发类型动态没有 major
+            return self.module_dynamic
         return None
 
 
