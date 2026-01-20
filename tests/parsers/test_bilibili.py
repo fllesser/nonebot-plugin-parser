@@ -66,7 +66,7 @@ async def test_dynamic():
     dynamic_urls = [
         "https://t.bilibili.com/1120105154190770281",
         "https://www.bilibili.com/opus/998440765151510535",
-        "https://www.bilibili.com/opus/1040093151889457152"
+        "https://www.bilibili.com/opus/1040093151889457152",
     ]
 
     parser = BilibiliParser()
@@ -86,7 +86,5 @@ async def test_dynamic():
             path = await img_content.get_path()
             assert path.exists(), "图片不存在"
 
-    await asyncio.gather(
-        *[test_parse_dynamic(dynamic_url) for dynamic_url in dynamic_urls]
-    )
+    await asyncio.gather(*[test_parse_dynamic(dynamic_url) for dynamic_url in dynamic_urls])
     logger.success("B站动态解析成功")
