@@ -88,8 +88,12 @@ class BilibiliParser(BaseParser):
     @handle("/read/", r"bilibili\.com/read/cv(?P<read_id>\d+)")
     async def _parse_read(self, searched: Match[str]):
         """解析专栏信息"""
+        from bilibili_api.article import Article
+
         read_id = int(searched.group("read_id"))
-        return await self.parse_read(read_id)
+        article = Article(read_id)
+        opus = await article.turn_to_opus()
+        return await self._parse_bilibli_api_opus(opus)
 
     async def parse_video(
         self,
@@ -174,9 +178,9 @@ class BilibiliParser(BaseParser):
 
         dynamic = Dynamic(dynamic_id, await self.credential)
         if await dynamic.is_article():
-            return await self._parse_opus_obj(dynamic.turn_to_opus())
-        dynamic_info = convert(await dynamic.get_info(), DynamicData).item
+            return await self._parse_bilibli_api_opus(dynamic.turn_to_opus())
 
+        dynamic_info = convert(await dynamic.get_info(), DynamicData).item
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
 
         # 下载图片
@@ -193,27 +197,16 @@ class BilibiliParser(BaseParser):
             contents=contents,
         )
 
-    async def parse_opus(self, opus_id: int):
+    async def parse_opus_by_id(self, opus_id: int):
         """解析图文动态信息
 
         Args:
             opus_id (int): 图文动态 id
         """
         opus = Opus(opus_id, await self.credential)
-        return await self._parse_opus_obj(opus)
+        return await self._parse_bilibli_api_opus(opus)
 
-    async def parse_read(self, read_id: int):
-        """解析专栏信息, 使用 Opus 接口
-
-        Args:
-            read_id (int): 专栏 id
-        """
-        from bilibili_api.article import Article
-
-        article = Article(read_id)
-        return await self._parse_opus_obj(await article.turn_to_opus())
-
-    async def _parse_opus_obj(self, bili_opus: Opus):
+    async def _parse_bilibli_api_opus(self, bili_opus: Opus):
         """解析图文动态信息
 
         Args:
