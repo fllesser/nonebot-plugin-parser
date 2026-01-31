@@ -68,7 +68,7 @@ emosvg = ["emosvg>=0.1.6"]
 all = [
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "nonebot-plugin-htmlrender>=0.6.7",
-  "yt-dlp[default]>=2025.1.29",
+  "yt-dlp[default]>=2026.1.29",
   "emosvg>=0.1.6",
 ]
 
@@ -84,8 +84,8 @@ extras = [
   "emosvg>=0.1.6",
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "nonebot-plugin-htmlrender>=0.6.7",
-  "yt-dlp[default]>=2025.1.29",
-  "types-yt-dlp>=2025.1.29.20250120",
+  "yt-dlp[default]>=2026.1.29",
+  "types-yt-dlp>=2026.1.29.20260131",
 ]
 test = [
   "nonebug>=0.4.3,<1.0.0",
