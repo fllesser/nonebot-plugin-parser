@@ -93,3 +93,5 @@ weibo:
 
 nga:
 - https://nga.178.com/read.php?tid=45263995
+- https://ngabbs.com/read.php\?tid=45263995
+- https://bbs.nga.cn/read.php\?tid=45263995
