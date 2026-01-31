@@ -10,7 +10,7 @@ class TikTokParser(BaseParser):
     # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.TIKTOK, display_name="TikTok")
 
-    @handle("tiktok.com", r"(www|vt|vm)\.tiktok\.com/[A-Za-z0-9._?%&+\-=/#@]*")
+    @handle("tiktok", r"(www|vt|vm)\.tiktok\.com/[A-Za-z0-9._?%&+\-=/#@]*")
     async def _parse(self, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
         url, prefix = f"https://{searched.group(0)}", searched.group(1)
