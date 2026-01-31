@@ -130,9 +130,7 @@ class FontSet:
     def new(cls, font_path: Path):
         font_infos: dict[str, FontInfo] = {}
         for name, size, fill in cls._FONT_INFOS:
-            with open(font_path, "rb") as f:
-                font_bytes = BytesIO(f.read())
-            font = ImageFont.truetype(font_bytes, size, encoding="utf-8")
+            font = ImageFont.truetype(font_path, size)
             height = get_font_height(font)
             font_infos[name] = FontInfo(
                 font=font,
@@ -362,23 +360,10 @@ class CommonRenderer(ImageRenderer):
     ) -> int:
         """绘制文本"""
         if emosvg is not None:
-            emosvg.text(
-                ctx.image,
-                xy,
-                lines,
-                font.font,
-                fill=font.fill,
-                line_height=font.line_height,
-            )
+            emosvg.text(ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height)
         else:
             await Apilmoji.text(
-                ctx.image,
-                xy,
-                lines,
-                font.font,
-                fill=font.fill,
-                line_height=font.line_height,
-                source=cls.EMOJI_SOURCE,
+                ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height, source=cls.EMOJI_SOURCE
             )
         return font.line_height * len(lines)
 
@@ -1232,34 +1217,10 @@ class CommonRenderer(ImageRenderer):
         draw.rectangle((x2 - width, y1 + radius, x2, y2 - radius), fill=border_color)  # 右
 
         # 绘制四个圆角边框
-        draw.arc(
-            (x1, y1, x1 + 2 * radius, y1 + 2 * radius),
-            180,
-            270,
-            fill=border_color,
-            width=width,
-        )
-        draw.arc(
-            (x2 - 2 * radius, y1, x2, y1 + 2 * radius),
-            270,
-            360,
-            fill=border_color,
-            width=width,
-        )
-        draw.arc(
-            (x1, y2 - 2 * radius, x1 + 2 * radius, y2),
-            90,
-            180,
-            fill=border_color,
-            width=width,
-        )
-        draw.arc(
-            (x2 - 2 * radius, y2 - 2 * radius, x2, y2),
-            0,
-            90,
-            fill=border_color,
-            width=width,
-        )
+        draw.arc((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=border_color, width=width)
+        draw.arc((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=border_color, width=width)
+        draw.arc((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=border_color, width=width)
+        draw.arc((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=border_color, width=width)
 
     def _wrap_text(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
         """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
