@@ -63,12 +63,12 @@ Repository = "https://github.com/fllesser/nonebot-plugin-parser"
 [project.optional-dependencies]
 htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc4"]
 htmlrender = ["nonebot-plugin-htmlrender>=0.6.7"]
-ytdlp = ["yt-dlp[default]>=2025.12.8"]
+ytdlp = ["yt-dlp[default]>=2025.1.29"]
 emosvg = ["emosvg>=0.1.6"]
 all = [
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "nonebot-plugin-htmlrender>=0.6.7",
-  "yt-dlp[default]>=2025.12.8",
+  "yt-dlp[default]>=2025.1.29",
   "emosvg>=0.1.6",
 ]
 
@@ -76,7 +76,7 @@ all = [
 dev = [
   "nonebot2[fastapi]>=2.4.3,<3.0.0",
   "nonebot-adapter-onebot>=2.4.6",
-  "ruff>=0.14.9,<1.0.0",
+  "ruff>=0.14.14,<1.0.0",
   { include-group = "extras" },
   { include-group = "test" },
 ]
@@ -84,12 +84,12 @@ extras = [
   "emosvg>=0.1.6",
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "nonebot-plugin-htmlrender>=0.6.7",
-  "yt-dlp[default]>=2025.12.8",
-  "types-yt-dlp>=2025.12.8.20251210",
+  "yt-dlp[default]>=2025.1.29",
+  "types-yt-dlp>=2025.1.29.20250120",
 ]
 test = [
   "nonebug>=0.4.3,<1.0.0",
-  "poethepoet>=0.38.0",
+  "poethepoet>=0.40.0",
   "pytest-asyncio>=1.3.0,<1.4.0",
   "pytest-cov>=7.0.0",
   "pytest-xdist>=3.8.0,<4.0.0",
