@@ -428,6 +428,10 @@ real_url = await self.get_redirect_url(
 
 </details>
 
+## 🌟 星星
+
+[![Star History Chart](https://api.star-history.com/svg?repos=fllesser/nonebot-plugin-parser&type=date&legend=top-left)](https://www.star-history.com/#fllesser/nonebot-plugin-parser&type=date&legend=top-left)
+
 ## 🎉 致谢
 
 [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
