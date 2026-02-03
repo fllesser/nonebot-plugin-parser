@@ -1,7 +1,10 @@
 default_install_hook_types: [pre-commit]
 ci:
-  autofix_commit_msg: "chore: auto fix by pre-commit hooks"
   autofix_prs: true
+  autofix_commit_msg: "chore: auto fix by pre-commit hooks"
+  autoupdate_branch: master
+  autoupdate_schedule: monthly
+  autoupdate_commit_msg: "chore: auto update pre-commit hooks"
 repos:
   - repo: https://github.com/fllesser/ruff-rev-sync-pre-commit
     rev: v1.0.0
