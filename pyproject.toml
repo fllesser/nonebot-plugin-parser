@@ -85,7 +85,7 @@ extras = [
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "nonebot-plugin-htmlrender>=0.6.7",
   "yt-dlp[default]>=2026.2.4",
-  "types-yt-dlp>=2026.1.31.20260202",
+  "types-yt-dlp>=2026.2.4.20260206",
 ]
 test = [
   "nonebug>=0.4.3,<1.0.0",

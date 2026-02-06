@@ -1639,14 +1639,14 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.8.0,<4.0.0" },
     { name = "respx", specifier = ">=0.22.0" },
     { name = "ruff", specifier = ">=0.15.0,<1.0.0" },
-    { name = "types-yt-dlp", specifier = ">=2026.1.31.20260202" },
+    { name = "types-yt-dlp", specifier = ">=2026.2.4.20260206" },
     { name = "yt-dlp", extras = ["default"], specifier = ">=2026.2.4" },
 ]
 extras = [
     { name = "emosvg", specifier = ">=0.1.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot-plugin-htmlrender", specifier = ">=0.6.7" },
-    { name = "types-yt-dlp", specifier = ">=2026.1.31.20260202" },
+    { name = "types-yt-dlp", specifier = ">=2026.2.4.20260206" },
     { name = "yt-dlp", extras = ["default"], specifier = ">=2026.2.4" },
 ]
 pydantic-v1 = [{ name = "pydantic", specifier = "<2.0.0" }]
@@ -2699,14 +2699,14 @@ wheels = [
 
 [[package]]
 name = "types-yt-dlp"
-version = "2026.1.31.20260202"
+version = "2026.2.4.20260206"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/fe/64bac01b45cd0eb036d6893c145663e0883ec9bd89ded56012db7b23f2ff/types_yt_dlp-2026.1.31.20260202.tar.gz", hash = "sha256:05504c9036722f72576b59dae25fa7ea1c6f8257807897e3a4c1e74a98be9aaa", size = 42944, upload-time = "2026-02-02T04:11:19.096Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/47/04b17c0497e40d173397e5f364cb1f43cd04c36e8b7c93470436df6a54c6/types_yt_dlp-2026.2.4.20260206.tar.gz", hash = "sha256:375b6dd4afb7c0ee559b144dc96ec94fb1bb8456dd86326f55c1891ddc3fbd07", size = 43026, upload-time = "2026-02-06T04:03:42.972Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/52/59/7535da2a79097384fb9dc923144830e979e742a331c1f239c3b1d1a52015/types_yt_dlp-2026.1.31.20260202-py3-none-any.whl", hash = "sha256:94e921288793df847b8c40bf5737ec6fae1768393cd18289a3444e152ad4510b", size = 58162, upload-time = "2026-02-02T04:11:17.817Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/aa/b89206b1db8867daa622c5f261ddb0523e08680c681d85b9ba1171ffee29/types_yt_dlp-2026.2.4.20260206-py3-none-any.whl", hash = "sha256:ba51fd2a2509110db0ae89f914e32d558ec73db403aa0d5f98fd8084a2a1e15a", size = 58148, upload-time = "2026-02-06T04:03:41.973Z" },
 ]
 
 [[package]]
