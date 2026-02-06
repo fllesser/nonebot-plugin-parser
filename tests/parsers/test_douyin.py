@@ -1,8 +1,6 @@
 import pytest
 from nonebot import logger
 
-from nonebot_plugin_parser.exception import DownloadException
-
 
 @pytest.mark.asyncio
 async def test_common_video():
@@ -68,6 +66,7 @@ async def test_old_video():
 async def test_note():
     """测试普通图文"""
     from nonebot_plugin_parser.parsers import DouyinParser
+    from nonebot_plugin_parser.exception import DownloadException
 
     parser = DouyinParser()
 
