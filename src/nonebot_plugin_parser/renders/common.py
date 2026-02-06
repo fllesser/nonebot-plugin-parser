@@ -613,7 +613,6 @@ class CommonRenderer(ImageRenderer):
             return c in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
 
         lines: list[str] = []
-        emoji_list = emoji.emoji_list(text)
 
         for paragraph in text.splitlines():
             if not paragraph:
@@ -624,6 +623,7 @@ class CommonRenderer(ImageRenderer):
             current_width = 0
             idx = 0
 
+            emoji_list = emoji.emoji_list(paragraph)
             while idx < len(paragraph):
                 # 检查 emoji
                 for ed in emoji_list:
