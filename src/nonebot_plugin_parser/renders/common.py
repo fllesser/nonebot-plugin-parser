@@ -90,14 +90,6 @@ class FontInfo:
             return self.get_char_width(char)
 
     def get_text_width(self, text: str) -> int:
-        """计算文本宽度，使用预计算的字符宽度优化性能
-
-        Args:
-            text: 要计算宽度的文本
-
-        Returns:
-            文本宽度（像素）
-        """
         if not text:
             return 0
 
@@ -777,46 +769,55 @@ class CommonRenderer(ImageRenderer):
         with Image.open(img_path) as original_img:
             img = original_img
 
-            # 根据图片数量决定处理方式
+            # 多张图片需要裁剪为方形
             if img_count >= 2:
-                # 2张及以上图片，统一为方形
                 img = self._crop_to_square(img)
 
-            # 计算图片尺寸
-            if img_count == 1:
-                # 单张图片，根据卡片宽度调整，与视频封面保持一致
-                max_width = content_width
-                max_height = min(self.MAX_IMAGE_HEIGHT, content_width)  # 限制最大高度
-                if img.width > max_width or img.height > max_height:
-                    ratio = min(max_width / img.width, max_height / img.height)
-                    new_size = (int(img.width * ratio), int(img.height * ratio))
-                    img = img.resize(new_size, Image.Resampling.LANCZOS)
-                elif img is original_img:
-                    # 如果没有做任何转换，需要 copy 一份
-                    img = img.copy()
-            else:
-                # 多张图片，计算最大尺寸
-                if img_count in (2, 4):
-                    # 2张或4张图片，使用2列布局
-                    num_gaps = 3  # 2列有3个间距
-                    max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // 2
-                    max_size = min(max_size, self.IMAGE_2_GRID_SIZE)
-                else:
-                    # 多张图片，使用3列布局
-                    num_gaps = self.IMAGE_GRID_COLS + 1
-                    max_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // self.IMAGE_GRID_COLS
-                    max_size = min(max_size, self.IMAGE_3_GRID_SIZE)
+            # 计算目标尺寸
+            target_size = self._calculate_target_size(img_count, content_width)
 
-                # 调整多张图片的尺寸
-                if img.width > max_size or img.height > max_size:
-                    ratio = min(max_size / img.width, max_size / img.height)
-                    new_size = (int(img.width * ratio), int(img.height * ratio))
-                    img = img.resize(new_size, Image.Resampling.LANCZOS)
-                elif img is original_img:
-                    # 如果没有做任何转换，需要 copy 一份
-                    img = img.copy()
+            # 调整图片尺寸
+            if img.width > target_size[0] or img.height > target_size[1]:
+                ratio = min(target_size[0] / img.width, target_size[1] / img.height)
+                new_size = (int(img.width * ratio), int(img.height * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+            elif img is original_img:
+                # 如果没有做任何转换，需要 copy 一份
+                img = img.copy()
 
             return img
+
+    def _calculate_target_size(self, img_count: int, content_width: int) -> tuple[int, int]:
+        """计算图片的目标尺寸
+
+        Args:
+            img_count: 图片数量
+            content_width: 内容宽度
+
+        Returns:
+            目标尺寸 (width, height)
+        """
+        if img_count == 1:
+            # 单张图片：保持宽高比，限制最大高度
+            max_height = min(self.MAX_IMAGE_HEIGHT, content_width)
+            return (content_width, max_height)
+        else:
+            # 多张图片：统一为方形
+            if img_count in (2, 4):
+                # 2张或4张图片使用2列布局
+                cols = 2
+                max_size = self.IMAGE_2_GRID_SIZE
+            else:
+                # 其他数量使用3列布局
+                cols = self.IMAGE_GRID_COLS
+                max_size = self.IMAGE_3_GRID_SIZE
+
+            # 计算网格图片尺寸
+            num_gaps = cols + 1  # 列数+1个间距
+            calculated_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // cols
+            final_size = min(calculated_size, max_size)
+
+            return (final_size, final_size)
 
     def _crop_to_square(self, img: PILImage) -> PILImage:
         """将图片裁剪为方形（上下切割）"""
@@ -1293,74 +1294,6 @@ class CommonRenderer(ImageRenderer):
                     lines.append(current_line)
                     current_line = char
                     current_line_width = char_width
-
-            # 保存最后一行
-            if current_line:
-                lines.append(current_line)
-
-        return lines
-
-    def _wrap_text_old(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
-        """优化的文本自动换行算法，考虑中英文字符宽度相同
-
-        Args:
-            text: 要处理的文本
-            max_width: 最大宽度（像素）
-            font_info: 字体信息对象
-
-        Returns:
-            换行后的文本列表
-        """
-        if not text:
-            return []
-
-        def is_punctuation(char: str) -> bool:
-            """判断是否为不能为行首的标点符号"""
-            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
-
-        lines: list[str] = []
-        paragraphs = text.splitlines()
-
-        for paragraph in paragraphs:
-            if not paragraph:
-                lines.append("")
-                continue
-
-            current_line = ""
-            current_line_width = 0
-            remaining_text = paragraph
-
-            while remaining_text:
-                next_char = remaining_text[0]
-                char_width = font_info.get_char_width_fast(next_char)
-                # 如果当前行为空，直接添加字符
-                if not current_line:
-                    current_line = next_char
-                    current_line_width = char_width
-                    remaining_text = remaining_text[1:]
-                    continue
-
-                # 如果是标点符号，直接添加到当前行（标点符号不应该单独成行）
-                if is_punctuation(next_char):
-                    current_line += next_char
-                    current_line_width += char_width
-                    remaining_text = remaining_text[1:]
-                    continue
-
-                # 测试添加下一个字符后的宽度
-                test_width = current_line_width + char_width
-
-                if test_width <= max_width:
-                    # 宽度合适，继续添加
-                    current_line += next_char
-                    current_line_width = test_width
-                    remaining_text = remaining_text[1:]
-                else:
-                    # 宽度超限，需要断行
-                    lines.append(current_line)
-                    current_line = next_char
-                    current_line_width = char_width
-                    remaining_text = remaining_text[1:]
 
             # 保存最后一行
             if current_line:

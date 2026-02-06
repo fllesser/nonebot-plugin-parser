@@ -1,6 +1,8 @@
 import pytest
 from nonebot import logger
 
+from nonebot_plugin_parser.exception import DownloadException
+
 
 @pytest.mark.asyncio
 async def test_common_video():
@@ -90,7 +92,10 @@ async def test_note():
         logger.success(f"{url} | 抖音图文解析成功")
 
     for url in note_urls:
-        await test_parse(url)
+        try:
+            await test_parse(url)
+        except DownloadException:
+            pytest.skip("抖音 note 下载失败")
 
 
 @pytest.mark.asyncio
