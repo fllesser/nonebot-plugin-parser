@@ -168,8 +168,6 @@ class CommonRenderer(ImageRenderer):
                 with Image.open(logo_path) as img:
                     cls.platform_logos[str(platform_name)] = img.convert("RGBA")
 
-    # ===================== 主渲染流程 =====================
-
     @override
     async def render_image(self, result: ParseResult) -> bytes:
         image = await self._create_card_image(result)
@@ -253,8 +251,6 @@ class CommonRenderer(ImageRenderer):
 
         # 增加安全余量，防止估算不足（最后会裁剪）
         return height + 300
-
-    # ===================== 各部分渲染 =====================
 
     async def _render_header(self, ctx: RenderContext) -> None:
         """渲染头部（头像 + 名称 + 时间）"""
@@ -587,8 +583,6 @@ class CommonRenderer(ImageRenderer):
         ctx.image.paste(repost_img, (card_x, card_y))
 
         ctx.y_pos += container_h + self.SECTION_SPACING
-
-    # ===================== 文本处理 =====================
 
     async def _draw_text_lines(self, ctx: RenderContext, lines: list[str], font: FontInfo) -> int:
         """绘制多行文本"""
