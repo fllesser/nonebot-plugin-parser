@@ -1,9 +1,8 @@
 from io import BytesIO
-from typing import TypeVar, ClassVar, ParamSpec
+from typing import ClassVar
 from pathlib import Path
-from functools import wraps, lru_cache
+from functools import lru_cache
 from dataclasses import dataclass
-from collections.abc import Callable, Awaitable
 from typing_extensions import override
 
 import emoji
@@ -16,10 +15,6 @@ from .base import ParseResult, ImageRenderer
 from ..config import pconfig
 from ..parsers import GraphicsContent
 
-# 定义类型变量
-P = ParamSpec("P")
-T = TypeVar("T")
-
 Color = tuple[int, int, int]
 PILImage = Image.Image
 PILImageDraw = ImageDraw.ImageDraw
@@ -28,38 +23,6 @@ try:
     import emosvg
 except ImportError:
     emosvg = None
-
-
-def suppress_exception(
-    func: Callable[P, T],
-) -> Callable[P, T | None]:
-    """装饰器：捕获所有异常并返回 None"""
-
-    @wraps(func)
-    def wrapper(*args: P.args, **kwargs: P.kwargs) -> T | None:
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            logger.debug(f"函数 {func.__name__} 执行失败: {e}")
-            return None
-
-    return wrapper
-
-
-def suppress_exception_async(
-    func: Callable[P, Awaitable[T]],
-) -> Callable[P, Awaitable[T | None]]:
-    """装饰器：捕获所有异常并返回 None"""
-
-    @wraps(func)
-    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T | None:
-        try:
-            return await func(*args, **kwargs)
-        except Exception as e:
-            logger.debug(f"函数 {func.__name__} 执行失败: {e}")
-            return None
-
-    return wrapper
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -72,31 +35,22 @@ class FontInfo:
     cjk_width: int
 
     def __hash__(self) -> int:
-        """实现哈希方法以支持 @lru_cache"""
         return hash((id(self.font), self.line_height, self.cjk_width, self.fill))
 
     @lru_cache(maxsize=500)
     def get_char_width(self, char: str) -> int:
-        """获取字符宽度，使用缓存优化"""
-        # return int(self.font.getlength(char, direction="ltr"))
         bbox = self.font.getbbox(char)
         return int(bbox[2] - bbox[0])
 
     def get_char_width_fast(self, char: str) -> int:
-        """快速获取单个字符宽度"""
         if "\u4e00" <= char <= "\u9fff":
             return self.cjk_width
-        else:
-            return self.get_char_width(char)
+        return self.get_char_width(char)
 
     def get_text_width(self, text: str) -> int:
         if not text:
             return 0
-
-        total_width = 0
-        for char in text:
-            total_width += self.get_char_width_fast(char)
-        return total_width
+        return sum(self.get_char_width_fast(char) for char in text)
 
 
 @dataclass(eq=False, frozen=True, slots=True)
@@ -110,7 +64,6 @@ class FontSet:
         ("extra", 24, (136, 136, 136)),
         ("indicator", 60, (255, 255, 255)),
     )
-    """字体信息"""
 
     name: FontInfo
     title: FontInfo
@@ -124,184 +77,64 @@ class FontSet:
         for name, size, fill in cls._FONT_INFOS:
             font = ImageFont.truetype(font_path, size)
             height = get_font_height(font)
-            font_infos[name] = FontInfo(
-                font=font,
-                fill=fill,
-                line_height=height,
-                cjk_width=size,
-            )
+            font_infos[name] = FontInfo(font=font, fill=fill, line_height=height, cjk_width=size)
         return FontSet(**font_infos)
-
-
-@dataclass(eq=False, frozen=True, slots=True)
-class SectionData:
-    """基础部分数据类"""
-
-    height: int
-
-
-@dataclass(eq=False, frozen=True, slots=True)
-class HeaderSectionData(SectionData):
-    """Header 部分数据"""
-
-    avatar: PILImage | None
-    name: str
-    time: str | None
-    text_height: int
-
-
-@dataclass(eq=False, frozen=True, slots=True)
-class TitleSectionData(SectionData):
-    """标题部分数据"""
-
-    lines: list[str]
-
-
-@dataclass(eq=False, frozen=True, slots=True)
-class CoverSectionData(SectionData):
-    """封面部分数据"""
-
-    cover_img: PILImage
-
-
-@dataclass(eq=False, frozen=True, slots=True)
-class TextSectionData(SectionData):
-    """文本部分数据"""
-
-    lines: list[str]
-
-
-@dataclass(eq=False, frozen=True, slots=True)
-class ExtraSectionData(SectionData):
-    """额外信息部分数据"""
-
-    lines: list[str]
-
-
-@dataclass(eq=False, frozen=True, slots=True)
-class RepostSectionData(SectionData):
-    """转发部分数据"""
-
-    scaled_image: PILImage
-
-
-@dataclass(eq=False, frozen=True, slots=True)
-class ImageGridSectionData(SectionData):
-    """图片网格部分数据"""
-
-    images: list[PILImage]
-    cols: int
-    rows: int
-    has_more: bool
-    remaining_count: int
-
-
-@dataclass(eq=False, frozen=True, slots=True)
-class GraphicsSectionData(SectionData):
-    """图文内容部分数据"""
-
-    text_lines: list[str]
-    image: PILImage
-    alt_text: str | None = None
 
 
 @dataclass
 class RenderContext:
-    """渲染上下文，存储渲染过程中的状态信息"""
+    """渲染上下文"""
 
     result: ParseResult
-    """解析结果"""
     card_width: int
-    """卡片宽度"""
     content_width: int
-    """内容宽度"""
     image: PILImage
-    """当前图像"""
     draw: PILImageDraw
-    """绘图对象"""
     not_repost: bool = True
-    """是否为非转发内容"""
     y_pos: int = 0
-    """当前绘制位置（绘制阶段使用）"""
 
 
 class CommonRenderer(ImageRenderer):
-    """统一的渲染器，将解析结果转换为消息"""
+    """统一渲染器 - 单次遍历渲染"""
 
-    # 卡片配置常量
+    # 布局常量
     PADDING = 25
-    """内边距"""
     AVATAR_SIZE = 80
-    """头像大小"""
     AVATAR_TEXT_GAP = 15
-    """头像和文字之间的间距"""
-    MAX_COVER_WIDTH = 1000
-    """封面最大宽度"""
-    MAX_COVER_HEIGHT = 800
-    """封面最大高度"""
-    DEFAULT_CARD_WIDTH = 800
-    """默认卡片宽度"""
-    MIN_CARD_WIDTH = 400
-    """最小卡片宽度"""
     SECTION_SPACING = 15
-    """部分间距"""
     NAME_TIME_GAP = 5
-    """名称和时间之间的间距"""
-    AVATAR_UPSCALE_FACTOR = 2
-    """头像圆形框超采样倍数"""
+    DEFAULT_CARD_WIDTH = 800
 
-    # 图片处理配置
-    MIN_COVER_WIDTH = 300
-    """最小封面宽度"""
-    MIN_COVER_HEIGHT = 200
-    """最小封面高度"""
+    # 图片处理
+    MAX_COVER_HEIGHT = 800
     MAX_IMAGE_HEIGHT = 800
-    """图片最大高度限制"""
-    IMAGE_3_GRID_SIZE = 300
-    """图片3列网格最大尺寸"""
     IMAGE_2_GRID_SIZE = 400
-    """图片2列网格最大尺寸"""
+    IMAGE_3_GRID_SIZE = 300
     IMAGE_GRID_SPACING = 4
-    """图片网格间距"""
-    MAX_IMAGES_DISPLAY = 9
-    """最大显示图片数量"""
     IMAGE_GRID_COLS = 3
-    """图片网格列数"""
+    MAX_IMAGES_DISPLAY = 9
 
-    # 转发内容配置
+    # 转发
     REPOST_PADDING = 12
-    """转发内容内边距"""
     REPOST_SCALE = 0.88
-    """转发缩放比例"""
 
-    # 资源名称
-    _EMOJIS = "emojis"
-    _RESOURCES = "resources"
-    _BUTTON_FILENAME = "media_button.png"
-    _FONT_FILENAME = "HYSongYunLangHeiW-1.ttf"
-
-    # 颜色配置
+    # 颜色
     BG_COLOR: ClassVar[Color] = (255, 255, 255)
-    """背景色"""
     REPOST_BG_COLOR: ClassVar[Color] = (247, 247, 247)
-    """转发背景色"""
     REPOST_BORDER_COLOR: ClassVar[Color] = (230, 230, 230)
-    """转发边框色"""
 
-    # 路径配置
+    # 资源路径
+    _RESOURCES = "resources"
+    _EMOJIS = "emojis"
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / _RESOURCES
-    """资源目录"""
-    DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / _FONT_FILENAME
-    """默认字体路径"""
-    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / _BUTTON_FILENAME
-    """默认视频按钮路径"""
+    DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW-1.ttf"
+    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "media_button.png"
     EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
         base_url=pconfig.emoji_cdn,
         style=pconfig.emoji_style,
         cache_dir=pconfig.cache_dir / _EMOJIS,
         enable_tqdm=True,
     )
-    """Emoji Source"""
 
     @classmethod
     def load_resources(cls):
@@ -312,27 +145,20 @@ class CommonRenderer(ImageRenderer):
 
     @classmethod
     def _load_fonts(cls):
-        """预加载自定义字体"""
-
         font_path = pconfig.custom_font or cls.DEFAULT_FONT_PATH
-        # 创建 FontSet 对象
         cls.fontset = FontSet.new(font_path)
         logger.success(f"加载字体「{font_path.name}」成功")
 
     @classmethod
     def _load_video_button(cls):
-        """预加载视频按钮"""
         with Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH) as img:
             cls.video_button_image: PILImage = img.convert("RGBA")
-
-        # 设置透明度为 30%
-        alpha = cls.video_button_image.split()[-1]  # 获取 alpha 通道
-        alpha = alpha.point(lambda x: int(x * 0.3))  # 将透明度设置为 30%
+        alpha = cls.video_button_image.split()[-1]
+        alpha = alpha.point(lambda x: int(x * 0.3))
         cls.video_button_image.putalpha(alpha)
 
     @classmethod
     def _load_platform_logos(cls):
-        """预加载平台 logo"""
         from ..constants import PlatformEnum
 
         cls.platform_logos: dict[str, PILImage] = {}
@@ -342,86 +168,25 @@ class CommonRenderer(ImageRenderer):
                 with Image.open(logo_path) as img:
                     cls.platform_logos[str(platform_name)] = img.convert("RGBA")
 
-    @classmethod
-    async def text(
-        cls,
-        ctx: RenderContext,
-        xy: tuple[int, int],
-        lines: list[str],
-        font: FontInfo,
-    ) -> int:
-        """绘制文本"""
-        if emosvg is not None:
-            emosvg.text(ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height)
-        else:
-            await Apilmoji.text(
-                ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height, source=cls.EMOJI_SOURCE
-            )
-        return font.line_height * len(lines)
-
-    @staticmethod
-    def text_single_line(
-        ctx: RenderContext,
-        xy: tuple[int, int],
-        line: str,
-        font: FontInfo,
-    ) -> int:
-        """绘制单行文本"""
-        ctx.draw.text(xy, line, font=font.font, fill=font.fill)
-        return font.line_height
+    # ===================== 主渲染流程 =====================
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
-        """使用 PIL 绘制通用社交媒体帖子卡片
-
-        Args:
-            result: 解析结果
-
-        Returns:
-            PNG 图片的字节数据，如果没有足够的内容则返回 None
-        """
-        # 调用内部方法生成图片
         image = await self._create_card_image(result)
-
-        # 将图片转换为字节
         output = BytesIO()
         image.save(output, format="PNG")
         return output.getvalue()
 
-    async def _create_card_image(
-        self,
-        result: ParseResult,
-        not_repost: bool = True,
-    ) -> PILImage:
-        """创建卡片图片（内部方法，用于递归调用）
-
-        Args:
-            result: 解析结果
-            not_repost: 是否为非转发内容，转发内容为 False
-
-        Returns:
-            PIL Image 对象
-        """
-        # 计算必要参数
+    async def _create_card_image(self, result: ParseResult, not_repost: bool = True) -> PILImage:
+        """单次遍历渲染"""
         card_width = self.DEFAULT_CARD_WIDTH
         content_width = card_width - 2 * self.PADDING
 
-        # 计算各部分内容的高度
-        sections = await self._calculate_sections(result, content_width)
-
-        # 计算总高度
-        card_height = sum(section.height for section in sections)
-        card_height += self.PADDING * 2 + self.SECTION_SPACING * (len(sections) - 1)
-
-        # 创建画布
+        # 初始估算高度（后续可动态扩展）
+        estimated_height = self._estimate_height(result, content_width)
         bg_color = self.BG_COLOR if not_repost else self.REPOST_BG_COLOR
-        image = Image.new(
-            "RGB",
-            (card_width, card_height),
-            bg_color,
-        )
+        image = Image.new("RGB", (card_width, estimated_height), bg_color)
 
-        # 创建完整的渲染上下文
         ctx = RenderContext(
             result=result,
             card_width=card_width,
@@ -429,873 +194,465 @@ class CommonRenderer(ImageRenderer):
             image=image,
             draw=ImageDraw.Draw(image),
             not_repost=not_repost,
-            y_pos=self.PADDING,  # 以 padding 作为起始
+            y_pos=self.PADDING,
         )
-        # 绘制各部分内容
-        await self._draw_sections(ctx, sections)
-        return image
 
-    @suppress_exception
-    def _load_and_resize_cover(
-        self,
-        cover_path: Path | None,
-        content_width: int,
-    ) -> PILImage | None:
-        """加载并调整封面尺寸
+        # 单次遍历渲染各部分
+        await self._render_header(ctx)
+        await self._render_title(ctx)
+        await self._render_cover_or_images(ctx)
+        await self._render_text(ctx)
+        await self._render_extra(ctx)
+        await self._render_repost(ctx)
 
-        Args:
-            cover_path: 封面路径
-            content_width: 内容区域宽度, 封面会缩放到此宽度以确保左右padding一致
-        """
-        if not cover_path or not cover_path.exists():
-            return None
+        # 裁剪到实际高度
+        final_height = ctx.y_pos + self.PADDING
+        return ctx.image.crop((0, 0, card_width, final_height))
 
-        with Image.open(cover_path) as original_img:
-            # 转换为 RGB 模式以确保兼容性
-            if original_img.mode not in ("RGB", "RGBA"):
-                cover_img = original_img.convert("RGB")
-            else:
-                cover_img = original_img
+    def _ensure_canvas_height(self, ctx: RenderContext, needed_height: int) -> None:
+        """确保画布有足够高度，不够则扩展"""
+        if ctx.y_pos + needed_height + self.PADDING > ctx.image.height:
+            # 扩展画布（每次扩展 1.5 倍或至少满足需求）
+            new_height = max(int(ctx.image.height * 1.5), ctx.y_pos + needed_height + self.PADDING * 2)
+            bg_color = self.BG_COLOR if ctx.not_repost else self.REPOST_BG_COLOR
+            new_image = Image.new("RGB", (ctx.card_width, new_height), bg_color)
+            new_image.paste(ctx.image, (0, 0))
+            ctx.image = new_image
+            ctx.draw = ImageDraw.Draw(new_image)
 
-            # 封面宽度应该等于内容区域宽度，以确保左右padding一致
-            target_width = content_width
+    def _estimate_height(self, result: ParseResult, content_width: int) -> int:
+        """估算画布高度"""
+        height = self.PADDING * 2  # 上下边距
 
-            # 计算缩放比例（保持宽高比）
-            if cover_img.width != target_width:
-                scale_ratio = target_width / cover_img.width
-                new_width = target_width
-                new_height = int(cover_img.height * scale_ratio)
+        # 头部
+        if result.author:
+            height += self.AVATAR_SIZE + self.SECTION_SPACING
 
-                # 检查高度是否超过最大限制
-                if new_height > self.MAX_COVER_HEIGHT:
-                    # 如果高度超限，按高度重新计算
-                    scale_ratio = self.MAX_COVER_HEIGHT / new_height
-                    new_height = self.MAX_COVER_HEIGHT
-                    new_width = int(new_width * scale_ratio)
-
-                cover_img = cover_img.resize(
-                    (new_width, new_height),
-                    Image.Resampling.LANCZOS,
-                )
-            elif cover_img is original_img:
-                # 如果没有做任何转换，需要 copy 一份，因为原图会在 with 结束时关闭
-                cover_img = cover_img.copy()
-
-            return cover_img
-
-    @suppress_exception
-    def _load_and_process_avatar(self, avatar: Path | None) -> PILImage | None:
-        """加载并处理头像（圆形裁剪，带抗锯齿）"""
-        if not avatar or not avatar.exists():
-            return None
-
-        with Image.open(avatar) as original_img:
-            # 转换为 RGBA 模式（用于更好的抗锯齿效果）
-            if original_img.mode != "RGBA":
-                avatar_img = original_img.convert("RGBA")
-            else:
-                avatar_img = original_img
-
-            # 使用超采样技术提高质量：先放大到指定倍数
-            scale = self.AVATAR_UPSCALE_FACTOR
-            temp_size = self.AVATAR_SIZE * scale
-            avatar_img = avatar_img.resize(
-                (temp_size, temp_size),
-                Image.Resampling.LANCZOS,
-            )
-
-            # 创建高分辨率圆形遮罩（带抗锯齿）
-            mask = Image.new("L", (temp_size, temp_size), 0)
-            mask_draw = ImageDraw.Draw(mask)
-            mask_draw.ellipse((0, 0, temp_size - 1, temp_size - 1), fill=255)
-
-            # 应用遮罩
-            output_avatar = Image.new(
-                "RGBA",
-                (temp_size, temp_size),
-                (0, 0, 0, 0),
-            )
-            output_avatar.paste(avatar_img, (0, 0))
-            output_avatar.putalpha(mask)
-
-            # 缩小到目标尺寸（抗锯齿缩放）
-            output_avatar = output_avatar.resize(
-                (self.AVATAR_SIZE, self.AVATAR_SIZE),
-                Image.Resampling.LANCZOS,
-            )
-
-            return output_avatar
-
-    async def _calculate_sections(self, result: ParseResult, content_width: int) -> list[SectionData]:
-        """计算各部分内容的高度和数据"""
-        sections: list[SectionData] = []
-
-        # 1. Header 部分
-        header_section = await self._calculate_header_section(result)
-        if header_section is not None:
-            sections.append(header_section)
-
-        # 2. 标题部分
+        # 标题（估算）
         if result.title:
-            title_lines = self._wrap_text(
-                result.title,
-                content_width,
-                self.fontset.title,
-            )
-            title_height = len(title_lines) * self.fontset.title.line_height
-            sections.append(TitleSectionData(height=title_height, lines=title_lines))
+            lines = len(result.title) * self.fontset.title.cjk_width // content_width + 1
+            height += lines * self.fontset.title.line_height + self.SECTION_SPACING
 
-        # 3. 封面，图集，图文内容
-        if cover_img := self._load_and_resize_cover(
-            await result.cover_path,
-            content_width=content_width,
-        ):
-            sections.append(CoverSectionData(height=cover_img.height, cover_img=cover_img))
-        elif result.img_contents:
-            # 如果没有封面但有图片，处理图片列表
-            img_grid_section = await self._calculate_image_grid_section(
-                result,
-                content_width,
-            )
-            if img_grid_section:
-                sections.append(img_grid_section)
-        elif result.graphics_contents:
-            for graphics_content in result.graphics_contents:
-                graphics_section = await self._calculate_graphics_section(
-                    graphics_content,
-                    content_width,
-                )
-                if graphics_section:
-                    sections.append(graphics_section)
+        # 封面或图片（图文内容由动态扩展处理，此处仅作基础估算）
+        height += self.MAX_COVER_HEIGHT + self.SECTION_SPACING
 
-        # 5. 文本内容
+        # 文本（估算）
         if result.text:
-            text_lines = self._wrap_text(
-                result.text,
-                content_width,
-                self.fontset.text,
-            )
-            text_height = len(text_lines) * self.fontset.text.line_height
-            sections.append(TextSectionData(height=text_height, lines=text_lines))
+            lines = len(result.text) * self.fontset.text.cjk_width // content_width + 1
+            height += lines * self.fontset.text.line_height + self.SECTION_SPACING
 
-        # 6. 额外信息
+        # 额外信息
         if result.extra_info:
-            extra_lines = self._wrap_text(
-                result.extra_info,
-                content_width,
-                self.fontset.extra,
-            )
-            extra_height = len(extra_lines) * self.fontset.extra.line_height
-            sections.append(ExtraSectionData(height=extra_height, lines=extra_lines))
+            height += self.fontset.extra.line_height * 3 + self.SECTION_SPACING
 
-        # 7. 转发内容
+        # 转发内容（递归估算）
         if result.repost:
-            repost_section = await self._calculate_repost_section(result.repost)
-            sections.append(repost_section)
+            height += int(self._estimate_height(result.repost, content_width) * self.REPOST_SCALE)
+            height += self.REPOST_PADDING * 2 + self.SECTION_SPACING
 
-        return sections
+        return height
 
-    @suppress_exception_async
-    async def _calculate_graphics_section(
-        self, graphics_content: GraphicsContent, content_width: int
-    ) -> GraphicsSectionData | None:
-        """计算图文内容部分的高度和内容"""
-        # 加载图片
-        img_path = await graphics_content.get_path()
-        with Image.open(img_path) as original_img:
-            # 调整图片尺寸以适应内容宽度
-            if original_img.width > content_width:
-                ratio = content_width / original_img.width
-                new_height = int(original_img.height * ratio)
-                image = original_img.resize(
-                    (content_width, new_height),
-                    Image.Resampling.LANCZOS,
-                )
-            else:
-                # 如果不需要缩放，copy 一份
-                image = original_img.copy()
+    # ===================== 各部分渲染 =====================
 
-            # 处理文本内容
-            text_lines = []
-            if graphics_content.text:
-                text_lines = self._wrap_text(
-                    graphics_content.text,
-                    content_width,
-                    self.fontset.text,
-                )
+    async def _render_header(self, ctx: RenderContext) -> None:
+        """渲染头部（头像 + 名称 + 时间）"""
+        if ctx.result.author is None:
+            return
 
-            # 计算总高度：文本高度 + 图片高度 + alt文本高度 + 间距
-            text_height = len(text_lines) * self.fontset.text.line_height if text_lines else 0
-            alt_height = self.fontset.extra.line_height if graphics_content.alt else 0
-            total_height = text_height + image.height + alt_height
-            if text_lines:
-                total_height += self.SECTION_SPACING  # 文本和图片之间的间距
-            if graphics_content.alt:
-                total_height += self.SECTION_SPACING  # 图片和alt文本之间的间距
-
-            return GraphicsSectionData(
-                height=total_height,
-                text_lines=text_lines,
-                image=image,
-                alt_text=graphics_content.alt,
-            )
-
-    async def _calculate_header_section(
-        self,
-        result: ParseResult,
-    ) -> HeaderSectionData | None:
-        """计算 header 部分的高度和内容"""
-        if result.author is None:
-            return None
-
-        # 加载头像
-        avatar_img = self._load_and_process_avatar(await result.author.get_avatar_path())
-
-        text_height = self.fontset.name.line_height
-        time = result.formartted_datetime
-        if time:
-            text_height += self.NAME_TIME_GAP + self.fontset.extra.line_height
-
-        header_height = max(self.AVATAR_SIZE, text_height)
-
-        return HeaderSectionData(
-            height=header_height,
-            avatar=avatar_img,
-            name=result.author.name,
-            time=result.formartted_datetime,
-            text_height=text_height,
-        )
-
-    async def _calculate_repost_section(self, repost: ParseResult) -> RepostSectionData:
-        """计算转发内容的高度和内容（递归调用绘制方法）"""
-        repost_image = await self._create_card_image(repost, False)
-        # 缩放图片
-        scaled_width = int(repost_image.width * self.REPOST_SCALE)
-        scaled_height = int(repost_image.height * self.REPOST_SCALE)
-        repost_image_scaled = repost_image.resize(
-            (scaled_width, scaled_height),
-            Image.Resampling.LANCZOS,
-        )
-
-        return RepostSectionData(
-            height=scaled_height + self.REPOST_PADDING * 2,  # 加上转发容器的内边距
-            scaled_image=repost_image_scaled,
-        )
-
-    async def _calculate_image_grid_section(
-        self, result: ParseResult, content_width: int
-    ) -> ImageGridSectionData | None:
-        """计算图片网格部分的高度和内容"""
-        if not result.img_contents:
-            return None
-
-        # 检查是否有超过最大显示数量的图片
-        total_images = len(result.img_contents)
-        has_more = total_images > self.MAX_IMAGES_DISPLAY
-
-        # 如果超过最大显示数量，处理前N张，最后一张显示+N效果
-        if has_more:
-            img_contents = result.img_contents[: self.MAX_IMAGES_DISPLAY]
-            remaining_count = total_images - self.MAX_IMAGES_DISPLAY
-        else:
-            img_contents = result.img_contents[: self.MAX_IMAGES_DISPLAY]
-            remaining_count = 0
-
-        processed_images = []
-        img_count = len(img_contents)
-
-        for img_content in img_contents:
-            img_path = await img_content.get_path()
-            # 使用装饰器保护的方法，失败会返回 None
-            img = await self._load_and_process_grid_image(img_path, content_width, img_count)
-            if img is not None:
-                processed_images.append(img)
-
-        if not processed_images:
-            return None
-
-        # 计算网格布局
-        image_count = len(processed_images)
-
-        if image_count == 1:
-            # 单张图片
-            cols, rows = 1, 1
-        elif image_count in (2, 4):
-            # 2张或4张图片，使用2列布局
-            cols, rows = 2, (image_count + 1) // 2
-        else:
-            # 多张图片，使用3列布局（九宫格）
-            cols = self.IMAGE_GRID_COLS
-            rows = (image_count + cols - 1) // cols
-
-        # 计算高度
-        max_img_height = max(img.height for img in processed_images)
-        if len(processed_images) == 1:
-            # 单张图片
-            grid_height = max_img_height
-        else:
-            # 多张图片：上间距 + (图片 + 间距) * 行数
-            grid_height = self.IMAGE_GRID_SPACING + rows * (max_img_height + self.IMAGE_GRID_SPACING)
-
-        return ImageGridSectionData(
-            height=grid_height,
-            images=processed_images,
-            cols=cols,
-            rows=rows,
-            has_more=has_more,
-            remaining_count=remaining_count,
-        )
-
-    @suppress_exception_async
-    async def _load_and_process_grid_image(
-        self,
-        img_path: Path,
-        content_width: int,
-        img_count: int,
-    ) -> PILImage | None:
-        """加载并处理网格图片
-
-        Args:
-            img_path: 图片路径
-            content_width: 内容宽度
-            img_count: 图片总数（用于决定处理方式）
-
-        Returns:
-            处理后的图片对象，失败返回 None
-        """
-        if not img_path.exists():
-            return None
-
-        with Image.open(img_path) as original_img:
-            img = original_img
-
-            # 多张图片需要裁剪为方形
-            if img_count >= 2:
-                img = self._crop_to_square(img)
-
-            # 计算目标尺寸
-            target_size = self._calculate_target_size(img_count, content_width)
-
-            # 调整图片尺寸
-            if img.width > target_size[0] or img.height > target_size[1]:
-                ratio = min(target_size[0] / img.width, target_size[1] / img.height)
-                new_size = (int(img.width * ratio), int(img.height * ratio))
-                img = img.resize(new_size, Image.Resampling.LANCZOS)
-            elif img is original_img:
-                # 如果没有做任何转换，需要 copy 一份
-                img = img.copy()
-
-            return img
-
-    def _calculate_target_size(self, img_count: int, content_width: int) -> tuple[int, int]:
-        """计算图片的目标尺寸
-
-        Args:
-            img_count: 图片数量
-            content_width: 内容宽度
-
-        Returns:
-            目标尺寸 (width, height)
-        """
-        if img_count == 1:
-            # 单张图片：保持宽高比，限制最大高度
-            max_height = min(self.MAX_IMAGE_HEIGHT, content_width)
-            return (content_width, max_height)
-        else:
-            # 多张图片：统一为方形
-            if img_count in (2, 4):
-                # 2张或4张图片使用2列布局
-                cols = 2
-                max_size = self.IMAGE_2_GRID_SIZE
-            else:
-                # 其他数量使用3列布局
-                cols = self.IMAGE_GRID_COLS
-                max_size = self.IMAGE_3_GRID_SIZE
-
-            # 计算网格图片尺寸
-            num_gaps = cols + 1  # 列数+1个间距
-            calculated_size = (content_width - self.IMAGE_GRID_SPACING * num_gaps) // cols
-            final_size = min(calculated_size, max_size)
-
-            return (final_size, final_size)
-
-    def _crop_to_square(self, img: PILImage) -> PILImage:
-        """将图片裁剪为方形（上下切割）"""
-        width, height = img.size
-
-        if width == height:
-            return img
-
-        if width > height:
-            # 宽图片，左右切割
-            left = (width - height) // 2
-            right = left + height
-            return img.crop((left, 0, right, height))
-        else:
-            # 高图片，上下切割
-            top = (height - width) // 2
-            bottom = top + width
-            return img.crop((0, top, width, bottom))
-
-    async def _draw_sections(self, ctx: RenderContext, sections: list[SectionData]) -> None:
-        """绘制所有内容到画布上"""
-        for section in sections:
-            match section:
-                case HeaderSectionData() as header:
-                    await self._draw_header(ctx, header)
-                case TitleSectionData() as title:
-                    await self._draw_title(ctx, title.lines)
-                case CoverSectionData() as cover:
-                    self._draw_cover(ctx, cover.cover_img)
-                case TextSectionData() as text:
-                    await self._draw_text(ctx, text.lines)
-                case GraphicsSectionData() as graphics:
-                    await self._draw_graphics(ctx, graphics)
-                case ExtraSectionData() as extra:
-                    await self._draw_extra(ctx, extra.lines)
-                case RepostSectionData() as repost:
-                    self._draw_repost(ctx, repost)
-                case ImageGridSectionData() as image_grid:
-                    self._draw_image_grid(ctx, image_grid)
-
-    def _create_avatar_placeholder(self) -> PILImage:
-        """创建默认头像占位符"""
-        # 头像占位符配置常量
-        placeholder_bg_color = (230, 230, 230, 255)
-        placeholder_fg_color = (200, 200, 200, 255)
-        head_ratio = 0.35  # 头部位置比例
-        head_radius_ratio = 1 / 6  # 头部半径比例
-        shoulder_y_ratio = 0.55  # 肩部 Y 位置比例
-        shoulder_width_ratio = 0.55  # 肩部宽度比例
-        shoulder_height_ratio = 0.6  # 肩部高度比例
-
-        placeholder = Image.new(
-            "RGBA",
-            (self.AVATAR_SIZE, self.AVATAR_SIZE),
-            (0, 0, 0, 0),
-        )
-        draw = ImageDraw.Draw(placeholder)
-
-        # 绘制圆形背景
-        draw.ellipse(
-            (0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1),
-            fill=placeholder_bg_color,
-        )
-
-        # 绘制简单的用户图标（圆形头部 + 肩部）
-        center_x = self.AVATAR_SIZE // 2
-
-        # 头部圆形
-        head_radius = int(self.AVATAR_SIZE * head_radius_ratio)
-        head_y = int(self.AVATAR_SIZE * head_ratio)
-        draw.ellipse(
-            (
-                center_x - head_radius,
-                head_y - head_radius,
-                center_x + head_radius,
-                head_y + head_radius,
-            ),
-            fill=placeholder_fg_color,
-        )
-
-        # 肩部
-        shoulder_y = int(self.AVATAR_SIZE * shoulder_y_ratio)
-        shoulder_width = int(self.AVATAR_SIZE * shoulder_width_ratio)
-        shoulder_height = int(self.AVATAR_SIZE * shoulder_height_ratio)
-        draw.ellipse(
-            (
-                center_x - shoulder_width // 2,
-                shoulder_y,
-                center_x + shoulder_width // 2,
-                shoulder_y + shoulder_height,
-            ),
-            fill=placeholder_fg_color,
-        )
-
-        # 创建圆形遮罩确保不超出边界
-        mask = Image.new("L", (self.AVATAR_SIZE, self.AVATAR_SIZE), 0)
-        mask_draw = ImageDraw.Draw(mask)
-        mask_draw.ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=255)
-
-        # 应用遮罩
-        placeholder.putalpha(mask)
-        return placeholder
-
-    async def _draw_header(self, ctx: RenderContext, section: HeaderSectionData) -> None:
-        """绘制 header 部分"""
         x_pos = self.PADDING
 
-        # 绘制头像或占位符
-        avatar = section.avatar if section.avatar else self._create_avatar_placeholder()
+        # 头像
+        avatar_path = await ctx.result.author.get_avatar_path()
+        avatar = self._load_avatar(avatar_path)
         ctx.image.paste(avatar, (x_pos, ctx.y_pos), avatar)
 
-        # 文字始终从头像位置后面开始
+        # 文字区域
         text_x = self.PADDING + self.AVATAR_SIZE + self.AVATAR_TEXT_GAP
+        name_height = self.fontset.name.line_height
+        time_str = ctx.result.formartted_datetime
+        time_height = (self.NAME_TIME_GAP + self.fontset.extra.line_height) if time_str else 0
+        text_height = name_height + time_height
 
-        # 计算文字垂直居中位置（对齐头像中轴）
-        avatar_center = ctx.y_pos + self.AVATAR_SIZE // 2
-        text_start_y = avatar_center - section.text_height // 2
-        text_y = text_start_y
+        # 垂直居中
+        text_y = ctx.y_pos + (self.AVATAR_SIZE - text_height) // 2
 
-        # 发布者名称（蓝色）
-        text_y += self.text_single_line(
-            ctx,
+        # 名称
+        ctx.draw.text(
             (text_x, text_y),
-            section.name,
-            font=self.fontset.name,
+            ctx.result.author.name,
+            font=self.fontset.name.font,
+            fill=self.fontset.name.fill,
         )
+        text_y += name_height
 
-        # 时间（灰色）
-        if section.time:
+        # 时间
+        if time_str:
             text_y += self.NAME_TIME_GAP
-            text_y += self.text_single_line(
-                ctx,
+            ctx.draw.text(
                 (text_x, text_y),
-                section.time,
-                font=self.fontset.extra,
+                time_str,
+                font=self.fontset.extra.font,
+                fill=self.fontset.extra.fill,
             )
 
-        # 在右侧绘制平台 logo（仅在非转发内容时绘制）
+        # 平台 Logo
         if ctx.not_repost:
             platform_name = ctx.result.platform.name
             if platform_name in self.platform_logos:
-                logo_img = self.platform_logos[platform_name]
-                # 计算 logo 位置（右侧对齐）
-                logo_x = ctx.image.width - self.PADDING - logo_img.width
-                # 垂直居中对齐头像
-                logo_y = ctx.y_pos + (self.AVATAR_SIZE - logo_img.height) // 2
-                ctx.image.paste(logo_img, (logo_x, logo_y), logo_img)
+                logo = self.platform_logos[platform_name]
+                logo_x = ctx.image.width - self.PADDING - logo.width
+                logo_y = ctx.y_pos + (self.AVATAR_SIZE - logo.height) // 2
+                ctx.image.paste(logo, (logo_x, logo_y), logo)
 
-        ctx.y_pos += section.height + self.SECTION_SPACING
+        ctx.y_pos += self.AVATAR_SIZE + self.SECTION_SPACING
 
-    async def _draw_title(self, ctx: RenderContext, lines: list[str]) -> None:
-        """绘制标题"""
-        ctx.y_pos += await self.text(
-            ctx,
-            (self.PADDING, ctx.y_pos),
-            lines,
-            self.fontset.title,
+    def _load_avatar(self, avatar_path: Path | None) -> PILImage:
+        """加载头像（带圆形裁剪）"""
+        if avatar_path and avatar_path.exists():
+            try:
+                with Image.open(avatar_path) as img:
+                    avatar = img.convert("RGBA").resize((self.AVATAR_SIZE, self.AVATAR_SIZE), Image.Resampling.LANCZOS)
+            except Exception:
+                avatar = self._create_avatar_placeholder()
+        else:
+            avatar = self._create_avatar_placeholder()
+
+        # 圆形遮罩
+        mask = Image.new("L", (self.AVATAR_SIZE, self.AVATAR_SIZE), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=255)
+        avatar.putalpha(mask)
+        return avatar
+
+    def _create_avatar_placeholder(self) -> PILImage:
+        """创建默认头像"""
+        size = self.AVATAR_SIZE
+        placeholder = Image.new("RGBA", (size, size), (230, 230, 230, 255))
+        draw = ImageDraw.Draw(placeholder)
+
+        # 简单的人形图标
+        center = size // 2
+        head_r = size // 6
+        draw.ellipse(
+            (center - head_r, size * 35 // 100 - head_r, center + head_r, size * 35 // 100 + head_r),
+            fill=(200, 200, 200, 255),
         )
+        draw.ellipse(
+            (center - size * 27 // 100, size * 55 // 100, center + size * 27 // 100, size * 115 // 100),
+            fill=(200, 200, 200, 255),
+        )
+        return placeholder
 
+    async def _render_title(self, ctx: RenderContext) -> None:
+        """渲染标题"""
+        if not ctx.result.title:
+            return
+
+        lines = self._wrap_text(ctx.result.title, ctx.content_width, self.fontset.title)
+        ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.title)
         ctx.y_pos += self.SECTION_SPACING
 
-    def _draw_cover(self, ctx: RenderContext, cover_img: PILImage) -> None:
-        """绘制封面"""
-        # 封面从左边padding开始，和文字、头像对齐
-        x_pos = self.PADDING
-        ctx.image.paste(cover_img, (x_pos, ctx.y_pos))
+    async def _render_cover_or_images(self, ctx: RenderContext) -> None:
+        """渲染封面或图片网格"""
+        # 尝试封面
+        cover_path = await ctx.result.cover_path
+        if cover_path and cover_path.exists():
+            cover = self._load_cover(cover_path, ctx.content_width)
+            if cover:
+                x_pos = self.PADDING
+                ctx.image.paste(cover, (x_pos, ctx.y_pos))
+                # 视频按钮
+                btn_size = 128
+                btn_x = x_pos + (cover.width - btn_size) // 2
+                btn_y = ctx.y_pos + (cover.height - btn_size) // 2
+                ctx.image.paste(self.video_button_image, (btn_x, btn_y), self.video_button_image)
+                ctx.y_pos += cover.height + self.SECTION_SPACING
+                return
 
-        # 添加视频播放按钮（居中）
-        button_size = 128  # 固定使用 128x128 尺寸
-        button_x = x_pos + (cover_img.width - button_size) // 2
-        button_y = ctx.y_pos + (cover_img.height - button_size) // 2
-        ctx.image.paste(
-            self.video_button_image,
-            (button_x, button_y),
-            self.video_button_image,
-        )
+        # 尝试图片网格
+        if ctx.result.img_contents:
+            await self._render_image_grid(ctx)
+            return
 
-        ctx.y_pos += cover_img.height + self.SECTION_SPACING
+        # 尝试图文内容
+        if ctx.result.graphics_contents:
+            for gc in ctx.result.graphics_contents:
+                await self._render_graphics(ctx, gc)
 
-    async def _draw_text(self, ctx: RenderContext, lines: list[str]) -> None:
-        """绘制文本内容"""
-        ctx.y_pos += await self.text(
-            ctx,
-            (self.PADDING, ctx.y_pos),
-            lines,
-            self.fontset.text,
-        )
-        ctx.y_pos += self.SECTION_SPACING
+    def _load_cover(self, cover_path: Path, content_width: int) -> PILImage | None:
+        """加载并缩放封面"""
+        try:
+            with Image.open(cover_path) as img:
+                if img.mode not in ("RGB", "RGBA"):
+                    img = img.convert("RGB")
 
-    async def _draw_graphics(self, ctx: RenderContext, section: GraphicsSectionData) -> None:
-        """绘制图文内容"""
-        # 绘制文本内容（如果有）
-        if section.text_lines:
-            ctx.y_pos += await self.text(
-                ctx,
-                (self.PADDING, ctx.y_pos),
-                section.text_lines,
-                self.fontset.text,
-            )
-            ctx.y_pos += self.SECTION_SPACING  # 文本和图片之间的间距
+                # 缩放到内容宽度
+                if img.width != content_width:
+                    ratio = content_width / img.width
+                    new_h = int(img.height * ratio)
+                    if new_h > self.MAX_COVER_HEIGHT:
+                        ratio = self.MAX_COVER_HEIGHT / new_h
+                        new_h = self.MAX_COVER_HEIGHT
+                        content_width = int(content_width * ratio)
+                    return img.resize((content_width, new_h), Image.Resampling.LANCZOS)
+                return img.copy()
+        except Exception as e:
+            logger.debug(f"加载封面失败: {e}")
+            return None
 
-        # 绘制图片（居中）
-        x_pos = self.PADDING + (ctx.content_width - section.image.width) // 2
-        ctx.image.paste(section.image, (x_pos, ctx.y_pos))
-        ctx.y_pos += section.image.height
+    async def _render_image_grid(self, ctx: RenderContext) -> None:
+        """渲染图片网格"""
+        contents = ctx.result.img_contents
+        total = len(contents)
+        has_more = total > self.MAX_IMAGES_DISPLAY
+        display_contents = contents[: self.MAX_IMAGES_DISPLAY]
 
-        # 绘制 alt 文本（如果有，居中显示）
-        if section.alt_text:
-            ctx.y_pos += self.SECTION_SPACING  # 图片和alt文本之间的间距
-            # 计算文本居中位置
-            extra_font_info = self.fontset.extra
-            text_width = extra_font_info.get_text_width(section.alt_text)
-            text_x = self.PADDING + (ctx.content_width - text_width) // 2
-            ctx.y_pos += self.text_single_line(
-                ctx,
-                (text_x, ctx.y_pos),
-                section.alt_text,
-                self.fontset.extra,
-            )
-
-        ctx.y_pos += self.SECTION_SPACING
-
-    async def _draw_extra(self, ctx: RenderContext, lines: list[str]) -> None:
-        """绘制额外信息"""
-        ctx.y_pos += await self.text(
-            ctx,
-            (self.PADDING, ctx.y_pos),
-            lines,
-            self.fontset.extra,
-        )
-
-    def _draw_repost(self, ctx: RenderContext, section: RepostSectionData) -> None:
-        """绘制转发内容"""
-        # 获取缩放后的转发图片
-        repost_image = section.scaled_image
-
-        # 转发框占满整个内容区域，左右和边缘对齐
-        repost_x = self.PADDING
-        repost_y = ctx.y_pos
-        repost_width = ctx.content_width  # 转发框宽度等于内容区域宽度
-        repost_height = section.height
-
-        # 绘制转发背景（圆角矩形）
-        self._draw_rounded_rectangle(
-            ctx.image,
-            (repost_x, repost_y, repost_x + repost_width, repost_y + repost_height),
-            self.REPOST_BG_COLOR,
-            radius=8,
-        )
-
-        # 绘制转发边框
-        self._draw_rounded_rectangle_border(
-            ctx.draw,
-            (repost_x, repost_y, repost_x + repost_width, repost_y + repost_height),
-            self.REPOST_BORDER_COLOR,
-            radius=8,
-            width=1,
-        )
-
-        # 转发图片在转发容器中居中
-        card_x = repost_x + (repost_width - repost_image.width) // 2
-        card_y = repost_y + self.REPOST_PADDING
-
-        # 将缩放后的转发图片贴到主画布上
-        ctx.image.paste(repost_image, (card_x, card_y))
-
-        ctx.y_pos += repost_height + self.SECTION_SPACING
-
-    def _draw_image_grid(self, ctx: RenderContext, section: ImageGridSectionData) -> None:
-        """绘制图片网格"""
-        images = section.images
-        cols = section.cols
-        rows = section.rows
-        has_more = section.has_more
-        remaining_count = section.remaining_count
+        images: list[PILImage] = []
+        for content in display_contents:
+            try:
+                path = await content.get_path()
+                img = self._load_grid_image(path, ctx.content_width, len(display_contents))
+                if img:
+                    images.append(img)
+            except Exception:
+                continue
 
         if not images:
             return
 
-        # 计算每个图片的尺寸和间距
-        available_width = ctx.content_width  # 可用宽度
-        img_spacing = self.IMAGE_GRID_SPACING
+        count = len(images)
+        cols = 1 if count == 1 else (2 if count in (2, 4) else self.IMAGE_GRID_COLS)
+        rows = (count + cols - 1) // cols
 
-        # 根据图片数量计算每个图片的尺寸
-        if len(images) == 1:
-            # 单张图片，使用完整的可用宽度，与视频封面保持一致
-            max_img_size = available_width
+        # 计算尺寸
+        if count == 1:
+            img_size = ctx.content_width
         else:
-            # 多张图片，统一使用间距计算，确保所有间距相同
-            num_gaps = cols + 1  # 2列有3个间距，3列有4个间距
-            calculated_size = (available_width - img_spacing * num_gaps) // cols
-            max_img_size = self.IMAGE_2_GRID_SIZE if cols == 2 else self.IMAGE_3_GRID_SIZE
-            max_img_size = min(calculated_size, max_img_size)
+            num_gaps = cols + 1
+            max_size = self.IMAGE_2_GRID_SIZE if cols == 2 else self.IMAGE_3_GRID_SIZE
+            img_size = min((ctx.content_width - self.IMAGE_GRID_SPACING * num_gaps) // cols, max_size)
 
+        spacing = self.IMAGE_GRID_SPACING
         current_y = ctx.y_pos
 
         for row in range(rows):
             row_start = row * cols
-            row_end = min(row_start + cols, len(images))
-            row_images = images[row_start:row_end]
+            row_imgs = images[row_start : row_start + cols]
+            max_h = max(img.height for img in row_imgs)
 
-            # 计算这一行的最大高度
-            max_height = max(img.height for img in row_images)
+            for i, img in enumerate(row_imgs):
+                img_x = self.PADDING + spacing + i * (img_size + spacing)
+                img_y = current_y + spacing + (max_h - img.height) // 2
+                ctx.image.paste(img, (img_x, img_y))
 
-            # 绘制这一行的图片
-            for i, img in enumerate(row_images):
-                # 统一使用间距计算方式
-                img_x = self.PADDING + img_spacing + i * (max_img_size + img_spacing)
+                # +N 指示器
+                if has_more and row == rows - 1 and i == len(row_imgs) - 1:
+                    remaining = total - self.MAX_IMAGES_DISPLAY
+                    self._draw_more_indicator(ctx.image, img_x, current_y + spacing, img.width, img.height, remaining)
 
-                img_y = current_y + img_spacing  # 每行上方都有间距
+            current_y += spacing + max_h
 
-                # 居中放置图片
-                y_offset = (max_height - img.height) // 2
-                ctx.image.paste(img, (img_x, img_y + y_offset))
+        ctx.y_pos = current_y + spacing + self.SECTION_SPACING
 
-                # 如果是最后一张图片且有更多图片，绘制+N效果
-                if has_more and row == rows - 1 and i == len(row_images) - 1 and len(images) == self.MAX_IMAGES_DISPLAY:
-                    self._draw_more_indicator(
-                        ctx.image,
-                        img_x,
-                        img_y,
-                        max_img_size,
-                        max_height,
-                        remaining_count,
-                    )
+    def _load_grid_image(self, path: Path, content_width: int, count: int) -> PILImage | None:
+        """加载网格图片"""
+        try:
+            with Image.open(path) as img:
+                # 多图裁剪为方形
+                if count >= 2:
+                    w, h = img.size
+                    if w != h:
+                        s = min(w, h)
+                        left = (w - s) // 2
+                        top = (h - s) // 2
+                        img = img.crop((left, top, left + s, top + s))
 
-            current_y += img_spacing + max_height
+                # 计算目标尺寸
+                if count == 1:
+                    target = (content_width, min(self.MAX_IMAGE_HEIGHT, content_width))
+                else:
+                    cols = 2 if count in (2, 4) else self.IMAGE_GRID_COLS
+                    max_size = self.IMAGE_2_GRID_SIZE if cols == 2 else self.IMAGE_3_GRID_SIZE
+                    num_gaps = cols + 1
+                    size = min((content_width - self.IMAGE_GRID_SPACING * num_gaps) // cols, max_size)
+                    target = (size, size)
 
-        ctx.y_pos = current_y + img_spacing + self.SECTION_SPACING
+                if img.width > target[0] or img.height > target[1]:
+                    ratio = min(target[0] / img.width, target[1] / img.height)
+                    new_size = (int(img.width * ratio), int(img.height * ratio))
+                    return img.resize(new_size, Image.Resampling.LANCZOS)
+                return img.copy()
+        except Exception:
+            return None
 
-    def _draw_more_indicator(
-        self,
-        image: PILImage,
-        img_x: int,
-        img_y: int,
-        img_width: int,
-        img_height: int,
-        count: int,
-    ):
-        """在图片上绘制+N指示器"""
-        draw = ImageDraw.Draw(image)
+    def _draw_more_indicator(self, image: PILImage, x: int, y: int, w: int, h: int, count: int) -> None:
+        """绘制 +N 指示器"""
+        overlay = Image.new("RGBA", (w, h), (0, 0, 0, 100))
+        image.paste(overlay, (x, y), overlay)
 
-        # 创建半透明黑色遮罩（透明度 1/4）
-        overlay = Image.new("RGBA", (img_width, img_height), (0, 0, 0, 0))
-        overlay_draw = ImageDraw.Draw(overlay)
-        overlay_draw.rectangle((0, 0, img_width - 1, img_height - 1), fill=(0, 0, 0, 100))
+        text = f"+{count}"
+        font = self.fontset.indicator
+        text_w = font.get_text_width(text)
+        text_x = x + (w - text_w) // 2
+        text_y = y + (h - font.line_height) // 2
+        ImageDraw.Draw(image).text((text_x, text_y), text, fill=font.fill, font=font.font)
 
-        # 将遮罩贴到图片上
-        image.paste(overlay, (img_x, img_y), overlay)
+    async def _render_graphics(self, ctx: RenderContext, gc: GraphicsContent) -> None:
+        """渲染图文内容"""
+        try:
+            path = await gc.get_path()
+            with Image.open(path) as img:
+                if img.width > ctx.content_width:
+                    ratio = ctx.content_width / img.width
+                    img = img.resize((ctx.content_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
+                else:
+                    img = img.copy()
 
-        # 绘制+N文字
-        text = "+" + str(count)
-        indicator_font = self.fontset.indicator
-        # 计算文字位置（居中）
-        text_width = indicator_font.get_text_width(text)
-        text_x = img_x + (img_width - text_width) // 2
-        text_y = img_y + (img_height - indicator_font.line_height) // 2
+            # 计算所需高度并确保画布足够
+            text_height = 0
+            if gc.text:
+                lines = self._wrap_text(gc.text, ctx.content_width, self.fontset.text)
+                text_height = len(lines) * self.fontset.text.line_height + self.SECTION_SPACING
+            alt_height = self.fontset.extra.line_height + self.SECTION_SPACING if gc.alt else 0
+            needed = text_height + img.height + alt_height + self.SECTION_SPACING
+            self._ensure_canvas_height(ctx, needed)
 
-        # 绘制50%透明白色文字
-        draw.text((text_x, text_y), text, fill=indicator_font.fill, font=indicator_font.font)
+            # 文本
+            if gc.text:
+                lines = self._wrap_text(gc.text, ctx.content_width, self.fontset.text)
+                ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.text)
+                ctx.y_pos += self.SECTION_SPACING
 
-    def _draw_rounded_rectangle(
-        self,
-        image: PILImage,
-        bbox: tuple[int, int, int, int],
-        fill_color: Color,
-        radius: int = 8,
-    ):
-        """绘制圆角矩形"""
-        x1, y1, x2, y2 = bbox
-        draw = ImageDraw.Draw(image)
+            # 图片
+            x_pos = self.PADDING + (ctx.content_width - img.width) // 2
+            ctx.image.paste(img, (x_pos, ctx.y_pos))
+            ctx.y_pos += img.height
 
-        # 绘制主体矩形
-        draw.rectangle((x1 + radius, y1, x2 - radius, y2), fill=fill_color)
-        draw.rectangle((x1, y1 + radius, x2, y2 - radius), fill=fill_color)
+            # Alt 文本
+            if gc.alt:
+                ctx.y_pos += self.SECTION_SPACING
+                text_w = self.fontset.extra.get_text_width(gc.alt)
+                text_x = self.PADDING + (ctx.content_width - text_w) // 2
+                ctx.draw.text((text_x, ctx.y_pos), gc.alt, font=self.fontset.extra.font, fill=self.fontset.extra.fill)
+                ctx.y_pos += self.fontset.extra.line_height
 
-        # 绘制四个圆角
-        draw.pieslice((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=fill_color)
-        draw.pieslice((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=fill_color)
-        draw.pieslice((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=fill_color)
-        draw.pieslice((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=fill_color)
+            ctx.y_pos += self.SECTION_SPACING
+        except Exception as e:
+            logger.debug(f"渲染图文失败: {e}")
 
-    def _draw_rounded_rectangle_border(
-        self,
-        draw: PILImageDraw,
-        bbox: tuple[int, int, int, int],
-        border_color: Color,
-        radius: int = 8,
-        width: int = 1,
-    ):
-        """绘制圆角矩形边框"""
-        x1, y1, x2, y2 = bbox
+    async def _render_text(self, ctx: RenderContext) -> None:
+        """渲染正文"""
+        if not ctx.result.text:
+            return
 
-        # 绘制主体边框
-        draw.rectangle((x1 + radius, y1, x2 - radius, y1 + width), fill=border_color)  # 上
-        draw.rectangle((x1 + radius, y2 - width, x2 - radius, y2), fill=border_color)  # 下
-        draw.rectangle((x1, y1 + radius, x1 + width, y2 - radius), fill=border_color)  # 左
-        draw.rectangle((x2 - width, y1 + radius, x2, y2 - radius), fill=border_color)  # 右
+        lines = self._wrap_text(ctx.result.text, ctx.content_width, self.fontset.text)
+        ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.text)
+        ctx.y_pos += self.SECTION_SPACING
 
-        # 绘制四个圆角边框
-        draw.arc((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 180, 270, fill=border_color, width=width)
-        draw.arc((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 270, 360, fill=border_color, width=width)
-        draw.arc((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 90, 180, fill=border_color, width=width)
-        draw.arc((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 0, 90, fill=border_color, width=width)
+    async def _render_extra(self, ctx: RenderContext) -> None:
+        """渲染额外信息"""
+        if not ctx.result.extra_info:
+            return
 
-    def _wrap_text(self, text: str, max_width: int, font_info: FontInfo) -> list[str]:
-        """使用 emoji.emoji_list 优化的文本自动换行算法，正确处理组合 emoji
+        lines = self._wrap_text(ctx.result.extra_info, ctx.content_width, self.fontset.extra)
+        ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.extra)
 
-        Args:
-            text: 要处理的文本
-            max_width: 最大宽度（像素）
-            font_info: 字体信息对象
+    async def _render_repost(self, ctx: RenderContext) -> None:
+        """渲染转发内容"""
+        if not ctx.result.repost:
+            return
 
-        Returns:
-            换行后的文本列表
-        """
+        # 递归渲染转发内容
+        repost_img = await self._create_card_image(ctx.result.repost, False)
+
+        # 缩放
+        scaled_w = int(repost_img.width * self.REPOST_SCALE)
+        scaled_h = int(repost_img.height * self.REPOST_SCALE)
+        repost_img = repost_img.resize((scaled_w, scaled_h), Image.Resampling.LANCZOS)
+
+        # 容器
+        container_h = scaled_h + self.REPOST_PADDING * 2
+        x1, y1 = self.PADDING, ctx.y_pos
+        x2, y2 = self.PADDING + ctx.content_width, ctx.y_pos + container_h
+
+        # 背景和边框
+        ctx.draw.rounded_rectangle(
+            (x1, y1, x2, y2), radius=8, fill=self.REPOST_BG_COLOR, outline=self.REPOST_BORDER_COLOR
+        )
+
+        # 居中贴图
+        card_x = x1 + (ctx.content_width - scaled_w) // 2
+        card_y = y1 + self.REPOST_PADDING
+        ctx.image.paste(repost_img, (card_x, card_y))
+
+        ctx.y_pos += container_h + self.SECTION_SPACING
+
+    # ===================== 文本处理 =====================
+
+    async def _draw_text_lines(self, ctx: RenderContext, lines: list[str], font: FontInfo) -> int:
+        """绘制多行文本"""
+        if not lines:
+            return 0
+
+        xy = (self.PADDING, ctx.y_pos)
+        if emosvg is not None:
+            emosvg.text(ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height)
+        else:
+            await Apilmoji.text(
+                ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height, source=self.EMOJI_SOURCE
+            )
+        return font.line_height * len(lines)
+
+    def _wrap_text(self, text: str, max_width: int, font: FontInfo) -> list[str]:
+        """文本自动换行"""
         if not text:
             return []
 
-        def is_punctuation(char: str) -> bool:
-            """判断是否为不能为行首的标点符号"""
-            return char in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
+        def is_punctuation(c: str) -> bool:
+            return c in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
 
         lines: list[str] = []
-        paragraphs = text.splitlines()
+        emoji_list = emoji.emoji_list(text)
 
-        for paragraph in paragraphs:
+        for paragraph in text.splitlines():
             if not paragraph:
                 lines.append("")
                 continue
 
-            # 使用 emoji.emoji_list 识别所有 emoji 组合
-            emoji_list = emoji.emoji_list(paragraph)
-
             current_line = ""
-            current_line_width = 0
-            idx = 0  # 当前处理的字符索引
+            current_width = 0
+            idx = 0
 
             while idx < len(paragraph):
-                # 检查当前位置是否有 emoji, 包含组合 emoji
-                for emoji_data in emoji_list:
-                    if emoji_data["match_start"] == idx:
-                        char = emoji_data["emoji"]
-                        idx = emoji_data["match_end"]
-                        char_width = font_info.font.size
+                # 检查 emoji
+                for ed in emoji_list:
+                    if ed["match_start"] == idx:
+                        char = ed["emoji"]
+                        idx = ed["match_end"]
+                        char_width = font.font.size
                         break
                 else:
-                    # 处理普通字符
                     char = paragraph[idx]
                     idx += 1
-                    char_width = font_info.get_char_width_fast(char)
+                    char_width = font.get_char_width_fast(char)
 
-                # 如果当前行为空，直接添加字符
                 if not current_line:
                     current_line = char
-                    current_line_width = char_width
+                    current_width = char_width
                     continue
 
-                # 如果是标点符号，直接添加到当前行（标点符号不应该单独成行）
                 if len(char) == 1 and is_punctuation(char):
                     current_line += char
-                    current_line_width += char_width
+                    current_width += char_width
                     continue
 
-                # 测试添加下一个字符后的宽度
-                test_width = current_line_width + char_width
-
-                if test_width <= max_width:
-                    # 宽度合适，继续添加
+                if current_width + char_width <= max_width:
                     current_line += char
-                    current_line_width = test_width
+                    current_width += char_width
                 else:
-                    # 宽度超限，需要断行
                     lines.append(current_line)
                     current_line = char
-                    current_line_width = char_width
+                    current_width = char_width
 
-            # 保存最后一行
             if current_line:
                 lines.append(current_line)
 
