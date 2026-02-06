@@ -230,15 +230,16 @@ class CommonRenderer(ImageRenderer):
 
         # 标题（估算）
         if result.title:
-            lines = len(result.title) * self.fontset.title.cjk_width // content_width + 1
+            # 考虑换行符
+            lines = result.title.count("\n") + 1 + (len(result.title) * self.fontset.title.cjk_width // content_width)
             height += lines * self.fontset.title.line_height + self.SECTION_SPACING
 
-        # 封面或图片（图文内容由动态扩展处理，此处仅作基础估算）
+        # 封面或图片
         height += self.MAX_COVER_HEIGHT + self.SECTION_SPACING
 
-        # 文本（估算）
+        # 文本（估算：考虑换行符）
         if result.text:
-            lines = len(result.text) * self.fontset.text.cjk_width // content_width + 1
+            lines = result.text.count("\n") + 1 + (len(result.text) * self.fontset.text.cjk_width // content_width)
             height += lines * self.fontset.text.line_height + self.SECTION_SPACING
 
         # 额外信息
@@ -250,7 +251,8 @@ class CommonRenderer(ImageRenderer):
             height += int(self._estimate_height(result.repost, content_width) * self.REPOST_SCALE)
             height += self.REPOST_PADDING * 2 + self.SECTION_SPACING
 
-        return height
+        # 增加安全余量，防止估算不足（最后会裁剪）
+        return height + 300
 
     # ===================== 各部分渲染 =====================
 
