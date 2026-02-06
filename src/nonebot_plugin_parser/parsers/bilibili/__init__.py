@@ -230,7 +230,7 @@ class BilibiliParser(BaseParser):
         contents: list[MediaContent] = []
         current_text = ""
 
-        for node in opus_data.gen_text_img():
+        for node in opus_data.extract_nodes():
             if isinstance(node, ImageNode):
                 contents.append(self.create_graphics_content(node.url, current_text.strip(), node.alt))
                 current_text = ""
