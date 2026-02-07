@@ -133,6 +133,7 @@ class BilibiliParser(BaseParser):
                 return output_path
             v_url, a_url = await self.extract_download_urls(video=video, page_index=page_info.index)
             if page_info.duration > pconfig.duration_maximum:
+                logger.warning(f"视频时长 {page_info.duration} 秒, 超过 {pconfig.duration_maximum} 秒, 取消下载")
                 raise IgnoreException
             if a_url is not None:
                 return await self.downloader.download_av_and_merge(
