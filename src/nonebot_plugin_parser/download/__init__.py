@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
-from contextlib import asynccontextmanager
+from functools import partial
+from contextlib import contextmanager
 
 import aiofiles
 from httpx import HTTPError, AsyncClient
@@ -10,7 +11,6 @@ from rich.progress import (
     BarColumn,
     TextColumn,
     DownloadColumn,
-    TransferSpeedColumn,
 )
 
 from .task import auto_task
@@ -27,35 +27,18 @@ class StreamDownloader:
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
         self.client: AsyncClient = AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
-        self.progress = Progress(
+
+    @contextmanager
+    def rich_progress(self, desc: str, total: int | None = None):
+        with Progress(
             TextColumn("[bold blue]{task.description}", justify="right"),
             BarColumn(bar_width=None),
             "[progress.percentage]{task.percentage:>3.1f}%",
             "•",
             DownloadColumn(),
-            "•",
-            TransferSpeedColumn(),
-        )
-        self._active_downloads = 0
-        self._lock = asyncio.Lock()
-
-    @asynccontextmanager
-    async def create_progress_task(self, desc: str, total: int | None = None):
-        """progress task context manager"""
-        async with self._lock:
-            if self._active_downloads == 0:
-                self.progress.start()
-            self._active_downloads += 1
-
-        task_id = self.progress.add_task(description=desc, total=total)
-        try:
-            yield lambda advance: self.progress.update(task_id, advance=advance)
-        finally:
-            async with self._lock:
-                self.progress.remove_task(task_id)
-                self._active_downloads -= 1
-                if self._active_downloads == 0:
-                    self.progress.stop()
+        ) as progress:
+            task_id = progress.add_task(description=desc, total=total)
+            yield partial(progress.update, task_id)
 
     @auto_task
     async def streamd(
@@ -64,6 +47,7 @@ class StreamDownloader:
         *,
         file_name: str | None = None,
         ext_headers: dict[str, str] | None = None,
+        chunk_size: int = 64 * 1024,
     ) -> Path:
         """download file by url with stream"""
         if not file_name:
@@ -89,11 +73,11 @@ class StreamDownloader:
                     logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
                     raise SizeLimitException
 
-                async with self.create_progress_task(file_name, content_length) as update_progress:
+                with self.rich_progress(file_name, content_length) as update_progress:
                     async with aiofiles.open(file_path, "wb") as file:
-                        async for chunk in response.aiter_bytes(1024 * 1024):
+                        async for chunk in response.aiter_bytes(chunk_size):
                             await file.write(chunk)
-                            update_progress(len(chunk))
+                            update_progress(advance=len(chunk))
 
         except HTTPError:
             await safe_unlink(file_path)
@@ -113,7 +97,7 @@ class StreamDownloader:
         """download video file by url with stream"""
         if video_name is None:
             video_name = generate_file_name(url, ".mp4")
-        return await self.streamd(url, file_name=video_name, ext_headers=ext_headers)
+        return await self.streamd(url, file_name=video_name, ext_headers=ext_headers, chunk_size=1024 * 1024)
 
     @auto_task
     async def download_audio(
