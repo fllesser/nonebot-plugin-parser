@@ -60,7 +60,7 @@ class ArticleInfo(Struct):
     meta: Meta
     children: list[dict[str, Any]]
 
-    def gen_text_img(self) -> Generator[TextNode | ImageNode, None, None]:
+    def extract_nodes(self) -> Generator[TextNode | ImageNode, None, None]:
         """生成文本和图片节点（保持顺序）"""
         for child in self.children:
             if child.get("type") == "ParagraphNode":

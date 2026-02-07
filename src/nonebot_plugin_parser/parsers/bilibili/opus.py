@@ -124,7 +124,7 @@ class OpusItem(Struct):
                 return module.module_author.pub_ts
         return None
 
-    def gen_text_img(self) -> Generator[TextNode | ImageNode, None, None]:
+    def extract_nodes(self) -> Generator[TextNode | ImageNode, None, None]:
         """生成图文节点（保持顺序）"""
         for module in self.item.modules:
             if module.module_type == "MODULE_TYPE_CONTENT" and module.module_content:

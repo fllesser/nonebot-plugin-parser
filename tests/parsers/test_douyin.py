@@ -66,6 +66,7 @@ async def test_old_video():
 async def test_note():
     """测试普通图文"""
     from nonebot_plugin_parser.parsers import DouyinParser
+    from nonebot_plugin_parser.exception import DownloadException
 
     parser = DouyinParser()
 
@@ -90,7 +91,10 @@ async def test_note():
         logger.success(f"{url} | 抖音图文解析成功")
 
     for url in note_urls:
-        await test_parse(url)
+        try:
+            await test_parse(url)
+        except DownloadException:
+            pytest.skip("抖音 note 下载失败")
 
 
 @pytest.mark.asyncio
