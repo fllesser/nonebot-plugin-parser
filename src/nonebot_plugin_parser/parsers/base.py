@@ -90,18 +90,6 @@ class BaseParser:
         return cls._registry
 
     async def parse(self, keyword: str, searched: Match[str]) -> ParseResult:
-        """解析 URL 提取信息
-
-        Args:
-            keyword: 关键词
-            searched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
         return await self._handlers[keyword](self, searched)
 
     async def parse_with_redirect(
