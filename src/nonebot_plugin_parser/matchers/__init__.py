@@ -11,7 +11,6 @@ from ..config import pconfig
 from ..helper import UniHelper, UniMessage
 from ..parsers import BaseParser, ParseResult, BilibiliParser
 from ..renders import get_renderer
-from ..download import DOWNLOADER
 
 
 def _get_enabled_parser_classes() -> list[type[BaseParser]]:
@@ -104,7 +103,7 @@ async def _(message: Message = CommandArg()):
     if not audio_url:
         await UniMessage("未找到可下载的音频").finish()
 
-    audio_path = await DOWNLOADER.download_audio(
+    audio_path = await parser.downloader.download_audio(
         audio_url, audio_name=f"{bvid}-{page_idx}.mp3", ext_headers=parser.headers
     )
     await UniMessage(UniHelper.record_seg(audio_path)).send()
