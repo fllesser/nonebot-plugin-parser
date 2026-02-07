@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 from functools import partial
-from contextlib import asynccontextmanager
+from contextlib import contextmanager
 
 import aiofiles
 from httpx import HTTPError, AsyncClient
@@ -39,8 +39,8 @@ class StreamDownloader:
         )
         self.progress.start()
 
-    @asynccontextmanager
-    async def create_progress_task(self, desc: str, total: int | None = None):
+    @contextmanager
+    def create_progress_task(self, desc: str, total: int | None = None):
         """progress task context manager"""
         task_id = self.progress.add_task(description=desc, total=total)
         try:
@@ -81,7 +81,7 @@ class StreamDownloader:
                     logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
                     raise SizeLimitException
 
-                async with self.create_progress_task(file_name, content_length) as update_progress:
+                with self.create_progress_task(file_name, content_length) as update_progress:
                     async with aiofiles.open(file_path, "wb") as file:
                         async for chunk in response.aiter_bytes(chunk_size):
                             await file.write(chunk)
