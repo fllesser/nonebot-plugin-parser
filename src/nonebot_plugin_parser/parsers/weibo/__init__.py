@@ -12,7 +12,6 @@ from ..data import MediaContent
 
 
 class WeiBoParser(BaseParser):
-    # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.WEIBO, display_name="微博")
 
     def __init__(self):

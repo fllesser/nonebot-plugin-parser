@@ -5,11 +5,12 @@ from collections import defaultdict
 
 import yt_dlp
 from msgspec import Struct, convert
+from nonebot import logger
 
 from .task import auto_task
 from ..utils import LimitedSizeDict, generate_file_name
 from ..config import pconfig
-from ..exception import ParseException, DurationLimitException
+from ..exception import ParseException, IgnoreException
 
 
 class VideoInfo(Struct):
@@ -95,7 +96,8 @@ class YtdlpDownloader:
         video_info = await self.extract_video_info(url, cookiefile)
         duration = video_info.duration
         if duration > pconfig.duration_maximum:
-            raise DurationLimitException
+            logger.warning(f"视频时长 {duration} 秒, 超过 {pconfig.duration_maximum} 秒, 取消下载")
+            raise IgnoreException
 
         video_path = pconfig.cache_dir / generate_file_name(url, ".mp4")
         if video_path.exists():

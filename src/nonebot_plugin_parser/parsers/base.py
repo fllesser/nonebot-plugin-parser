@@ -1,5 +1,3 @@
-"""Parser 基类定义"""
-
 from re import Match, Pattern, compile
 from abc import ABC
 from typing import TYPE_CHECKING, Any, TypeVar, ClassVar, cast
@@ -10,16 +8,13 @@ from typing_extensions import Unpack
 
 from .data import Platform, ParseResult, ParseResultKwargs
 from ..config import pconfig as pconfig
-from ..download import DOWNLOADER as DOWNLOADER
+from ..download import DOWNLOADER
 from ..constants import IOS_HEADER, COMMON_HEADER, ANDROID_HEADER, COMMON_TIMEOUT
 from ..constants import DOWNLOAD_TIMEOUT as DOWNLOAD_TIMEOUT
 from ..constants import PlatformEnum as PlatformEnum
-from ..exception import TipException as TipException
-from ..exception import ParseException as ParseException
+from ..exception import ParseException
+from ..exception import IgnoreException as IgnoreException
 from ..exception import DownloadException as DownloadException
-from ..exception import ZeroSizeException as ZeroSizeException
-from ..exception import SizeLimitException as SizeLimitException
-from ..exception import DurationLimitException as DurationLimitException
 
 T = TypeVar("T", bound="BaseParser")
 HandlerFunc = Callable[[T, Match[str]], Coroutine[Any, Any, ParseResult]]
@@ -259,3 +254,7 @@ class BaseParser:
 
         image_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
         return GraphicsContent(image_task, text, alt)
+
+    @property
+    def downloader(self):
+        return DOWNLOADER

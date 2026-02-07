@@ -15,7 +15,6 @@ from ..base import (
 
 
 class DouyinParser(BaseParser):
-    # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.DOUYIN, display_name="抖音")
 
     # https://v.douyin.com/_2ljF4AmKL8
@@ -31,19 +30,13 @@ class DouyinParser(BaseParser):
     @handle("iesdouyin", r"iesdouyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
     @handle("m.douyin", r"m\.douyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
     # https://jingxuan.douyin.com/m/video/7574300896016862490?app=yumme&utm_source=copy_link
-    @handle(
-        "jingxuan.douyin",
-        r"jingxuan\.douyin.com/m/(?P<ty>slides|video|note)/(?P<vid>\d+)",
-    )
+    @handle("jingxuan.douyin", r"jingxuan\.douyin.com/m/(?P<ty>slides|video|note)/(?P<vid>\d+)")
     async def _parse_douyin(self, searched: re.Match[str]):
         ty, vid = searched.group("ty"), searched.group("vid")
         if ty == "slides":
             return await self.parse_slides(vid)
 
-        for url in (
-            self._build_m_douyin_url(ty, vid),
-            self._build_iesdouyin_url(ty, vid),
-        ):
+        for url in (self._build_m_douyin_url(ty, vid), self._build_iesdouyin_url(ty, vid)):
             try:
                 return await self.parse_video(url)
             except ParseException as e:
