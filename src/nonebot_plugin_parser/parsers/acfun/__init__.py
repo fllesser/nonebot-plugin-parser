@@ -118,7 +118,7 @@ class AcfunParser(BaseParser):
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
                                 await f.write(chunk)
                                 total_size += len(chunk)
-                                update_progress(advance=len(chunk))
+                                update_progress(advance=len(chunk), total=total_size)
         except HTTPError:
             video_file.unlink(missing_ok=True)
             logger.exception("视频下载失败")

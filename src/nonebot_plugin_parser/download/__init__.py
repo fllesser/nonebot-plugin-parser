@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from functools import partial
 from contextlib import asynccontextmanager
 
 import aiofiles
@@ -36,26 +37,16 @@ class StreamDownloader:
             "•",
             TransferSpeedColumn(),
         )
-        self._active_downloads = 0
-        self._lock = asyncio.Lock()
+        self.progress.start()
 
     @asynccontextmanager
     async def create_progress_task(self, desc: str, total: int | None = None):
         """progress task context manager"""
-        async with self._lock:
-            if self._active_downloads == 0:
-                self.progress.start()
-            self._active_downloads += 1
-
         task_id = self.progress.add_task(description=desc, total=total)
         try:
-            yield lambda advance: self.progress.update(task_id, advance=advance)
+            yield partial(self.progress.update, task_id)
         finally:
-            async with self._lock:
-                self.progress.remove_task(task_id)
-                self._active_downloads -= 1
-                if self._active_downloads == 0:
-                    self.progress.stop()
+            self.progress.remove_task(task_id)
 
     @auto_task
     async def streamd(
@@ -64,6 +55,7 @@ class StreamDownloader:
         *,
         file_name: str | None = None,
         ext_headers: dict[str, str] | None = None,
+        chunk_size: int = 64 * 1024,
     ) -> Path:
         """download file by url with stream"""
         if not file_name:
@@ -91,9 +83,9 @@ class StreamDownloader:
 
                 async with self.create_progress_task(file_name, content_length) as update_progress:
                     async with aiofiles.open(file_path, "wb") as file:
-                        async for chunk in response.aiter_bytes(1024 * 1024):
+                        async for chunk in response.aiter_bytes(chunk_size):
                             await file.write(chunk)
-                            update_progress(len(chunk))
+                            update_progress(advance=len(chunk))
 
         except HTTPError:
             await safe_unlink(file_path)
@@ -113,7 +105,7 @@ class StreamDownloader:
         """download video file by url with stream"""
         if video_name is None:
             video_name = generate_file_name(url, ".mp4")
-        return await self.streamd(url, file_name=video_name, ext_headers=ext_headers)
+        return await self.streamd(url, file_name=video_name, ext_headers=ext_headers, chunk_size=1024 * 1024)
 
     @auto_task
     async def download_audio(
