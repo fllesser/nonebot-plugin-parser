@@ -15,14 +15,6 @@ class HtmlRenderer(ImageRenderer):
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
-        """使用 HTML 绘制通用社交媒体帖子卡片
-
-        Args:
-            result: 解析结果
-
-        Returns:
-            PNG 图片的字节数据
-        """
         # 准备模板数据
         template_data = await self._resolve_parse_result(result)
 
