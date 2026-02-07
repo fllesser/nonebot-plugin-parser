@@ -125,6 +125,7 @@ class StreamDownloader:
         audio_name: str | None = None,
         ext_headers: dict[str, str] | None = None,
     ) -> Path:
+        """download audio file by url with stream"""
         if audio_name is None:
             audio_name = generate_file_name(url, ".mp3")
         return await self.streamd(url, file_name=audio_name, ext_headers=ext_headers)
@@ -137,21 +138,10 @@ class StreamDownloader:
         img_name: str | None = None,
         ext_headers: dict[str, str] | None = None,
     ) -> Path:
+        """download image file by url with stream"""
         if img_name is None:
             img_name = generate_file_name(url, ".jpg")
         return await self.streamd(url, file_name=img_name, ext_headers=ext_headers)
-
-    async def download_imgs_without_raise(
-        self,
-        urls: list[str],
-        *,
-        ext_headers: dict[str, str] | None = None,
-    ) -> list[Path]:
-        paths_or_errs = await asyncio.gather(
-            *[self.download_img(url, ext_headers=ext_headers) for url in urls],
-            return_exceptions=True,
-        )
-        return [p for p in paths_or_errs if isinstance(p, Path)]
 
     @auto_task
     async def download_av_and_merge(
@@ -169,6 +159,19 @@ class StreamDownloader:
         )
         await merge_av(v_path=v_path, a_path=a_path, output_path=output_path)
         return output_path
+
+    async def download_imgs_without_raise(
+        self,
+        urls: list[str],
+        *,
+        ext_headers: dict[str, str] | None = None,
+    ) -> list[Path]:
+        """download image files by urls with stream, ignore errors"""
+        paths_or_errs = await asyncio.gather(
+            *[self.download_img(url, ext_headers=ext_headers) for url in urls],
+            return_exceptions=True,
+        )
+        return [p for p in paths_or_errs if isinstance(p, Path)]
 
 
 DOWNLOADER: StreamDownloader = StreamDownloader()
