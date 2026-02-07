@@ -52,12 +52,10 @@ class StreamDownloader:
             yield lambda advance: self.progress.update(task_id, advance=advance)
         finally:
             async with self._lock:
+                self.progress.remove_task(task_id)
                 self._active_downloads -= 1
                 if self._active_downloads == 0:
                     self.progress.stop()
-                    # 清理所有任务，防止下次启动时显示旧任务
-                    while self.progress.task_ids:
-                        self.progress.remove_task(self.progress.task_ids[0])
 
     @auto_task
     async def streamd(
