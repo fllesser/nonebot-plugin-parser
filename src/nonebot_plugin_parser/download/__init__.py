@@ -1,10 +1,17 @@
 import asyncio
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 import aiofiles
 from httpx import HTTPError, AsyncClient
 from nonebot import logger
-from tqdm.asyncio import tqdm
+from rich.progress import (
+    Progress,
+    BarColumn,
+    TextColumn,
+    DownloadColumn,
+    TransferSpeedColumn,
+)
 
 from .task import auto_task
 from ..utils import merge_av, safe_unlink, generate_file_name
@@ -20,6 +27,17 @@ class StreamDownloader:
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
         self.client: AsyncClient = AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
+        self.progress = Progress(
+            TextColumn("[bold blue]{task.description}", justify="right"),
+            BarColumn(bar_width=None),
+            "[progress.percentage]{task.percentage:>3.1f}%",
+            "•",
+            DownloadColumn(),
+            "•",
+            TransferSpeedColumn(),
+        )
+        self._active_downloads = 0
+        self._lock = asyncio.Lock()
 
     @auto_task
     async def streamd(
@@ -66,38 +84,18 @@ class StreamDownloader:
                     logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
                     raise SizeLimitException
 
-                with self.get_progress_bar(file_name, content_length) as bar:
+                async with self.manual_progress(file_name, content_length) as update:
                     async with aiofiles.open(file_path, "wb") as file:
                         async for chunk in response.aiter_bytes(1024 * 1024):
                             await file.write(chunk)
-                            bar.update(len(chunk))
+                            update(len(chunk))
 
         except HTTPError:
             await safe_unlink(file_path)
             logger.exception(f"下载失败 | url: {url}, file_path: {file_path}")
             raise DownloadException("媒体下载失败")
+
         return file_path
-
-    @staticmethod
-    def get_progress_bar(desc: str, total: int | None = None) -> tqdm:
-        """获取进度条 bar
-
-        Args:
-            desc (str): 描述
-            total (int | None): 总大小. Defaults to None.
-
-        Returns:
-            tqdm: 进度条
-        """
-        return tqdm(
-            total=total,
-            unit="B",
-            unit_scale=True,
-            unit_divisor=1024,
-            dynamic_ncols=True,
-            colour="green",
-            desc=desc,
-        )
 
     @auto_task
     async def download_video(
@@ -123,6 +121,25 @@ class StreamDownloader:
         if video_name is None:
             video_name = generate_file_name(url, ".mp4")
         return await self.streamd(url, file_name=video_name, ext_headers=ext_headers)
+
+    @asynccontextmanager
+    async def manual_progress(self, desc: str, total: int | None = None):
+        async with self._lock:
+            if self._active_downloads == 0:
+                self.progress.start()
+            self._active_downloads += 1
+
+        task_id = self.progress.add_task(description=desc, total=total)
+        try:
+            yield lambda advance: self.progress.update(task_id, advance=advance)
+        finally:
+            async with self._lock:
+                self._active_downloads -= 1
+                if self._active_downloads == 0:
+                    self.progress.stop()
+                    # 清理所有任务，防止下次启动时显示旧任务
+                    while self.progress.task_ids:
+                        self.progress.remove_task(self.progress.task_ids[0])
 
     @auto_task
     async def download_audio(
