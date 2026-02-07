@@ -9,7 +9,6 @@ from ..data import MediaContent
 
 
 class XiaoHongShuParser(BaseParser):
-    # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.XIAOHONGSHU, display_name="小红书")
 
     def __init__(self):

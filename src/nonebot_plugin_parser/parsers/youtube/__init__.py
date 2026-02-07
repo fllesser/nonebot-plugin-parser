@@ -9,7 +9,6 @@ from ...download import YTDLP_DOWNLOADER
 
 
 class YouTubeParser(BaseParser):
-    # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.YOUTUBE, display_name="油管")
 
     def __init__(self):

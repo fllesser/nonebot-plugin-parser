@@ -10,7 +10,6 @@ from ..exception import ParseException
 
 
 class TwitterParser(BaseParser):
-    # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.TWITTER, display_name="小蓝鸟")
 
     async def _req_xdown_api(self, url: str) -> dict[str, Any]:

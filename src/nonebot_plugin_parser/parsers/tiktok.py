@@ -7,7 +7,6 @@ from ..download import DOWNLOADER, YTDLP_DOWNLOADER
 
 
 class TikTokParser(BaseParser):
-    # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.TIKTOK, display_name="TikTok")
 
     @handle("tiktok", r"(www|vt|vm)\.tiktok\.com/[A-Za-z0-9._?%&+\-=/#@]*")
