@@ -9,12 +9,7 @@ class User(Struct):
 
 class Representation(Struct):
     url: str
-    m3u8Slice: str
     qualityType: str
-
-    @property
-    def m3u8_slice(self) -> str:
-        return self.m3u8Slice.replace("\\\\n", "\n")
 
 
 class AdaptationSet(Struct):
