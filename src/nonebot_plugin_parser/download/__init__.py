@@ -39,6 +39,26 @@ class StreamDownloader:
         self._active_downloads = 0
         self._lock = asyncio.Lock()
 
+    @asynccontextmanager
+    async def create_progress_task(self, desc: str, total: int | None = None):
+        """progress task context manager"""
+        async with self._lock:
+            if self._active_downloads == 0:
+                self.progress.start()
+            self._active_downloads += 1
+
+        task_id = self.progress.add_task(description=desc, total=total)
+        try:
+            yield lambda advance: self.progress.update(task_id, advance=advance)
+        finally:
+            async with self._lock:
+                self._active_downloads -= 1
+                if self._active_downloads == 0:
+                    self.progress.stop()
+                    # 清理所有任务，防止下次启动时显示旧任务
+                    while self.progress.task_ids:
+                        self.progress.remove_task(self.progress.task_ids[0])
+
     @auto_task
     async def streamd(
         self,
@@ -47,20 +67,7 @@ class StreamDownloader:
         file_name: str | None = None,
         ext_headers: dict[str, str] | None = None,
     ) -> Path:
-        """download file by url with stream
-
-        Args:
-            url (str): url address
-            file_name (str | None): file name. Defaults to generate_file_name.
-            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
-
-        Returns:
-            Path: file path
-
-        Raises:
-            httpx.HTTPError: When download fails
-        """
-
+        """download file by url with stream"""
         if not file_name:
             file_name = generate_file_name(url)
         file_path = self.cache_dir / file_name
@@ -84,11 +91,11 @@ class StreamDownloader:
                     logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
                     raise SizeLimitException
 
-                async with self.manual_progress(file_name, content_length) as update:
+                async with self.create_progress_task(file_name, content_length) as update_progress:
                     async with aiofiles.open(file_path, "wb") as file:
                         async for chunk in response.aiter_bytes(1024 * 1024):
                             await file.write(chunk)
-                            update(len(chunk))
+                            update_progress(len(chunk))
 
         except HTTPError:
             await safe_unlink(file_path)
@@ -105,41 +112,10 @@ class StreamDownloader:
         video_name: str | None = None,
         ext_headers: dict[str, str] | None = None,
     ) -> Path:
-        """download video file by url with stream
-
-        Args:
-            url (str): url address
-            video_name (str | None): video name. Defaults to get name by parse url.
-            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
-
-        Returns:
-            Path: video file path
-
-        Raises:
-            httpx.HTTPError: When download fails
-        """
+        """download video file by url with stream"""
         if video_name is None:
             video_name = generate_file_name(url, ".mp4")
         return await self.streamd(url, file_name=video_name, ext_headers=ext_headers)
-
-    @asynccontextmanager
-    async def manual_progress(self, desc: str, total: int | None = None):
-        async with self._lock:
-            if self._active_downloads == 0:
-                self.progress.start()
-            self._active_downloads += 1
-
-        task_id = self.progress.add_task(description=desc, total=total)
-        try:
-            yield lambda advance: self.progress.update(task_id, advance=advance)
-        finally:
-            async with self._lock:
-                self._active_downloads -= 1
-                if self._active_downloads == 0:
-                    self.progress.stop()
-                    # 清理所有任务，防止下次启动时显示旧任务
-                    while self.progress.task_ids:
-                        self.progress.remove_task(self.progress.task_ids[0])
 
     @auto_task
     async def download_audio(
@@ -149,19 +125,6 @@ class StreamDownloader:
         audio_name: str | None = None,
         ext_headers: dict[str, str] | None = None,
     ) -> Path:
-        """download audio file by url with stream
-
-        Args:
-            url (str): url address
-            audio_name (str | None ): audio name. Defaults to generate from url.
-            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
-
-        Returns:
-            Path: audio file path
-
-        Raises:
-            httpx.HTTPError: When download fails
-        """
         if audio_name is None:
             audio_name = generate_file_name(url, ".mp3")
         return await self.streamd(url, file_name=audio_name, ext_headers=ext_headers)
@@ -174,19 +137,6 @@ class StreamDownloader:
         img_name: str | None = None,
         ext_headers: dict[str, str] | None = None,
     ) -> Path:
-        """download image file by url with stream
-
-        Args:
-            url (str): url
-            img_name (str | None): image name. Defaults to generate from url.
-            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
-
-        Returns:
-            Path: image file path
-
-        Raises:
-            httpx.HTTPError: When download fails
-        """
         if img_name is None:
             img_name = generate_file_name(url, ".jpg")
         return await self.streamd(url, file_name=img_name, ext_headers=ext_headers)
@@ -197,15 +147,6 @@ class StreamDownloader:
         *,
         ext_headers: dict[str, str] | None = None,
     ) -> list[Path]:
-        """download images without raise
-
-        Args:
-            urls (list[str]): urls
-            ext_headers (dict[str, str] | None): ext headers. Defaults to None.
-
-        Returns:
-            list[Path]: image file paths
-        """
         paths_or_errs = await asyncio.gather(
             *[self.download_img(url, ext_headers=ext_headers) for url in urls],
             return_exceptions=True,

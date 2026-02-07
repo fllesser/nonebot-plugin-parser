@@ -112,13 +112,13 @@ class AcfunParser(BaseParser):
                 AsyncClient(headers=self.headers, timeout=DOWNLOAD_TIMEOUT) as client,
             ):
                 total_size = 0
-                async with DOWNLOADER.manual_progress(desc=file_name) as update:
+                async with DOWNLOADER.create_progress_task(desc=file_name) as update_progress:
                     for url in m3u8_slices:
                         async with client.stream("GET", url) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
                                 await f.write(chunk)
                                 total_size += len(chunk)
-                                update(advance=len(chunk))
+                                update_progress(advance=len(chunk))
         except HTTPError:
             video_file.unlink(missing_ok=True)
             logger.exception("视频下载失败")
