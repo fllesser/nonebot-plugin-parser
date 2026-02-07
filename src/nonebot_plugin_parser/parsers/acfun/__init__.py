@@ -112,7 +112,7 @@ class AcfunParser(BaseParser):
                 AsyncClient(headers=self.headers, timeout=DOWNLOAD_TIMEOUT) as client,
             ):
                 total_size = 0
-                with DOWNLOADER.create_progress_task(desc=file_name) as update_progress:
+                with DOWNLOADER.rich_progress(desc=file_name) as update_progress:
                     for url in m3u8_slices:
                         async with client.stream("GET", url) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):

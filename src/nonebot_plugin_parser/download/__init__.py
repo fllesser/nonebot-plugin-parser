@@ -11,7 +11,6 @@ from rich.progress import (
     BarColumn,
     TextColumn,
     DownloadColumn,
-    TransferSpeedColumn,
 )
 
 from .task import auto_task
@@ -28,25 +27,18 @@ class StreamDownloader:
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
         self.client: AsyncClient = AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
-        self.progress = Progress(
+
+    @contextmanager
+    def rich_progress(self, desc: str, total: int | None = None):
+        with Progress(
             TextColumn("[bold blue]{task.description}", justify="right"),
             BarColumn(bar_width=None),
             "[progress.percentage]{task.percentage:>3.1f}%",
             "•",
             DownloadColumn(),
-            "•",
-            TransferSpeedColumn(),
-        )
-        self.progress.start()
-
-    @contextmanager
-    def create_progress_task(self, desc: str, total: int | None = None):
-        """progress task context manager"""
-        task_id = self.progress.add_task(description=desc, total=total)
-        try:
-            yield partial(self.progress.update, task_id)
-        finally:
-            self.progress.remove_task(task_id)
+        ) as progress:
+            task_id = progress.add_task(description=desc, total=total)
+            yield partial(progress.update, task_id)
 
     @auto_task
     async def streamd(
@@ -81,7 +73,7 @@ class StreamDownloader:
                     logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB 超过 {pconfig.max_size} MB, 取消下载")
                     raise SizeLimitException
 
-                with self.create_progress_task(file_name, content_length) as update_progress:
+                with self.rich_progress(file_name, content_length) as update_progress:
                     async with aiofiles.open(file_path, "wb") as file:
                         async for chunk in response.aiter_bytes(chunk_size):
                             await file.write(chunk)
