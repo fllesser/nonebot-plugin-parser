@@ -1,6 +1,7 @@
 import asyncio
 from typing import TYPE_CHECKING
 from pathlib import Path
+from collections import defaultdict
 
 import yt_dlp
 from msgspec import Struct, convert
@@ -48,6 +49,7 @@ class YtdlpDownloader:
             "force_generic_extractor": True,
         }
         self._download_base_opts: _Params = {}
+        self._url_locks: defaultdict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
         if proxy := pconfig.proxy:
             self._download_base_opts["proxy"] = proxy
             self._extract_base_opts["proxy"] = proxy
@@ -99,17 +101,28 @@ class YtdlpDownloader:
         if video_path.exists():
             return video_path
 
-        ydl_opts = self._download_base_opts.copy()
-        ydl_opts["outtmpl"] = str(video_path)
-        ydl_opts["merge_output_format"] = "mp4"
-        ydl_opts["format"] = f"bv[filesize<={duration // 10 + 10}M]+ba/b[filesize<={duration // 8 + 10}M]"
-        ydl_opts["postprocessors"] = [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}]
+        async with self._url_locks[url]:
+            if video_path.exists():
+                return video_path
 
-        if cookiefile:
-            ydl_opts["cookiefile"] = str(cookiefile)
+            pconfig.cache_dir.mkdir(parents=True, exist_ok=True)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            await asyncio.to_thread(ydl.download, [url])
+            ydl_opts = self._download_base_opts.copy()
+            ydl_opts["outtmpl"] = str(video_path)
+            ydl_opts["merge_output_format"] = "mp4"
+            ydl_opts["format"] = f"bv[filesize<={duration // 10 + 10}M]+ba/b[filesize<={duration // 8 + 10}M]"
+            ydl_opts["postprocessors"] = [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}]
+
+            if cookiefile:
+                ydl_opts["cookiefile"] = str(cookiefile)
+
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    await asyncio.to_thread(ydl.download, [url])
+            except Exception:
+                if video_path.exists():
+                    return video_path
+                raise
         return video_path
 
     @auto_task
@@ -128,19 +141,30 @@ class YtdlpDownloader:
         if audio_path.exists():
             return audio_path
 
-        ydl_opts = self._download_base_opts.copy()
-        ydl_opts["outtmpl"] = f"{pconfig.cache_dir / file_name}.%(ext)s"
-        ydl_opts["format"] = "bestaudio/best"
-        ydl_opts["postprocessors"] = [
-            {
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "flac",
-                "preferredquality": "0",
-            }
-        ]
+        async with self._url_locks[url]:
+            if audio_path.exists():
+                return audio_path
 
-        if cookiefile:
-            ydl_opts["cookiefile"] = str(cookiefile)
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            await asyncio.to_thread(ydl.download, [url])
+            pconfig.cache_dir.mkdir(parents=True, exist_ok=True)
+
+            ydl_opts = self._download_base_opts.copy()
+            ydl_opts["outtmpl"] = f"{pconfig.cache_dir / file_name}.%(ext)s"
+            ydl_opts["format"] = "bestaudio/best"
+            ydl_opts["postprocessors"] = [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "flac",
+                    "preferredquality": "0",
+                }
+            ]
+
+            if cookiefile:
+                ydl_opts["cookiefile"] = str(cookiefile)
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    await asyncio.to_thread(ydl.download, [url])
+            except Exception:
+                if audio_path.exists():
+                    return audio_path
+                raise
         return audio_path
