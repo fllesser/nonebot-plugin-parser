@@ -54,7 +54,7 @@ wheels = [
 
 [[package]]
 name = "apilmoji"
-version = "0.2.4"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -62,14 +62,14 @@ dependencies = [
     { name = "httpx" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c0/83/708aa87dc4a099a5a248672996c5974932491ba867c2cd0235db0199a89f/apilmoji-0.2.4.tar.gz", hash = "sha256:4bbf767b5f414f5a5fe42f7172c9d210ca393c7730a0816ad0a4b276900381c4", size = 8460, upload-time = "2025-12-20T05:46:27.644Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/23/e1/a905bb2b74cde2d22eec2c5c87fb06913590986e2ae1aacaa29f21e29cb4/apilmoji-0.3.0.tar.gz", hash = "sha256:87c0c9f90f5b8bb88ef3d9d5675e398d0dcbf1eb49e4b9dbb68653b4f9848110", size = 8694, upload-time = "2026-02-07T04:47:09.813Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0f/d6/4a2c058e585ef403ba118dc756259cf63dc3b8d660528257a16f182f2b36/apilmoji-0.2.4-py3-none-any.whl", hash = "sha256:ec22f32bae6d0938c40bcac0a48e264be9fff55ed3629666820ed31671f78c4f", size = 9036, upload-time = "2025-12-20T05:46:26.333Z" },
+    { url = "https://files.pythonhosted.org/packages/97/61/12d5fb461691505c99b8d03dcf0e3aa1ccb7ae9f548eb06280fd8f770abc/apilmoji-0.3.0-py3-none-any.whl", hash = "sha256:3d847d6496a7d17042a80f5c8055fe3b4dc1d7861c39a0a56e7cff51111c90a7", size = 9271, upload-time = "2026-02-07T04:47:10.937Z" },
 ]
 
 [package.optional-dependencies]
-tqdm = [
-    { name = "tqdm" },
+rich = [
+    { name = "rich" },
 ]
 
 [[package]]
@@ -1542,7 +1542,7 @@ version = "2.3.9"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
-    { name = "apilmoji", extra = ["tqdm"] },
+    { name = "apilmoji", extra = ["rich"] },
     { name = "beautifulsoup4" },
     { name = "bilibili-api-python" },
     { name = "curl-cffi" },
@@ -1622,7 +1622,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=25.1.0" },
-    { name = "apilmoji", extras = ["tqdm"], specifier = ">=0.2.4,<1.0.0" },
+    { name = "apilmoji", extras = ["rich"], specifier = ">=0.3.0,<1.0.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.1,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,!=0.14.0,<1.0.0" },
@@ -2717,18 +2717,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7e/46/cc36c679f09f27ded940281c38607716c86cf8ba4a518d524e349c8b4874/tomli-2.3.0-cp314-cp314t-win32.whl", hash = "sha256:a1f7f282fe248311650081faafa5f4732bdbfef5d45fe3f2e702fbc6f2d496e0", size = 107563, upload-time = "2025-10-08T22:01:44.233Z" },
     { url = "https://files.pythonhosted.org/packages/84/ff/426ca8683cf7b753614480484f6437f568fd2fda2edbdf57a2d3d8b27a0b/tomli-2.3.0-cp314-cp314t-win_amd64.whl", hash = "sha256:70a251f8d4ba2d9ac2542eecf008b3c8a9fc5c3f9f02c56a9d7952612be2fdba", size = 119756, upload-time = "2025-10-08T22:01:45.234Z" },
     { url = "https://files.pythonhosted.org/packages/77/b8/0135fadc89e73be292b473cb820b4f5a08197779206b33191e801feeae40/tomli-2.3.0-py3-none-any.whl", hash = "sha256:e95b1af3c5b07d9e643909b5abbec77cd9f1217e6d0bca72b0234736b9fb1f1b", size = 14408, upload-time = "2025-10-08T22:01:46.04Z" },
-]
-
-[[package]]
-name = "tqdm"
-version = "4.67.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/09/a9/6ba95a270c6f1fbcd8dac228323f2777d886cb206987444e4bce66338dd4/tqdm-4.67.3.tar.gz", hash = "sha256:7d825f03f89244ef73f1d4ce193cb1774a8179fd96f31d7e1dcde62092b960bb", size = 169598, upload-time = "2026-02-03T17:35:53.048Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/16/e1/3079a9ff9b8e11b846c6ac5c8b5bfb7ff225eee721825310c91b3b50304f/tqdm-4.67.3-py3-none-any.whl", hash = "sha256:ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf", size = 78374, upload-time = "2026-02-03T17:35:50.982Z" },
 ]
 
 [[package]]
