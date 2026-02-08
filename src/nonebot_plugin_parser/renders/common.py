@@ -210,13 +210,17 @@ class CommonRenderer(ImageRenderer):
         """确保画布有足够高度，不够则扩展"""
         if ctx.y_pos + needed_height + self.PADDING > ctx.image.height:
             # 扩展画布（每次扩展 1.6 倍或至少满足需求）
-            new_height = max(int(ctx.image.height * 1.6), ctx.y_pos + needed_height + self.PADDING * 2)
+            new_height = max(int(ctx.image.height * 1.5), ctx.y_pos + needed_height + self.PADDING * 2)
             logger.debug(f"扩展画布高度: {ctx.image.height} -> {new_height}")
             bg_color = self.BG_COLOR if ctx.not_repost else self.REPOST_BG_COLOR
             new_image = Image.new("RGB", (ctx.card_width, new_height), bg_color)
             new_image.paste(ctx.image, (0, 0))
             ctx.image = new_image
             ctx.draw = ImageDraw.Draw(new_image)
+
+    def _estimate_text_height(self, text: str, font: FontInfo, content_width: int) -> int:
+        """估算文本高度（考虑换行符）"""
+        return text.count("\n") + 1 + (len(text) * font.cjk_width // content_width) * font.line_height
 
     def _estimate_height(self, result: ParseResult, content_width: int) -> int:
         """估算画布高度"""
@@ -226,22 +230,27 @@ class CommonRenderer(ImageRenderer):
         if result.author:
             height += self.AVATAR_SIZE + self.SECTION_SPACING
 
-        # 标题（估算，考虑换行符）
+        # 标题
         if result.title:
-            lines = result.title.count("\n") + 1 + (len(result.title) * self.fontset.title.cjk_width // content_width)
-            height += lines * self.fontset.title.line_height + self.SECTION_SPACING
-
-        # 封面或图片
-        height += self.MAX_COVER_HEIGHT + self.SECTION_SPACING
+            height += self._estimate_text_height(result.title, self.fontset.title, content_width)
+            height += self.SECTION_SPACING
 
         # 图文内容
         if graphics_contents := result.graphics_contents:
+            for content in graphics_contents:
+                if content.text is not None:
+                    height += self._estimate_text_height(content.text, self.fontset.text, content_width)
+                if content.alt is not None:
+                    height += self.fontset.extra.line_height
             height += len(graphics_contents) * self.MAX_COVER_HEIGHT + self.SECTION_SPACING
+        else:
+            # 封面或图片
+            height += self.MAX_COVER_HEIGHT + self.SECTION_SPACING
 
-        # 正文（估算，考虑换行符）
+        # 正文
         if result.text:
-            lines = result.text.count("\n") + 1 + (len(result.text) * self.fontset.text.cjk_width // content_width)
-            height += lines * self.fontset.text.line_height + self.SECTION_SPACING
+            height += self._estimate_text_height(result.text, self.fontset.text, content_width)
+            height += self.SECTION_SPACING
 
         # 额外信息
         if result.extra_info:
@@ -252,7 +261,6 @@ class CommonRenderer(ImageRenderer):
             height += int(self._estimate_height(result.repost, content_width) * self.REPOST_SCALE)
             height += self.REPOST_PADDING * 2 + self.SECTION_SPACING
 
-        # 增加安全余量，防止估算不足（最后会裁剪）
         return height
 
     async def _render_header(self, ctx: RenderContext) -> None:
@@ -312,7 +320,8 @@ class CommonRenderer(ImageRenderer):
         if avatar_path and avatar_path.exists():
             try:
                 with Image.open(avatar_path) as img:
-                    avatar = img.convert("RGBA").resize((self.AVATAR_SIZE, self.AVATAR_SIZE), Image.Resampling.LANCZOS)
+                    avatar = img.convert("RGBA")
+                    avatar = avatar.resize((self.AVATAR_SIZE, self.AVATAR_SIZE), Image.Resampling.LANCZOS)
             except Exception:
                 avatar = self._create_avatar_placeholder()
         else:
@@ -411,8 +420,7 @@ class CommonRenderer(ImageRenderer):
         for content in display_contents:
             try:
                 path = await content.get_path()
-                img = self._load_grid_image(path, ctx.content_width, len(display_contents))
-                if img:
+                if img := self._load_grid_image(path, ctx.content_width, len(display_contents)):
                     images.append(img)
             except Exception:
                 continue
