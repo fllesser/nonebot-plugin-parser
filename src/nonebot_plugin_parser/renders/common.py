@@ -150,7 +150,7 @@ class CommonRenderer(ImageRenderer):
     @classmethod
     def _load_video_button(cls):
         with Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH) as img:
-            cls.video_button_image: PILImage = img.convert("RGBA").resize((128, 128))
+            cls.video_button_image: PILImage = img.convert("RGBA").resize((100, 100))
         alpha = cls.video_button_image.split()[-1]
         alpha = alpha.point(lambda x: int(x * 0.5))
         cls.video_button_image.putalpha(alpha)
@@ -354,7 +354,7 @@ class CommonRenderer(ImageRenderer):
 
     async def _render_cover_or_images(self, ctx: RenderContext) -> None:
         """渲染封面或图片网格"""
-        # 尝试封面
+
         cover_path = await ctx.result.cover_path
         if cover_path and cover_path.exists():
             cover = self._load_cover(cover_path, ctx.content_width)
@@ -362,7 +362,7 @@ class CommonRenderer(ImageRenderer):
                 x_pos = self.PADDING
                 ctx.image.paste(cover, (x_pos, ctx.y_pos))
                 # 视频按钮
-                btn_size = 128
+                btn_size = 100
                 btn_x = x_pos + (cover.width - btn_size) // 2
                 btn_y = ctx.y_pos + (cover.height - btn_size) // 2
                 ctx.image.paste(self.video_button_image, (btn_x, btn_y), self.video_button_image)
