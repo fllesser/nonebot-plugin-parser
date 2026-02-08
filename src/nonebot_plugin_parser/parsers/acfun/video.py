@@ -52,7 +52,7 @@ class VideoInfo(Struct, kw_only=True):
 
     @property
     def text(self) -> str | None:
-        return f"简介: {self.description}" if self.description else None
+        return self.description
 
     @property
     def timestamp(self) -> int:

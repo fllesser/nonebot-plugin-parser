@@ -105,11 +105,8 @@ class BilibiliParser(BaseParser):
         from .video import VideoInfo, AIConclusion
 
         video = await self._get_video(bvid=bvid, avid=avid)
-        # 转换为 msgspec struct
         video_info = convert(await video.get_info(), VideoInfo)
-        # 获取简介
-        text = f"简介: {video_info.desc}" if video_info.desc else None
-        # up
+        # UP
         author = self.create_author(video_info.owner.name, video_info.owner.face)
         # 处理分 p
         page_info = video_info.extract_info_with_page(page_num)
@@ -153,7 +150,7 @@ class BilibiliParser(BaseParser):
             url=url,
             title=page_info.title,
             timestamp=page_info.timestamp,
-            text=text,
+            text=video_info.desc,
             author=author,
             contents=[video_content],
             extra={"info": ai_summary},
