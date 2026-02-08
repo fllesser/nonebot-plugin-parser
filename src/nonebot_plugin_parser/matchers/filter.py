@@ -37,7 +37,6 @@ def get_group_key(session: Session) -> str:
     return f"{session.scope}_{session.scene_path}"
 
 
-# Rule
 def is_enabled(session: Session = UniSession()) -> bool:
     """判断当前会话是否在关闭解析的名单中"""
     if session.scene.is_private:

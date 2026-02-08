@@ -124,15 +124,13 @@ class CommonRenderer(ImageRenderer):
     REPOST_BORDER_COLOR: ClassVar[Color] = (230, 230, 230)
 
     # 资源路径
-    _RESOURCES = "resources"
-    _EMOJIS = "emojis"
-    RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / _RESOURCES
-    DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW-1.ttf"
-    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "media_button.png"
+    RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
+    DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW.ttf"
+    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "play.png"
     EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
         base_url=pconfig.emoji_cdn,
         style=pconfig.emoji_style,
-        cache_dir=pconfig.cache_dir / _EMOJIS,
+        cache_dir=pconfig.cache_dir / "emojis",
         show_progress=True,
     )
 
@@ -152,9 +150,9 @@ class CommonRenderer(ImageRenderer):
     @classmethod
     def _load_video_button(cls):
         with Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH) as img:
-            cls.video_button_image: PILImage = img.convert("RGBA")
+            cls.video_button_image: PILImage = img.convert("RGBA").resize((128, 128))
         alpha = cls.video_button_image.split()[-1]
-        alpha = alpha.point(lambda x: int(x * 0.3))
+        alpha = alpha.point(lambda x: int(x * 0.5))
         cls.video_button_image.putalpha(alpha)
 
     @classmethod

@@ -40,17 +40,11 @@ def handle(keyword: str, pattern: str):
 
 
 class BaseParser:
-    """所有平台 Parser 的抽象基类
-
-    子类必须实现：
-    - platform: 平台信息（包含名称和显示名称)
-    """
+    platform: ClassVar[Platform]
+    """ 平台信息（包含名称和显示名称） """
 
     _registry: ClassVar[list[type["BaseParser"]]] = []
     """ 存储所有已注册的 Parser 类 """
-
-    platform: ClassVar[Platform]
-    """ 平台信息（包含名称和显示名称） """
 
     if TYPE_CHECKING:
         _key_patterns: ClassVar[KeyPatterns]

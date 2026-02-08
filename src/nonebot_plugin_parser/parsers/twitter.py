@@ -43,14 +43,7 @@ class TwitterParser(BaseParser):
         return self.parse_twitter_html(html_content)
 
     def parse_twitter_html(self, html_content: str) -> ParseResult:
-        """解析 Twitter HTML 内容
-
-        Args:
-            html_content (str): Twitter HTML 内容
-
-        Returns:
-            ParseResult: 解析结果
-        """
+        """解析 Twitter HTML 内容"""
         from bs4 import Tag, BeautifulSoup
 
         soup = BeautifulSoup(html_content, "html.parser")

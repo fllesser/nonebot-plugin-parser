@@ -3,13 +3,7 @@ from pathlib import Path
 
 
 def save_cookies_with_netscape(cookies_str: str, file_path: Path, domain: str):
-    """以 netscape 格式保存 cookies
-
-    Args:
-        cookies_str: cookies 字符串
-        file_path: 保存的文件路径
-        domain: 域名
-    """
+    """以 netscape 格式保存 cookies"""
     # 创建 MozillaCookieJar 对象
     cj = cookiejar.MozillaCookieJar(file_path)
 
@@ -43,14 +37,7 @@ def save_cookies_with_netscape(cookies_str: str, file_path: Path, domain: str):
 
 
 def ck2dict(cookies_str: str) -> dict[str, str]:
-    """将 cookies 字符串转换为字典
-
-    Args:
-        cookies_str: cookies 字符串
-
-    Returns:
-        dict[str, str]: 字典
-    """
+    """将 cookies 字符串转换为字典"""
     res = {}
     for cookie in cookies_str.split(";"):
         name, value = cookie.strip().split("=", 1)
