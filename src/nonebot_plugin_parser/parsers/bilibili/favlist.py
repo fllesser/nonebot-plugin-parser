@@ -59,7 +59,7 @@ class FavData(Struct):
 
     @property
     def desc(self) -> str:
-        return f"简介: {self.info.intro}"
+        return self.info.intro
 
     @property
     def timestamp(self) -> int:

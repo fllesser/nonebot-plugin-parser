@@ -72,14 +72,7 @@ def _searched(state: T_State) -> SearchResult | None:
 
 
 def _extract_url(hyper: Hyper) -> str | None:
-    """处理 JSON 类型的消息段，提取 URL
-
-    Args:
-        json_seg: JSON 类型的消息段
-
-    Returns:
-        Optional[str]: 提取的 URL, 如果提取失败则返回 None
-    """
+    """处理 JSON 类型的消息段，提取 URL"""
     data = hyper.data
     raw_str: str | None = data.get("raw")
 

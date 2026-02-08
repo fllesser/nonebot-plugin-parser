@@ -49,23 +49,20 @@ async def test_video():
 async def test_max_size_video():
     from nonebot_plugin_parser.parsers import BilibiliParser
     from nonebot_plugin_parser.download import DOWNLOADER
-    from nonebot_plugin_parser.exception import (
-        SizeLimitException,
-        DurationLimitException,
-    )
+    from nonebot_plugin_parser.exception import IgnoreException
 
     parser = BilibiliParser()
     bvid = "BV1du4y1E7Nh"
     audio_url = None
     try:
         _, audio_url = await parser.extract_download_urls(bvid=bvid)
-    except DurationLimitException:
+    except IgnoreException:
         pass
 
     assert audio_url is not None
     try:
         await DOWNLOADER.download_audio(audio_url, ext_headers=parser.headers)
-    except SizeLimitException:
+    except IgnoreException:
         pass
 
 

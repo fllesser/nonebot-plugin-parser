@@ -12,12 +12,11 @@ from bilibili_api.video import Video
 from bilibili_api.login_v2 import QrCodeLogin, QrCodeLoginEvents
 
 from ..base import (
-    DOWNLOADER,
     BaseParser,
     PlatformEnum,
     ParseException,
+    IgnoreException,
     DownloadException,
-    DurationLimitException,
     handle,
     pconfig,
 )
@@ -32,7 +31,6 @@ request_settings.set("impersonate", "chrome131")
 
 
 class BilibiliParser(BaseParser):
-    # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
 
     def __init__(self):
@@ -102,22 +100,13 @@ class BilibiliParser(BaseParser):
         avid: int | None = None,
         page_num: int = 1,
     ):
-        """解析视频信息
-
-        Args:
-            bvid (str | None): bvid
-            avid (int | None): avid
-            page_num (int): 页码
-        """
+        """解析视频信息"""
 
         from .video import VideoInfo, AIConclusion
 
         video = await self._get_video(bvid=bvid, avid=avid)
-        # 转换为 msgspec struct
         video_info = convert(await video.get_info(), VideoInfo)
-        # 获取简介
-        text = f"简介: {video_info.desc}" if video_info.desc else None
-        # up
+        # UP
         author = self.create_author(video_info.owner.name, video_info.owner.face)
         # 处理分 p
         page_info = video_info.extract_info_with_page(page_num)
@@ -141,13 +130,14 @@ class BilibiliParser(BaseParser):
                 return output_path
             v_url, a_url = await self.extract_download_urls(video=video, page_index=page_info.index)
             if page_info.duration > pconfig.duration_maximum:
-                raise DurationLimitException
+                logger.warning(f"视频时长 {page_info.duration} 秒, 超过 {pconfig.duration_maximum} 秒, 取消下载")
+                raise IgnoreException
             if a_url is not None:
-                return await DOWNLOADER.download_av_and_merge(
+                return await self.downloader.download_av_and_merge(
                     v_url, a_url, output_path=output_path, ext_headers=self.headers
                 )
             else:
-                return await DOWNLOADER.streamd(v_url, file_name=output_path.name, ext_headers=self.headers)
+                return await self.downloader.download_file(v_url, file_name=output_path.name, ext_headers=self.headers)
 
         video_task = asyncio.create_task(download_video())
         video_content = self.create_video_content(
@@ -160,18 +150,14 @@ class BilibiliParser(BaseParser):
             url=url,
             title=page_info.title,
             timestamp=page_info.timestamp,
-            text=text,
+            text=video_info.desc,
             author=author,
             contents=[video_content],
             extra={"info": ai_summary},
         )
 
     async def parse_dynamic_or_opus(self, dynamic_id: int):
-        """解析动态和图文信息
-
-        Args:
-            url (str): 动态链接
-        """
+        """解析动态或图文"""
         from bilibili_api.dynamic import Dynamic
 
         from .dynamic import DynamicData
@@ -186,7 +172,7 @@ class BilibiliParser(BaseParser):
         # 下载图片
         contents: list[MediaContent] = []
         for image_url in dynamic_info.image_urls:
-            img_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
+            img_task = self.downloader.download_img(image_url, ext_headers=self.headers)
             contents.append(ImageContent(img_task))
 
         return self.result(
@@ -198,23 +184,12 @@ class BilibiliParser(BaseParser):
         )
 
     async def parse_opus_by_id(self, opus_id: int):
-        """解析图文动态信息
-
-        Args:
-            opus_id (int): 图文动态 id
-        """
+        """解析图文动态(opus id)"""
         opus = Opus(opus_id, await self.credential)
         return await self._parse_bilibli_api_opus(opus)
 
     async def _parse_bilibli_api_opus(self, bili_opus: Opus):
-        """解析图文动态信息
-
-        Args:
-            opus_id (int): 图文动态 id
-
-        Returns:
-            ParseResult: 解析结果
-        """
+        """解析图文动态(Opus)"""
 
         from .opus import OpusItem, TextNode, ImageNode
 
@@ -246,14 +221,7 @@ class BilibiliParser(BaseParser):
         )
 
     async def parse_live(self, room_id: int):
-        """解析直播信息
-
-        Args:
-            room_id (int): 直播 id
-
-        Returns:
-            ParseResult: 解析结果
-        """
+        """解析直播"""
         from bilibili_api.live import LiveRoom
 
         from .live import RoomData
@@ -265,12 +233,12 @@ class BilibiliParser(BaseParser):
         contents: list[MediaContent] = []
         # 下载封面
         if cover := room_data.cover:
-            cover_task = DOWNLOADER.download_img(cover, ext_headers=self.headers)
+            cover_task = self.downloader.download_img(cover, ext_headers=self.headers)
             contents.append(ImageContent(cover_task))
 
         # 下载关键帧
         if keyframe := room_data.keyframe:
-            keyframe_task = DOWNLOADER.download_img(keyframe, ext_headers=self.headers)
+            keyframe_task = self.downloader.download_img(keyframe, ext_headers=self.headers)
             contents.append(ImageContent(keyframe_task))
 
         author = self.create_author(room_data.name, room_data.avatar)
@@ -285,14 +253,7 @@ class BilibiliParser(BaseParser):
         )
 
     async def parse_favlist(self, fav_id: int):
-        """解析收藏夹信息
-
-        Args:
-            fav_id (int): 收藏夹 id
-
-        Returns:
-            list[GraphicsContent]: 图文内容列表
-        """
+        """解析收藏夹"""
         from bilibili_api.favorite_list import get_video_favorite_list_content
 
         from .favlist import FavData
@@ -313,12 +274,7 @@ class BilibiliParser(BaseParser):
         )
 
     async def _get_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
-        """解析视频信息
-
-        Args:
-            bvid (str | None): bvid
-            avid (int | None): avid
-        """
+        """解析视频"""
         if avid:
             return Video(aid=avid, credential=await self.credential)
         elif bvid:
@@ -334,13 +290,7 @@ class BilibiliParser(BaseParser):
         avid: int | None = None,
         page_index: int = 0,
     ) -> tuple[str, str | None]:
-        """解析视频下载链接
-
-        Args:
-            bvid (str | None): bvid
-            avid (int | None): avid
-            page_index (int): 页索引 = 页码 - 1
-        """
+        """解析视频下载链接"""
 
         from bilibili_api.video import (
             AudioStreamDownloadURL,

@@ -11,15 +11,6 @@ class DefaultRenderer(BaseRenderer):
 
     @override
     async def render_messages(self, result: ParseResult):
-        """渲染内容消息
-
-        Args:
-            result (ParseResult): 解析结果
-
-        Returns:
-            Generator[UniMessage[Any], None, None]: 消息生成器
-        """
-
         texts = [
             result.header,
             result.text,

@@ -1,5 +1,3 @@
-"""Parser 基类定义"""
-
 from re import Match, Pattern, compile
 from abc import ABC
 from typing import TYPE_CHECKING, Any, TypeVar, ClassVar, cast
@@ -10,16 +8,13 @@ from typing_extensions import Unpack
 
 from .data import Platform, ParseResult, ParseResultKwargs
 from ..config import pconfig as pconfig
-from ..download import DOWNLOADER as DOWNLOADER
+from ..download import DOWNLOADER
 from ..constants import IOS_HEADER, COMMON_HEADER, ANDROID_HEADER, COMMON_TIMEOUT
 from ..constants import DOWNLOAD_TIMEOUT as DOWNLOAD_TIMEOUT
 from ..constants import PlatformEnum as PlatformEnum
-from ..exception import TipException as TipException
-from ..exception import ParseException as ParseException
+from ..exception import ParseException
+from ..exception import IgnoreException as IgnoreException
 from ..exception import DownloadException as DownloadException
-from ..exception import ZeroSizeException as ZeroSizeException
-from ..exception import SizeLimitException as SizeLimitException
-from ..exception import DurationLimitException as DurationLimitException
 
 T = TypeVar("T", bound="BaseParser")
 HandlerFunc = Callable[[T, Match[str]], Coroutine[Any, Any, ParseResult]]
@@ -45,17 +40,11 @@ def handle(keyword: str, pattern: str):
 
 
 class BaseParser:
-    """所有平台 Parser 的抽象基类
-
-    子类必须实现：
-    - platform: 平台信息（包含名称和显示名称)
-    """
+    platform: ClassVar[Platform]
+    """ 平台信息（包含名称和显示名称） """
 
     _registry: ClassVar[list[type["BaseParser"]]] = []
     """ 存储所有已注册的 Parser 类 """
-
-    platform: ClassVar[Platform]
-    """ 平台信息（包含名称和显示名称） """
 
     if TYPE_CHECKING:
         _key_patterns: ClassVar[KeyPatterns]
@@ -95,18 +84,6 @@ class BaseParser:
         return cls._registry
 
     async def parse(self, keyword: str, searched: Match[str]) -> ParseResult:
-        """解析 URL 提取信息
-
-        Args:
-            keyword: 关键词
-            searched: 正则表达式匹配对象，由平台对应的模式匹配得到
-
-        Returns:
-            ParseResult: 解析结果
-
-        Raises:
-            ParseException: 解析失败时抛出
-        """
         return await self._handlers[keyword](self, searched)
 
     async def parse_with_redirect(
@@ -259,3 +236,7 @@ class BaseParser:
 
         image_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
         return GraphicsContent(image_task, text, alt)
+
+    @property
+    def downloader(self):
+        return DOWNLOADER

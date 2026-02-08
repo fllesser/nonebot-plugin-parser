@@ -9,7 +9,6 @@ from ...download import YTDLP_DOWNLOADER
 
 
 class YouTubeParser(BaseParser):
-    # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.YOUTUBE, display_name="油管")
 
     def __init__(self):
@@ -53,15 +52,7 @@ class YouTubeParser(BaseParser):
         )
 
     async def parse_audio(self, url: str):
-        """解析 YouTube URL 并标记为音频下载
-
-        Args:
-            url: YouTube 链接
-
-        Returns:
-            ParseResult: 解析结果（音频内容）
-
-        """
+        """解析 YouTube URL 音频"""
         video_info = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
         author = await self._fetch_author_info(video_info.channel_id)
 

@@ -13,7 +13,6 @@ from ..exception import ParseException
 
 
 class NGAParser(BaseParser):
-    # 平台信息
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.NGA, display_name="NGA")
 
     def __init__(self):
