@@ -95,7 +95,7 @@ class RenderContext:
 
 
 class CommonRenderer(ImageRenderer):
-    """统一渲染器 - 单次遍历渲染"""
+    """统一渲染器"""
 
     # 布局常量
     PADDING = 25
@@ -205,13 +205,15 @@ class CommonRenderer(ImageRenderer):
 
         # 裁剪到实际高度
         final_height = ctx.y_pos + self.PADDING
+        logger.debug(f"估算高度: {estimated_height}, 画布高度: {ctx.image.height}, 最终高度: {final_height}")
         return ctx.image.crop((0, 0, card_width, final_height))
 
     def _ensure_canvas_height(self, ctx: RenderContext, needed_height: int) -> None:
         """确保画布有足够高度，不够则扩展"""
         if ctx.y_pos + needed_height + self.PADDING > ctx.image.height:
-            # 扩展画布（每次扩展 1.5 倍或至少满足需求）
-            new_height = max(int(ctx.image.height * 1.5), ctx.y_pos + needed_height + self.PADDING * 2)
+            # 扩展画布（每次扩展 1.6 倍或至少满足需求）
+            new_height = max(int(ctx.image.height * 1.6), ctx.y_pos + needed_height + self.PADDING * 2)
+            logger.debug(f"扩展画布高度: {ctx.image.height} -> {new_height}")
             bg_color = self.BG_COLOR if ctx.not_repost else self.REPOST_BG_COLOR
             new_image = Image.new("RGB", (ctx.card_width, new_height), bg_color)
             new_image.paste(ctx.image, (0, 0))
@@ -222,20 +224,23 @@ class CommonRenderer(ImageRenderer):
         """估算画布高度"""
         height = self.PADDING * 2  # 上下边距
 
-        # 头部
+        # 头部（头像 + 名称 + 时间）
         if result.author:
             height += self.AVATAR_SIZE + self.SECTION_SPACING
 
-        # 标题（估算）
+        # 标题（估算，考虑换行符）
         if result.title:
-            # 考虑换行符
             lines = result.title.count("\n") + 1 + (len(result.title) * self.fontset.title.cjk_width // content_width)
             height += lines * self.fontset.title.line_height + self.SECTION_SPACING
 
         # 封面或图片
         height += self.MAX_COVER_HEIGHT + self.SECTION_SPACING
 
-        # 文本（估算：考虑换行符）
+        # 图文内容
+        if graphics_contents := result.graphics_contents:
+            height += len(graphics_contents) * self.MAX_COVER_HEIGHT + self.SECTION_SPACING
+
+        # 正文（估算，考虑换行符）
         if result.text:
             lines = result.text.count("\n") + 1 + (len(result.text) * self.fontset.text.cjk_width // content_width)
             height += lines * self.fontset.text.line_height + self.SECTION_SPACING
@@ -250,7 +255,7 @@ class CommonRenderer(ImageRenderer):
             height += self.REPOST_PADDING * 2 + self.SECTION_SPACING
 
         # 增加安全余量，防止估算不足（最后会裁剪）
-        return height + 300
+        return height
 
     async def _render_header(self, ctx: RenderContext) -> None:
         """渲染头部（头像 + 名称 + 时间）"""
