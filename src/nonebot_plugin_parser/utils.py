@@ -7,6 +7,7 @@ from pathlib import Path
 from collections import OrderedDict
 from urllib.parse import urlparse
 
+from anyio import Path as AnyioPath
 from nonebot import logger
 
 K = TypeVar("K")
@@ -29,28 +30,17 @@ class LimitedSizeDict(OrderedDict[K, V]):
 
 
 def keep_zh_en_num(text: str) -> str:
-    """
-    保留字符串中的中英文和数字
-    """
+    """保留字符串中的中英文和数字"""
     return re.sub(r"[^\u4e00-\u9fa5a-zA-Z0-9\-_]", "", text.replace(" ", "_"))
 
 
 async def safe_unlink(path: Path):
-    """
-    安全删除文件
-    """
-    try:
-        await asyncio.to_thread(path.unlink, missing_ok=True)
-    except Exception:
-        logger.warning(f"删除 {path} 失败")
+    """安全删除文件"""
+    await AnyioPath(path).unlink(missing_ok=True)
 
 
 async def exec_ffmpeg_cmd(cmd: list[str]) -> None:
-    """执行命令
-
-    Args:
-        cmd (list[str]): 命令序列
-    """
+    """执行 ffmpeg 命令"""
     try:
         process = await asyncio.create_subprocess_exec(
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
@@ -71,13 +61,7 @@ async def merge_av(
     a_path: Path,
     output_path: Path,
 ) -> None:
-    """合并视频和音频
-
-    Args:
-        v_path (Path): 视频文件路径
-        a_path (Path): 音频文件路径
-        output_path (Path): 输出文件路径
-    """
+    """合并视频和音频"""
     logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name}")
 
     cmd = [
@@ -107,13 +91,7 @@ async def merge_av_h264(
     a_path: Path,
     output_path: Path,
 ) -> None:
-    """合并视频和音频，并使用 H.264 编码
-
-    Args:
-        v_path (Path): 视频文件路径
-        a_path (Path): 音频文件路径
-        output_path (Path): 输出文件路径
-    """
+    """合并视频和音频，并使用 H.264 编码"""
     logger.info(f"Merging {v_path.name} and {a_path.name} to {output_path.name} with H.264")
 
     # 修改命令以确保视频使用 H.264 编码
@@ -147,14 +125,7 @@ async def merge_av_h264(
 
 
 async def encode_video_to_h264(video_path: Path) -> Path:
-    """将视频重新编码到 h264
-
-    Args:
-        video_path (Path): 视频路径
-
-    Returns:
-        Path: 编码后的视频路径
-    """
+    """将视频重新编码到 h264"""
     output_path = video_path.with_name(f"{video_path.stem}_h264{video_path.suffix}")
     if output_path.exists():
         return output_path
@@ -178,24 +149,13 @@ async def encode_video_to_h264(video_path: Path) -> Path:
 
 
 def fmt_size(file_path: Path) -> str:
-    """格式化文件大小
-
-    Args:
-        video_path (Path): 视频路径
-    """
+    """格式化文件大小"""
     return f"大小: {file_path.stat().st_size / 1024 / 1024:.2f} MB"
 
 
 def generate_file_name(url: str, default_suffix: str = "") -> str:
-    """根据 url 生成文件名
+    """根据 url 生成文件名"""
 
-    Args:
-        url (str): url
-        default_suffix (str): 默认后缀. Defaults to "".
-
-    Returns:
-        str: 文件名
-    """
     # 根据 url 获取文件后缀
     path = Path(urlparse(url).path)
     suffix = path.suffix if path.suffix else default_suffix
@@ -206,12 +166,7 @@ def generate_file_name(url: str, default_suffix: str = "") -> str:
 
 
 def write_json_to_data(data: dict[str, Any] | str, file_name: str):
-    """将数据写入数据目录
-
-    Args:
-        data (dict[str, Any] | str): 数据
-        file_name (str): 文件名
-    """
+    """将数据写入数据目录"""
     import json
 
     from .config import pconfig
