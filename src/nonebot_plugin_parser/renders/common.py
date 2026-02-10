@@ -126,8 +126,8 @@ class CommonRenderer(ImageRenderer):
     # 资源路径
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
     DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW.ttf"
-    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "play.png"
     DEFAULT_AVATAR_PATH: ClassVar[Path] = RESOURCES_DIR / "avatar.png"
+    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "play.png"
     EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
         base_url=pconfig.emoji_cdn,
         style=pconfig.emoji_style,
@@ -215,7 +215,7 @@ class CommonRenderer(ImageRenderer):
         logger.debug(f"估算高度: {estimated_height}, 画布高度: {ctx.image.height}, 最终高度: {final_height}")
         return ctx.image.crop((0, 0, card_width, final_height))
 
-    def _ensure_canvas_height(self, ctx: RenderContext, needed_height: int) -> None:
+    def _ensure_height_enough(self, ctx: RenderContext, needed_height: int) -> None:
         """确保画布有足够高度，不够则扩展"""
         if ctx.y_pos + needed_height + self.PADDING > ctx.image.height:
             # 扩展画布（每次扩展 1.6 倍或至少满足需求）
@@ -521,7 +521,7 @@ class CommonRenderer(ImageRenderer):
                 text_height = len(lines) * self.fontset.text.line_height + self.SECTION_SPACING
             alt_height = self.fontset.extra.line_height + self.SECTION_SPACING if gc.alt else 0
             needed = text_height + img.height + alt_height + self.SECTION_SPACING
-            self._ensure_canvas_height(ctx, needed)
+            self._ensure_height_enough(ctx, needed)
 
             # 文本
             if gc.text:
