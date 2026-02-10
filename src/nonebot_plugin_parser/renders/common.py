@@ -126,6 +126,7 @@ class CommonRenderer(ImageRenderer):
     # 资源路径
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
     DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW.ttf"
+    DEFAULT_AVATAR_PATH: ClassVar[Path] = RESOURCES_DIR / "avatar.png"
     DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "play.png"
     EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
         base_url=pconfig.emoji_cdn,
@@ -138,22 +139,14 @@ class CommonRenderer(ImageRenderer):
     def load_resources(cls):
         """加载资源"""
         cls._load_fonts()
-        cls._load_video_button()
         cls._load_platform_logos()
+        cls._load_other_resources()
 
     @classmethod
     def _load_fonts(cls):
         font_path = pconfig.custom_font or cls.DEFAULT_FONT_PATH
         cls.fontset = FontSet.new(font_path)
         logger.success(f"加载字体「{font_path.name}」成功")
-
-    @classmethod
-    def _load_video_button(cls):
-        with Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH) as img:
-            cls.video_button_image: PILImage = img.convert("RGBA").resize((100, 100))
-        alpha = cls.video_button_image.split()[-1]
-        alpha = alpha.point(lambda x: int(x * 0.5))
-        cls.video_button_image.putalpha(alpha)
 
     @classmethod
     def _load_platform_logos(cls):
@@ -165,6 +158,22 @@ class CommonRenderer(ImageRenderer):
             if logo_path.exists():
                 with Image.open(logo_path) as img:
                     cls.platform_logos[str(platform_name)] = img.convert("RGBA")
+                logger.debug(f"加载 logo「{platform_name}」成功")
+
+    @classmethod
+    def _load_other_resources(cls):
+        # avatar
+        with Image.open(cls.DEFAULT_AVATAR_PATH) as img:
+            cls.avatar_image: PILImage = img.convert("RGBA").resize((cls.AVATAR_SIZE, cls.AVATAR_SIZE))
+        logger.debug(f"加载头像「{cls.DEFAULT_AVATAR_PATH.name}」成功")
+
+        # video button
+        with Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH) as img:
+            cls.video_button_image: PILImage = img.convert("RGBA").resize((100, 100))
+        alpha = cls.video_button_image.split()[-1]
+        alpha = alpha.point(lambda x: int(x * 0.5))
+        cls.video_button_image.putalpha(alpha)
+        logger.debug(f"加载视频按钮「{cls.DEFAULT_VIDEO_BUTTON_PATH.name}」成功")
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
@@ -206,7 +215,7 @@ class CommonRenderer(ImageRenderer):
         logger.debug(f"估算高度: {estimated_height}, 画布高度: {ctx.image.height}, 最终高度: {final_height}")
         return ctx.image.crop((0, 0, card_width, final_height))
 
-    def _ensure_canvas_height(self, ctx: RenderContext, needed_height: int) -> None:
+    def _ensure_height_enough(self, ctx: RenderContext, needed_height: int) -> None:
         """确保画布有足够高度，不够则扩展"""
         if ctx.y_pos + needed_height + self.PADDING > ctx.image.height:
             # 扩展画布（每次扩展 1.6 倍或至少满足需求）
@@ -317,15 +326,18 @@ class CommonRenderer(ImageRenderer):
 
     def _load_avatar(self, avatar_path: Path | None) -> PILImage:
         """加载头像（带圆形裁剪）"""
-        if avatar_path and avatar_path.exists():
-            try:
-                with Image.open(avatar_path) as img:
-                    avatar = img.convert("RGBA")
-                    avatar = avatar.resize((self.AVATAR_SIZE, self.AVATAR_SIZE), Image.Resampling.LANCZOS)
-            except Exception:
-                avatar = self._create_avatar_placeholder()
-        else:
-            avatar = self._create_avatar_placeholder()
+        if avatar_path is None or not avatar_path.exists():
+            return self.avatar_image
+
+        try:
+            with Image.open(avatar_path) as img:
+                avatar = img.convert("RGBA")
+                avatar = avatar.resize(
+                    (self.AVATAR_SIZE, self.AVATAR_SIZE),
+                    Image.Resampling.LANCZOS,
+                )
+        except Exception:
+            return self.avatar_image
 
         # 圆形遮罩
         mask = Image.new("L", (self.AVATAR_SIZE, self.AVATAR_SIZE), 0)
@@ -333,41 +345,20 @@ class CommonRenderer(ImageRenderer):
         avatar.putalpha(mask)
         return avatar
 
-    def _create_avatar_placeholder(self) -> PILImage:
-        """创建默认头像"""
-        size = self.AVATAR_SIZE
-        placeholder = Image.new("RGBA", (size, size), (230, 230, 230, 255))
-        draw = ImageDraw.Draw(placeholder)
-
-        # 简单的人形图标
-        center = size // 2
-        head_r = size // 6
-        draw.ellipse(
-            (center - head_r, size * 35 // 100 - head_r, center + head_r, size * 35 // 100 + head_r),
-            fill=(200, 200, 200, 255),
-        )
-        draw.ellipse(
-            (center - size * 27 // 100, size * 55 // 100, center + size * 27 // 100, size * 115 // 100),
-            fill=(200, 200, 200, 255),
-        )
-        return placeholder
-
     async def _render_title(self, ctx: RenderContext) -> None:
         """渲染标题"""
         if not ctx.result.title:
             return
 
         lines = self._wrap_text(ctx.result.title, ctx.content_width, self.fontset.title)
-        ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.title)
+        ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.title)
         ctx.y_pos += self.SECTION_SPACING
 
-    async def _render_cover_or_images(self, ctx: RenderContext) -> None:
+    async def _render_cover_or_images(self, ctx: RenderContext):
         """渲染封面或图片网格"""
 
-        cover_path = await ctx.result.cover_path
-        if cover_path and cover_path.exists():
-            cover = self._load_cover(cover_path, ctx.content_width)
-            if cover:
+        if (cover_path := await ctx.result.cover_path) and cover_path.exists():
+            if cover := self._load_cover(cover_path, ctx.content_width):
                 x_pos = self.PADDING
                 ctx.image.paste(cover, (x_pos, ctx.y_pos))
                 # 视频按钮
@@ -378,12 +369,12 @@ class CommonRenderer(ImageRenderer):
                 ctx.y_pos += cover.height + self.SECTION_SPACING
                 return
 
-        # 尝试图片网格
+        # 图片网格
         if ctx.result.img_contents:
             await self._render_image_grid(ctx)
             return
 
-        # 尝试图文内容
+        # 图文内容
         if ctx.result.graphics_contents:
             for gc in ctx.result.graphics_contents:
                 await self._render_graphics(ctx, gc)
@@ -456,7 +447,14 @@ class CommonRenderer(ImageRenderer):
                 # +N 指示器
                 if has_more and row == rows - 1 and i == len(row_imgs) - 1:
                     remaining = total - self.MAX_IMAGES_DISPLAY
-                    self._draw_more_indicator(ctx.image, img_x, current_y + spacing, img.width, img.height, remaining)
+                    self._draw_more_indicator(
+                        ctx.image,
+                        img_x,
+                        current_y + spacing,
+                        img.width,
+                        img.height,
+                        remaining,
+                    )
 
             current_y += spacing + max_h
 
@@ -523,12 +521,12 @@ class CommonRenderer(ImageRenderer):
                 text_height = len(lines) * self.fontset.text.line_height + self.SECTION_SPACING
             alt_height = self.fontset.extra.line_height + self.SECTION_SPACING if gc.alt else 0
             needed = text_height + img.height + alt_height + self.SECTION_SPACING
-            self._ensure_canvas_height(ctx, needed)
+            self._ensure_height_enough(ctx, needed)
 
             # 文本
             if gc.text:
                 lines = self._wrap_text(gc.text, ctx.content_width, self.fontset.text)
-                ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.text)
+                ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.text)
                 ctx.y_pos += self.SECTION_SPACING
 
             # 图片
@@ -554,7 +552,7 @@ class CommonRenderer(ImageRenderer):
             return
 
         lines = self._wrap_text(ctx.result.text, ctx.content_width, self.fontset.text)
-        ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.text)
+        ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.text)
         ctx.y_pos += self.SECTION_SPACING
 
     async def _render_extra(self, ctx: RenderContext) -> None:
@@ -563,7 +561,7 @@ class CommonRenderer(ImageRenderer):
             return
 
         lines = self._wrap_text(ctx.result.extra_info, ctx.content_width, self.fontset.extra)
-        ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.extra)
+        ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.extra)
 
     async def _render_repost(self, ctx: RenderContext) -> None:
         """渲染转发内容"""
@@ -595,7 +593,7 @@ class CommonRenderer(ImageRenderer):
 
         ctx.y_pos += container_h + self.SECTION_SPACING
 
-    async def _draw_text_lines(self, ctx: RenderContext, lines: list[str], font: FontInfo) -> int:
+    async def _draw_text(self, ctx: RenderContext, lines: list[str], font: FontInfo) -> int:
         """绘制多行文本"""
         if not lines:
             return 0
@@ -614,7 +612,8 @@ class CommonRenderer(ImageRenderer):
         if not text:
             return []
 
-        def is_punctuation(c: str) -> bool:
+        # 行尾标点符号
+        def is_trailing_punctuation(c: str) -> bool:
             return c in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
 
         lines: list[str] = []
@@ -647,7 +646,7 @@ class CommonRenderer(ImageRenderer):
                     current_width = char_width
                     continue
 
-                if len(char) == 1 and is_punctuation(char):
+                if len(char) == 1 and is_trailing_punctuation(char):
                     current_line += char
                     current_width += char_width
                     continue
