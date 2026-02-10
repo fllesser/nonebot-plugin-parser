@@ -127,6 +127,7 @@ class CommonRenderer(ImageRenderer):
     RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
     DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW.ttf"
     DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "play.png"
+    DEFAULT_AVATAR_PATH: ClassVar[Path] = RESOURCES_DIR / "avatar.png"
     EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
         base_url=pconfig.emoji_cdn,
         style=pconfig.emoji_style,
@@ -138,22 +139,14 @@ class CommonRenderer(ImageRenderer):
     def load_resources(cls):
         """加载资源"""
         cls._load_fonts()
-        cls._load_video_button()
         cls._load_platform_logos()
+        cls._load_other_resources()
 
     @classmethod
     def _load_fonts(cls):
         font_path = pconfig.custom_font or cls.DEFAULT_FONT_PATH
         cls.fontset = FontSet.new(font_path)
         logger.success(f"加载字体「{font_path.name}」成功")
-
-    @classmethod
-    def _load_video_button(cls):
-        with Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH) as img:
-            cls.video_button_image: PILImage = img.convert("RGBA").resize((100, 100))
-        alpha = cls.video_button_image.split()[-1]
-        alpha = alpha.point(lambda x: int(x * 0.5))
-        cls.video_button_image.putalpha(alpha)
 
     @classmethod
     def _load_platform_logos(cls):
@@ -165,6 +158,22 @@ class CommonRenderer(ImageRenderer):
             if logo_path.exists():
                 with Image.open(logo_path) as img:
                     cls.platform_logos[str(platform_name)] = img.convert("RGBA")
+                logger.debug(f"加载 logo「{platform_name}」成功")
+
+    @classmethod
+    def _load_other_resources(cls):
+        # avatar
+        with Image.open(cls.DEFAULT_AVATAR_PATH) as img:
+            cls.avatar_image: PILImage = img.convert("RGBA").resize((cls.AVATAR_SIZE, cls.AVATAR_SIZE))
+        logger.debug(f"加载头像「{cls.DEFAULT_AVATAR_PATH.name}」成功")
+
+        # video button
+        with Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH) as img:
+            cls.video_button_image: PILImage = img.convert("RGBA").resize((100, 100))
+        alpha = cls.video_button_image.split()[-1]
+        alpha = alpha.point(lambda x: int(x * 0.5))
+        cls.video_button_image.putalpha(alpha)
+        logger.debug(f"加载视频按钮「{cls.DEFAULT_VIDEO_BUTTON_PATH.name}」成功")
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
@@ -317,40 +326,24 @@ class CommonRenderer(ImageRenderer):
 
     def _load_avatar(self, avatar_path: Path | None) -> PILImage:
         """加载头像（带圆形裁剪）"""
-        if avatar_path and avatar_path.exists():
-            try:
-                with Image.open(avatar_path) as img:
-                    avatar = img.convert("RGBA")
-                    avatar = avatar.resize((self.AVATAR_SIZE, self.AVATAR_SIZE), Image.Resampling.LANCZOS)
-            except Exception:
-                avatar = self._create_avatar_placeholder()
-        else:
-            avatar = self._create_avatar_placeholder()
+        if avatar_path is None or not avatar_path.exists():
+            return self.avatar_image
+
+        try:
+            with Image.open(avatar_path) as img:
+                avatar = img.convert("RGBA")
+                avatar = avatar.resize(
+                    (self.AVATAR_SIZE, self.AVATAR_SIZE),
+                    Image.Resampling.LANCZOS,
+                )
+        except Exception:
+            return self.avatar_image
 
         # 圆形遮罩
         mask = Image.new("L", (self.AVATAR_SIZE, self.AVATAR_SIZE), 0)
         ImageDraw.Draw(mask).ellipse((0, 0, self.AVATAR_SIZE - 1, self.AVATAR_SIZE - 1), fill=255)
         avatar.putalpha(mask)
         return avatar
-
-    def _create_avatar_placeholder(self) -> PILImage:
-        """创建默认头像"""
-        size = self.AVATAR_SIZE
-        placeholder = Image.new("RGBA", (size, size), (230, 230, 230, 255))
-        draw = ImageDraw.Draw(placeholder)
-
-        # 简单的人形图标
-        center = size // 2
-        head_r = size // 6
-        draw.ellipse(
-            (center - head_r, size * 35 // 100 - head_r, center + head_r, size * 35 // 100 + head_r),
-            fill=(200, 200, 200, 255),
-        )
-        draw.ellipse(
-            (center - size * 27 // 100, size * 55 // 100, center + size * 27 // 100, size * 115 // 100),
-            fill=(200, 200, 200, 255),
-        )
-        return placeholder
 
     async def _render_title(self, ctx: RenderContext) -> None:
         """渲染标题"""
@@ -361,13 +354,11 @@ class CommonRenderer(ImageRenderer):
         ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.title)
         ctx.y_pos += self.SECTION_SPACING
 
-    async def _render_cover_or_images(self, ctx: RenderContext) -> None:
+    async def _render_cover_or_images(self, ctx: RenderContext):
         """渲染封面或图片网格"""
 
-        cover_path = await ctx.result.cover_path
-        if cover_path and cover_path.exists():
-            cover = self._load_cover(cover_path, ctx.content_width)
-            if cover:
+        if (cover_path := await ctx.result.cover_path) and cover_path.exists():
+            if cover := self._load_cover(cover_path, ctx.content_width):
                 x_pos = self.PADDING
                 ctx.image.paste(cover, (x_pos, ctx.y_pos))
                 # 视频按钮
@@ -456,7 +447,14 @@ class CommonRenderer(ImageRenderer):
                 # +N 指示器
                 if has_more and row == rows - 1 and i == len(row_imgs) - 1:
                     remaining = total - self.MAX_IMAGES_DISPLAY
-                    self._draw_more_indicator(ctx.image, img_x, current_y + spacing, img.width, img.height, remaining)
+                    self._draw_more_indicator(
+                        ctx.image,
+                        img_x,
+                        current_y + spacing,
+                        img.width,
+                        img.height,
+                        remaining,
+                    )
 
             current_y += spacing + max_h
 
@@ -602,7 +600,14 @@ class CommonRenderer(ImageRenderer):
 
         xy = (self.PADDING, ctx.y_pos)
         if emosvg is not None:
-            emosvg.text(ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height)
+            emosvg.text(
+                ctx.image,
+                xy,
+                lines,
+                font.font,
+                fill=font.fill,
+                line_height=font.line_height,
+            )
         else:
             await Apilmoji.text(
                 ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height, source=self.EMOJI_SOURCE
