@@ -351,7 +351,7 @@ class CommonRenderer(ImageRenderer):
             return
 
         lines = self._wrap_text(ctx.result.title, ctx.content_width, self.fontset.title)
-        ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.title)
+        ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.title)
         ctx.y_pos += self.SECTION_SPACING
 
     async def _render_cover_or_images(self, ctx: RenderContext):
@@ -369,12 +369,12 @@ class CommonRenderer(ImageRenderer):
                 ctx.y_pos += cover.height + self.SECTION_SPACING
                 return
 
-        # 尝试图片网格
+        # 图片网格
         if ctx.result.img_contents:
             await self._render_image_grid(ctx)
             return
 
-        # 尝试图文内容
+        # 图文内容
         if ctx.result.graphics_contents:
             for gc in ctx.result.graphics_contents:
                 await self._render_graphics(ctx, gc)
@@ -526,7 +526,7 @@ class CommonRenderer(ImageRenderer):
             # 文本
             if gc.text:
                 lines = self._wrap_text(gc.text, ctx.content_width, self.fontset.text)
-                ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.text)
+                ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.text)
                 ctx.y_pos += self.SECTION_SPACING
 
             # 图片
@@ -552,7 +552,7 @@ class CommonRenderer(ImageRenderer):
             return
 
         lines = self._wrap_text(ctx.result.text, ctx.content_width, self.fontset.text)
-        ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.text)
+        ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.text)
         ctx.y_pos += self.SECTION_SPACING
 
     async def _render_extra(self, ctx: RenderContext) -> None:
@@ -561,7 +561,7 @@ class CommonRenderer(ImageRenderer):
             return
 
         lines = self._wrap_text(ctx.result.extra_info, ctx.content_width, self.fontset.extra)
-        ctx.y_pos += await self._draw_text_lines(ctx, lines, self.fontset.extra)
+        ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.extra)
 
     async def _render_repost(self, ctx: RenderContext) -> None:
         """渲染转发内容"""
@@ -593,21 +593,14 @@ class CommonRenderer(ImageRenderer):
 
         ctx.y_pos += container_h + self.SECTION_SPACING
 
-    async def _draw_text_lines(self, ctx: RenderContext, lines: list[str], font: FontInfo) -> int:
+    async def _draw_text(self, ctx: RenderContext, lines: list[str], font: FontInfo) -> int:
         """绘制多行文本"""
         if not lines:
             return 0
 
         xy = (self.PADDING, ctx.y_pos)
         if emosvg is not None:
-            emosvg.text(
-                ctx.image,
-                xy,
-                lines,
-                font.font,
-                fill=font.fill,
-                line_height=font.line_height,
-            )
+            emosvg.text(ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height)
         else:
             await Apilmoji.text(
                 ctx.image, xy, lines, font.font, fill=font.fill, line_height=font.line_height, source=self.EMOJI_SOURCE
@@ -619,7 +612,8 @@ class CommonRenderer(ImageRenderer):
         if not text:
             return []
 
-        def is_punctuation(c: str) -> bool:
+        # 行尾标点符号
+        def is_trailing_punctuation(c: str) -> bool:
             return c in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
 
         lines: list[str] = []
@@ -652,7 +646,7 @@ class CommonRenderer(ImageRenderer):
                     current_width = char_width
                     continue
 
-                if len(char) == 1 and is_punctuation(char):
+                if len(char) == 1 and is_trailing_punctuation(char):
                     current_line += char
                     current_width += char_width
                     continue
