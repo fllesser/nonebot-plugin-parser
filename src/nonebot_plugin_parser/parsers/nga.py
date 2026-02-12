@@ -117,11 +117,11 @@ class NGAParser(BaseParser):
         content_tag = soup.find(id="postcontent0")
         if content_tag and isinstance(content_tag, Tag):
             text = content_tag.get_text("\n", strip=True)
-            text = self.clean_text(text)
             # 清理 BBCode 标签并限制长度
             img_urls: list[str] = re.findall(r"\[img\](.*?)\[/img\]", text)
             img_urls = [self.base_img_url + url[1:] for url in img_urls]
             contents.extend(self.create_image_contents(img_urls))
+            text = self.clean_text(text)
 
         return self.result(
             title=title,
