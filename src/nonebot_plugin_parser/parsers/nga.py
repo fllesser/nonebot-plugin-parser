@@ -75,7 +75,6 @@ class NGAParser(BaseParser):
         if "需要" in html and ("登录" in html or "请登录" in html):
             raise ParseException("页面可能需要登录后访问")
 
-        # 使用 BeautifulSoup 解析 HTML
         soup = BeautifulSoup(html, "html.parser")
 
         # 提取 title - 从 postsubject0 标签提取
@@ -117,52 +116,27 @@ class NGAParser(BaseParser):
         content_tag = soup.find(id="postcontent0")
         if content_tag and isinstance(content_tag, Tag):
             text = content_tag.get_text("\n", strip=True)
-            # 清理 BBCode 标签并限制长度
-            img_urls: list[str] = re.findall(r"\[img\](.*?)\[/img\]", text)
-            img_urls = [self.base_img_url + url[1:] for url in img_urls]
-            contents.extend(self.create_image_contents(img_urls))
-            text = self.clean_text(text)
+            lines = text.split("\n")
+            temp_text = ""
+            for line in lines:
+                if line.startswith("[img]"):
+                    # [img]./mon_202602/10/-lmuf1Q1aw-hzwpZ2dT3cSl4-bs.webp[/img]
+                    img_url = self.base_img_url + line[6:-6]
+                    contents.append(self.create_graphics_content(img_url, text=temp_text))
+                    temp_text = ""
+                # 去除其他标签, 仅保留文本
+                elif "[" in line:
+                    if clean_line := re.sub(r"\[[^\]]*?\]", "", line).strip():
+                        temp_text += clean_line + "\n"
+                else:
+                    temp_text += line + "\n"
+            text = temp_text.strip()
 
         return self.result(
             title=title,
-            text=text,
             url=url,
             author=author,
+            text=text,
             contents=contents,
             timestamp=timestamp,
         )
-
-    @staticmethod
-    def clean_text(text: str, max_length: int = 500) -> str:
-        rules: list[tuple[str, str, int]] = [
-            # 移除图片标签（完整和不完整的）
-            (r"\[img\][^\[\]]*\[/img\]", "", 0),
-            (r"\[img\][^\[\]]*", "", 0),
-            # 处理URL标签，保留链接文本
-            (r"\[url=[^\]]*\]([^\[]*?)\[/url\]", r"\1", 0),
-            (r"\[url\]([^\[]*?)\[/url\]", r"\1", 0),
-            # 移除引用标签
-            (r"\[quote\].*?\[/quote\]", "", re.DOTALL),
-            # 处理格式标签，保留文本内容（b, i, u）
-            (r"\[(b|i|u)\](.*?)\[/\1\]", r"\2", re.DOTALL),
-            # 处理带属性的格式标签（color, size）
-            (r"\[(color|size)=[^\]]*\](.*?)\[/\1\]", r"\2", re.DOTALL),
-            # 移除其他未配对的标签
-            (r"\[[^]]+\]", "", 0),
-            # 清理空白字符
-            (r"\n{3,}", "\n\n", 0),  # 多个换行符压缩为两个
-            (r"[ \t]+", " ", 0),  # 多个空格/制表符压缩为一个空格
-            (r"\n\s+\n", "\n\n", 0),  # 清理空行中的空白字符
-        ]
-
-        for rule in rules:
-            pattern, replacement, flags = rule[0], rule[1], rule[2]
-            text = re.sub(pattern, replacement, text, flags=flags)
-
-        text = text.strip()
-
-        # 限制文本长度
-        if len(text) > max_length:
-            text = text[:max_length] + "..."
-
-        return text
