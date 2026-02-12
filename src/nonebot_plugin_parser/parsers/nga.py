@@ -7,6 +7,7 @@ from typing import ClassVar
 
 from bs4 import Tag, BeautifulSoup
 from httpx import HTTPError, AsyncClient
+from nonebot import logger
 
 from .base import Platform, BaseParser, PlatformEnum, handle
 from ..exception import ParseException
@@ -29,7 +30,7 @@ class NGAParser(BaseParser):
         self.base_img_url = "https://img.nga.178.com/attachments"
 
     @staticmethod
-    def nga_url(tid: str | int) -> str:
+    def build_url_by_tid(tid: str | int) -> str:
         return f"https://nga.178.com/read.php?tid={tid}"
 
     # ("ngabbs.com", r"https?://ngabbs\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
@@ -38,33 +39,28 @@ class NGAParser(BaseParser):
     @handle("nga", r"tid=(?P<tid>\d+)")
     async def _parse(self, searched: re.Match[str]):
         # 从匹配对象中获取原始URL
-        tid = searched.group("tid")
-        url = self.nga_url(tid)
+        tid = int(searched.group("tid"))
+        url = self.build_url_by_tid(tid)
 
         async with AsyncClient(headers=self.headers, timeout=self.timeout, follow_redirects=True) as client:
             try:
-                # 第一次请求可能返回403，但包含设置cookie的JavaScript
+                # 第一次请求可能返回 403，但包含设置 cookie 的 JavaScript
                 resp = await client.get(url)
-
-                # 如果返回403且包含guestJs cookie设置，提取cookie并重试
+                # 如果返回 403 且包含 guestJs cookie设置，提取cookie并重试
                 if resp.status_code == 403 and "guestJs" in resp.text:
-                    # 从JavaScript中提取guestJs cookie值
-                    cookie_match = re.search(
-                        r"document\.cookie\s*=\s*['\"]guestJs=([^;'\"]+)",
-                        resp.text,
-                    )
-                    if cookie_match:
-                        guest_js = cookie_match.group(1)
-                        # 设置cookie并重试
+                    logger.debug("第一次请求 403 错误, 包含 guestJs cookie, 重试请求")
+                    # 从JavaScript中提取 guestJs cookie 值
+                    if matched := re.search(r"document\.cookie\s*=\s*['\"]guestJs=([^;'\"]+)", resp.text):
+                        guest_js = matched.group(1)
                         client.cookies.set("guestJs", guest_js, domain=".178.com")
-                        # 等待一小段时间（模拟JavaScript的setTimeout）
+                        # 等待一小段时间（模拟 JavaScript 的 setTimeout）
                         await asyncio.sleep(0.3)
-
-                        # 添加随机参数避免缓存（模拟JavaScript的行为）
+                        # 添加随机参数避免缓存（模拟 JavaScript 的行为）
                         rand_param = random.randint(0, 999)
                         separator = "&" if "?" in url else "?"
                         retry_url = f"{url}{separator}rand={rand_param}"
 
+                        # 重试请求
                         resp = await client.get(retry_url)
 
             except HTTPError as e:
@@ -82,35 +78,33 @@ class NGAParser(BaseParser):
         # 使用 BeautifulSoup 解析 HTML
         soup = BeautifulSoup(html, "html.parser")
 
-        # 提取 title - 从 postsubject0
+        # 提取 title - 从 postsubject0 标签提取
         title = None
         title_tag = soup.find(id="postsubject0")
         if title_tag and isinstance(title_tag, Tag):
             title = title_tag.get_text(strip=True)
 
-        # 提取作者 - 先从 postauthor0 标签提取 uid，再从 JavaScript 中查找用户名
+        # 提取作者信息 - 先从 postauthor0 标签提取 uid，再从 JavaScript 中查找用户名
         author = None
         author_tag = soup.find(id="postauthor0")
         if author_tag and isinstance(author_tag, Tag):
             # 从 href 属性中提取 uid: href="nuke.php?func=ucp&uid=24278093"
             href = author_tag.get("href", "")
-            uid_match = re.search(r"[?&]uid=(\d+)", str(href))
-            if uid_match:
-                uid = uid_match.group(1)
+            if matched := re.search(r"[?&]uid=(\d+)", str(href)):
+                uid = str(matched.group(1))
                 # 从 JavaScript 的 commonui.userInfo.setAll() 中查找对应用户名
                 script_pattern = r"commonui\.userInfo\.setAll\s*\(\s*(\{.*?\})\s*\)"
-                script_match = re.search(script_pattern, html, re.DOTALL)
-                if script_match:
+                if matched := re.search(script_pattern, html, re.DOTALL):
+                    user_info = matched.group(1)
                     try:
-                        user_info_json = script_match.group(1)
-                        user_info = json.loads(user_info_json)
-                        # 使用提取的 uid 查找用户名
+                        user_info = json.loads(user_info)
                         if uid in user_info:
                             author = user_info[uid].get("username")
                     except (json.JSONDecodeError, KeyError):
-                        # JSON 解析失败或数据结构不符合预期,保持 author 为 None
                         pass
+
         author = self.create_author(author) if author else None
+
         # 提取时间 - 从第一个帖子的 postdate0
         timestamp = None
         time_tag = soup.find(id="postdate0")
@@ -119,16 +113,15 @@ class NGAParser(BaseParser):
             timestamp = int(time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M")))
 
         # 提取文本 - postcontent0
-        text = None
+        text, contents = None, []
         content_tag = soup.find(id="postcontent0")
-        contents = []
         if content_tag and isinstance(content_tag, Tag):
             text = content_tag.get_text("\n", strip=True)
+            text = self.clean_text(text)
             # 清理 BBCode 标签并限制长度
             img_urls: list[str] = re.findall(r"\[img\](.*?)\[/img\]", text)
             img_urls = [self.base_img_url + url[1:] for url in img_urls]
             contents.extend(self.create_image_contents(img_urls))
-            text = self.clean_nga_text(text)
 
         return self.result(
             title=title,
@@ -140,7 +133,7 @@ class NGAParser(BaseParser):
         )
 
     @staticmethod
-    def clean_nga_text(text: str, max_length: int = 500) -> str:
+    def clean_text(text: str, max_length: int = 500) -> str:
         rules: list[tuple[str, str, int]] = [
             # 移除图片标签（完整和不完整的）
             (r"\[img\][^\[\]]*\[/img\]", "", 0),
