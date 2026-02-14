@@ -229,7 +229,7 @@ class CommonRenderer(ImageRenderer):
 
     def _estimate_text_height(self, text: str, font: FontInfo, content_width: int) -> int:
         """估算文本高度（考虑换行符）"""
-        return text.count("\n") + 1 + (len(text) * font.cjk_width // content_width) * font.line_height
+        return (text.count("\n") + 1 + len(text) * font.cjk_width // content_width) * font.line_height
 
     def _estimate_height(self, result: ParseResult, content_width: int) -> int:
         """估算画布高度"""

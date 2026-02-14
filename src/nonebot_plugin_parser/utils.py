@@ -15,10 +15,6 @@ V = TypeVar("V")
 
 
 class LimitedSizeDict(OrderedDict[K, V]):
-    """
-    定长字典
-    """
-
     def __init__(self, *args, max_size=20, **kwargs):
         self.max_size = max_size
         super().__init__(*args, **kwargs)
