@@ -11,6 +11,32 @@ from .data import Platform, ParseResult, MediaContent
 from ..exception import ParseException
 
 
+class MediaElement(Struct):
+    type: str
+    """媒体类型 video/image/gif"""
+    url: str
+    altText: str | None = None
+    thumbnail_url: str | None = None
+    duration_millis: int | None = None
+
+
+class VxTwitterResponse(Struct):
+    article: str | None
+    date_epoch: int
+    fetched_on: int
+    likes: int
+    text: str
+    user_name: str
+    user_screen_name: str
+    user_profile_image_url: str
+    qrt: "VxTwitterResponse | None" = None
+    qrtURL: str | None = None
+    media_extended: list[MediaElement] = field(default_factory=list)
+
+
+decoder = Decoder(VxTwitterResponse)
+
+
 class TwitterParser(BaseParser):
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.TWITTER, display_name="小蓝鸟")
 
@@ -18,6 +44,39 @@ class TwitterParser(BaseParser):
     async def _parse(self, searched: re.Match[str]) -> ParseResult:
         url = f"https://{searched.group(0)}"
         return await self.parse_by_vxapi(url)
+
+    async def parse_by_vxapi(self, url: str):
+        """使用 vxtwitter API 解析 Twitter 链接"""
+
+        api_url = url.replace("x.com", "api.vxtwitter.com")
+        async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+            response = await client.get(api_url)
+            response.raise_for_status()
+
+        data = decoder.decode(response.content)
+        return self._collect_result(data)
+
+    def _collect_result(self, data: VxTwitterResponse) -> ParseResult:
+        author = self.create_author(data.user_screen_name, data.user_profile_image_url)
+
+        contents: list[MediaContent] = []
+
+        for media in data.media_extended:
+            if media.type in ("video", "gif"):
+                contents.append(self.create_video_content(media.url, media.thumbnail_url))
+            elif media.type == "image":
+                contents.append(self.create_image_content(media.url))
+
+        repost = self._collect_result(data.qrt) if data.qrt else None
+
+        return self.result(
+            author=author,
+            title=data.article,
+            text=data.text,
+            timestamp=data.date_epoch,
+            contents=contents,
+            repost=repost,
+        )
 
     async def _parse_old(self, searched: re.Match[str]) -> ParseResult:
         # 从匹配对象中获取原始URL
@@ -112,59 +171,3 @@ class TwitterParser(BaseParser):
             author=self.create_author("无用户名"),
             contents=contents,
         )
-
-    async def parse_by_vxapi(self, url: str):
-        """使用 vxtwitter API 解析 Twitter 链接"""
-
-        api_url = url.replace("x.com", "api.vxtwitter.com")
-        async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
-            response = await client.get(api_url)
-            response.raise_for_status()
-
-        # write_json_to_data(response.json(), f"X_{url.split('/')[-1]}.json")
-        data = decoder.decode(response.content)
-
-        author = self.create_author(data.user_screen_name, data.user_profile_image_url)
-
-        contents: list[MediaContent] = []
-
-        for media in data.media_extended:
-            if media.type in ("video", "gif"):
-                contents.append(self.create_video_content(media.url, media.thumbnail_url))
-            elif media.type == "image":
-                contents.append(self.create_image_content(media.url))
-
-        return self.result(
-            author=author,
-            title=data.article,
-            text=data.text,
-            timestamp=data.date_epoch,
-            contents=contents,
-        )
-
-
-class MediaElement(Struct):
-    type: str
-    """媒体类型 video/image/gif"""
-    url: str
-    altText: str | None = None
-    thumbnail_url: str | None = None
-    duration_millis: int | None = None
-
-
-class VxTwitterResponse(Struct):
-    article: str | None
-    date_epoch: int
-    fetched_on: int
-    lang: str
-    likes: int
-    text: str
-    user_name: str
-    user_screen_name: str
-    user_profile_image_url: str
-    retweetURL: str | None = None
-    # mediaURLs: list[str] = field(default_factory=list)
-    media_extended: list[MediaElement] = field(default_factory=list)
-
-
-decoder = Decoder(VxTwitterResponse)

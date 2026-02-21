@@ -83,3 +83,22 @@ async def test_gif():
             assert path.exists(), "GIF 不存在"
 
     await asyncio.gather(*[parse_gif(url) for url in urls])
+
+
+@pytest.mark.asyncio
+async def test_repost():
+    from nonebot_plugin_parser.parsers import TwitterParser
+
+    parser = TwitterParser()
+
+    url = "https://x.com/matcha__ore_p/status/2025067664830497203?s=46"
+
+    keyword, searched = parser.search_url(url)
+    assert searched, "无法匹配 URL"
+
+    logger.info(f"{url} | 开始解析推特转发")
+    result = await parser.parse(keyword, searched)
+    logger.debug(f"{url} | 解析结果: \n{result}")
+
+    repost = result.repost
+    assert repost, "转发为空"
