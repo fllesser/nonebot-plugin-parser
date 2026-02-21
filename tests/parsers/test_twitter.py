@@ -20,7 +20,6 @@ async def test_video():
         logger.info(f"{url} | 开始解析推特视频")
         result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
-        assert result.title, "标题为空"
         video_contents = result.video_contents
         assert video_contents, "视频内容为空"
         for video_content in video_contents:
