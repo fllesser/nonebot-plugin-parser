@@ -3,14 +3,36 @@ from typing import Any, ClassVar
 from itertools import chain
 
 from httpx import AsyncClient
+from msgspec import Struct, field
+from msgspec.json import Decoder
 
 from .base import BaseParser, PlatformEnum, handle
-from .data import Platform, ParseResult
+from .data import Platform, ParseResult, MediaContent
 from ..exception import ParseException
 
 
 class TwitterParser(BaseParser):
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.TWITTER, display_name="小蓝鸟")
+
+    @handle("x.com", r"x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)")
+    async def _parse(self, searched: re.Match[str]) -> ParseResult:
+        url = f"https://{searched.group(0)}"
+        return await self.parse_by_vxapi(url)
+
+    async def _parse_old(self, searched: re.Match[str]) -> ParseResult:
+        # 从匹配对象中获取原始URL
+        url = f"https://{searched.group(0)}"
+
+        resp = await self._req_xdown_api(url)
+        if resp.get("status") != "ok":
+            raise ParseException("解析失败")
+
+        html_content = resp.get("data")
+
+        if html_content is None:
+            raise ParseException("解析失败, 数据为空")
+
+        return self._parse_twitter_html(html_content)
 
     async def _req_xdown_api(self, url: str) -> dict[str, Any]:
         headers = {
@@ -26,23 +48,7 @@ class TwitterParser(BaseParser):
             response = await client.post(url, data=data)
             return response.json()
 
-    @handle("x.com", r"x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)")
-    async def _parse(self, searched: re.Match[str]) -> ParseResult:
-        # 从匹配对象中获取原始URL
-        url = f"https://{searched.group(0)}"
-
-        resp = await self._req_xdown_api(url)
-        if resp.get("status") != "ok":
-            raise ParseException("解析失败")
-
-        html_content = resp.get("data")
-
-        if html_content is None:
-            raise ParseException("解析失败, 数据为空")
-
-        return self.parse_twitter_html(html_content)
-
-    def parse_twitter_html(self, html_content: str) -> ParseResult:
+    def _parse_twitter_html(self, html_content: str) -> ParseResult:
         """解析 Twitter HTML 内容"""
         from bs4 import Tag, BeautifulSoup
 
@@ -106,11 +112,59 @@ class TwitterParser(BaseParser):
             author=self.create_author("无用户名"),
             contents=contents,
         )
-        # # 4. 提取Twitter ID
-        # twitter_id_input = soup.find("input", {"id": "TwitterId"})
-        # if (
-        #     twitter_id_input
-        #     and isinstance(twitter_id_input, Tag)
-        #     and (value := twitter_id_input.get("value"))
-        #     and isinstance(value, str)
-        # ):
+
+    async def parse_by_vxapi(self, url: str):
+        """使用 vxtwitter API 解析 Twitter 链接"""
+
+        api_url = url.replace("x.com", "api.vxtwitter.com")
+        async with AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+            response = await client.get(api_url)
+            response.raise_for_status()
+
+        # write_json_to_data(response.json(), f"X_{url.split('/')[-1]}.json")
+        data = decoder.decode(response.content)
+
+        author = self.create_author(data.user_screen_name, data.user_profile_image_url)
+
+        contents: list[MediaContent] = []
+
+        for media in data.media_extended:
+            if media.type in ("video", "gif"):
+                contents.append(self.create_video_content(media.url, media.thumbnail_url))
+            elif media.type == "image":
+                contents.append(self.create_image_content(media.url))
+
+        return self.result(
+            author=author,
+            title=data.article,
+            text=data.text,
+            timestamp=data.date_epoch,
+            contents=contents,
+        )
+
+
+class MediaElement(Struct):
+    type: str
+    """媒体类型 video/image/gif"""
+    url: str
+    altText: str | None = None
+    thumbnail_url: str | None = None
+    duration_millis: int | None = None
+
+
+class VxTwitterResponse(Struct):
+    article: str | None
+    date_epoch: int
+    fetched_on: int
+    lang: str
+    likes: int
+    text: str
+    user_name: str
+    user_screen_name: str
+    user_profile_image_url: str
+    retweetURL: str | None = None
+    # mediaURLs: list[str] = field(default_factory=list)
+    media_extended: list[MediaElement] = field(default_factory=list)
+
+
+decoder = Decoder(VxTwitterResponse)
