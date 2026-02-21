@@ -65,7 +65,7 @@ async def test_gif():
     parser = TwitterParser()
 
     urls = [
-        "https://x.com/Dithmenos9/status/1966798448499286345",
+        "https://x.com/Dithmenos9/status/1966798448499286345",  # gif
     ]
 
     async def parse_gif(url: str):
@@ -76,10 +76,29 @@ async def test_gif():
         result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
 
-        gif_contents = result.dynamic_contents
-        assert gif_contents, "GIF 内容为空"
-        for gif_content in gif_contents:
-            path = await gif_content.get_path()
+        video_contents = result.video_contents
+        assert video_contents, "GIF 内容为空"
+        for video_content in video_contents:
+            path = await video_content.get_path()
             assert path.exists(), "GIF 不存在"
 
     await asyncio.gather(*[parse_gif(url) for url in urls])
+
+
+@pytest.mark.asyncio
+async def test_repost():
+    from nonebot_plugin_parser.parsers import TwitterParser
+
+    parser = TwitterParser()
+
+    url = "https://x.com/matcha__ore_p/status/2025067664830497203?s=46"
+
+    keyword, searched = parser.search_url(url)
+    assert searched, "无法匹配 URL"
+
+    logger.info(f"{url} | 开始解析推特转发")
+    result = await parser.parse(keyword, searched)
+    logger.debug(f"{url} | 解析结果: \n{result}")
+
+    repost = result.repost
+    assert repost, "转发为空"

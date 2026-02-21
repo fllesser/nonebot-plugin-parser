@@ -199,6 +199,18 @@ class BaseParser:
             contents.append(ImageContent(task))
         return contents
 
+    def create_image_content(
+        self,
+        url_or_task: str | Task[Path],
+    ):
+        """创建图片内容"""
+        from .data import ImageContent
+
+        if isinstance(url_or_task, str):
+            url_or_task = DOWNLOADER.download_img(url_or_task, ext_headers=self.headers)
+
+        return ImageContent(url_or_task)
+
     def create_dynamic_contents(
         self,
         dynamic_urls: list[str],
