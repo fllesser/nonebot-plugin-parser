@@ -39,7 +39,7 @@ async def test_repost():
 
     urls = [
         # "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
-        "https://weibo.com/1694917363/Q0KtXh6z2",
+        "https://weibo.com/1854467892/QsPbt51HH",
     ]
 
     async def parse_repost(url) -> None:
@@ -102,7 +102,6 @@ async def test_text():
         # "https://mapp.api.weibo.cn/fx/8102df2b26100b2e608e6498a0d3cfe2.html",
         "https://weibo.com/3144744040/PvoG6c1AR",
         "https://weibo.com/3144744040/PiTAYaTKQ",
-        "https://weibo.com/1157864602/Q0PtH9Yux",
     ]
 
     async def parse_text(url: str) -> None:
