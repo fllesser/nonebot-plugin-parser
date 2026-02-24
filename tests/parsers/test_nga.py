@@ -31,12 +31,12 @@ async def test_nga_parse():
     logger.debug(f"内容: {result.contents}")
     assert result.contents is not None, "应该能提取内容信息"
     assert len(result.contents) > 0, "应该能提取内容信息"
-    img_contents = result.img_contents
-    assert img_contents is not None, "应该能提取图片内容"
-    for img_content in img_contents:
-        img_path = await img_content.get_path()
-        assert img_path.exists(), "图片不存在"
-        logger.debug(f"图片: {img_path}")
+    graphics_contents = result.graphics_contents
+    assert graphics_contents is not None, "应该能提取图片内容"
+    for graphics_content in graphics_contents:
+        graphics_path = await graphics_content.get_path()
+        assert graphics_path.exists(), "图片不存在"
+        logger.debug(f"图片: {graphics_path}")
     logger.success("NGA帖子解析成功")
 
 

@@ -27,11 +27,14 @@ class NGAParser(BaseParser):
             "Upgrade-Insecure-Requests": "1",
         }
         self.headers.update(extra_headers)
-        self.base_img_url = "https://img.nga.178.com/attachments"
 
     @staticmethod
     def build_url_by_tid(tid: str | int) -> str:
         return f"https://nga.178.com/read.php?tid={tid}"
+
+    @staticmethod
+    def build_img_url(path: str) -> str:
+        return "https://img.nga.178.com/attachments" + path
 
     # ("ngabbs.com", r"https?://ngabbs\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
     # ("nga.178.com", r"https?://nga\.178\.com/read\.php\?tid=(?P<tid>\d+)(?:[&#A-Za-z\d=_-]+)?"),
@@ -117,20 +120,29 @@ class NGAParser(BaseParser):
         if content_tag and isinstance(content_tag, Tag):
             text = content_tag.get_text("\n", strip=True)
             lines = text.split("\n")
-            temp_text = ""
+            text_buffer: list[str] = []
+
             for line in lines:
-                if line.startswith("[img]"):
+                if "[" in line:
                     # [img]./mon_202602/10/-lmuf1Q1aw-hzwpZ2dT3cSl4-bs.webp[/img]
-                    img_url = self.base_img_url + line[6:-6]
-                    contents.append(self.create_graphics_content(img_url, text=temp_text))
-                    temp_text = ""
-                # 去除其他标签, 仅保留文本
-                elif "[" in line:
-                    if clean_line := re.sub(r"\[[^\]]*?\]", "", line).strip():
-                        temp_text += clean_line + "\n"
+                    if paths := re.findall(r"\[img\]\.(.*?)\[\/img\]", line):
+                        for path in paths:
+                            contents.append(
+                                self.create_graphics_content(
+                                    self.build_img_url(path),
+                                    text="\n".join(text_buffer).strip(),
+                                )
+                            )
+                            text_buffer.clear()
+                    else:
+                        # 去除其他标签, 仅保留文本
+                        if clean_line := re.sub(r"\[[^\]]*?\]", "", line).strip():
+                            text_buffer.append(clean_line)
                 else:
-                    temp_text += line + "\n"
-            text = temp_text.strip()
+                    text_buffer.append(line)
+
+            # 处理剩余的文本
+            text = "\n".join(text_buffer).strip()
 
         return self.result(
             title=title,
