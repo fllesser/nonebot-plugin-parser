@@ -1,5 +1,5 @@
 import re
-from typing import Any, ClassVar
+from typing import Any, Literal, ClassVar
 from itertools import chain
 
 from httpx import AsyncClient
@@ -12,8 +12,7 @@ from ..exception import ParseException
 
 
 class MediaElement(Struct):
-    type: str
-    """媒体类型 video/image/gif"""
+    type: Literal["video", "image", "gif"]
     url: str
     altText: str | None = None
     thumbnail_url: str | None = None
@@ -32,6 +31,10 @@ class VxTwitterResponse(Struct):
     qrt: "VxTwitterResponse | None" = None
     qrtURL: str | None = None
     media_extended: list[MediaElement] = field(default_factory=list)
+
+    @property
+    def name(self) -> str:
+        return f"{self.user_name} @{self.user_screen_name}"
 
 
 decoder = Decoder(VxTwitterResponse)
@@ -57,10 +60,9 @@ class TwitterParser(BaseParser):
         return self._collect_result(data)
 
     def _collect_result(self, data: VxTwitterResponse) -> ParseResult:
-        author = self.create_author(data.user_screen_name, data.user_profile_image_url)
+        author = self.create_author(data.name, data.user_profile_image_url)
 
         contents: list[MediaContent] = []
-
         for media in data.media_extended:
             if media.type in ("video", "gif"):
                 contents.append(self.create_video_content(media.url, media.thumbnail_url))
