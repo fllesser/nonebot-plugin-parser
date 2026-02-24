@@ -1641,8 +1641,8 @@ requires-dist = [
     { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
     { name = "rich", specifier = ">=13.0.0" },
-    { name = "yt-dlp", extras = ["default"], marker = "extra == 'all'", specifier = ">=2026.2.4" },
-    { name = "yt-dlp", extras = ["default"], marker = "extra == 'ytdlp'", specifier = ">=2025.2.4" },
+    { name = "yt-dlp", extras = ["default"], marker = "extra == 'all'", specifier = ">=2026.2.21" },
+    { name = "yt-dlp", extras = ["default"], marker = "extra == 'ytdlp'", specifier = ">=2025.2.21" },
 ]
 provides-extras = ["htmlkit", "htmlrender", "ytdlp", "emosvg", "all"]
 
@@ -1654,28 +1654,28 @@ dev = [
     { name = "nonebot-plugin-htmlrender", specifier = ">=0.6.7" },
     { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
     { name = "nonebug", git = "https://github.com/nonebot/nonebug" },
-    { name = "poethepoet", specifier = ">=0.40.0" },
+    { name = "poethepoet", specifier = ">=0.42.0" },
     { name = "pytest-asyncio", specifier = ">=1.3.0,<1.4.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0,<4.0.0" },
     { name = "respx", specifier = ">=0.22.0" },
     { name = "ruff", specifier = ">=0.15.0,<1.0.0" },
-    { name = "types-yt-dlp", specifier = ">=2026.2.4.20260206" },
-    { name = "yt-dlp", extras = ["default"], specifier = ">=2026.2.4" },
+    { name = "types-yt-dlp", specifier = ">=2026.2.21.20260223" },
+    { name = "yt-dlp", extras = ["default"], specifier = ">=2026.2.21" },
 ]
 extras = [
     { name = "emosvg", specifier = ">=0.1.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot-plugin-htmlrender", specifier = ">=0.6.7" },
-    { name = "types-yt-dlp", specifier = ">=2026.2.4.20260206" },
-    { name = "yt-dlp", extras = ["default"], specifier = ">=2026.2.4" },
+    { name = "types-yt-dlp", specifier = ">=2026.2.21.20260223" },
+    { name = "yt-dlp", extras = ["default"], specifier = ">=2026.2.21" },
 ]
 pydantic-v1 = [{ name = "pydantic", specifier = "<2.0.0" }]
 pydantic-v2 = [{ name = "pydantic", specifier = ">=2.0.0" }]
 telegram = [{ name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" }]
 test = [
     { name = "nonebug", git = "https://github.com/nonebot/nonebug" },
-    { name = "poethepoet", specifier = ">=0.40.0" },
+    { name = "poethepoet", specifier = ">=0.42.0" },
     { name = "pytest-asyncio", specifier = ">=1.3.0,<1.4.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0,<4.0.0" },
@@ -1900,16 +1900,16 @@ wheels = [
 
 [[package]]
 name = "poethepoet"
-version = "0.40.0"
+version = "0.42.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pastel" },
     { name = "pyyaml" },
     { name = "tomli", marker = "python_full_version < '3.11' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/9d/054c8435b03324ed9abd5d5ab8c45065b1f42c23952cd23f13a5921d8465/poethepoet-0.40.0.tar.gz", hash = "sha256:91835f00d03d6c4f0e146f80fa510e298ad865e7edd27fe4cb9c94fdc090791b", size = 81114, upload-time = "2026-01-05T19:09:13.116Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4a/9a/4e81fafef2ba94e5c974b4701343d1f053a27575ab5133cbd264348925dd/poethepoet-0.42.0.tar.gz", hash = "sha256:c9a2828259e585e9ed152857602130ff339f7b1638879b80d4a23f25588be4f8", size = 91278, upload-time = "2026-02-22T14:24:50.967Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fb/bc/73327d12b176abea7a3c6c7d760e1a953992f7b59d72c0354e39d7a353b5/poethepoet-0.40.0-py3-none-any.whl", hash = "sha256:afd276ae31d5c53573c0c14898118d4848ccee3709b6b0be6a1c6cbe522bbc8a", size = 106672, upload-time = "2026-01-05T19:09:11.536Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/3e/58041b7e4d49b69e859dc81c35e221cf02d91ed4dbb5a2f6cc4698a29f44/poethepoet-0.42.0-py3-none-any.whl", hash = "sha256:e43cc20d458ee5bfccaa4572bc5783bcb93991a7d2fcf8dadc9c43f1ebc9b277", size = 118091, upload-time = "2026-02-22T14:24:49.53Z" },
 ]
 
 [[package]]
@@ -2721,14 +2721,14 @@ wheels = [
 
 [[package]]
 name = "types-yt-dlp"
-version = "2026.2.4.20260206"
+version = "2026.2.21.20260223"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/15/47/04b17c0497e40d173397e5f364cb1f43cd04c36e8b7c93470436df6a54c6/types_yt_dlp-2026.2.4.20260206.tar.gz", hash = "sha256:375b6dd4afb7c0ee559b144dc96ec94fb1bb8456dd86326f55c1891ddc3fbd07", size = 43026, upload-time = "2026-02-06T04:03:42.972Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/84/5e/ff5f40cbbb399eaac57e8db581cce1c6248eabc4d67b28657be9bbeac4ef/types_yt_dlp-2026.2.21.20260223.tar.gz", hash = "sha256:a8299a55d4c778b7c5f95c3190deca07b6f7cf4af91ee73b254fada33013f4c2", size = 43035, upload-time = "2026-02-23T04:11:43.977Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f0/aa/b89206b1db8867daa622c5f261ddb0523e08680c681d85b9ba1171ffee29/types_yt_dlp-2026.2.4.20260206-py3-none-any.whl", hash = "sha256:ba51fd2a2509110db0ae89f914e32d558ec73db403aa0d5f98fd8084a2a1e15a", size = 58148, upload-time = "2026-02-06T04:03:41.973Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/33/44f38b4f108012cdc5bc0a54ffde3d8b186930ebc8affe308e76ed15aeea/types_yt_dlp-2026.2.21.20260223-py3-none-any.whl", hash = "sha256:30d1b98145e9f4445ca6934ddd4babb01db47bd7ad38dc9816bd06d698cf384c", size = 58175, upload-time = "2026-02-23T04:11:42.946Z" },
 ]
 
 [[package]]
