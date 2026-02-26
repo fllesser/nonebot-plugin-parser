@@ -1,6 +1,7 @@
 from random import choice
 
-from msgspec import Struct, json, field
+from msgspec import Struct, field
+from msgspec.json import Decoder
 
 
 class PlayAddr(Struct):
@@ -59,4 +60,4 @@ class SlidesInfo(Struct):
     aweme_details: list[SlidesData] = field(default_factory=list)
 
 
-decoder = json.Decoder(SlidesInfo)
+decoder = Decoder(SlidesInfo)

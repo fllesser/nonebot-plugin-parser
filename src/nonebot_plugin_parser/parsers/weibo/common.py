@@ -1,6 +1,7 @@
 from re import sub
 
-from msgspec import Struct, json
+from msgspec import Struct
+from msgspec.json import Decoder
 
 
 class LargeInPic(Struct):
@@ -107,4 +108,4 @@ class WeiboResponse(Struct):
     data: WeiboData
 
 
-decoder = json.Decoder(WeiboResponse)
+decoder = Decoder(WeiboResponse)

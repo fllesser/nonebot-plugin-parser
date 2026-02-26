@@ -1,4 +1,5 @@
-from msgspec import Struct, json
+from msgspec import Struct
+from msgspec.json import Decoder
 
 
 class UserInfo(Struct):
@@ -20,4 +21,4 @@ class Detail(Struct):
     data: Data
 
 
-decoder = json.Decoder(Detail)
+decoder = Decoder(Detail)

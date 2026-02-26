@@ -1,4 +1,5 @@
-from msgspec import Struct, json
+from msgspec import Struct
+from msgspec.json import Decoder
 
 
 class Thumbnail(Struct):
@@ -40,4 +41,4 @@ class BrowseResponse(Struct):
         return self.metadata.channelMetadataRenderer.description
 
 
-decoder = json.Decoder(BrowseResponse)
+decoder = Decoder(BrowseResponse)
