@@ -23,3 +23,4 @@ repos:
     hooks:
       - id: uv-lock
       - id: uv-sync
+        stages: [pre-commit, post-checkout]
