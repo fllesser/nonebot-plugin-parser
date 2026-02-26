@@ -66,7 +66,7 @@ class TwitterParser(BaseParser):
         return self._collect_result(data)
 
     def _collect_result(self, data: VxTwitterResponse) -> ParseResult:
-        author = self.create_author(data.name, data.user_profile_image_url)
+        author = self.create_author(data.user_name, data.user_profile_image_url)
         title = data.article.title if isinstance(data.article, Article) else data.article
 
         contents: list[MediaContent] = []
