@@ -1,6 +1,7 @@
 from random import choice
 
-from msgspec import Struct, json, field
+from msgspec import Struct, field
+from msgspec.json import Decoder
 
 
 class CdnUrl(Struct):
@@ -59,4 +60,4 @@ class TusjohData(Struct):
     photo: Photo | None = None
 
 
-decoder = json.Decoder(dict[str, TusjohData])
+decoder = Decoder(dict[str, TusjohData])

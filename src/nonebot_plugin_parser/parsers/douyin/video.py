@@ -1,7 +1,8 @@
 from random import choice
 from typing import Any
 
-from msgspec import Struct, json, field
+from msgspec import Struct, field
+from msgspec.json import Decoder
 
 from ..base import ParseException
 
@@ -95,4 +96,4 @@ class RouterData(Struct):
         raise ParseException("can't find video_(id)/page or note_(id)/page in router data")
 
 
-decoder = json.Decoder(RouterData)
+decoder = Decoder(RouterData)
