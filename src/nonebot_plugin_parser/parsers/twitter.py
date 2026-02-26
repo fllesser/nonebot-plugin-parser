@@ -19,8 +19,14 @@ class MediaElement(Struct):
     duration_millis: int | None = None
 
 
+class Article(Struct):
+    image: str | None = None
+    preview_text: str | None = None
+    title: str | None = None
+
+
 class VxTwitterResponse(Struct):
-    article: str | None
+    article: str | Article | None
     date_epoch: int
     fetched_on: int
     likes: int
@@ -73,7 +79,7 @@ class TwitterParser(BaseParser):
 
         return self.result(
             author=author,
-            title=data.article,
+            title=data.article.title if isinstance(data.article, Article) else data.article,
             text=data.text,
             timestamp=data.date_epoch,
             contents=contents,
