@@ -113,7 +113,7 @@ conflicts = [
 ]
 
 [tool.uv.sources]
-nonebug = { git = "https://github.com/nonebot/nonebug" }
+nonebug = { git = "https://github.com/nonebot/nonebug", rev = "master" }
 
 [tool.bumpversion]
 tag = true
