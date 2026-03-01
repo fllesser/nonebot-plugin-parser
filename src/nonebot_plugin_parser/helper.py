@@ -101,8 +101,7 @@ class UniHelper:
         """文件 Seg"""
         if not display_name:
             display_name = file.name
-        if not display_name:
-            raise ValueError("文件名不能为空")
+
         if pconfig.use_base64:
             return File(raw=file.read_bytes(), name=display_name)
         else:
