@@ -161,7 +161,9 @@ class HtmlRenderer(ImageRenderer):
             avatar_path = await result.author.get_avatar_path()
             # 无头像时 fallback 到默认头像（与 CommonRenderer 保持一致）
             if not avatar_path:
-                avatar_path = CommonRenderer.DEFAULT_AVATAR_PATH if CommonRenderer.DEFAULT_AVATAR_PATH.exists() else None
+                avatar_path = (
+                    CommonRenderer.DEFAULT_AVATAR_PATH if CommonRenderer.DEFAULT_AVATAR_PATH.exists() else None
+                )
             author = CardAuthor(
                 name=result.author.name,
                 avatar_path=avatar_path.as_uri() if avatar_path else None,
@@ -171,10 +173,12 @@ class HtmlRenderer(ImageRenderer):
         video_contents: list[CardVideoContent] = []
         for vc in result.video_contents:
             cover = await vc.get_cover_path()
-            video_contents.append(CardVideoContent(
-                cover_path=cover.as_uri() if cover else None,
-                duration=vc.display_duration if vc.duration else None,
-            ))
+            video_contents.append(
+                CardVideoContent(
+                    cover_path=cover.as_uri() if cover else None,
+                    duration=vc.display_duration if vc.duration else None,
+                )
+            )
 
         cover_path = video_contents[0].cover_path if video_contents else None
 
@@ -184,33 +188,57 @@ class HtmlRenderer(ImageRenderer):
             path = await img.get_path()
             img_contents.append(CardImageContent(path=path.as_uri()))
 
+        # 动态视频标记：将首张图片提升为视频封面（播放按钮 + 时长）
+        is_video = result.extra.get("is_video", False)
+        if is_video and img_contents and not video_contents:
+            promoted = img_contents.pop(0)
+            duration_secs = result.extra.get("duration", 0)
+            duration_str = None
+            if duration_secs:
+                minutes = int(duration_secs) // 60
+                seconds = int(duration_secs) % 60
+                duration_str = f"时长: {minutes}:{seconds:02d}"
+            video_contents.append(
+                CardVideoContent(
+                    cover_path=promoted.path,
+                    duration=duration_str,
+                )
+            )
+            cover_path = promoted.path
+
         # 图文内容
         graphics_contents: list[CardGraphicsContent] = []
         for graphics in result.graphics_contents:
             path = await graphics.get_path()
-            graphics_contents.append(CardGraphicsContent(
-                path=path.as_uri(),
-                text=graphics.text,
-                alt=graphics.alt,
-            ))
+            graphics_contents.append(
+                CardGraphicsContent(
+                    path=path.as_uri(),
+                    text=graphics.text,
+                    alt=graphics.alt,
+                )
+            )
 
-        # 内容类型推断
-        if video_contents:
-            content_type = "视频"
-        elif graphics_contents:
-            content_type = "图文"
-        elif img_contents:
-            content_type = "动态"
-        elif result.repost:
-            content_type = "动态"
-        else:
-            content_type = None
+        # 内容类型推断（允许解析器通过 extra 显式指定）
+        content_type = result.extra.get("content_type")
+        if content_type is None:
+            if video_contents:
+                content_type = "视频"
+            elif graphics_contents:
+                content_type = "图文"
+            elif img_contents:
+                content_type = "动态"
+            elif result.repost:
+                content_type = "动态"
 
         # 转发
         repost = await self._resolve_parse_result(result.repost) if result.repost else None
 
         # 播放按钮 & 字体（使用 CommonRenderer 定义的常量，保持一致）
-        play_icon_uri = CommonRenderer.DEFAULT_VIDEO_BUTTON_PATH.as_uri() if CommonRenderer.DEFAULT_VIDEO_BUTTON_PATH.exists() else None
+        play_icon_uri = (
+            CommonRenderer.DEFAULT_VIDEO_BUTTON_PATH.as_uri()
+            if CommonRenderer.DEFAULT_VIDEO_BUTTON_PATH.exists()
+            else None
+        )
         font_uri = CommonRenderer.DEFAULT_FONT_PATH.as_uri() if CommonRenderer.DEFAULT_FONT_PATH.exists() else None
 
         return CardData(
