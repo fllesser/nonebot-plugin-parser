@@ -26,10 +26,25 @@ class VideoArchive(Struct):
     title: str
     desc: str
     cover: str
-    # duration_text: str
+    duration_text: str = ""
     # jump_url: str
     # stat: dict[str, str]
     # badge: dict[str, Any] | None = None
+
+    @property
+    def duration_seconds(self) -> float:
+        """将 duration_text（如 '3:42'）解析为秒数"""
+        if not self.duration_text:
+            return 0.0
+        parts = self.duration_text.split(":")
+        try:
+            if len(parts) == 2:
+                return int(parts[0]) * 60 + int(parts[1])
+            elif len(parts) == 3:
+                return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+        except ValueError:
+            pass
+        return 0.0
 
 
 class OpusImage(Struct):
@@ -104,6 +119,13 @@ class DynamicMajor(Struct):
             return self.archive.cover
         return None
 
+    @property
+    def duration(self) -> float:
+        """获取视频时长（秒）"""
+        if self.type == "MAJOR_TYPE_ARCHIVE" and self.archive:
+            return self.archive.duration_seconds
+        return 0.0
+
 
 class DynamicModule(Struct):
     """动态模块"""
@@ -137,6 +159,15 @@ class DynamicModule(Struct):
             return self.module_dynamic
         return None
 
+    @property
+    def desc_text(self) -> str | None:
+        """获取动态自身的文字描述（非 major 内容的文字）"""
+        if self.module_dynamic:
+            desc = self.module_dynamic.get("desc")
+            if desc and isinstance(desc, dict):
+                return desc.get("text")
+        return None
+
 
 class DynamicInfo(Struct):
     """动态信息"""
@@ -146,6 +177,7 @@ class DynamicInfo(Struct):
     visible: bool
     modules: DynamicModule
     basic: dict[str, Any] | None = None
+    orig: "DynamicInfo | None" = None
 
     @property
     def name(self) -> str:
@@ -173,7 +205,11 @@ class DynamicInfo(Struct):
 
     @property
     def text(self) -> str | None:
-        """获取文本内容"""
+        """获取文本内容（优先取动态自身文字，回退到 major 的文字）"""
+        # 优先取动态自身描述（如发视频时附带的文字）
+        if desc_text := self.modules.desc_text:
+            return desc_text
+        # 回退到 major 的文字（图文摘要、视频简介等）
         major_info = self.modules.major_info
         if major_info:
             major = convert(major_info, DynamicMajor)
@@ -197,6 +233,15 @@ class DynamicInfo(Struct):
             major = convert(major_info, DynamicMajor)
             return major.cover_url
         return None
+
+    @property
+    def duration(self) -> float:
+        """获取视频时长（秒）"""
+        major_info = self.modules.major_info
+        if major_info:
+            major = convert(major_info, DynamicMajor)
+            return major.duration
+        return 0.0
 
 
 class DynamicData(Struct):

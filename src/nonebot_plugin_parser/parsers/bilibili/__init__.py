@@ -20,7 +20,7 @@ from ..base import (
     handle,
     pconfig,
 )
-from ..data import Platform, ImageContent, MediaContent
+from ..data import Platform, ImageContent, MediaContent, ParseResult
 from ..cookie import ck2dict
 
 # 选择客户端
@@ -169,11 +169,50 @@ class BilibiliParser(BaseParser):
         dynamic_info = convert(await dynamic.get_info(), DynamicData).item
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
 
-        # 下载图片
+        # 下载图片 / 视频封面
         contents: list[MediaContent] = []
-        for image_url in dynamic_info.image_urls:
-            img_task = self.downloader.download_img(image_url, ext_headers=self.headers)
-            contents.append(ImageContent(img_task))
+        if dynamic_info.cover_url:
+            # 视频类动态，用 VideoContent 以显示播放按钮
+            contents.append(
+                self.create_video_content(
+                    self.downloader.download_img(dynamic_info.cover_url, ext_headers=self.headers),
+                    cover_url=dynamic_info.cover_url,
+                    duration=dynamic_info.duration,
+                )
+            )
+        else:
+            for image_url in dynamic_info.image_urls:
+                img_task = self.downloader.download_img(image_url, ext_headers=self.headers)
+                contents.append(ImageContent(img_task))
+
+        # 转发动态：递归解析原始动态
+        repost: ParseResult | None = None
+        if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig:
+            orig = dynamic_info.orig
+            orig_author = self.create_author(orig.name, orig.avatar)
+            orig_contents: list[MediaContent] = []
+
+            if orig.cover_url:
+                # 原始动态是视频，用 VideoContent 以显示播放按钮
+                orig_contents.append(
+                    self.create_video_content(
+                        self.downloader.download_img(orig.cover_url, ext_headers=self.headers),
+                        cover_url=orig.cover_url,
+                        duration=orig.duration,
+                    )
+                )
+            else:
+                for image_url in orig.image_urls:
+                    img_task = self.downloader.download_img(image_url, ext_headers=self.headers)
+                    orig_contents.append(ImageContent(img_task))
+
+            repost = self.result(
+                title=orig.title,
+                text=orig.text,
+                timestamp=orig.timestamp,
+                author=orig_author,
+                contents=orig_contents,
+            )
 
         return self.result(
             title=dynamic_info.title,
@@ -181,6 +220,8 @@ class BilibiliParser(BaseParser):
             timestamp=dynamic_info.timestamp,
             author=author,
             contents=contents,
+            repost=repost,
+            extra={"content_type": "动态"},
         )
 
     async def parse_opus_by_id(self, opus_id: int):
