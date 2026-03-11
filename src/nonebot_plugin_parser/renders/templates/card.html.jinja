@@ -499,7 +499,12 @@
       {% endif %}
 
       <div class="content-body">
-        {# ── 视频封面（显示在标题前，匹配 CommonRenderer 布局） ── #}
+        {# ── 动态类型：文字显示在封面上方 ── #}
+        {% if result.content_type == '动态' and result.text %}
+        <div class="text">{{ result.text }}</div>
+        {% endif %}
+
+        {# ── 视频封面 ── #}
         {% if result.video_contents %}
         {% set vc = result.video_contents[0] %}
         {% if vc.cover_path %}
@@ -524,8 +529,8 @@
         <div class="title">{{ result.title }}</div>
         {% endif %}
 
-        {# ── Text ── #}
-        {% if result.text %}
+        {# ── Text（非动态类型） ── #}
+        {% if result.content_type != '动态' and result.text %}
         <div class="text">{{ result.text }}</div>
         {% endif %}
 
