@@ -152,7 +152,7 @@ class Config(BaseModel):
                     old_path.rename(new_path)
                     logger.info(f"字体文件 {old_path} 成功迁移到 {new_path}")
                 except OSError:
-                    logger.error(f"自定义字体文件迁移失败, 请手动将其移动到 {new_path}")
+                    logger.error(f"字体文件迁移失败, 请手动将其移动到 {new_path}")
                     return old_path
 
                 return new_path
