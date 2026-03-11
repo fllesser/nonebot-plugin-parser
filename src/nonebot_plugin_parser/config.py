@@ -144,18 +144,21 @@ class Config(BaseModel):
     def custom_font(self) -> Path | None:
         """自定义字体"""
         if self.parser_custom_font:
-            old_path = self.data_dir / self.parser_custom_font
-            new_path = self.config_dir / self.parser_custom_font
+            font_path = self.config_dir / self.parser_custom_font
+            if font_path.exists():
+                return font_path
 
+            # 尝试从旧路径迁移字体文件
+            old_path = self.data_dir / self.parser_custom_font
             if old_path.exists():
                 try:
-                    old_path.rename(new_path)
-                    logger.info(f"字体文件 {old_path} 成功迁移到 {new_path}")
+                    old_path.rename(font_path)
+                    logger.info(f"字体文件 {old_path} 成功迁移到 {font_path}")
                 except OSError:
-                    logger.error(f"字体文件迁移失败, 请手动将其移动到 {new_path}")
+                    logger.error(f"字体文件迁移失败, 请手动将其移动到 {font_path}")
                     return old_path
 
-                return new_path
+                return font_path
 
     @property
     def need_forward_contents(self) -> bool:
