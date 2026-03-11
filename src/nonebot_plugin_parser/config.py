@@ -146,6 +146,7 @@ class Config(BaseModel):
         if self.parser_custom_font:
             old_path = self.data_dir / self.parser_custom_font
             new_path = self.config_dir / self.parser_custom_font
+
             if old_path.exists():
                 try:
                     old_path.rename(new_path)
@@ -153,7 +154,9 @@ class Config(BaseModel):
                     logger.error(f"自定义字体文件 {old_path} 不存在")
                 except OSError:
                     logger.error(f"自定义字体文件迁移失败, 请手动将其移动到 {new_path}")
-            return new_path
+
+            if new_path.exists():
+                return new_path
 
     @property
     def need_forward_contents(self) -> bool:
