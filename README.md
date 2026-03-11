@@ -246,8 +246,8 @@ parser_render_type="common"
 parser_append_url=False
 
 # [可选] 自定义渲染字体
-# 配置字体文件名，并将字体文件放置于 localstore 生成的插件 data 目录下
-# 例如: ./data/nonebot_plugin_parser/
+# 配置字体文件名，并将字体文件放置于 localstore 生成的插件 config 目录下
+# 例如: ./config/nonebot_plugin_parser/
 parser_custom_font="LXGWZhenKaiGB-Regular.ttf"
 
 # [可选] 是否需要转发媒体内容(超过 4 项时始终使用合并转发)
