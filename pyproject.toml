@@ -53,7 +53,6 @@ dependencies = [
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
   "nonebot-plugin-uninfo>=0.10.1,<1.0.0",
-
 ]
 
 [project.urls]
@@ -90,7 +89,7 @@ extras = [
 ]
 test = [
   "nonebug>=0.4.3,<1.0.0",
-  "poethepoet>=0.42.0",
+  "poethepoet>=0.42.1",
   "pytest-asyncio>=1.3.0,<1.4.0",
   "pytest-cov>=7.0.0",
   "pytest-xdist>=3.8.0,<4.0.0",
@@ -114,7 +113,7 @@ conflicts = [
 ]
 
 [tool.uv.sources]
-nonebug = { git = "https://github.com/nonebot/nonebug" }
+nonebug = { git = "https://github.com/nonebot/nonebug", rev = "master" }
 
 [tool.bumpversion]
 tag = true
