@@ -13,6 +13,13 @@ on:
       - "pyproject.toml"
 
 jobs:
+  prek:
+    name: Prek
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: j178/prek-action@v1
+
   typos:
     name: Typos
     runs-on: ubuntu-latest
