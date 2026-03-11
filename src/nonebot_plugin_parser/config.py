@@ -150,8 +150,7 @@ class Config(BaseModel):
             if old_path.exists():
                 try:
                     old_path.rename(new_path)
-                except FileNotFoundError:
-                    logger.error(f"自定义字体文件 {old_path} 不存在")
+                    logger.info(f"字体文件 {old_path} 成功迁移到 {new_path}")
                 except OSError:
                     logger.error(f"自定义字体文件迁移失败, 请手动将其移动到 {new_path}")
 
