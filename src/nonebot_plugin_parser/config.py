@@ -153,8 +153,8 @@ class Config(BaseModel):
                     logger.info(f"字体文件 {old_path} 成功迁移到 {new_path}")
                 except OSError:
                     logger.error(f"自定义字体文件迁移失败, 请手动将其移动到 {new_path}")
+                    return old_path
 
-            if new_path.exists():
                 return new_path
 
     @property
