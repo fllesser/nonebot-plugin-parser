@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from nonebot import require, get_driver, get_plugin_config
+from nonebot import logger, require, get_driver, get_plugin_config
 from apilmoji import ELK_SH_CDN, EmojiStyle
 from pydantic import BaseModel
 from bilibili_api.video import VideoCodecs, VideoQuality
@@ -143,7 +143,17 @@ class Config(BaseModel):
     @property
     def custom_font(self) -> Path | None:
         """自定义字体"""
-        return (self.data_dir / self.parser_custom_font) if self.parser_custom_font else None
+        if self.parser_custom_font:
+            old_path = self.data_dir / self.parser_custom_font
+            new_path = self.config_dir / self.parser_custom_font
+            if old_path.exists():
+                try:
+                    old_path.rename(new_path)
+                except FileNotFoundError:
+                    logger.error(f"自定义字体文件 {old_path} 不存在")
+                except OSError:
+                    logger.error(f"自定义字体文件迁移失败, 请手动将其移动到 {new_path}")
+            return new_path
 
     @property
     def need_forward_contents(self) -> bool:
