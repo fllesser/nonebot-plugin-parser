@@ -21,7 +21,7 @@ PILImageDraw = ImageDraw.ImageDraw
 
 try:
     import emosvg
-except ImportError:
+except (ImportError, OSError):
     emosvg = None
 
 
