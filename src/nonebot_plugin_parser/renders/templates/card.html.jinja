@@ -496,6 +496,11 @@
       {% endif %}
 
       <div class="content-body">
+        {# ── Title（非视频：标题属于动态本身，放在封面上方） ── #}
+        {% if result.title and not result.video_contents %}
+        <div class="title">{{ result.title }}</div>
+        {% endif %}
+
         {# ── 动态类型：文字显示在封面上方 ── #}
         {% if result.content_type == '动态' and result.text %}
         <div class="text">{{ result.text }}</div>
@@ -521,8 +526,8 @@
         {% endif %}
         {% endif %}
 
-        {# ── Title ── #}
-        {% if result.title %}
+        {# ── Title（有视频：标题属于视频，放在封面下方） ── #}
+        {% if result.title and result.video_contents %}
         <div class="title">{{ result.title }}</div>
         {% endif %}
 
