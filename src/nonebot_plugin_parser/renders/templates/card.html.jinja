@@ -7,7 +7,7 @@
     <style>
       {% if result.font_uri %}
       @font-face {
-        font-family: 'HYSongYunLangHei';
+        font-family: 'CustomFont';
         src: url('{{ result.font_uri | safe }}');
       }
       {% endif %}
@@ -108,7 +108,7 @@
       * { box-sizing: border-box; margin: 0; padding: 0; }
 
       body {
-        font-family: {% if result.font_uri %}'HYSongYunLangHei', {% endif %}"Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        font-family: {% if result.font_uri %}'CustomFont', {% endif %}"Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
         width: 800px;
         padding: 24px;
         background: linear-gradient(160deg, var(--grad-from) 0%, var(--grad-via) 50%, var(--grad-to) 100%);

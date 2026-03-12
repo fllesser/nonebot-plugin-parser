@@ -11,6 +11,7 @@ from nonebot_plugin_htmlrender import template_to_pic
 
 from .base import ImageRenderer, ParseResult
 from .common import CommonRenderer
+from ..config import pconfig
 
 
 # region 模板数据类
@@ -239,7 +240,8 @@ class HtmlRenderer(ImageRenderer):
             if CommonRenderer.DEFAULT_VIDEO_BUTTON_PATH.exists()
             else None
         )
-        font_uri = CommonRenderer.DEFAULT_FONT_PATH.as_uri() if CommonRenderer.DEFAULT_FONT_PATH.exists() else None
+        font_path = pconfig.custom_font or CommonRenderer.DEFAULT_FONT_PATH
+        font_uri = font_path.as_uri() if font_path.exists() else None
 
         return CardData(
             title=result.title,
