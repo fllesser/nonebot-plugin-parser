@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from dataclasses import field, dataclass
 from typing_extensions import override
 
@@ -9,13 +8,10 @@ from nonebot import require
 require("nonebot_plugin_htmlrender")
 from nonebot_plugin_htmlrender import template_to_pic
 
-from .base import ImageRenderer, ParseResult
+from .base import ParseResult, ImageRenderer
+from ..utils import fmt_duration
 from .common import CommonRenderer
 from ..config import pconfig
-from ..utils import fmt_duration
-
-
-# region 模板数据类
 
 
 @dataclass(slots=True)
@@ -25,7 +21,7 @@ class CardPlatform:
     Attributes:
         name: 平台标识名，如 ``bilibili``、``weibo``
         display_name: 用于展示的平台中文名
-        logo_path: 平台 logo 的 file URI，不存在时为 ``None``
+        logo_path: 平台 logo 的 file URI, 不存在时为 ``None``
     """
 
     name: str
@@ -100,10 +96,10 @@ class CardData:
         platform: 平台信息
         author: 作者信息
         video_contents: 视频内容列表（封面 + 时长）
-        cover_path: 首个视频封面的 file URI（兼容字段）
+        cover_path: 首个视频封面的 file URI (兼容字段)
         img_contents: 图片内容列表
         graphics_contents: 图文内容列表
-        content_type: 推断的内容类型标签（"视频" / "图文" / "动态"）
+        content_type: 推断的内容类型标签 ("视频" / "图文" / "动态")
         play_icon_uri: 播放按钮图标的 file URI
         font_uri: 中文字体的 file URI
         repost: 转发内容（递归结构）
@@ -123,9 +119,6 @@ class CardData:
     play_icon_uri: str | None = None
     font_uri: str | None = None
     repost: CardData | None = None
-
-
-# endregion
 
 
 class HtmlRenderer(ImageRenderer):

@@ -20,7 +20,7 @@ from ..base import (
     handle,
     pconfig,
 )
-from ..data import Platform, ImageContent, MediaContent, ParseResult
+from ..data import Platform, ParseResult, ImageContent, MediaContent
 from ..cookie import ck2dict
 
 # 选择客户端

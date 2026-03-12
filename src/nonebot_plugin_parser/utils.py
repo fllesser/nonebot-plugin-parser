@@ -149,7 +149,7 @@ def fmt_size(file_path: Path) -> str:
     return f"大小: {file_path.stat().st_size / 1024 / 1024:.2f} MB"
 
 
-def fmt_duration(duration: float | int) -> str:
+def fmt_duration(duration: float) -> str:
     """格式化媒体时长，超过 1 小时后显示为 h:mm:ss。"""
     total_seconds = max(int(duration), 0)
     hours, remainder = divmod(total_seconds, 3600)
