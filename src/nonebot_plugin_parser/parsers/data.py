@@ -4,6 +4,8 @@ from pathlib import Path
 from datetime import datetime
 from dataclasses import field, dataclass
 
+from ..utils import fmt_duration
+
 
 def repr_path_task(path_task: Path | Task[Path]) -> str:
     if isinstance(path_task, Path):
@@ -53,9 +55,7 @@ class VideoContent(MediaContent):
 
     @property
     def display_duration(self) -> str:
-        minutes = int(self.duration) // 60
-        seconds = int(self.duration) % 60
-        return f"时长: {minutes}:{seconds:02d}"
+        return f"时长: {fmt_duration(self.duration)}"
 
     def __repr__(self) -> str:
         repr = f"VideoContent({repr_path_task(self.path_task)}"

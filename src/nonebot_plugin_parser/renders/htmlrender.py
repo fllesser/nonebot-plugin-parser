@@ -12,6 +12,7 @@ from nonebot_plugin_htmlrender import template_to_pic
 from .base import ImageRenderer, ParseResult
 from .common import CommonRenderer
 from ..config import pconfig
+from ..utils import fmt_duration
 
 
 # region 模板数据类
@@ -196,9 +197,7 @@ class HtmlRenderer(ImageRenderer):
             duration_secs = result.extra.get("duration", 0)
             duration_str = None
             if duration_secs:
-                minutes = int(duration_secs) // 60
-                seconds = int(duration_secs) % 60
-                duration_str = f"时长: {minutes}:{seconds:02d}"
+                duration_str = f"时长: {fmt_duration(duration_secs)}"
             video_contents.append(
                 CardVideoContent(
                     cover_path=promoted.path,
