@@ -21,7 +21,10 @@ PILImageDraw = ImageDraw.ImageDraw
 
 try:
     import emosvg
-except (ImportError, OSError):
+except ImportError:
+    emosvg = None
+except OSError:
+    logger.error("未安装 cairo, 无法使用 emosvg 渲染 emoji")
     emosvg = None
 
 
