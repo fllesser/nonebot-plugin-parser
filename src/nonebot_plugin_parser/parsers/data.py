@@ -4,7 +4,10 @@ from typing import Any, TypedDict
 from asyncio import Task
 from pathlib import Path
 from datetime import datetime
+from functools import cached_property
 from dataclasses import field, dataclass
+
+from ..utils import fmt_duration
 
 
 def repr_path_task(path_task: Path | Task[Path]) -> str:
@@ -23,6 +26,11 @@ class MediaContent:
             return self.path_task
         self.path_task = await self.path_task
         return self.path_task
+
+    @property
+    def path_uri(self):
+        if isinstance(self.path_task, Path):
+            return self.path_task.as_uri()
 
     def __repr__(self) -> str:
         prefix = self.__class__.__name__
@@ -54,10 +62,13 @@ class VideoContent(MediaContent):
         return self.cover
 
     @property
+    def cover_path_uri(self):
+        if isinstance(self.cover, Path):
+            return self.cover.as_uri()
+
+    @property
     def display_duration(self) -> str:
-        minutes = int(self.duration) // 60
-        seconds = int(self.duration) % 60
-        return f"时长: {minutes}:{seconds:02d}"
+        return f"时长: {fmt_duration(self.duration)}"
 
     def __repr__(self) -> str:
         repr = f"VideoContent({repr_path_task(self.path_task)}"
@@ -131,6 +142,11 @@ class Author:
         self.avatar = await self.avatar
         return self.avatar
 
+    @property
+    def avatar_path_uri(self):
+        if isinstance(self.avatar, Path):
+            return self.avatar.as_uri()
+
     def __repr__(self) -> str:
         repr = f"Author(name={self.name}"
         if self.avatar:
@@ -140,7 +156,7 @@ class Author:
         return repr + ")"
 
 
-@dataclass(repr=False, slots=True)
+@dataclass(repr=False)
 class ParseResult:
     """完整的解析结果"""
 
@@ -187,23 +203,23 @@ class ParseResult:
     def extra_info(self) -> str | None:
         return self.extra.get("info")
 
-    @property
+    @cached_property
     def video_contents(self) -> list[VideoContent]:
         return [cont for cont in self.contents if isinstance(cont, VideoContent)]
 
-    @property
+    @cached_property
     def img_contents(self) -> list[ImageContent]:
         return [cont for cont in self.contents if isinstance(cont, ImageContent)]
 
-    @property
+    @cached_property
     def audio_contents(self) -> list[AudioContent]:
         return [cont for cont in self.contents if isinstance(cont, AudioContent)]
 
-    @property
+    @cached_property
     def dynamic_contents(self) -> list[DynamicContent]:
         return [cont for cont in self.contents if isinstance(cont, DynamicContent)]
 
-    @property
+    @cached_property
     def graphics_contents(self) -> list[GraphicsContent]:
         return [cont for cont in self.contents if isinstance(cont, GraphicsContent)]
 
@@ -219,6 +235,36 @@ class ParseResult:
     def formartted_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str | None:
         """格式化时间戳"""
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
+
+    async def ensure_imgs_ready(self) -> None:
+        if author := self.author:
+            await author.get_avatar_path()
+
+        for cont in self.contents:
+            if isinstance(cont, VideoContent):
+                await cont.get_cover_path()
+            else:
+                await cont.get_path()
+
+        if self.repost is not None:
+            await self.repost.ensure_imgs_ready()
+
+    @property
+    def content_type(self) -> str | None:
+        """获取内容类型 (允许解析器通过 extra 显式指定)"""
+        content_type = self.extra.get("content_type")
+
+        if content_type is None:
+            if self.video_contents:
+                return "视频"
+            elif self.graphics_contents:
+                return "图文"
+            elif self.img_contents:
+                return "动态"
+            elif self.repost:
+                return "动态"
+
+        return content_type
 
     def __repr__(self) -> str:
         return (

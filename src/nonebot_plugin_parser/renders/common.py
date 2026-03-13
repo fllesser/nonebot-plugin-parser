@@ -11,6 +11,7 @@ from nonebot import logger
 from apilmoji import Apilmoji, EmojiCDNSource
 from apilmoji.core import get_font_height
 
+from . import resources
 from .base import ParseResult, ImageRenderer
 from ..config import pconfig
 from ..parsers import GraphicsContent
@@ -22,6 +23,9 @@ PILImageDraw = ImageDraw.ImageDraw
 try:
     import emosvg
 except ImportError:
+    emosvg = None
+except OSError:
+    logger.error("未安装 cairo, 无法使用 emosvg 渲染 emoji")
     emosvg = None
 
 
@@ -123,11 +127,7 @@ class CommonRenderer(ImageRenderer):
     REPOST_BG_COLOR: ClassVar[Color] = (247, 247, 247)
     REPOST_BORDER_COLOR: ClassVar[Color] = (230, 230, 230)
 
-    # 资源路径
-    RESOURCES_DIR: ClassVar[Path] = Path(__file__).parent / "resources"
-    DEFAULT_FONT_PATH: ClassVar[Path] = RESOURCES_DIR / "HYSongYunLangHeiW.ttf"
-    DEFAULT_AVATAR_PATH: ClassVar[Path] = RESOURCES_DIR / "avatar.png"
-    DEFAULT_VIDEO_BUTTON_PATH: ClassVar[Path] = RESOURCES_DIR / "play.png"
+    # apilmoji emoji 源
     EMOJI_SOURCE: ClassVar[EmojiCDNSource] = EmojiCDNSource(
         base_url=pconfig.emoji_cdn,
         style=pconfig.emoji_style,
@@ -144,7 +144,7 @@ class CommonRenderer(ImageRenderer):
 
     @classmethod
     def _load_fonts(cls):
-        font_path = pconfig.custom_font or cls.DEFAULT_FONT_PATH
+        font_path = pconfig.custom_font or resources.DEFAULT_FONT_PATH
         cls.fontset = FontSet.new(font_path)
         logger.success(f"加载字体「{font_path.name}」成功")
 
@@ -154,7 +154,7 @@ class CommonRenderer(ImageRenderer):
 
         cls.platform_logos: dict[str, PILImage] = {}
         for platform_name in PlatformEnum:
-            logo_path = cls.RESOURCES_DIR / f"{platform_name}.png"
+            logo_path = resources.RESOURCES_DIR / f"{platform_name}.png"
             if logo_path.exists():
                 with Image.open(logo_path) as img:
                     cls.platform_logos[str(platform_name)] = img.convert("RGBA")
@@ -163,17 +163,17 @@ class CommonRenderer(ImageRenderer):
     @classmethod
     def _load_other_resources(cls):
         # avatar
-        with Image.open(cls.DEFAULT_AVATAR_PATH) as img:
+        with Image.open(resources.DEFAULT_AVATAR_PATH) as img:
             cls.avatar_image: PILImage = img.convert("RGBA").resize((cls.AVATAR_SIZE, cls.AVATAR_SIZE))
-        logger.debug(f"加载头像「{cls.DEFAULT_AVATAR_PATH.name}」成功")
+        logger.debug(f"加载头像「{resources.DEFAULT_AVATAR_PATH.name}」成功")
 
         # video button
-        with Image.open(cls.DEFAULT_VIDEO_BUTTON_PATH) as img:
+        with Image.open(resources.DEFAULT_VIDEO_BUTTON_PATH) as img:
             cls.video_button_image: PILImage = img.convert("RGBA").resize((100, 100))
         alpha = cls.video_button_image.split()[-1]
         alpha = alpha.point(lambda x: int(x * 0.5))
         cls.video_button_image.putalpha(alpha)
-        logger.debug(f"加载视频按钮「{cls.DEFAULT_VIDEO_BUTTON_PATH.name}」成功")
+        logger.debug(f"加载视频按钮「{resources.DEFAULT_VIDEO_BUTTON_PATH.name}」成功")
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:

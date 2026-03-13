@@ -22,6 +22,7 @@ from ..base import (
 )
 from ..data import Platform, ImageContent, MediaContent
 from ..cookie import ck2dict
+from .dynamic import DynamicInfo
 
 # 选择客户端
 select_client("curl_cffi")
@@ -160,20 +161,31 @@ class BilibiliParser(BaseParser):
         """解析动态或图文"""
         from bilibili_api.dynamic import Dynamic
 
-        from .dynamic import DynamicData
+        from .dynamic import DynamicWrapper
 
         dynamic = Dynamic(dynamic_id, await self.credential)
         if await dynamic.is_article():
             return await self._parse_bilibli_api_opus(dynamic.turn_to_opus())
 
-        dynamic_info = convert(await dynamic.get_info(), DynamicData).item
-        author = self.create_author(dynamic_info.name, dynamic_info.avatar)
+        dynamic_info = convert(await dynamic.get_info(), DynamicWrapper).item
+        return await self._parse_dynamic_info(dynamic_info)
+
+    async def _parse_dynamic_info(self, dynamic_info: DynamicInfo):
+        if dynamic_info.is_video():
+            if (major := dynamic_info.modules.major) and (archive := major.archive):
+                result = await self.parse_video(bvid=archive.bvid)
+                result.text = dynamic_info.text
+                result.extra["content_type"] = "动态"
+                return result
 
         # 下载图片
+        author = self.create_author(dynamic_info.name, dynamic_info.avatar)
         contents: list[MediaContent] = []
-        for image_url in dynamic_info.image_urls:
-            img_task = self.downloader.download_img(image_url, ext_headers=self.headers)
-            contents.append(ImageContent(img_task))
+        contents.extend(self.create_image_contents(dynamic_info.image_urls))
+
+        repost = None
+        if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig is not None:
+            repost = await self._parse_dynamic_info(dynamic_info.orig)
 
         return self.result(
             title=dynamic_info.title,
@@ -181,6 +193,8 @@ class BilibiliParser(BaseParser):
             timestamp=dynamic_info.timestamp,
             author=author,
             contents=contents,
+            repost=repost,
+            extra={"content_type": "动态"},
         )
 
     async def parse_opus_by_id(self, opus_id: int):

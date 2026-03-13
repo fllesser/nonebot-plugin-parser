@@ -1,0 +1,10 @@
+from pathlib import Path
+
+RESOURCES_DIR = Path(__file__).parent
+"""默认资源目录"""
+DEFAULT_FONT_PATH = RESOURCES_DIR / "HYSongYunLangHeiW.ttf"
+"""默认字体文件路径"""
+DEFAULT_AVATAR_PATH = RESOURCES_DIR / "avatar.png"
+"""默认头像文件路径"""
+DEFAULT_VIDEO_BUTTON_PATH = RESOURCES_DIR / "play.png"
+"""默认视频播放按钮文件路径"""
