@@ -181,9 +181,8 @@ class BilibiliParser(BaseParser):
         contents.extend(self.create_image_contents(dynamic_info.image_urls))
 
         repost = None
-        if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig:
-            orig = dynamic_info.orig
-            repost = await self.parse_dynamic_info(orig)
+        if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig is not None:
+            repost = await self.parse_dynamic_info(dynamic_info.orig)
 
         return self.result(
             title=dynamic_info.title,
