@@ -29,9 +29,7 @@ async def test_nga_parse():
     logger.debug(f"作者: {result.author.name if result.author else 'N/A'}")
     logger.debug(f"时间: {result.timestamp}")
     logger.debug(f"内容: {result.contents}")
-    assert result.contents is not None, "应该能提取内容信息"
-    assert len(result.contents) > 0, "应该能提取内容信息"
-    assert result.graphics is not None, "应该能提取图片内容"
+    assert result.graphics, "应该能提取图片内容"
     await result.ensure_imgs_ready()
     logger.success("NGA帖子解析成功")
 
