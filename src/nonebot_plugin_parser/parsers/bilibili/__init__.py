@@ -168,9 +168,9 @@ class BilibiliParser(BaseParser):
             return await self._parse_bilibli_api_opus(dynamic.turn_to_opus())
 
         dynamic_info = convert(await dynamic.get_info(), DynamicWrapper).item
-        return await self.parse_dynamic_info(dynamic_info)
+        return await self._parse_dynamic_info(dynamic_info)
 
-    async def parse_dynamic_info(self, dynamic_info: DynamicInfo):
+    async def _parse_dynamic_info(self, dynamic_info: DynamicInfo):
         if dynamic_info.is_video():
             if (major := dynamic_info.modules.major) and (archive := major.archive):
                 return await self.parse_video(bvid=archive.bvid)
@@ -182,7 +182,7 @@ class BilibiliParser(BaseParser):
 
         repost = None
         if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig is not None:
-            repost = await self.parse_dynamic_info(dynamic_info.orig)
+            repost = await self._parse_dynamic_info(dynamic_info.orig)
 
         return self.result(
             title=dynamic_info.title,
