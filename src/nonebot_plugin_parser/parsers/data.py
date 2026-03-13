@@ -221,7 +221,7 @@ class ParseResult:
         for cont in self.contents:
             if isinstance(cont, VideoContent):
                 await cont.get_cover_path()
-            else:
+            elif isinstance(cont, ImageContent):
                 await cont.get_path()
 
         for gra in self.graphics:
@@ -257,6 +257,7 @@ class ParseResult:
             f"url: {self.url}, "
             f"author: {self.author}, "
             f"contents: {self.contents}, "
+            f"graphics: {self.graphics}, "
             f"extra: {self.extra}, "
             f"repost: <<<<<<<{self.repost}>>>>>>, "
             f"render_image: {self.render_image.name if self.render_image else 'None'}"
