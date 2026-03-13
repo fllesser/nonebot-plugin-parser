@@ -398,16 +398,6 @@ images = self.create_image_contents([
 ])
 ```
 
-> 构建图文内容(适用于类似 Bilibili 动态图文混排)
-
-```python
-graphics = self.create_graphics_content(
-    image_url="https://example.com/image.jpg",
-    text="图片前的文字说明",  # 可选
-    alt="图片描述"            # 可选，居中显示
-)
-```
-
 > 创建动图内容（GIF)，平台一般只提供视频（后续插件会做自动转为 gif 的处理)
 
 ```python
