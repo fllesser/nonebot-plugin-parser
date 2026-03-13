@@ -75,8 +75,9 @@ class HtmlRenderer(ImageRenderer):
             graphics_contents.append(
                 {
                     "path": path.as_uri(),
-                    "text": graphics.text,
+                    "text_before": graphics.text_before,
                     "alt": graphics.alt,
+                    "text_after": graphics.text_after,
                 }
             )
         data["graphics_contents"] = graphics_contents

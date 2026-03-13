@@ -23,7 +23,7 @@ async def test_download_video():
 async def test_download_audio():
     from nonebot_plugin_parser.download import YTDLP_DOWNLOADER
 
-    url = "https://www.tiktok.com/@annamalygonfp/video/7598985324252925215"
+    url = "https://www.tiktok.com/@fdznews/video/7575810064078884116?is_from_webapp=1&sender_device=pc"
 
     audio_path = await YTDLP_DOWNLOADER.download_audio(url)
 

@@ -121,18 +121,18 @@ class NGAParser(BaseParser):
             text = content_tag.get_text("\n", strip=True)
             lines = text.split("\n")
             text_buffer: list[str] = []
+            current_content = None
 
             for line in lines:
                 if "[" in line:
                     # [img]./mon_202602/10/-lmuf1Q1aw-hzwpZ2dT3cSl4-bs.webp[/img]
                     if paths := re.findall(r"\[img\]\.(.*?)\[\/img\]", line):
                         for path in paths:
-                            contents.append(
-                                self.create_graphics_content(
-                                    self.build_img_url(path),
-                                    text="\n".join(text_buffer).strip(),
-                                )
+                            current_content = self.create_graphics_content(
+                                self.build_img_url(path),
+                                text_before="\n".join(text_buffer).strip(),
                             )
+                            contents.append(current_content)
                             text_buffer.clear()
                     else:
                         # 去除其他标签, 仅保留文本
@@ -142,7 +142,8 @@ class NGAParser(BaseParser):
                     text_buffer.append(line)
 
             # 处理剩余的文本
-            text = "\n".join(text_buffer).strip()
+            if text_buffer and current_content is not None:
+                current_content.text_after = "\n".join(text_buffer).strip()
 
         return self.result(
             title=title,
