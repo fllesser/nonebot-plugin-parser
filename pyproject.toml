@@ -114,6 +114,7 @@ conflicts = [
 
 [tool.uv.sources]
 nonebug = { git = "https://github.com/nonebot/nonebug", rev = "master" }
+emosvg = { git = "https://github.com/fllesser/emosvg", rev = "fix/combo-emoji" }
 
 [tool.bumpversion]
 tag = true
