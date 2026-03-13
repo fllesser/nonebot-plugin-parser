@@ -562,22 +562,20 @@
           {% endfor %}
         </div>
         {% endif %}
-
         {# ── Graphics ── #}
-        {% elif result.graphics_contents %}
-        {% for graphics in result.graphics_contents %}
+        {% elif result.graphics %}
+        {% for text_or_img in result.graphics %}
         <div class="graphics-item">
-          {% if graphics.text_before %}
-          <div class="text">{{ graphics.text_before }}</div>
+          {% if text_or_img is string %}
+          <div class="text">{{ text_or_img }}</div>
           {% endif %}
+          {% if text_or_img.path_uri is defined %}
           <div class="image-container">
-            <img src="{{ graphics.path_uri | safe }}" class="single-image" alt="graphics" />
+            <img src="{{ text_or_img.path_uri | safe }}" class="single-image" alt="graphics" />
           </div>
-          {% if graphics.alt %}
-          <div class="graphics-alt">{{ graphics.alt }}</div>
-          {% endif %}
-          {% if graphics.text_after %}
-          <div class="text">{{ graphics.text_after }}</div>
+            {% if text_or_img.alt %}
+            <div class="graphics-alt">{{ text_or_img.alt }}</div>
+            {% endif %}
           {% endif %}
         </div>
         {% endfor %}

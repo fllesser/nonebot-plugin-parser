@@ -64,12 +64,12 @@ Repository = "https://github.com/fllesser/nonebot-plugin-parser"
 htmlkit = ["nonebot-plugin-htmlkit>=0.1.0rc4"]
 htmlrender = ["nonebot-plugin-htmlrender>=0.6.7"]
 ytdlp = ["yt-dlp[default]>=2025.2.21"]
-emosvg = ["emosvg>=0.1.6"]
+emosvg = ["emosvg>=0.1.7"]
 all = [
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "nonebot-plugin-htmlrender>=0.6.7",
   "yt-dlp[default]>=2026.2.21",
-  "emosvg>=0.1.6",
+  "emosvg>=0.1.7",
 ]
 
 [dependency-groups]
@@ -81,7 +81,7 @@ dev = [
   { include-group = "test" },
 ]
 extras = [
-  "emosvg>=0.1.6",
+  "emosvg>=0.1.7",
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "nonebot-plugin-htmlrender>=0.6.7",
   "yt-dlp[default]>=2026.2.21",

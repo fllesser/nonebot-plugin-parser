@@ -215,31 +215,19 @@ class BilibiliParser(BaseParser):
         logger.debug(f"opus_data: {opus_data}")
         author = self.create_author(*opus_data.name_avatar)
 
-        # 按顺序处理图文内容（参考 parse_read 的逻辑）
-        contents: list[MediaContent] = []
-        text_buffer: list[str] = []
-        current_content = None
-
+        # 按顺序处理图文内容
+        graphics: list[str | ImageContent] = []
         for node in opus_data.extract_nodes():
             if isinstance(node, ImageNode):
-                current_content = self.create_graphics_content(
-                    node.url,
-                    text_before="".join(text_buffer),
-                    alt=node.alt,
-                )
-                contents.append(current_content)
-                text_buffer.clear()
+                graphics.append(self.create_image_content(node.url, alt=node.alt))
             elif isinstance(node, TextNode):
-                text_buffer.append(node.text)
-
-        if text_buffer and current_content is not None:
-            current_content.text_after = "".join(text_buffer)
+                graphics.append(node.text)
 
         return self.result(
             title=opus_data.title,
             author=author,
             timestamp=opus_data.timestamp,
-            contents=contents,
+            graphics=graphics,
         )
 
     async def parse_live(self, room_id: int):
@@ -288,11 +276,18 @@ class BilibiliParser(BaseParser):
 
         favdata = convert(fav_dict, FavData)
 
+        author = self.create_author(favdata.info.upper.name, favdata.info.upper.face)
+
+        graphics: list[str | ImageContent] = []
+        for fav in favdata.medias:
+            graphics.append(self.create_image_content(fav.cover, alt=fav.desc))
+            graphics.append(fav.desc)
+
         return self.result(
             title=favdata.title,
             timestamp=favdata.timestamp,
-            author=self.create_author(favdata.info.upper.name, favdata.info.upper.face),
-            contents=[self.create_graphics_content(fav.cover, text_before=fav.desc) for fav in favdata.medias],
+            author=author,
+            graphics=graphics,
         )
 
     async def _get_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:

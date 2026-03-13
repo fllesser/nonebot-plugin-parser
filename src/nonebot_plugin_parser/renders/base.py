@@ -8,14 +8,7 @@ from typing_extensions import override
 
 from ..config import pconfig
 from ..helper import UniHelper, UniMessage, ForwardNodeInner
-from ..parsers import (
-    ParseResult,
-    AudioContent,
-    ImageContent,
-    VideoContent,
-    DynamicContent,
-    GraphicsContent,
-)
+from ..parsers import ParseResult, AudioContent, ImageContent, VideoContent, DynamicContent
 from ..exception import IgnoreException, DownloadException
 
 
@@ -56,15 +49,12 @@ class BaseRenderer(ABC):
                     forwardable_segs.append(UniHelper.img_seg(path))
                 case DynamicContent():
                     dynamic_segs.append(UniHelper.video_seg(path))
-                case GraphicsContent() as graphics:
-                    graphics_msg = UniHelper.img_seg(path)
-                    if graphics.text_before is not None:
-                        graphics_msg = graphics.text_before + graphics_msg
-                    if graphics.alt is not None:
-                        graphics_msg = graphics_msg + graphics.alt
-                    if graphics.text_after is not None:
-                        graphics_msg = graphics_msg + graphics.text_after
-                    forwardable_segs.append(graphics_msg)
+
+        for cont in chain(result.graphics, result.repost.graphics if result.repost else ()):
+            if isinstance(cont, str):
+                forwardable_segs.append(cont)
+            else:
+                forwardable_segs.append(UniHelper.img_seg(await cont.get_path()))
 
         if forwardable_segs:
             if pconfig.need_forward_contents or len(forwardable_segs) > 4:

@@ -8,7 +8,7 @@ from httpx import Cookies, AsyncClient
 
 from . import common, article
 from ..base import Platform, BaseParser, PlatformEnum, ParseException, handle
-from ..data import MediaContent
+from ..data import ImageContent
 
 
 class WeiBoParser(BaseParser):
@@ -87,30 +87,21 @@ class WeiBoParser(BaseParser):
         data = detail.data
 
         soup = BeautifulSoup(data.content, "html.parser")
-        contents: list[MediaContent] = []
-        text_buffer: list[str] = []
-        current_graphics = None
+        graphics: list[str | ImageContent] = []
 
         for element in soup.find_all(["p", "img"]):
             if not isinstance(element, Tag):
                 continue
-
             if element.name == "p":
                 text = element.get_text(strip=True)
                 # 去除零宽空格
                 text = text.replace("\u200b", "")
                 if text:
-                    text_buffer.append(text)
+                    graphics.append(text)
             elif element.name == "img":
                 src = element.get("src")
                 if isinstance(src, str):
-                    text = "\n\n".join(text_buffer)
-                    current_graphics = self.create_graphics_content(src, text_before=text)
-                    contents.append(current_graphics)
-                    text_buffer.clear()
-
-        if text_buffer and current_graphics is not None:
-            current_graphics.text_after = "\n\n".join(text_buffer)
+                    graphics.append(self.create_image_content(src))
 
         author = self.create_author(
             data.userinfo.screen_name,
@@ -122,7 +113,7 @@ class WeiBoParser(BaseParser):
             title=data.title,
             author=author,
             timestamp=data.create_at_unix,
-            contents=contents,
+            graphics=graphics,
         )
 
     async def parse_fid(self, fid: str):
