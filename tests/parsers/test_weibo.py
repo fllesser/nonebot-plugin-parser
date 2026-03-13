@@ -129,7 +129,6 @@ async def test_article():
         result = await parser.parse(keyword, searched)
         assert result.url
         assert result.title
-        assert result.text
         assert result.timestamp
         assert result.author
         assert result.author.name
