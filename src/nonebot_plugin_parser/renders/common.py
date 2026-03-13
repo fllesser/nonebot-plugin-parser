@@ -12,9 +12,8 @@ from apilmoji import Apilmoji, EmojiCDNSource
 from apilmoji.core import get_font_height
 
 from . import resources
-from .base import ParseResult, ImageRenderer
+from .base import ParseResult, ImageContent, ImageRenderer
 from ..config import pconfig
-from ..parsers import GraphicsContent
 
 Color = tuple[int, int, int]
 PILImage = Image.Image
@@ -245,17 +244,15 @@ class CommonRenderer(ImageRenderer):
             height += self.SECTION_SPACING
 
         # 图文内容
-        if graphics_contents := result.graphics_contents:
-            for content in graphics_contents:
-                if content.text_before is not None:
-                    height += self._estimate_text_height(content.text_before, self.fontset.text, content_width)
-                if content.text_after is not None:
-                    height += self._estimate_text_height(content.text_after, self.fontset.text, content_width)
-                if content.alt is not None:
-                    height += self.fontset.extra.line_height
-            height += len(graphics_contents) * self.MAX_COVER_HEIGHT + self.SECTION_SPACING
+        if graphics := result.graphics:
+            for text_or_img in graphics:
+                if isinstance(text_or_img, str):
+                    height += self._estimate_text_height(text_or_img, self.fontset.text, content_width)
+                else:
+                    height += self.MAX_COVER_HEIGHT
+            height += (len(graphics) - 1) * self.SECTION_SPACING
+        # 封面或图片
         else:
-            # 封面或图片
             height += self.MAX_COVER_HEIGHT + self.SECTION_SPACING
 
         # 正文
@@ -357,7 +354,7 @@ class CommonRenderer(ImageRenderer):
         ctx.y_pos += self.SECTION_SPACING
 
     async def _render_cover_or_images(self, ctx: RenderContext):
-        """渲染封面或图片网格"""
+        """渲染封面/图片网格/图文内容"""
 
         if (cover_path := await ctx.result.cover_path) and cover_path.exists():
             if cover := self._load_cover(cover_path, ctx.content_width):
@@ -377,9 +374,12 @@ class CommonRenderer(ImageRenderer):
             return
 
         # 图文内容
-        if ctx.result.graphics_contents:
-            for gc in ctx.result.graphics_contents:
-                await self._render_graphics(ctx, gc)
+        if graphics := ctx.result.graphics:
+            for text_or_img in graphics:
+                if isinstance(text_or_img, str):
+                    await self._render_text(ctx, text_or_img)
+                else:
+                    await self._render_img_in_graphics(ctx, text_or_img)
 
     def _load_cover(self, cover_path: Path, content_width: int) -> PILImage | None:
         """加载并缩放封面"""
@@ -505,10 +505,10 @@ class CommonRenderer(ImageRenderer):
         text_y = y + (h - font.line_height) // 2
         ImageDraw.Draw(image).text((text_x, text_y), text, fill=font.fill, font=font.font)
 
-    async def _render_graphics(self, ctx: RenderContext, gc: GraphicsContent) -> None:
-        """渲染图文内容"""
+    async def _render_img_in_graphics(self, ctx: RenderContext, image_content: ImageContent) -> None:
+        """渲染图片"""
         try:
-            path = await gc.get_path()
+            path = await image_content.get_path()
             with Image.open(path) as img:
                 if img.width > ctx.content_width:
                     ratio = ctx.content_width / img.width
@@ -516,54 +516,32 @@ class CommonRenderer(ImageRenderer):
                 else:
                     img = img.copy()
 
-            # 计算所需高度并确保画布足够
-            text_height = 0
-            lines_before = None
-            lines_after = None
-            if gc.text_before is not None:
-                lines_before = self._wrap_text(gc.text_before, ctx.content_width, self.fontset.text)
-                text_height = len(lines_before) * self.fontset.text.line_height + self.SECTION_SPACING
-            if gc.text_after is not None:
-                lines_after = self._wrap_text(gc.text_after, ctx.content_width, self.fontset.text)
-                text_height += len(lines_after) * self.fontset.text.line_height + self.SECTION_SPACING
-
-            alt_height = self.fontset.extra.line_height + self.SECTION_SPACING if gc.alt else 0
-            needed = text_height + img.height + alt_height + self.SECTION_SPACING
-            self._ensure_height_enough(ctx, needed)
-
-            # before 文本
-            if lines_before is not None:
-                ctx.y_pos += await self._draw_text(ctx, lines_before, self.fontset.text)
-                ctx.y_pos += self.SECTION_SPACING
-
-            # 图片
             x_pos = self.PADDING + (ctx.content_width - img.width) // 2
             ctx.image.paste(img, (x_pos, ctx.y_pos))
             ctx.y_pos += img.height
 
             # Alt 文本
-            if gc.alt:
+            if image_content.alt:
                 ctx.y_pos += self.SECTION_SPACING
-                text_w = self.fontset.extra.get_text_width(gc.alt)
+                text_w = self.fontset.extra.get_text_width(image_content.alt)
                 text_x = self.PADDING + (ctx.content_width - text_w) // 2
-                ctx.draw.text((text_x, ctx.y_pos), gc.alt, font=self.fontset.extra.font, fill=self.fontset.extra.fill)
+                ctx.draw.text(
+                    (text_x, ctx.y_pos), image_content.alt, font=self.fontset.extra.font, fill=self.fontset.extra.fill
+                )
                 ctx.y_pos += self.fontset.extra.line_height
 
             ctx.y_pos += self.SECTION_SPACING
 
-            # after 文本
-            if lines_after is not None:
-                ctx.y_pos += await self._draw_text(ctx, lines_after, self.fontset.text)
-                ctx.y_pos += self.SECTION_SPACING
         except Exception as e:
-            logger.debug(f"渲染图文失败: {e}")
+            logger.debug(f"渲染 Graphics 中的图片失败: {e}")
 
-    async def _render_text(self, ctx: RenderContext) -> None:
+    async def _render_text(self, ctx: RenderContext, text: str | None = None) -> None:
         """渲染正文"""
-        if not ctx.result.text:
+        text = text or ctx.result.text
+        if not text:
             return
 
-        lines = self._wrap_text(ctx.result.text, ctx.content_width, self.fontset.text)
+        lines = self._wrap_text(text, ctx.content_width, self.fontset.text)
         ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.text)
         ctx.y_pos += self.SECTION_SPACING
 

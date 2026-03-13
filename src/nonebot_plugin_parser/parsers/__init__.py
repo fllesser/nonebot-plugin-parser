@@ -23,7 +23,6 @@ from .data import (
     ImageContent,
     VideoContent,
     DynamicContent,
-    GraphicsContent,
 )
 
 __all__ = [
@@ -31,7 +30,6 @@ __all__ = [
     "Author",
     "BaseParser",
     "DynamicContent",
-    "GraphicsContent",
     "ImageContent",
     "ParseResult",
     "Platform",

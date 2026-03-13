@@ -137,7 +137,7 @@ class OpusItem(Struct):
                         text_content = self._extract_text_from_nodes(paragraph.text.nodes)
                         text_content = text_content.strip()
                         if text_content:
-                            yield TextNode(text="\n\n" + text_content)
+                            yield TextNode(text=text_content)
 
                     # 处理图片段落
                     if paragraph.pic and paragraph.pic.pics:

@@ -4,7 +4,6 @@ from typing import Any, TypedDict
 from asyncio import Task
 from pathlib import Path
 from datetime import datetime
-from functools import cached_property
 from dataclasses import field, dataclass
 
 from ..utils import fmt_duration
@@ -81,7 +80,8 @@ class VideoContent(MediaContent):
 class ImageContent(MediaContent):
     """图片内容"""
 
-    pass
+    alt: str | None = None
+    """图片描述 用于图文"""
 
 
 @dataclass(repr=False, slots=True)
@@ -89,28 +89,6 @@ class DynamicContent(MediaContent):
     """动态内容 视频格式 后续转 gif"""
 
     gif_path: Path | None = None
-
-
-@dataclass(repr=False, slots=True)
-class GraphicsContent(MediaContent):
-    """图文内容"""
-
-    text_before: str | None = None
-    """图片前的文字"""
-    text_after: str | None = None
-    """图片后的文字"""
-    alt: str | None = None
-    """图片描述 渲染时居中显示"""
-
-    def __repr__(self) -> str:
-        repr = f"GraphicsContent({repr_path_task(self.path_task)}"
-        if self.text_before:
-            repr += f", text_before={self.text_before}"
-        if self.alt:
-            repr += f", alt={self.alt}"
-        if self.text_after:
-            repr += f", text_after={self.text_after}"
-        return repr + ")"
 
 
 @dataclass(slots=True)
@@ -156,7 +134,7 @@ class Author:
         return repr + ")"
 
 
-@dataclass(repr=False)
+@dataclass(repr=False, slots=True)
 class ParseResult:
     """完整的解析结果"""
 
@@ -174,6 +152,8 @@ class ParseResult:
     """来源链接"""
     contents: list[MediaContent] = field(default_factory=list)
     """媒体内容"""
+    graphics: list[str | ImageContent] = field(default_factory=list)
+    """图文内容"""
     extra: dict[str, Any] = field(default_factory=dict)
     """额外信息"""
     repost: ParseResult | None = None
@@ -203,25 +183,21 @@ class ParseResult:
     def extra_info(self) -> str | None:
         return self.extra.get("info")
 
-    @cached_property
+    @property
     def video_contents(self) -> list[VideoContent]:
         return [cont for cont in self.contents if isinstance(cont, VideoContent)]
 
-    @cached_property
+    @property
     def img_contents(self) -> list[ImageContent]:
         return [cont for cont in self.contents if isinstance(cont, ImageContent)]
 
-    @cached_property
+    @property
     def audio_contents(self) -> list[AudioContent]:
         return [cont for cont in self.contents if isinstance(cont, AudioContent)]
 
-    @cached_property
+    @property
     def dynamic_contents(self) -> list[DynamicContent]:
         return [cont for cont in self.contents if isinstance(cont, DynamicContent)]
-
-    @cached_property
-    def graphics_contents(self) -> list[GraphicsContent]:
-        return [cont for cont in self.contents if isinstance(cont, GraphicsContent)]
 
     @property
     async def cover_path(self) -> Path | None:
@@ -237,6 +213,8 @@ class ParseResult:
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
 
     async def ensure_imgs_ready(self) -> None:
+        """确保所有图片内容都已准备就绪"""
+
         if author := self.author:
             await author.get_avatar_path()
 
@@ -245,6 +223,10 @@ class ParseResult:
                 await cont.get_cover_path()
             else:
                 await cont.get_path()
+
+        for gra in self.graphics:
+            if isinstance(gra, ImageContent):
+                await gra.get_path()
 
         if self.repost is not None:
             await self.repost.ensure_imgs_ready()
@@ -257,7 +239,7 @@ class ParseResult:
         if content_type is None:
             if self.video_contents:
                 return "视频"
-            elif self.graphics_contents:
+            elif self.graphics:
                 return "图文"
             elif self.img_contents:
                 return "动态"
@@ -285,6 +267,7 @@ class ParseResultKwargs(TypedDict, total=False):
     title: str | None
     text: str | None
     contents: list[MediaContent]
+    graphics: list[str | ImageContent]
     timestamp: int | None
     url: str | None
     author: Author | None

@@ -6,7 +6,7 @@ from pathlib import Path
 from collections.abc import Callable, Coroutine
 from typing_extensions import Unpack, final
 
-from .data import Platform, ParseResult, ParseResultKwargs
+from .data import Platform, ParseResult, ImageContent, ParseResultKwargs
 from ..config import pconfig as pconfig
 from ..download import DOWNLOADER
 from ..constants import IOS_HEADER, COMMON_HEADER, ANDROID_HEADER, COMMON_TIMEOUT
@@ -193,8 +193,6 @@ class BaseParser:
         image_urls: list[str],
     ):
         """创建图片内容列表"""
-        from .data import ImageContent
-
         contents: list[ImageContent] = []
         for url in image_urls:
             task = DOWNLOADER.download_img(url, ext_headers=self.headers)
@@ -204,14 +202,13 @@ class BaseParser:
     def create_image_content(
         self,
         url_or_task: str | Task[Path],
+        alt: str | None = None,
     ):
         """创建图片内容"""
-        from .data import ImageContent
-
         if isinstance(url_or_task, str):
             url_or_task = DOWNLOADER.download_img(url_or_task, ext_headers=self.headers)
 
-        return ImageContent(url_or_task)
+        return ImageContent(url_or_task, alt=alt)
 
     def create_dynamic_contents(
         self,
@@ -239,19 +236,9 @@ class BaseParser:
 
         return AudioContent(url_or_task, duration)
 
-    def create_graphics_content(
-        self,
-        image_url: str,
-        *,
-        text_before: str | None = None,
-        text_after: str | None = None,
-        alt: str | None = None,
-    ):
-        """创建图文内容 图片不能为空 文字可空 渲染时文字在前 图片在后"""
-        from .data import GraphicsContent
-
-        image_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
-        return GraphicsContent(image_task, text_before=text_before, text_after=text_after, alt=alt)
+    def create_empty_graphics(self) -> list[str | ImageContent]:
+        """创建空的图片内容列表"""
+        return []
 
     @property
     def downloader(self):

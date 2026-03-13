@@ -115,41 +115,30 @@ class NGAParser(BaseParser):
             timestamp = int(time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M")))
 
         # 提取文本 - postcontent0
-        text, contents = None, []
+        graphics = self.create_empty_graphics()
         content_tag = soup.find(id="postcontent0")
         if content_tag and isinstance(content_tag, Tag):
             text = content_tag.get_text("\n", strip=True)
             lines = text.split("\n")
-            text_buffer: list[str] = []
-            current_content = None
 
             for line in lines:
                 if "[" in line:
                     # [img]./mon_202602/10/-lmuf1Q1aw-hzwpZ2dT3cSl4-bs.webp[/img]
                     if paths := re.findall(r"\[img\]\.(.*?)\[\/img\]", line):
                         for path in paths:
-                            current_content = self.create_graphics_content(
-                                self.build_img_url(path),
-                                text_before="\n".join(text_buffer).strip(),
-                            )
-                            contents.append(current_content)
-                            text_buffer.clear()
+                            img_url = self.build_img_url(path)
+                            graphics.append(self.create_image_content(img_url))
                     else:
                         # 去除其他标签, 仅保留文本
                         if clean_line := re.sub(r"\[[^\]]*?\]", "", line).strip():
-                            text_buffer.append(clean_line)
+                            graphics.append(clean_line)
                 else:
-                    text_buffer.append(line)
-
-            # 处理剩余的文本
-            if text_buffer and current_content is not None:
-                current_content.text_after = "\n".join(text_buffer).strip()
+                    graphics.append(line)
 
         return self.result(
             title=title,
             url=url,
             author=author,
-            text=text,
-            contents=contents,
+            graphics=graphics,
             timestamp=timestamp,
         )
