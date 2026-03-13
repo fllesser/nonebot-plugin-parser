@@ -235,7 +235,7 @@ class ParseResult:
         """格式化时间戳"""
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
 
-    async def ensure_img_ready(self) -> None:
+    async def ensure_imgs_ready(self) -> None:
         if author := self.author:
             await author.get_avatar_path()
 
@@ -246,7 +246,7 @@ class ParseResult:
                 await cont.get_path()
 
         if self.repost is not None:
-            await self.repost.ensure_img_ready()
+            await self.repost.ensure_imgs_ready()
 
     @property
     def content_type(self) -> str | None:

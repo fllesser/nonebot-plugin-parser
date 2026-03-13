@@ -14,7 +14,7 @@ class HtmlRenderer(ImageRenderer):
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
-        await result.ensure_img_ready()
+        await result.ensure_imgs_ready()
 
         logo = resources.RESOURCES_DIR / f"{result.platform.name}.png"
         logo = logo.as_uri() if logo.exists() else None
@@ -31,8 +31,5 @@ class HtmlRenderer(ImageRenderer):
                 "font": font,
                 "play_button": play_button,
             },
-            pages={
-                "viewport": {"width": 800, "height": 100},
-                "base_url": f"file://{self.templates_dir}",
-            },
+            pages={"viewport": {"width": 800, "height": 100}},
         )
