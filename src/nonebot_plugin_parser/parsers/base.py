@@ -242,14 +242,16 @@ class BaseParser:
     def create_graphics_content(
         self,
         image_url: str,
-        text: str | None = None,
+        *,
+        text_before: str | None = None,
+        text_after: str | None = None,
         alt: str | None = None,
     ):
         """创建图文内容 图片不能为空 文字可空 渲染时文字在前 图片在后"""
         from .data import GraphicsContent
 
         image_task = DOWNLOADER.download_img(image_url, ext_headers=self.headers)
-        return GraphicsContent(image_task, text, alt)
+        return GraphicsContent(image_task, text_before=text_before, text_after=text_after, alt=alt)
 
     @property
     def downloader(self):

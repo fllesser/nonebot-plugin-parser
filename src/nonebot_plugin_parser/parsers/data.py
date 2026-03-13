@@ -1,4 +1,6 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, TypedDict
 from asyncio import Task
 from pathlib import Path
 from datetime import datetime
@@ -80,19 +82,23 @@ class DynamicContent(MediaContent):
 
 @dataclass(repr=False, slots=True)
 class GraphicsContent(MediaContent):
-    """图文内容 渲染时文字在前 图片在后"""
+    """图文内容"""
 
-    text: str | None = None
-    """图片前的文本内容"""
+    text_before: str | None = None
+    """图片前的文字"""
+    text_after: str | None = None
+    """图片后的文字"""
     alt: str | None = None
     """图片描述 渲染时居中显示"""
 
     def __repr__(self) -> str:
         repr = f"GraphicsContent({repr_path_task(self.path_task)}"
-        if self.text:
-            repr += f", text={self.text}"
+        if self.text_before:
+            repr += f", text_before={self.text_before}"
         if self.alt:
             repr += f", alt={self.alt}"
+        if self.text_after:
+            repr += f", text_after={self.text_after}"
         return repr + ")"
 
 
@@ -154,7 +160,7 @@ class ParseResult:
     """媒体内容"""
     extra: dict[str, Any] = field(default_factory=dict)
     """额外信息"""
-    repost: "ParseResult | None" = None
+    repost: ParseResult | None = None
     """转发的内容"""
     render_image: Path | None = None
     """渲染图片"""
@@ -227,10 +233,6 @@ class ParseResult:
             f"repost: <<<<<<<{self.repost}>>>>>>, "
             f"render_image: {self.render_image.name if self.render_image else 'None'}"
         )
-
-
-from typing import Any, TypedDict
-from dataclasses import field, dataclass
 
 
 class ParseResultKwargs(TypedDict, total=False):

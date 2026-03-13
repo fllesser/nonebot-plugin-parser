@@ -1,23 +1,8 @@
 from typing import Any
+from dataclasses import dataclass
 from collections.abc import Generator
 
 from msgspec import Struct
-
-
-class TextNode(Struct, tag="TextNode"):
-    """图文动态文本节点"""
-
-    text: str
-    """文本内容"""
-
-
-class ImageNode(Struct, tag="ImageNode"):
-    """图文动态图片节点"""
-
-    url: str
-    """图片链接"""
-    alt: str | None = None
-    """图片描述"""
 
 
 class Author(Struct):
@@ -100,6 +85,24 @@ class Info(Struct):
     type: int
     modules: list[Module]
     basic: Basic | None = None
+
+
+@dataclass(slots=True)
+class TextNode:
+    """图文动态文本节点"""
+
+    text: str
+    """文本内容"""
+
+
+@dataclass(slots=True)
+class ImageNode:
+    """图文动态图片节点"""
+
+    url: str
+    """图片链接"""
+    alt: str | None = None
+    """图片描述"""
 
 
 class OpusItem(Struct):

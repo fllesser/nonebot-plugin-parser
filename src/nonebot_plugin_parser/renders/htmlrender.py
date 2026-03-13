@@ -77,7 +77,8 @@ class CardGraphicsContent:
     """
 
     path: str
-    text: str | None = None
+    text_before: str | None = None
+    text_after: str | None = None
     alt: str | None = None
 
 
@@ -206,7 +207,8 @@ class HtmlRenderer(ImageRenderer):
             graphics_contents.append(
                 CardGraphicsContent(
                     path=path.as_uri(),
-                    text=graphics.text,
+                    text_before=graphics.text_before,
+                    text_after=graphics.text_after,
                     alt=graphics.alt,
                 )
             )

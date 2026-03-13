@@ -231,21 +231,29 @@ class BilibiliParser(BaseParser):
 
         # 按顺序处理图文内容（参考 parse_read 的逻辑）
         contents: list[MediaContent] = []
-        current_text = ""
+        text_buffer: list[str] = []
+        current_content = None
 
         for node in opus_data.extract_nodes():
             if isinstance(node, ImageNode):
-                contents.append(self.create_graphics_content(node.url, current_text.strip(), node.alt))
-                current_text = ""
+                current_content = self.create_graphics_content(
+                    node.url,
+                    text_before="".join(text_buffer),
+                    alt=node.alt,
+                )
+                contents.append(current_content)
+                text_buffer.clear()
             elif isinstance(node, TextNode):
-                current_text += node.text
+                text_buffer.append(node.text)
+
+        if text_buffer and current_content is not None:
+            current_content.text_after = "".join(text_buffer)
 
         return self.result(
             title=opus_data.title,
             author=author,
             timestamp=opus_data.timestamp,
             contents=contents,
-            text=current_text.strip(),
         )
 
     async def parse_live(self, room_id: int):
@@ -298,7 +306,7 @@ class BilibiliParser(BaseParser):
             title=favdata.title,
             timestamp=favdata.timestamp,
             author=self.create_author(favdata.info.upper.name, favdata.info.upper.face),
-            contents=[self.create_graphics_content(fav.cover, fav.desc) for fav in favdata.medias],
+            contents=[self.create_graphics_content(fav.cover, text_before=fav.desc) for fav in favdata.medias],
         )
 
     async def _get_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
