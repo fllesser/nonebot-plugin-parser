@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Media Card</title>
     <style>
-      {% if result.font_uri %}
+      {% if font %}
       @font-face {
         font-family: 'CustomFont';
-        src: url('{{ result.font_uri | safe }}');
+        src: url('{{ font | safe }}');
       }
       {% endif %}
 
@@ -108,7 +108,7 @@
       * { box-sizing: border-box; margin: 0; padding: 0; }
 
       body {
-        font-family: {% if result.font_uri %}'CustomFont', {% endif %}"Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        font-family: {% if font %}'CustomFont', {% endif %}"Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
         width: 800px;
         padding: 24px;
         background: linear-gradient(160deg, var(--grad-from) 0%, var(--grad-via) 50%, var(--grad-to) 100%);
@@ -480,8 +480,8 @@
       {# ── Header ── #}
       {% if result.author %}
       <div class="header">
-        {% if result.author.avatar_path %}
-        <img src="{{ result.author.avatar_path | safe }}" class="avatar" alt="avatar" />
+        {% if result.author.avatar_path_uri %}
+        <img src="{{ result.author.avatar_path_uri | safe }}" class="avatar" alt="avatar" />
         {% endif %}
         <div class="user-info">
           <div class="username">{{ result.author.name }}</div>
@@ -489,8 +489,8 @@
           <div class="time">{{ result.formartted_datetime }}</div>
           {% endif %}
         </div>
-        {% if not is_repost and result.platform and result.platform.logo_path %}
-        <img src="{{ result.platform.logo_path | safe }}" class="platform-logo" alt="{{ result.platform.display_name }}" />
+        {% if not is_repost and result.platform and logo %}
+        <img src="{{ logo | safe }}" class="platform-logo" alt="{{ result.platform.display_name }}" />
         {% endif %}
       </div>
       {% endif %}
@@ -509,12 +509,12 @@
         {# ── 视频封面 ── #}
         {% if result.video_contents %}
         {% set vc = result.video_contents[0] %}
-        {% if vc.cover_path %}
+        {% if vc.cover_path_uri %}
         <div class="cover-wrapper">
-          <img src="{{ vc.cover_path | safe }}" class="cover-img" alt="cover" />
-          {% if result.play_icon_uri %}
+          <img src="{{ vc.cover_path_uri | safe }}" class="cover-img" alt="cover" />
+          {% if play_button %}
           <div class="play-button">
-            <img src="{{ result.play_icon_uri | safe }}" alt="play" />
+            <img src="{{ play_button | safe }}" alt="play" />
           </div>
           {% endif %}
           {% if vc.duration %}
@@ -545,7 +545,7 @@
         {% set count = imgs|length %}
         {% if count == 1 %}
         <div class="image-container">
-          <img src="{{ imgs[0].path | safe }}" class="single-image" alt="image" />
+          <img src="{{ imgs[0].path_uri | safe }}" class="single-image" alt="image" />
         </div>
         {% else %}
         {% set cols = 3 %}
@@ -553,7 +553,7 @@
         <div class="image-grid cols-{{ cols }}">
           {% for img in imgs[:9] %}
           <div class="grid-item">
-            <img src="{{ img.path | safe }}" alt="image" />
+            <img src="{{ img.path_uri | safe }}" alt="image" />
             {% if loop.last and count > 9 %}
             <div class="more-count">+{{ count - 9 }}</div>
             {% endif %}
@@ -570,7 +570,7 @@
           <div class="text">{{ graphics.text_before }}</div>
           {% endif %}
           <div class="image-container">
-            <img src="{{ graphics.path | safe }}" class="single-image" alt="graphics" />
+            <img src="{{ graphics.path_uri | safe }}" class="single-image" alt="graphics" />
           </div>
           {% if graphics.alt %}
           <div class="graphics-alt">{{ graphics.alt }}</div>

@@ -26,6 +26,11 @@ class MediaContent:
         self.path_task = await self.path_task
         return self.path_task
 
+    @property
+    def path_uri(self):
+        if isinstance(self.path_task, Path):
+            return self.path_task.as_uri()
+
     def __repr__(self) -> str:
         prefix = self.__class__.__name__
         return f"{prefix}({repr_path_task(self.path_task)})"
@@ -54,6 +59,11 @@ class VideoContent(MediaContent):
             return self.cover
         self.cover = await self.cover
         return self.cover
+
+    @property
+    def cover_path_uri(self):
+        if isinstance(self.cover, Path):
+            return self.cover.as_uri()
 
     @property
     def display_duration(self) -> str:
@@ -130,6 +140,11 @@ class Author:
             return self.avatar
         self.avatar = await self.avatar
         return self.avatar
+
+    @property
+    def avatar_path_uri(self):
+        if isinstance(self.avatar, Path):
+            return self.avatar.as_uri()
 
     def __repr__(self) -> str:
         repr = f"Author(name={self.name}"
@@ -219,6 +234,31 @@ class ParseResult:
     def formartted_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str | None:
         """格式化时间戳"""
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
+
+    async def ensure_img_ready(self) -> None:
+        if author := self.author:
+            await author.get_avatar_path()
+
+        for cont in self.contents:
+            if isinstance(cont, VideoContent):
+                await cont.get_cover_path()
+            else:
+                await cont.get_path()
+
+    @property
+    def content_type(self) -> str | None:
+        """获取内容类型 (允许解析器通过 extra 显式指定)"""
+        content_type = self.extra.get("content_type")
+        if content_type is None:
+            if self.video_contents:
+                content_type = "视频"
+            elif self.graphics_contents:
+                content_type = "图文"
+            elif self.img_contents:
+                content_type = "动态"
+            elif self.repost:
+                content_type = "动态"
+        return content_type
 
     def __repr__(self) -> str:
         return (
