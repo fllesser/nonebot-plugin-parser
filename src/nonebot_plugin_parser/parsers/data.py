@@ -245,6 +245,9 @@ class ParseResult:
             else:
                 await cont.get_path()
 
+        if self.repost is not None:
+            await self.repost.ensure_img_ready()
+
     @property
     def content_type(self) -> str | None:
         """获取内容类型 (允许解析器通过 extra 显式指定)"""

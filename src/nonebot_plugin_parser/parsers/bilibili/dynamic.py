@@ -1,6 +1,6 @@
 from typing import Any
 
-from msgspec import Struct, convert
+from msgspec import Struct, field, convert
 
 
 class AuthorInfo(Struct):
@@ -134,6 +134,8 @@ class DynamicModule(Struct):
     module_dynamic: dict[str, Any] | None = None
     module_stat: dict[str, Any] | None = None
 
+    _cached_major: DynamicMajor | None = field(default=None)
+
     @property
     def author_name(self) -> str:
         """获取作者名称"""
@@ -150,7 +152,7 @@ class DynamicModule(Struct):
         return self.module_author.pub_ts
 
     @property
-    def major_info(self) -> dict[str, Any] | None:
+    def _major_info(self) -> dict[str, Any] | None:
         """获取主要内容信息"""
         if self.module_dynamic:
             if major := self.module_dynamic.get("major"):
@@ -158,6 +160,15 @@ class DynamicModule(Struct):
             # 转发类型动态没有 major
             return self.module_dynamic
         return None
+
+    @property
+    def major(self) -> DynamicMajor | None:
+        """获取缓存的 DynamicMajor 实例"""
+        if self._cached_major is None:
+            major_info = self._major_info
+            if major_info:
+                self._cached_major = convert(major_info, DynamicMajor)
+        return self._cached_major
 
     @property
     def desc_text(self) -> str | None:
@@ -197,11 +208,8 @@ class DynamicInfo(Struct):
     @property
     def title(self) -> str | None:
         """获取标题"""
-        major_info = self.modules.major_info
-        if major_info:
-            major = convert(major_info, DynamicMajor)
+        if major := self.modules.major:
             return major.title
-        return None
 
     @property
     def text(self) -> str | None:
@@ -210,38 +218,20 @@ class DynamicInfo(Struct):
         if desc_text := self.modules.desc_text:
             return desc_text
         # 回退到 major 的文字（图文摘要、视频简介等）
-        major_info = self.modules.major_info
-        if major_info:
-            major = convert(major_info, DynamicMajor)
+        if major := self.modules.major:
             return major.text
-        return None
 
     @property
     def image_urls(self) -> list[str]:
         """获取图片URL列表"""
-        major_info = self.modules.major_info
-        if major_info:
-            major = convert(major_info, DynamicMajor)
+        if major := self.modules.major:
             return major.image_urls
         return []
 
-    @property
-    def cover_url(self) -> str | None:
-        """获取封面URL"""
-        major_info = self.modules.major_info
-        if major_info:
-            major = convert(major_info, DynamicMajor)
-            return major.cover_url
-        return None
-
-    @property
-    def duration(self) -> float:
-        """获取视频时长（秒）"""
-        major_info = self.modules.major_info
-        if major_info:
-            major = convert(major_info, DynamicMajor)
-            return major.duration
-        return 0.0
+    def is_video(self) -> bool:
+        """判断是否为视频动态"""
+        major = self.modules.major
+        return major is not None and major.archive is not None
 
 
 class DynamicData(Struct):

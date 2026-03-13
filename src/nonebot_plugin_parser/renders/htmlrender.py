@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing_extensions import override
 
 from nonebot import require
@@ -16,7 +14,6 @@ class HtmlRenderer(ImageRenderer):
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
-        # await self._resolve_parse_result(result)
         await result.ensure_img_ready()
 
         logo = resources.RESOURCES_DIR / f"{result.platform.name}.png"
@@ -24,22 +21,6 @@ class HtmlRenderer(ImageRenderer):
         font = pconfig.custom_font or resources.DEFAULT_FONT_PATH
         font = font.as_uri() if font.exists() else None
         play_button = resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri()
-
-        # 动态视频标记：将首张图片提升为视频封面（播放按钮 + 时长）
-        # is_video = result.extra.get("is_video", False)
-        # if is_video and img_contents and not video_contents:
-        #     promoted = img_contents.pop(0)
-        #     duration_secs = result.extra.get("duration", 0)
-        #     duration_str = None
-        #     if duration_secs:
-        #         duration_str = f"时长: {fmt_duration(duration_secs)}"
-        #     video_contents.append(
-        #         CardVideoContent(
-        #             cover_path=promoted.path,
-        #             duration=duration_str,
-        #         )
-        #     )
-        #     cover_path = promoted.path
 
         return await template_to_pic(
             template_path=str(self.templates_dir),

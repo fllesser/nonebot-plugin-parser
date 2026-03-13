@@ -20,7 +20,7 @@ from ..base import (
     handle,
     pconfig,
 )
-from ..data import Platform, ParseResult, ImageContent, MediaContent
+from ..data import Platform, ImageContent, MediaContent
 from ..cookie import ck2dict
 
 # 选择客户端
@@ -176,26 +176,25 @@ class BilibiliParser(BaseParser):
             contents.append(ImageContent(img_task))
 
         # 转发动态：递归解析原始动态
-        repost: ParseResult | None = None
+        repost = None
         if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig:
             orig = dynamic_info.orig
             orig_author = self.create_author(orig.name, orig.avatar)
-            orig_contents: list[MediaContent] = []
-            for image_url in orig.image_urls:
-                img_task = self.downloader.download_img(image_url, ext_headers=self.headers)
-                orig_contents.append(ImageContent(img_task))
 
-            repost = self.result(
-                title=orig.title,
-                text=orig.text,
-                timestamp=orig.timestamp,
-                author=orig_author,
-                contents=orig_contents,
-                extra={
-                    "is_video": bool(orig.cover_url),
-                    "duration": orig.duration,
-                },
-            )
+            # 视频动态
+            if orig.is_video():
+                if (major := orig.modules.major) and (archive := major.archive):
+                    repost = await self.parse_video(bvid=archive.bvid)
+            else:
+                orig_contents: list[MediaContent] = []
+                orig_contents.extend(self.create_image_contents(orig.image_urls))
+                repost = self.result(
+                    title=orig.title,
+                    text=orig.text,
+                    timestamp=orig.timestamp,
+                    author=orig_author,
+                    contents=orig_contents,
+                )
 
         return self.result(
             title=dynamic_info.title,
@@ -204,11 +203,7 @@ class BilibiliParser(BaseParser):
             author=author,
             contents=contents,
             repost=repost,
-            extra={
-                "content_type": "动态",
-                "is_video": bool(dynamic_info.cover_url),
-                "duration": dynamic_info.duration,
-            },
+            extra={"content_type": "动态"},
         )
 
     async def parse_opus_by_id(self, opus_id: int):
