@@ -247,8 +247,10 @@ class CommonRenderer(ImageRenderer):
         # 图文内容
         if graphics_contents := result.graphics_contents:
             for content in graphics_contents:
-                if content.text is not None:
-                    height += self._estimate_text_height(content.text, self.fontset.text, content_width)
+                if content.text_before is not None:
+                    height += self._estimate_text_height(content.text_before, self.fontset.text, content_width)
+                if content.text_after is not None:
+                    height += self._estimate_text_height(content.text_after, self.fontset.text, content_width)
                 if content.alt is not None:
                     height += self.fontset.extra.line_height
             height += len(graphics_contents) * self.MAX_COVER_HEIGHT + self.SECTION_SPACING
@@ -516,17 +518,22 @@ class CommonRenderer(ImageRenderer):
 
             # 计算所需高度并确保画布足够
             text_height = 0
-            if gc.text:
-                lines = self._wrap_text(gc.text, ctx.content_width, self.fontset.text)
-                text_height = len(lines) * self.fontset.text.line_height + self.SECTION_SPACING
+            lines_before = None
+            lines_after = None
+            if gc.text_before is not None:
+                lines_before = self._wrap_text(gc.text_before, ctx.content_width, self.fontset.text)
+                text_height = len(lines_before) * self.fontset.text.line_height + self.SECTION_SPACING
+            if gc.text_after is not None:
+                lines_after = self._wrap_text(gc.text_after, ctx.content_width, self.fontset.text)
+                text_height += len(lines_after) * self.fontset.text.line_height + self.SECTION_SPACING
+
             alt_height = self.fontset.extra.line_height + self.SECTION_SPACING if gc.alt else 0
             needed = text_height + img.height + alt_height + self.SECTION_SPACING
             self._ensure_height_enough(ctx, needed)
 
-            # 文本
-            if gc.text:
-                lines = self._wrap_text(gc.text, ctx.content_width, self.fontset.text)
-                ctx.y_pos += await self._draw_text(ctx, lines, self.fontset.text)
+            # before 文本
+            if lines_before is not None:
+                ctx.y_pos += await self._draw_text(ctx, lines_before, self.fontset.text)
                 ctx.y_pos += self.SECTION_SPACING
 
             # 图片
@@ -543,6 +550,11 @@ class CommonRenderer(ImageRenderer):
                 ctx.y_pos += self.fontset.extra.line_height
 
             ctx.y_pos += self.SECTION_SPACING
+
+            # after 文本
+            if lines_after is not None:
+                ctx.y_pos += await self._draw_text(ctx, lines_after, self.fontset.text)
+                ctx.y_pos += self.SECTION_SPACING
         except Exception as e:
             logger.debug(f"渲染图文失败: {e}")
 

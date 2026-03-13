@@ -89,6 +89,7 @@ class WeiBoParser(BaseParser):
         soup = BeautifulSoup(data.content, "html.parser")
         contents: list[MediaContent] = []
         text_buffer: list[str] = []
+        current_graphics = None
 
         for element in soup.find_all(["p", "img"]):
             if not isinstance(element, Tag):
@@ -104,22 +105,23 @@ class WeiBoParser(BaseParser):
                 src = element.get("src")
                 if isinstance(src, str):
                     text = "\n\n".join(text_buffer)
-                    contents.append(self.create_graphics_content(src, text=text))
+                    current_graphics = self.create_graphics_content(src, text_before=text)
+                    contents.append(current_graphics)
                     text_buffer.clear()
+
+        if text_buffer and current_graphics is not None:
+            current_graphics.text_after = "\n\n".join(text_buffer)
 
         author = self.create_author(
             data.userinfo.screen_name,
             data.userinfo.profile_image_url,
         )
 
-        end_text = "\n\n".join(text_buffer) if text_buffer else None
-
         return self.result(
             url=data.url,
             title=data.title,
             author=author,
             timestamp=data.create_at_unix,
-            text=end_text,
             contents=contents,
         )
 
