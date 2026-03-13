@@ -4,6 +4,7 @@ from typing import Any, TypedDict
 from asyncio import Task
 from pathlib import Path
 from datetime import datetime
+from functools import cached_property
 from dataclasses import field, dataclass
 
 from ..utils import fmt_duration
@@ -202,23 +203,23 @@ class ParseResult:
     def extra_info(self) -> str | None:
         return self.extra.get("info")
 
-    @property
+    @cached_property
     def video_contents(self) -> list[VideoContent]:
         return [cont for cont in self.contents if isinstance(cont, VideoContent)]
 
-    @property
+    @cached_property
     def img_contents(self) -> list[ImageContent]:
         return [cont for cont in self.contents if isinstance(cont, ImageContent)]
 
-    @property
+    @cached_property
     def audio_contents(self) -> list[AudioContent]:
         return [cont for cont in self.contents if isinstance(cont, AudioContent)]
 
-    @property
+    @cached_property
     def dynamic_contents(self) -> list[DynamicContent]:
         return [cont for cont in self.contents if isinstance(cont, DynamicContent)]
 
-    @property
+    @cached_property
     def graphics_contents(self) -> list[GraphicsContent]:
         return [cont for cont in self.contents if isinstance(cont, GraphicsContent)]
 
