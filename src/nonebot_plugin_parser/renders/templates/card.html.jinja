@@ -566,14 +566,17 @@
         {% elif result.graphics_contents %}
         {% for graphics in result.graphics_contents %}
         <div class="graphics-item">
-          {% if graphics.text %}
-          <div class="text">{{ graphics.text }}</div>
+          {% if graphics.text_before %}
+          <div class="text">{{ graphics.text_before }}</div>
           {% endif %}
           <div class="image-container">
             <img src="{{ graphics.path | safe }}" class="single-image" alt="graphics" />
           </div>
           {% if graphics.alt %}
           <div class="graphics-alt">{{ graphics.alt }}</div>
+          {% endif %}
+          {% if graphics.text_after %}
+          <div class="text">{{ graphics.text_after }}</div>
           {% endif %}
         </div>
         {% endfor %}
