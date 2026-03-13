@@ -234,7 +234,5 @@ class DynamicInfo(Struct):
         return major is not None and major.archive is not None
 
 
-class DynamicData(Struct):
-    """动态项目"""
-
+class DynamicWrapper(Struct):
     item: DynamicInfo

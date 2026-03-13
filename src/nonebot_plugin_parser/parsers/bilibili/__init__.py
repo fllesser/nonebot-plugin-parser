@@ -22,6 +22,7 @@ from ..base import (
 )
 from ..data import Platform, ImageContent, MediaContent
 from ..cookie import ck2dict
+from .dynamic import DynamicInfo
 
 # 选择客户端
 select_client("curl_cffi")
@@ -160,41 +161,29 @@ class BilibiliParser(BaseParser):
         """解析动态或图文"""
         from bilibili_api.dynamic import Dynamic
 
-        from .dynamic import DynamicData
+        from .dynamic import DynamicWrapper
 
         dynamic = Dynamic(dynamic_id, await self.credential)
         if await dynamic.is_article():
             return await self._parse_bilibli_api_opus(dynamic.turn_to_opus())
 
-        dynamic_info = convert(await dynamic.get_info(), DynamicData).item
+        dynamic_info = convert(await dynamic.get_info(), DynamicWrapper).item
+        return await self.parse_dynamic_info(dynamic_info)
+
+    async def parse_dynamic_info(self, dynamic_info: DynamicInfo):
+        if dynamic_info.is_video():
+            if (major := dynamic_info.modules.major) and (archive := major.archive):
+                return await self.parse_video(bvid=archive.bvid)
+
+        # 下载图片
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
-
-        # 下载图片 / 视频封面
         contents: list[MediaContent] = []
-        for image_url in dynamic_info.image_urls:
-            img_task = self.downloader.download_img(image_url, ext_headers=self.headers)
-            contents.append(ImageContent(img_task))
+        contents.extend(self.create_image_contents(dynamic_info.image_urls))
 
-        # 转发动态：递归解析原始动态
         repost = None
         if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig:
             orig = dynamic_info.orig
-            orig_author = self.create_author(orig.name, orig.avatar)
-
-            # 视频动态
-            if orig.is_video():
-                if (major := orig.modules.major) and (archive := major.archive):
-                    repost = await self.parse_video(bvid=archive.bvid)
-            else:
-                orig_contents: list[MediaContent] = []
-                orig_contents.extend(self.create_image_contents(orig.image_urls))
-                repost = self.result(
-                    title=orig.title,
-                    text=orig.text,
-                    timestamp=orig.timestamp,
-                    author=orig_author,
-                    contents=orig_contents,
-                )
+            repost = await self.parse_dynamic_info(orig)
 
         return self.result(
             title=dynamic_info.title,
