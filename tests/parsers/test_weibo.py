@@ -133,11 +133,8 @@ async def test_article():
         assert result.author
         assert result.author.name
         assert result.author.avatar
-        assert result.contents
+        assert result.graphics
 
-        for content in result.contents:
-            await content.get_path()
-
-        await result.author.get_avatar_path()
+        await result.ensure_imgs_ready()
 
     await asyncio.gather(*[parse_article(url) for url in urls])

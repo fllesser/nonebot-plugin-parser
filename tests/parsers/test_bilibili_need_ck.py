@@ -19,10 +19,8 @@ async def test_favlist():
     assert avatar_path, "头像不存在"
     assert avatar_path.exists(), "头像不存在"
 
-    assert result.contents, "内容为空"
-    for content in result.contents:
-        path = await content.get_path()
-        assert path.exists(), "内容不存在"
+    assert result.graphics, "graphics 为空"
+    await result.ensure_imgs_ready()
 
     logger.success("B站收藏夹解析成功")
 

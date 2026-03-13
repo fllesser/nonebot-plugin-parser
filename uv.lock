@@ -648,12 +648,16 @@ wheels = [
 
 [[package]]
 name = "emosvg"
-version = "0.1.6"
-source = { git = "https://github.com/fllesser/emosvg?rev=fix%2Fcombo-emoji#6aead45e2c0a25f5ccc3c66f29ee2ca9d6cf99ea" }
+version = "0.1.7"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cairosvg" },
     { name = "emoji" },
     { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b7/30/5ef59fb1a0d593bb77b46ed8834df92a969f6f826e1e8071b6f8bb658503/emosvg-0.1.7.tar.gz", hash = "sha256:c8a9a27cb220a64c1be12a09bcf503554febc4b32dc47e46948ccabc82aa80df", size = 2233307, upload-time = "2026-03-13T16:19:05.246Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a2/0d/70889809d1dec1837239b23dbb83e784545dbc6228b04e6aa8b277443286/emosvg-0.1.7-py3-none-any.whl", hash = "sha256:4e1524e22901ac2d25910fa3c4582685110bf2cb21ed60a0e8f44f4c46f7f87b", size = 5319830, upload-time = "2026-03-13T16:19:03.081Z" },
 ]
 
 [[package]]
@@ -1627,8 +1631,8 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
     { name = "bilibili-api-python", specifier = ">=17.4.1,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,!=0.14.0,<1.0.0" },
-    { name = "emosvg", marker = "extra == 'all'", git = "https://github.com/fllesser/emosvg?rev=fix%2Fcombo-emoji" },
-    { name = "emosvg", marker = "extra == 'emosvg'", git = "https://github.com/fllesser/emosvg?rev=fix%2Fcombo-emoji" },
+    { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.7" },
+    { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.7" },
     { name = "httpx", specifier = ">=0.27.2,<1.0.0" },
     { name = "msgspec", specifier = ">=0.20.0,<1.0.0" },
     { name = "nonebot-plugin-alconna", specifier = ">=0.60.4,<1.0.0" },
@@ -1649,7 +1653,7 @@ provides-extras = ["htmlkit", "htmlrender", "ytdlp", "emosvg", "all"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "emosvg", git = "https://github.com/fllesser/emosvg?rev=fix%2Fcombo-emoji" },
+    { name = "emosvg", specifier = ">=0.1.7" },
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot-plugin-htmlrender", specifier = ">=0.6.7" },
@@ -1665,7 +1669,7 @@ dev = [
     { name = "yt-dlp", extras = ["default"], specifier = ">=2026.2.21" },
 ]
 extras = [
-    { name = "emosvg", git = "https://github.com/fllesser/emosvg?rev=fix%2Fcombo-emoji" },
+    { name = "emosvg", specifier = ">=0.1.7" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot-plugin-htmlrender", specifier = ">=0.6.7" },
     { name = "types-yt-dlp", specifier = ">=2026.2.21.20260223" },
