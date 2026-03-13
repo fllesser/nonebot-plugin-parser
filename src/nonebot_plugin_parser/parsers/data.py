@@ -221,7 +221,7 @@ class ParseResult:
         for cont in self.contents:
             if isinstance(cont, VideoContent):
                 await cont.get_cover_path()
-            else:
+            elif isinstance(cont, ImageContent):
                 await cont.get_path()
 
         for gra in self.graphics:
