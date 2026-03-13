@@ -624,12 +624,12 @@ class CommonRenderer(ImageRenderer):
         if not text:
             return []
 
-        # 行尾标点符号
-        def is_trailing_punctuation(c: str) -> bool:
-            return c in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
+        # 去掉 制表符
+        text = text.replace("\t", " ")
+        # 去掉 变体选择符
+        text = text.replace(chr(65039), "")
 
         lines: list[str] = []
-
         for paragraph in text.splitlines():
             if not paragraph:
                 lines.append("")
@@ -675,3 +675,8 @@ class CommonRenderer(ImageRenderer):
                 lines.append(current_line)
 
         return lines
+
+
+# 行尾标点符号
+def is_trailing_punctuation(c: str) -> bool:
+    return c in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
