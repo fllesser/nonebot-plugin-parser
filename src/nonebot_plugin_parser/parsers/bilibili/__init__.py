@@ -173,7 +173,10 @@ class BilibiliParser(BaseParser):
     async def _parse_dynamic_info(self, dynamic_info: DynamicInfo):
         if dynamic_info.is_video():
             if (major := dynamic_info.modules.major) and (archive := major.archive):
-                return await self.parse_video(bvid=archive.bvid)
+                result = await self.parse_video(bvid=archive.bvid)
+                result.text = dynamic_info.text
+                result.extra["content_type"] = "动态"
+                return result
 
         # 下载图片
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)

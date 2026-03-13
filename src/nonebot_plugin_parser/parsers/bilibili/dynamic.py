@@ -1,5 +1,4 @@
 from typing import Any
-from functools import cached_property
 
 from msgspec import Struct, convert
 
@@ -135,6 +134,8 @@ class DynamicModule(Struct):
     module_dynamic: dict[str, Any] | None = None
     module_stat: dict[str, Any] | None = None
 
+    _cached_major: DynamicMajor | None = None
+
     @property
     def author_name(self) -> str:
         """获取作者名称"""
@@ -160,12 +161,14 @@ class DynamicModule(Struct):
             return self.module_dynamic
         return None
 
-    @cached_property
+    @property
     def major(self) -> DynamicMajor | None:
         """获取缓存的 DynamicMajor 实例"""
-        major_info = self._major_info
-        if major_info:
-            return convert(major_info, DynamicMajor)
+        if self._cached_major is None:
+            major_info = self._major_info
+            if major_info:
+                self._cached_major = convert(major_info, DynamicMajor)
+        return self._cached_major
 
     @property
     def desc_text(self) -> str | None:

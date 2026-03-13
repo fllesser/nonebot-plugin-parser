@@ -156,7 +156,7 @@ class Author:
         return repr + ")"
 
 
-@dataclass(repr=False, slots=True)
+@dataclass(repr=False)
 class ParseResult:
     """完整的解析结果"""
 
