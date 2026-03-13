@@ -251,17 +251,18 @@ class ParseResult:
     @property
     def content_type(self) -> str | None:
         """获取内容类型 (允许解析器通过 extra 显式指定)"""
-        content_type = self.extra.get("content_type")
+        if content_type := self.extra.get("content_type"):
+            return content_type
+
         if content_type is None:
             if self.video_contents:
-                content_type = "视频"
+                return "视频"
             elif self.graphics_contents:
-                content_type = "图文"
+                return "图文"
             elif self.img_contents:
-                content_type = "动态"
+                return "动态"
             elif self.repost:
-                content_type = "动态"
-        return content_type
+                return "动态"
 
     def __repr__(self) -> str:
         return (
