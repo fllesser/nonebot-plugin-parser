@@ -77,11 +77,7 @@ async def test_dynamic():
         assert avatar_path, "头像不存在"
         assert avatar_path.exists(), "头像不存在"
 
-        assert result.contents, "内容为空"
-        img_contents = result.img_contents
-        for img_content in img_contents:
-            path = await img_content.get_path()
-            assert path.exists(), "图片不存在"
+        await result.ensure_imgs_ready()
 
     await asyncio.gather(*[test_parse_dynamic(dynamic_url) for dynamic_url in dynamic_urls])
     logger.success("B站动态解析成功")
