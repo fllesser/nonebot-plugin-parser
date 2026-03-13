@@ -10,7 +10,6 @@ from httpx import HTTPError, AsyncClient
 from nonebot import logger
 
 from .base import Platform, BaseParser, PlatformEnum, handle
-from .data import GraphicsContent
 from ..exception import ParseException
 
 
@@ -122,7 +121,7 @@ class NGAParser(BaseParser):
             text = content_tag.get_text("\n", strip=True)
             lines = text.split("\n")
             text_buffer: list[str] = []
-            current_content: GraphicsContent | None = None
+            current_content = None
 
             for line in lines:
                 if "[" in line:
