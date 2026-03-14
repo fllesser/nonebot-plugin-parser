@@ -513,31 +513,31 @@ class CommonRenderer(ImageRenderer):
         """渲染图片"""
         try:
             path = await image_content.get_path()
-            with Image.open(path) as img:
-                if img.width > ctx.content_width:
-                    ratio = ctx.content_width / img.width
-                    img = img.resize((ctx.content_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
-                else:
-                    img = img.copy()
+        except Exception:
+            return
 
-            x_pos = self.PADDING + (ctx.content_width - img.width) // 2
-            ctx.image.paste(img, (x_pos, ctx.y_pos))
-            ctx.y_pos += img.height
+        with Image.open(path) as img:
+            if img.width > ctx.content_width:
+                ratio = ctx.content_width / img.width
+                img = img.resize((ctx.content_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
+            else:
+                img = img.copy()
 
-            # Alt 文本
-            if image_content.alt:
-                ctx.y_pos += self.SECTION_SPACING
-                text_w = self.fontset.extra.get_text_width(image_content.alt)
-                text_x = self.PADDING + (ctx.content_width - text_w) // 2
-                ctx.draw.text(
-                    (text_x, ctx.y_pos), image_content.alt, font=self.fontset.extra.font, fill=self.fontset.extra.fill
-                )
-                ctx.y_pos += self.fontset.extra.line_height
+        x_pos = self.PADDING + (ctx.content_width - img.width) // 2
+        ctx.image.paste(img, (x_pos, ctx.y_pos))
+        ctx.y_pos += img.height
 
+        # Alt 文本
+        if image_content.alt:
             ctx.y_pos += self.SECTION_SPACING
+            text_w = self.fontset.extra.get_text_width(image_content.alt)
+            text_x = self.PADDING + (ctx.content_width - text_w) // 2
+            ctx.draw.text(
+                (text_x, ctx.y_pos), image_content.alt, font=self.fontset.extra.font, fill=self.fontset.extra.fill
+            )
+            ctx.y_pos += self.fontset.extra.line_height
 
-        except Exception as e:
-            logger.debug(f"渲染 Graphics 中的图片失败: {e}")
+        ctx.y_pos += self.SECTION_SPACING
 
     async def _render_text(self, ctx: RenderContext, text: str | None = None) -> None:
         """渲染正文"""
