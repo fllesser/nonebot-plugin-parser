@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any, TypedDict
 from asyncio import Task
 from pathlib import Path
 from datetime import datetime
 from dataclasses import field, dataclass
+from collections.abc import Iterator, Awaitable
 
 from ..utils import fmt_duration
 
@@ -211,7 +213,7 @@ class ParseResult:
                 return await cont.get_cover_path()
         return None
 
-    def _iterate_image_coros(self):
+    def _iterate_image_coros(self) -> Iterator[Awaitable[Path | None]]:
         if author := self.author:
             if author.avatar:
                 yield author.get_avatar_path()
@@ -229,20 +231,8 @@ class ParseResult:
         if self.repost is not None:
             yield from self.repost._iterate_image_coros()
 
-    async def ensure_imgs_ready(self) -> None:
-        """确保所有图片内容都已准备就绪"""
-
-        for coro in self._iterate_image_coros():
-            await coro
-
-    async def ensure_imgs_ready_without_exc(self) -> None:
-        """确保所有图片内容都已准备就绪, 忽略异常"""
-
-        for coro in self._iterate_image_coros():
-            try:
-                await coro
-            except Exception:
-                pass
+    async def ensure_imgs_ready(self, suppress_errors: bool = False) -> None:
+        await asyncio.gather(*self._iterate_image_coros(), return_exceptions=suppress_errors)
 
     @property
     def content_type(self) -> str | None:
