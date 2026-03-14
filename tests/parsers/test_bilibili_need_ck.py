@@ -20,7 +20,7 @@ async def test_favlist():
     assert avatar_path.exists(), "头像不存在"
 
     assert result.graphics, "graphics 为空"
-    await result.ensure_imgs_ready()
+    await result.ensure_downloads_complete()
 
     logger.success("B站收藏夹解析成功")
 

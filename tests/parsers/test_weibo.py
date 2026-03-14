@@ -135,6 +135,6 @@ async def test_article():
         assert result.author.avatar
         assert result.graphics
 
-        await result.ensure_imgs_ready()
+        await result.ensure_downloads_complete()
 
     await asyncio.gather(*[parse_article(url) for url in urls])
