@@ -139,7 +139,8 @@ class OpusItem(Struct):
                                     else:
                                         next_text += text
                             yield image_node
-                            yield next_text
+                            if next_text:
+                                yield next_text
 
     def _extract_texts_from_nodes(self, nodes: list[dict[str, Any]]) -> list[tuple[str, str | None]]:
         """从节点列表中提取文本内容"""
