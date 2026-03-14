@@ -65,7 +65,7 @@ class BaseRenderer(ABC):
 
             img_seg = UniHelper.img_seg(path)
             if cont.alt:
-                img_seg += f"\n{cont.alt}"
+                img_seg += cont.alt
             forwardable_segs.append(img_seg)
 
         if forwardable_segs:
