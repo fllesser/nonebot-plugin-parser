@@ -53,8 +53,18 @@ class BaseRenderer(ABC):
         for cont in chain(result.graphics, result.repost.graphics if result.repost else ()):
             if isinstance(cont, str):
                 forwardable_segs.append(cont)
-            else:
-                forwardable_segs.append(UniHelper.img_seg(await cont.get_path()))
+                continue
+            try:
+                path = await cont.get_path()
+            except IgnoreException:
+                continue
+            except DownloadException:
+                failed_count += 1
+                continue
+            img_seg = UniHelper.img_seg(path)
+            if cont.alt:
+                img_seg += f"\n{cont.alt}"
+            forwardable_segs.append(img_seg)
 
         if forwardable_segs:
             if pconfig.need_forward_contents or len(forwardable_segs) > 4:
