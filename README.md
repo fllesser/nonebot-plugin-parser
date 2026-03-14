@@ -145,7 +145,7 @@
 
     uv add "nonebot-plugin-parser[htmlkit]"
 
-`htmlrender`, 使用 `playwright` 渲染 `html`, 插件现有模版有点问题，并且极其丑陋，不建议使用
+`htmlrender`, 使用 `playwright` 渲染 `html`, 插件自 `v2.5.0` 起已正式支持
 
     uv add "nonebot-plugin-parser[htmlrender]"
 
