@@ -213,13 +213,15 @@ class ParseResult:
                 return await cont.get_cover_path()
         return None
 
-    def _iterate_image_coros(self) -> Iterator[Awaitable[Path | None]]:
+    def _iterate_download_coros(self, img_only: bool = False) -> Iterator[Awaitable[Path | None]]:
         if author := self.author:
             if author.avatar:
                 yield author.get_avatar_path()
 
         for cont in self.contents:
-            if isinstance(cont, VideoContent):
+            if not img_only:
+                yield cont.get_path()
+            elif isinstance(cont, VideoContent):
                 yield cont.get_cover_path()
             elif isinstance(cont, ImageContent):
                 yield cont.get_path()
@@ -229,10 +231,18 @@ class ParseResult:
                 yield gra.get_path()
 
         if self.repost is not None:
-            yield from self.repost._iterate_image_coros()
+            yield from self.repost._iterate_download_coros(img_only)
 
-    async def ensure_imgs_ready(self, suppress_errors: bool = False) -> None:
-        await asyncio.gather(*self._iterate_image_coros(), return_exceptions=suppress_errors)
+    async def ensure_downloads_complete(
+        self,
+        *,
+        img_only: bool = False,
+        suppress_errors: bool = True,
+    ) -> None:
+        await asyncio.gather(
+            *self._iterate_download_coros(img_only),
+            return_exceptions=suppress_errors,
+        )
 
     @property
     def content_type(self) -> str | None:
