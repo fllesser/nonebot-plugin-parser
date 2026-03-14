@@ -279,7 +279,10 @@ class CommonRenderer(ImageRenderer):
         x_pos = self.PADDING
 
         # 头像
-        avatar_path = await ctx.result.author.get_avatar_path()
+        try:
+            avatar_path = await ctx.result.author.get_avatar_path()
+        except Exception:
+            avatar_path = None
         avatar = self._load_avatar(avatar_path)
         ctx.image.paste(avatar, (x_pos, ctx.y_pos), avatar)
 
