@@ -200,6 +200,10 @@ class ParseResult:
         return [cont for cont in self.contents if isinstance(cont, DynamicContent)]
 
     @property
+    def formartted_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str | None:
+        """格式化时间戳"""
+        return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
+
     async def cover_path(self) -> Path | None:
         """获取封面路径"""
         for cont in self.contents:
@@ -207,29 +211,38 @@ class ParseResult:
                 return await cont.get_cover_path()
         return None
 
-    @property
-    def formartted_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str | None:
-        """格式化时间戳"""
-        return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
+    def _iterate_image_coros(self):
+        if author := self.author:
+            if author.avatar:
+                yield author.get_avatar_path()
+
+        for cont in self.contents:
+            if isinstance(cont, VideoContent):
+                yield cont.get_cover_path()
+            elif isinstance(cont, ImageContent):
+                yield cont.get_path()
+
+        for gra in self.graphics:
+            if isinstance(gra, ImageContent):
+                yield gra.get_path()
+
+        if self.repost is not None:
+            yield from self.repost._iterate_image_coros()
 
     async def ensure_imgs_ready(self) -> None:
         """确保所有图片内容都已准备就绪"""
 
-        if author := self.author:
-            await author.get_avatar_path()
+        for coro in self._iterate_image_coros():
+            await coro
 
-        for cont in self.contents:
-            if isinstance(cont, VideoContent):
-                await cont.get_cover_path()
-            elif isinstance(cont, ImageContent):
-                await cont.get_path()
+    async def ensure_imgs_ready_without_exc(self) -> None:
+        """确保所有图片内容都已准备就绪, 忽略异常"""
 
-        for gra in self.graphics:
-            if isinstance(gra, ImageContent):
-                await gra.get_path()
-
-        if self.repost is not None:
-            await self.repost.ensure_imgs_ready()
+        for coro in self._iterate_image_coros():
+            try:
+                await coro
+            except Exception:
+                pass
 
     @property
     def content_type(self) -> str | None:

@@ -355,8 +355,12 @@ class CommonRenderer(ImageRenderer):
 
     async def _render_cover_or_images(self, ctx: RenderContext):
         """渲染封面/图片网格/图文内容"""
+        try:
+            cover_path = await ctx.result.cover_path()
+        except Exception:
+            cover_path = None
 
-        if (cover_path := await ctx.result.cover_path) and cover_path.exists():
+        if cover_path and cover_path.exists():
             if cover := self._load_cover(cover_path, ctx.content_width):
                 x_pos = self.PADDING
                 ctx.image.paste(cover, (x_pos, ctx.y_pos))
