@@ -14,7 +14,7 @@ class HtmlRenderer(ImageRenderer):
 
     @override
     async def render_image(self, result: ParseResult) -> bytes:
-        await result.ensure_imgs_ready_without_exc()
+        await result.ensure_downloads_complete(img_only=True)
 
         logo = resources.RESOURCES_DIR / f"{result.platform.name}.png"
         logo = logo.as_uri() if logo.exists() else None

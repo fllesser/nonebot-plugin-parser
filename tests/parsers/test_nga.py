@@ -30,7 +30,7 @@ async def test_nga_parse():
     logger.debug(f"时间: {result.timestamp}")
     logger.debug(f"内容: {result.contents}")
     assert result.graphics, "应该能提取图片内容"
-    await result.ensure_imgs_ready()
+    await result.ensure_downloads_complete()
     logger.success("NGA帖子解析成功")
 
 

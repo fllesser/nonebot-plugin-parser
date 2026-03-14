@@ -51,7 +51,7 @@ async def test_read():
     assert avatar_path.exists(), "头像不存在"
 
     assert result.graphics, "graphics 为空"
-    await result.ensure_imgs_ready()
+    await result.ensure_downloads_complete()
 
     logger.success("B站图文解析成功")
 
@@ -77,7 +77,7 @@ async def test_dynamic():
         assert avatar_path, "头像不存在"
         assert avatar_path.exists(), "头像不存在"
 
-        await result.ensure_imgs_ready()
+        await result.ensure_downloads_complete()
 
     await asyncio.gather(*[test_parse_dynamic(dynamic_url) for dynamic_url in dynamic_urls])
     logger.success("B站动态解析成功")
