@@ -126,7 +126,11 @@ class OpusItem(Struct):
                 for paragraph in iterator:
                     # 处理文本段落
                     if paragraph.text and paragraph.text.nodes:
-                        yield "".join(text for text, _ in self._extract_texts_from_nodes(paragraph.text.nodes))
+                        cur_text = "".join(
+                            text for text, _ in self._extract_texts_from_nodes(paragraph.text.nodes)
+                        ).strip()
+                        if cur_text:
+                            yield cur_text
                     # 处理图片段落
                     if paragraph.pic and paragraph.pic.pics:
                         for pic in paragraph.pic.pics:
@@ -139,6 +143,7 @@ class OpusItem(Struct):
                                     else:
                                         next_text += text
                             yield image_node
+                            next_text = next_text.strip()
                             if next_text:
                                 yield next_text
 
