@@ -54,6 +54,7 @@ class BaseRenderer(ABC):
             if isinstance(cont, str):
                 forwardable_segs.append(cont)
                 continue
+
             try:
                 path = await cont.get_path()
             except IgnoreException:
@@ -61,6 +62,7 @@ class BaseRenderer(ABC):
             except DownloadException:
                 failed_count += 1
                 continue
+
             img_seg = UniHelper.img_seg(path)
             if cont.alt:
                 img_seg += f"\n{cont.alt}"

@@ -279,7 +279,10 @@ class CommonRenderer(ImageRenderer):
         x_pos = self.PADDING
 
         # 头像
-        avatar_path = await ctx.result.author.get_avatar_path()
+        try:
+            avatar_path = await ctx.result.author.get_avatar_path()
+        except Exception:
+            avatar_path = None
         avatar = self._load_avatar(avatar_path)
         ctx.image.paste(avatar, (x_pos, ctx.y_pos), avatar)
 
@@ -355,8 +358,12 @@ class CommonRenderer(ImageRenderer):
 
     async def _render_cover_or_images(self, ctx: RenderContext):
         """渲染封面/图片网格/图文内容"""
+        try:
+            cover_path = await ctx.result.cover_path()
+        except Exception:
+            cover_path = None
 
-        if (cover_path := await ctx.result.cover_path) and cover_path.exists():
+        if cover_path and cover_path.exists():
             if cover := self._load_cover(cover_path, ctx.content_width):
                 x_pos = self.PADDING
                 ctx.image.paste(cover, (x_pos, ctx.y_pos))
@@ -509,31 +516,31 @@ class CommonRenderer(ImageRenderer):
         """渲染图片"""
         try:
             path = await image_content.get_path()
-            with Image.open(path) as img:
-                if img.width > ctx.content_width:
-                    ratio = ctx.content_width / img.width
-                    img = img.resize((ctx.content_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
-                else:
-                    img = img.copy()
+        except Exception:
+            return
 
-            x_pos = self.PADDING + (ctx.content_width - img.width) // 2
-            ctx.image.paste(img, (x_pos, ctx.y_pos))
-            ctx.y_pos += img.height
+        with Image.open(path) as img:
+            if img.width > ctx.content_width:
+                ratio = ctx.content_width / img.width
+                img = img.resize((ctx.content_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
+            else:
+                img = img.copy()
 
-            # Alt 文本
-            if image_content.alt:
-                ctx.y_pos += self.SECTION_SPACING
-                text_w = self.fontset.extra.get_text_width(image_content.alt)
-                text_x = self.PADDING + (ctx.content_width - text_w) // 2
-                ctx.draw.text(
-                    (text_x, ctx.y_pos), image_content.alt, font=self.fontset.extra.font, fill=self.fontset.extra.fill
-                )
-                ctx.y_pos += self.fontset.extra.line_height
+        x_pos = self.PADDING + (ctx.content_width - img.width) // 2
+        ctx.image.paste(img, (x_pos, ctx.y_pos))
+        ctx.y_pos += img.height
 
+        # Alt 文本
+        if image_content.alt:
             ctx.y_pos += self.SECTION_SPACING
+            text_w = self.fontset.extra.get_text_width(image_content.alt)
+            text_x = self.PADDING + (ctx.content_width - text_w) // 2
+            ctx.draw.text(
+                (text_x, ctx.y_pos), image_content.alt, font=self.fontset.extra.font, fill=self.fontset.extra.fill
+            )
+            ctx.y_pos += self.fontset.extra.line_height
 
-        except Exception as e:
-            logger.debug(f"渲染 Graphics 中的图片失败: {e}")
+        ctx.y_pos += self.SECTION_SPACING
 
     async def _render_text(self, ctx: RenderContext, text: str | None = None) -> None:
         """渲染正文"""

@@ -25,8 +25,11 @@ class DefaultRenderer(BaseRenderer):
         texts[:-1] = [text + "\n" for text in texts[:-1]]
         segs: list[Segment] = [Text(text) for text in texts]
 
-        if cover_path := await result.cover_path:
-            segs.insert(1, UniHelper.img_seg(cover_path))
+        try:
+            if cover_path := await result.cover_path():
+                segs.insert(1, UniHelper.img_seg(cover_path))
+        except Exception:
+            pass
 
         if total_len > 300:
             yield UniMessage(UniHelper.construct_forward_message(segs))
