@@ -1,6 +1,5 @@
 from typing import Any
 from dataclasses import dataclass
-from collections.abc import Generator
 
 from msgspec import Struct
 
@@ -88,14 +87,6 @@ class Info(Struct):
 
 
 @dataclass(slots=True)
-class TextNode:
-    """图文动态文本节点"""
-
-    text: str
-    """文本内容"""
-
-
-@dataclass(slots=True)
 class ImageNode:
     """图文动态图片节点"""
 
@@ -127,30 +118,40 @@ class OpusItem(Struct):
                 return module.module_author.pub_ts
         return None
 
-    def extract_nodes(self) -> Generator[TextNode | ImageNode, None, None]:
-        """生成图文节点（保持顺序）"""
+    def extract_nodes(self):
+        """提取图文节点（保持顺序）"""
         for module in self.item.modules:
             if module.module_type == "MODULE_TYPE_CONTENT" and module.module_content:
-                for paragraph in module.module_content.paragraphs:
+                iterator = iter(module.module_content.paragraphs)
+                for paragraph in iterator:
                     # 处理文本段落
                     if paragraph.text and paragraph.text.nodes:
-                        text_content = self._extract_text_from_nodes(paragraph.text.nodes)
-                        text_content = text_content.strip()
-                        if text_content:
-                            yield TextNode(text=text_content)
-
+                        yield "".join(text for text, _ in self._extract_texts_from_nodes(paragraph.text.nodes))
                     # 处理图片段落
                     if paragraph.pic and paragraph.pic.pics:
                         for pic in paragraph.pic.pics:
-                            yield ImageNode(url=pic.url)
+                            image_node = ImageNode(url=pic.url)
+                            next_text = ""
+                            if (next_par := next(iterator, None)) and next_par.text and next_par.text.nodes:
+                                for text, color in self._extract_texts_from_nodes(next_par.text.nodes):
+                                    if color == "#999999":
+                                        image_node.alt = text
+                                    else:
+                                        next_text += text
+                            yield image_node
+                            if next_text:
+                                yield next_text
 
-    def _extract_text_from_nodes(self, nodes: list[dict[str, Any]]) -> str:
+    def _extract_texts_from_nodes(self, nodes: list[dict[str, Any]]) -> list[tuple[str, str | None]]:
         """从节点列表中提取文本内容"""
-        text_content = ""
+        texts: list[tuple[str, str | None]] = []
         for node in nodes:
-            if node.get("type") in [
+            if node.get("type") in (
                 "TEXT_NODE_TYPE_WORD",
                 "TEXT_NODE_TYPE_RICH",
-            ] and node.get("word"):
-                text_content += node["word"].get("words", "")
-        return text_content
+            ) and node.get("word"):
+                text = node["word"]["words"]
+                color = node["word"]["color"]
+                texts.append((text, color))
+
+        return texts

@@ -205,7 +205,7 @@ class BilibiliParser(BaseParser):
     async def _parse_bilibli_api_opus(self, bili_opus: Opus):
         """解析图文动态(Opus)"""
 
-        from .opus import OpusItem, TextNode, ImageNode
+        from .opus import OpusItem
 
         opus_info = await bili_opus.get_info()
         if not isinstance(opus_info, dict):
@@ -216,12 +216,12 @@ class BilibiliParser(BaseParser):
         author = self.create_author(*opus_data.name_avatar)
 
         # 按顺序处理图文内容
-        graphics: list[str | ImageContent] = []
+        graphics = self.create_empty_graphics()
         for node in opus_data.extract_nodes():
-            if isinstance(node, ImageNode):
+            if isinstance(node, str):
+                graphics.append(node)
+            else:
                 graphics.append(self.create_image_content(node.url, alt=node.alt))
-            elif isinstance(node, TextNode):
-                graphics.append(node.text)
 
         return self.result(
             title=opus_data.title,
