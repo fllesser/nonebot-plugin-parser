@@ -120,49 +120,37 @@ class OpusItem(Struct):
 
     def extract_nodes(self):
         """提取图文节点（保持顺序）"""
-        temp_list: list[tuple[str, str] | ImageNode] = []
         for module in self.item.modules:
             if module.module_type == "MODULE_TYPE_CONTENT" and module.module_content:
-                for paragraph in module.module_content.paragraphs:
+                iterator = iter(module.module_content.paragraphs)
+                for paragraph in iterator:
                     # 处理文本段落
                     if paragraph.text and paragraph.text.nodes:
-                        temp_text = ""
-                        for text, color in self._extract_texts_from_nodes(paragraph.text.nodes):
-                            if color == "#999999":
-                                temp_list.append((text, color))
-                            else:
-                                temp_text += text
-
-                        temp_list.append((temp_text, ""))
-
+                        yield "".join(text for text, _ in self._extract_texts_from_nodes(paragraph.text.nodes))
                     # 处理图片段落
                     if paragraph.pic and paragraph.pic.pics:
                         for pic in paragraph.pic.pics:
-                            temp_list.append(ImageNode(url=pic.url))
+                            image_node = ImageNode(url=pic.url)
+                            next_text = ""
+                            if (next_par := next(iterator, None)) and next_par.text and next_par.text.nodes:
+                                for text, color in self._extract_texts_from_nodes(next_par.text.nodes):
+                                    if color == "#999999":
+                                        image_node.alt = text
+                                    else:
+                                        next_text += text
+                            yield image_node
+                            yield next_text
 
-        node_list: list[str | ImageNode] = []
-        iterator = iter(temp_list)
-        for item in iterator:
-            if isinstance(item, ImageNode):
-                next_item = next(iterator, None)
-                if isinstance(next_item, tuple) and next_item[1] == "#999999":
-                    item.alt = next_item[0]
-                node_list.append(item)
-            else:
-                node_list.append(item[0])
-
-        return node_list
-
-    def _extract_texts_from_nodes(self, nodes: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    def _extract_texts_from_nodes(self, nodes: list[dict[str, Any]]) -> list[tuple[str, str | None]]:
         """从节点列表中提取文本内容"""
-        texts: list[tuple[str, str]] = []
+        texts: list[tuple[str, str | None]] = []
         for node in nodes:
             if node.get("type") in (
                 "TEXT_NODE_TYPE_WORD",
                 "TEXT_NODE_TYPE_RICH",
             ) and node.get("word"):
-                text = node["word"].get("words", "")
-                color = node["word"].get("color", "")
+                text = node["word"]["words"]
+                color = node["word"]["color"]
                 texts.append((text, color))
 
         return texts
