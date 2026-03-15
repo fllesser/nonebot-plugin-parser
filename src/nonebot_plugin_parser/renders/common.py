@@ -185,7 +185,6 @@ class CommonRenderer(ImageRenderer):
 
     async def _render_image(self) -> PILImage:
         """渲染图片 (内部方法)"""
-        # 初始估算高度（后续可动态扩展）
         estimated_height = self._estimate_height()
         bg_color = self.BG_COLOR if self.not_repost else self.REPOST_BG_COLOR
 
@@ -401,7 +400,7 @@ class CommonRenderer(ImageRenderer):
                     content_width = int(content_width * ratio)
                 img = img.resize((content_width, new_h), Image.Resampling.LANCZOS)
 
-            # 视频按钮
+            # 视频播放按钮
             btn_size = 100
             btn_x, btn_y = (img.width - btn_size) // 2, (img.height - btn_size) // 2
             img.paste(self.video_button_image, (btn_x, btn_y), self.video_button_image)
@@ -431,7 +430,7 @@ class CommonRenderer(ImageRenderer):
             )
             # 将半透明图层合成到原图
             img = Image.alpha_composite(img, overlay)
-            # 视频时长
+
             ImageDraw.Draw(img).text(
                 (text_x, text_y),
                 display_duration,
