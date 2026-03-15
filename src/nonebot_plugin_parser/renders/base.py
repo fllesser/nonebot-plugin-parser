@@ -18,20 +18,23 @@ class BaseRenderer(ABC):
     templates_dir: ClassVar[Path] = Path(__file__).parent / "templates"
     """模板目录"""
 
+    def __init__(self, result: ParseResult, not_repost: bool = True) -> None:
+        self.result = result
+        self.not_repost = not_repost
+
     @abstractmethod
-    async def render_messages(self, result: ParseResult) -> AsyncGenerator[UniMessage[Any], None]:
+    async def render_messages(self) -> AsyncGenerator[UniMessage[Any], None]:
         """渲染解析结果"""
         if False:
             yield
         raise NotImplementedError
 
-    async def render_contents(self, result: ParseResult) -> AsyncGenerator[UniMessage[Any], None]:
-        """渲染媒体内容"""
+    async def render_contents(self) -> AsyncGenerator[UniMessage[Any], None]:
         failed_count = 0
         forwardable_segs: list[ForwardNodeInner] = []
         dynamic_segs: list[ForwardNodeInner] = []
 
-        for cont in chain(result.contents, result.repost.contents if result.repost else ()):
+        for cont in chain(self.result.contents, self.result.repost.contents if self.result.repost else ()):
             try:
                 path = await cont.get_path()
             except IgnoreException:
@@ -50,7 +53,7 @@ class BaseRenderer(ABC):
                 case DynamicContent():
                     dynamic_segs.append(UniHelper.video_seg(path))
 
-        for cont in chain(result.graphics, result.repost.graphics if result.repost else ()):
+        for cont in chain(self.result.graphics, self.result.repost.graphics if self.result.repost else ()):
             if isinstance(cont, str):
                 forwardable_segs.append(cont)
                 continue
@@ -92,34 +95,34 @@ class ImageRenderer(BaseRenderer):
     """图片渲染器"""
 
     @abstractmethod
-    async def render_image(self, result: ParseResult) -> bytes:
+    async def render_image(self) -> bytes:
         """渲染图片"""
         raise NotImplementedError
 
     @override
-    async def render_messages(self, result: ParseResult):
-        image_seg = await self.cache_or_render_image(result)
+    async def render_messages(self):
+        image_seg = await self.cache_or_render_image()
 
         msg = UniMessage(image_seg)
         if self.append_url:
-            urls = (result.display_url, result.repost_display_url)
+            urls = (self.result.display_url, self.result.repost_display_url)
             msg += "\n".join(url for url in urls if url)
         yield msg
 
         # 媒体内容
-        async for message in self.render_contents(result):
+        async for message in self.render_contents():
             yield message
 
-    async def cache_or_render_image(self, result: ParseResult):
+    async def cache_or_render_image(self):
         """获取缓存图片"""
-        if result.render_image is None:
-            image_raw = await self.render_image(result)
+        if self.result.render_image is None:
+            image_raw = await self.render_image()
             image_path = await self.save_img(image_raw)
-            result.render_image = image_path
+            self.result.render_image = image_path
             if pconfig.use_base64:
                 return UniHelper.img_seg(image_raw)
 
-        return UniHelper.img_seg(result.render_image)
+        return UniHelper.img_seg(self.result.render_image)
 
     @classmethod
     async def save_img(cls, raw: bytes) -> Path:

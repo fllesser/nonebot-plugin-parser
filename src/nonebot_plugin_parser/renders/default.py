@@ -2,7 +2,7 @@
 
 from typing_extensions import override
 
-from .base import UniHelper, UniMessage, ParseResult, BaseRenderer
+from .base import UniHelper, UniMessage, BaseRenderer
 from ..helper import Text, Segment
 
 
@@ -10,15 +10,15 @@ class DefaultRenderer(BaseRenderer):
     """统一的渲染器，将解析结果转换为消息"""
 
     @override
-    async def render_messages(self, result: ParseResult):
+    async def render_messages(self):
         texts = [
-            result.header,
-            result.text,
-            result.extra_info,
+            self.result.header,
+            self.result.text,
+            self.result.extra_info,
         ]
 
         if self.append_url:
-            texts.extend((result.display_url, result.repost_display_url))
+            texts.extend((self.result.display_url, self.result.repost_display_url))
 
         texts = [text for text in texts if text]
         total_len = sum(len(text) for text in texts)
@@ -26,7 +26,7 @@ class DefaultRenderer(BaseRenderer):
         segs: list[Segment] = [Text(text) for text in texts]
 
         try:
-            if cover_path := await result.cover_path():
+            if cover_path := await self.result.get_cover_path():
                 segs.insert(1, UniHelper.img_seg(cover_path))
         except Exception:
             pass
@@ -36,5 +36,5 @@ class DefaultRenderer(BaseRenderer):
         else:
             yield UniMessage(segs)
 
-        async for message in self.render_contents(result):
+        async for message in self.render_contents():
             yield message

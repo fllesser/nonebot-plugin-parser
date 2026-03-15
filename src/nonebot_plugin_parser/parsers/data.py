@@ -206,14 +206,24 @@ class ParseResult:
         """格式化时间戳"""
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
 
-    async def cover_path(self) -> Path | None:
+    async def get_cover_path(self) -> Path | None:
         """获取封面路径"""
         for cont in self.contents:
             if isinstance(cont, VideoContent):
                 return await cont.get_cover_path()
         return None
 
-    def _iterate_download_coros(self, img_only: bool = False) -> Iterator[Awaitable[Path | None]]:
+    def get_video(self) -> VideoContent | None:
+        """获取视频内容"""
+        for cont in self.contents:
+            if isinstance(cont, VideoContent):
+                return cont
+        return None
+
+    def _iterate_download_coros(
+        self,
+        img_only: bool = False,
+    ) -> Iterator[Awaitable[Path | None]]:
         if author := self.author:
             if author.avatar:
                 yield author.get_avatar_path()

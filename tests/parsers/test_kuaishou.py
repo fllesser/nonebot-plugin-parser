@@ -8,9 +8,7 @@ from nonebot import logger
 @pytest.mark.asyncio
 async def test_parse():
     """测试快手视频解析"""
-    from nonebot_plugin_parser.utils import fmt_size
     from nonebot_plugin_parser.parsers import KuaiShouParser
-    from nonebot_plugin_parser.exception import IgnoreException
 
     parser = KuaiShouParser()
 
@@ -34,23 +32,7 @@ async def test_parse():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         assert parse_result.title, "视频标题为空"
 
-        if video_contents := parse_result.video_contents:
-            for video_content in video_contents:
-                video_path = await video_content.get_path()
-                assert video_path.exists()
-                logger.debug(f"{url} | 视频下载完成: {video_path}, 视频{fmt_size(video_path)}")
-
-        # 检查图片
-        if pic_paths := parse_result.img_contents:
-            for pic_path in pic_paths:
-                try:
-                    path = await pic_path.get_path()
-                except IgnoreException:
-                    continue
-
-                assert path.exists()
-                logger.debug(f"{url} | 图片下载完成: {path}, 图片{fmt_size(path)}")
-            assert len(pic_paths) > 0, "图片下载数量为0"
+        await parse_result.ensure_downloads_complete()
 
         logger.success(f"{url} | 快手视频解析成功")
 

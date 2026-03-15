@@ -10,37 +10,32 @@ from .default import DefaultRenderer
 _HTML_RENDER_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlrender")
 _HTMLKIT_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlkit")
 
-_COMMON_RENDERER = CommonRenderer()
-_DEFAULT_RENDERER = DefaultRenderer()
-RENDERER = None
-
 from ..config import pconfig
 from ..constants import RenderType
 
 match pconfig.render_type:
     case RenderType.common:
-        RENDERER = _COMMON_RENDERER
+        RENDERER = CommonRenderer
     case RenderType.default:
-        RENDERER = _DEFAULT_RENDERER
+        RENDERER = DefaultRenderer
     case RenderType.htmlrender if _HTML_RENDER_AVAILABLE:
         from .htmlrender import HtmlRenderer
 
-        RENDERER = HtmlRenderer()
+        RENDERER = HtmlRenderer
     case RenderType.htmlkit:
         RENDERER = None
 
 
-def get_renderer(platform: str) -> BaseRenderer:
+def get_renderer(platform: str) -> type[BaseRenderer]:
     """根据平台名称获取对应的 Renderer 类"""
     if RENDERER:
         return RENDERER
 
     if not _HTMLKIT_AVAILABLE:
-        return _COMMON_RENDERER
+        return CommonRenderer
     else:
         module = importlib.import_module("." + platform, package=__name__)
-        renderer_class: type[BaseRenderer] = getattr(module, "Renderer")
-        return renderer_class()
+        return getattr(module, "Renderer")
 
 
 @get_driver().on_startup

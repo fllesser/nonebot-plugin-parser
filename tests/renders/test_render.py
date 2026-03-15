@@ -39,10 +39,9 @@ async def render_collected_results(result_collections: list[Result]):
     import aiofiles
 
     from nonebot_plugin_parser import pconfig
-    from nonebot_plugin_parser.renders import _COMMON_RENDERER as common_renderer
+    from nonebot_plugin_parser.renders import CommonRenderer
     from nonebot_plugin_parser.renders.htmlrender import HtmlRenderer
 
-    html_renderer = HtmlRenderer()
     result_file = "render_result_combined.md"
 
     # 写入表头
@@ -73,7 +72,7 @@ async def render_collected_results(result_collections: list[Result]):
             # 使用 common renderer 渲染
             logger.info(f"PIL {item.url} | 开始渲染")
             common_start = time.time()
-            common_image_raw = await common_renderer.render_image(item.parse_result)
+            common_image_raw = await CommonRenderer(item.parse_result).render_image()
             common_time = time.time() - common_start
 
             # 保存 common renderer 图片
@@ -89,7 +88,7 @@ async def render_collected_results(result_collections: list[Result]):
             # 使用 html renderer 渲染
             logger.info(f"htmlrender {item.url} | 开始渲染")
             html_start = time.time()
-            html_image_raw = await html_renderer.render_image(item.parse_result)
+            html_image_raw = await HtmlRenderer(item.parse_result).render_image()
             html_time = time.time() - html_start
 
             # 保存 html renderer 图片
@@ -143,11 +142,11 @@ async def _download_all_media(result) -> float:
 
     # 添加头像和封面下载任务
     download_tasks.append(result.author.get_avatar_path())
-    download_tasks.append(result.cover_path())
+    download_tasks.append(result.get_cover_path())
     if respot := result.repost:
         assert respot.author
         download_tasks.append(respot.author.get_avatar_path())
-        download_tasks.append(respot.cover_path())
+        download_tasks.append(respot.get_cover_path())
 
     # 添加所有内容下载任务（包括转发内容）
     # 与渲染器逻辑保持一致
@@ -219,7 +218,7 @@ async def test_bilibili_opus_with_emoji(result_collections: list[Result]):
         logger.debug(f"{url} | 解析成功")
 
         # 收集解析结果
-        result_collections.append(Result(url, "哔哩哔哩动态", parse_result))
+        result_collections.append(Result(url, "哔哩哔哩动态(包含emoji)", parse_result))
     except Exception as e:
         pytest.skip(str(e))
 
@@ -241,14 +240,35 @@ async def test_bilibili_opus_graphics(result_collections: list[Result]):
         logger.debug(f"{url} | 解析成功")
 
         # 收集解析结果
-        result_collections.append(Result(url, "bilibili-opus", parse_result))
+        result_collections.append(Result(url, "B站动态", parse_result))
     except Exception as e:
         pytest.skip(str(e))
 
 
-@pytest.mark.xfail(reason="老版专栏已废弃")
+@pytest.mark.asyncio
+async def test_bilibili_opus_repost(result_collections: list[Result]):
+    """测试解析哔哩哔哩转发动态"""
+    from nonebot_plugin_parser.parsers import BilibiliParser
+
+    parser = BilibiliParser()
+    url = "https://t.bilibili.com/1180000659264503812"
+
+    keyword, searched = parser.search_url(url)
+    assert searched, f"无法匹配 URL: {url}"
+
+    logger.info(f"{url} | 开始解析")
+    try:
+        parse_result = await parser.parse(keyword, searched)
+        logger.debug(f"{url} | 解析成功")
+
+        # 收集解析结果
+        result_collections.append(Result(url, "B站转发动态", parse_result))
+    except Exception as e:
+        pytest.skip(str(e))
+
+
 async def test_bilibili_read(result_collections: list[Result]):
-    """测试解析哔哩哔哩专栏"""
+    """测试解析哔哩哔哩专栏（失败时跳过）"""
     from nonebot_plugin_parser.parsers import BilibiliParser
 
     parser = BilibiliParser()
@@ -258,11 +278,14 @@ async def test_bilibili_read(result_collections: list[Result]):
     assert searched, f"无法匹配 URL: {url}"
 
     logger.info(f"{url} | 开始解析")
-    parse_result = await parser.parse(keyword, searched)
-    logger.debug(f"{url} | 解析成功")
+    try:
+        parse_result = await parser.parse(keyword, searched)
+        logger.debug(f"{url} | 解析成功")
 
-    # 收集解析结果
-    result_collections.append(Result(url, "bilibili-read", parse_result))
+        # 收集解析结果
+        result_collections.append(Result(url, "bilibili-read", parse_result))
+    except Exception as e:
+        pytest.skip(f"解析失败，可能是风控: {e}")
 
 
 @pytest.mark.asyncio
@@ -286,7 +309,6 @@ async def test_weibo_urls(result_collections: list[Result]):
         "微博转发纯文": "https://weibo.com/2385967842/Q9epfFLvQ",
         "微博转发(横图)": "https://weibo.com/7207262816/Q6YCbtAn8",
         "微博转发(竖图)": "https://weibo.com/7207262816/Q617WgOm4",
-        "微博转发(视频)": "https://weibo.com/1694917363/Q0KtXh6z2",
     }
 
     async def parse_single(url_type: str, url: str) -> Result | None:

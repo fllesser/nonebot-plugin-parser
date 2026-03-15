@@ -25,7 +25,7 @@ async def test_common_video():
 
         assert result.title, "标题为空"
         assert result.author, "作者为空"
-        assert await result.cover_path(), "封面为空"
+        assert await result.get_cover_path(), "封面为空"
         assert result.video_contents, "视频内容为空"
 
         video_path = await result.video_contents[0].get_path()

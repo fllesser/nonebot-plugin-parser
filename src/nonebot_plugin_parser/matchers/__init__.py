@@ -78,8 +78,8 @@ async def parser_handler(
         logger.debug(f"命中缓存: {cache_key}, 结果: {result}")
 
     # 3. 渲染内容消息并发送
-    renderer = get_renderer(result.platform.name)
-    async for message in renderer.render_messages(result):
+    renderer = get_renderer(result.platform.name)(result)
+    async for message in renderer.render_messages():
         await message.send()
 
     # 4. 缓存解析结果
