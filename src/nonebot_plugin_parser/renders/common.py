@@ -65,14 +65,12 @@ class FontSet:
         ("title", 30, (102, 51, 153)),
         ("text", 24, (51, 51, 51)),
         ("extra", 24, (136, 136, 136)),
-        ("indicator", 60, (255, 255, 255)),
     )
 
     name: FontInfo
     title: FontInfo
     text: FontInfo
     extra: FontInfo
-    indicator: FontInfo
 
     @classmethod
     def new(cls, font_path: Path):
@@ -531,17 +529,27 @@ class CommonRenderer(ImageRenderer):
         except Exception:
             return None
 
-    def _draw_more_indicator(self, image: PILImage, x: int, y: int, w: int, h: int, count: int) -> None:
+    def _draw_more_indicator(
+        self,
+        image: PILImage,
+        x: int,
+        y: int,
+        w: int,
+        h: int,
+        count: int,
+    ) -> None:
         """绘制 +N 指示器"""
         overlay = Image.new("RGBA", (w, h), (0, 0, 0, 100))
         image.paste(overlay, (x, y), overlay)
 
-        text = f"+{count}"
-        font = self.fontset.indicator
-        text_w = font.get_text_width(text)
+        indicator_text = f"+{count}"
+        font_size, color = 60, (255, 255, 255)
+        # 这里统一使用默认字体
+        font = ImageFont.truetype(resources.DEFAULT_FONT_PATH, font_size)
+        text_w = font.getbbox(indicator_text)[2]
         text_x = x + (w - text_w) // 2
-        text_y = y + (h - font.line_height) // 2
-        ImageDraw.Draw(image).text((text_x, text_y), text, fill=font.fill, font=font.font)
+        text_y = y + (h - font_size) // 2
+        ImageDraw.Draw(image).text((text_x, text_y), indicator_text, fill=color, font=font)
 
     async def _render_img_in_graphics(self, image_content: ImageContent) -> None:
         """渲染图片"""
