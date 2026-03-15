@@ -213,7 +213,10 @@ class ParseResult:
                 return await cont.get_cover_path()
         return None
 
-    def _iterate_download_coros(self, img_only: bool = False) -> Iterator[Awaitable[Path | None]]:
+    def _iterate_download_coros(
+        self,
+        img_only: bool = False,
+    ) -> Iterator[Awaitable[Path | None]]:
         if author := self.author:
             if author.avatar:
                 yield author.get_avatar_path()

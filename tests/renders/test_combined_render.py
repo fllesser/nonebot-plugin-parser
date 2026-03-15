@@ -39,10 +39,9 @@ async def render_collected_results(result_collections: list[Result]):
     import aiofiles
 
     from nonebot_plugin_parser import pconfig
-    from nonebot_plugin_parser.renders import _COMMON_RENDERER as common_renderer
+    from nonebot_plugin_parser.renders import CommonRenderer
     from nonebot_plugin_parser.renders.htmlrender import HtmlRenderer
 
-    html_renderer = HtmlRenderer()
     result_file = "render_result_combined.md"
 
     # 写入表头
@@ -73,7 +72,7 @@ async def render_collected_results(result_collections: list[Result]):
             # 使用 common renderer 渲染
             logger.info(f"PIL {item.url} | 开始渲染")
             common_start = time.time()
-            common_image_raw = await common_renderer.render_image(item.parse_result)
+            common_image_raw = await CommonRenderer(item.parse_result).render_image()
             common_time = time.time() - common_start
 
             # 保存 common renderer 图片
@@ -89,7 +88,7 @@ async def render_collected_results(result_collections: list[Result]):
             # 使用 html renderer 渲染
             logger.info(f"htmlrender {item.url} | 开始渲染")
             html_start = time.time()
-            html_image_raw = await html_renderer.render_image(item.parse_result)
+            html_image_raw = await HtmlRenderer(item.parse_result).render_image()
             html_time = time.time() - html_start
 
             # 保存 html renderer 图片
