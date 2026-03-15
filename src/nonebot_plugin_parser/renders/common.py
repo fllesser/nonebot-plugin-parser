@@ -152,15 +152,15 @@ class CommonRenderer(ImageRenderer):
         from ..constants import PlatformEnum
 
         cls.platform_logos: dict[str, PILImage] = {}
-        success_loaded_platforms = []
+        loaded_platforms = []
         for platform_name in PlatformEnum:
             logo_path = resources.RESOURCES_DIR / f"{platform_name}.png"
 
             if logo_path.exists():
                 with Image.open(logo_path) as img:
                     cls.platform_logos[str(platform_name)] = img.convert("RGBA")
-                    success_loaded_platforms.append(platform_name)
-        logger.debug(f"加载 Logo「{', '.join(success_loaded_platforms)}」成功")
+                    loaded_platforms.append(platform_name)
+        logger.debug(f"加载 Logo「{', '.join(loaded_platforms)}」成功")
 
     @classmethod
     def _load_other_resources(cls):
