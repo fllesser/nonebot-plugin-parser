@@ -131,7 +131,7 @@ class CommonRenderer(ImageRenderer):
 
         self.card_width: int = self.DEFAULT_CARD_WIDTH
         self.content_width: int = self.card_width - 2 * self.PADDING
-        self.y_pos: int = 0
+        self.y_pos: int = self.PADDING
 
         self._image: PILImage
         self._draw: PILImageDraw
@@ -172,7 +172,7 @@ class CommonRenderer(ImageRenderer):
         with Image.open(resources.DEFAULT_VIDEO_BUTTON_PATH) as img:
             cls.video_button_image: PILImage = img.convert("RGBA").resize((100, 100))
         alpha = cls.video_button_image.split()[-1]
-        alpha = alpha.point(lambda x: int(x * 0.5))
+        alpha = alpha.point(lambda x: int(x * 0.6))
         cls.video_button_image.putalpha(alpha)
         logger.debug(f"加载视频按钮「{resources.DEFAULT_VIDEO_BUTTON_PATH.name}」成功")
 
@@ -353,22 +353,11 @@ class CommonRenderer(ImageRenderer):
 
     async def _render_main_content(self) -> None:
         """渲染封面/图片网格/图文内容"""
-        try:
-            cover_path = await self.result.cover_path()
-        except Exception:
-            cover_path = None
-
-        if cover_path and cover_path.exists():
-            if cover := self._load_cover(cover_path):
-                x_pos = self.PADDING
-                self._image.paste(cover, (x_pos, self.y_pos))
-                # 视频按钮
-                btn_size = 100
-                btn_x = x_pos + (cover.width - btn_size) // 2
-                btn_y = self.y_pos + (cover.height - btn_size) // 2
-                self._image.paste(self.video_button_image, (btn_x, btn_y), self.video_button_image)
-                self.y_pos += cover.height + self.SECTION_SPACING
-                return
+        if cover := await self._load_cover():
+            # 视频时长
+            self._image.paste(cover, (self.PADDING, self.y_pos))
+            self.y_pos += cover.height + self.SECTION_SPACING
+            return
 
         # 图片网格
         if self.result.img_contents:
@@ -383,26 +372,78 @@ class CommonRenderer(ImageRenderer):
                 else:
                     await self._render_img_in_graphics(item)
 
-    def _load_cover(self, cover_path: Path) -> PILImage | None:
+    async def _load_cover(self) -> PILImage | None:
         """加载并缩放封面"""
-        try:
-            with Image.open(cover_path) as img:
-                if img.mode not in ("RGB", "RGBA"):
-                    img = img.convert("RGB")
-
-                # 缩放到内容宽度
-                if img.width != self.content_width:
-                    ratio = self.content_width / img.width
-                    new_h = int(img.height * ratio)
-                    if new_h > self.MAX_COVER_HEIGHT:
-                        ratio = self.MAX_COVER_HEIGHT / new_h
-                        new_h = self.MAX_COVER_HEIGHT
-                        self.content_width = int(self.content_width * ratio)
-                    return img.resize((self.content_width, new_h), Image.Resampling.LANCZOS)
-                return img.copy()
-        except Exception as e:
-            logger.debug(f"加载封面失败: {e}")
+        video_content = self.result.get_video()
+        if video_content is None:
             return None
+
+        try:
+            cover_path = await video_content.get_cover_path()
+        except Exception:
+            return None
+
+        if cover_path is None or not cover_path.exists():
+            return None
+
+        with Image.open(cover_path) as img:
+            if img.mode != "RGBA":
+                img = img.convert("RGBA")
+
+            # 缩放到内容宽度
+            content_width = self.content_width
+            if img.width != content_width:
+                ratio = content_width / img.width
+                new_h = int(img.height * ratio)
+                if new_h > self.MAX_COVER_HEIGHT:
+                    ratio = self.MAX_COVER_HEIGHT / new_h
+                    new_h = self.MAX_COVER_HEIGHT
+                    content_width = int(content_width * ratio)
+                img = img.resize((content_width, new_h), Image.Resampling.LANCZOS)
+
+            # 视频按钮
+            btn_size = 100
+            btn_x, btn_y = (img.width - btn_size) // 2, (img.height - btn_size) // 2
+            img.paste(self.video_button_image, (btn_x, btn_y), self.video_button_image)
+
+            # 视频时长
+            display_duration = video_content.display_duration
+
+            font = self.fontset.extra
+            text_width = font.get_text_width(display_duration)
+            # 计算文本绘制位置
+            text_x = img.width - text_width - 20
+            text_y = img.height - 50
+
+            # 根据文本位置和大小计算矩形范围，确保文本居中
+            padding = 8
+            rect_x1 = text_x - padding
+            rect_y1 = text_y - padding
+            rect_x2 = text_x + text_width + padding
+            rect_y2 = text_y + font.line_height + padding
+
+            # 创建一个临时的半透明图层
+            overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+            overlay_draw = ImageDraw.Draw(overlay)
+            overlay_draw.rounded_rectangle(
+                (rect_x1, rect_y1, rect_x2, rect_y2),
+                radius=15,
+                fill=(0, 0, 0, 200),
+            )
+            # 将半透明图层合成到原图
+            img = Image.alpha_composite(img, overlay)
+
+            # 重新创建draw对象
+            draw = ImageDraw.Draw(img)
+            # 视频时长
+            draw.text(
+                (text_x, text_y),
+                display_duration,
+                font=self.fontset.extra.font,
+                fill=self.fontset.extra.fill,
+            )
+
+            return img.copy()
 
     async def _render_image_grid(self) -> None:
         """渲染图片网格"""

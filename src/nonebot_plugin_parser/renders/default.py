@@ -26,7 +26,7 @@ class DefaultRenderer(BaseRenderer):
         segs: list[Segment] = [Text(text) for text in texts]
 
         try:
-            if cover_path := await self.result.cover_path():
+            if cover_path := await self.result.get_cover_path():
                 segs.insert(1, UniHelper.img_seg(cover_path))
         except Exception:
             pass
