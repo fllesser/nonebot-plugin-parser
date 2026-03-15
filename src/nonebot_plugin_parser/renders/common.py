@@ -424,19 +424,15 @@ class CommonRenderer(ImageRenderer):
 
             # 创建一个临时的半透明图层
             overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
-            overlay_draw = ImageDraw.Draw(overlay)
-            overlay_draw.rounded_rectangle(
+            ImageDraw.Draw(overlay).rounded_rectangle(
                 (rect_x1, rect_y1, rect_x2, rect_y2),
                 radius=15,
                 fill=(0, 0, 0, 200),
             )
             # 将半透明图层合成到原图
             img = Image.alpha_composite(img, overlay)
-
-            # 重新创建draw对象
-            draw = ImageDraw.Draw(img)
             # 视频时长
-            draw.text(
+            ImageDraw.Draw(img).text(
                 (text_x, text_y),
                 display_duration,
                 font=self.fontset.extra.font,
