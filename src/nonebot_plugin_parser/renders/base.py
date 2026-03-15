@@ -30,7 +30,6 @@ class BaseRenderer(ABC):
         raise NotImplementedError
 
     async def render_contents(self) -> AsyncGenerator[UniMessage[Any], None]:
-        """渲染媒体内容"""
         failed_count = 0
         forwardable_segs: list[ForwardNodeInner] = []
         dynamic_segs: list[ForwardNodeInner] = []

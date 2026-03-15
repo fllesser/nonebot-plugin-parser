@@ -178,13 +178,13 @@ class CommonRenderer(ImageRenderer):
 
     @override
     async def render_image(self) -> bytes:
-        image = await self._create_card_image()
+        image = await self._render_image()
         output = BytesIO()
         image.save(output, format="PNG")
         return output.getvalue()
 
-    async def _create_card_image(self) -> PILImage:
-        """单次遍历渲染"""
+    async def _render_image(self) -> PILImage:
+        """渲染图片 (内部方法)"""
         # 初始估算高度（后续可动态扩展）
         estimated_height = self._estimate_height()
         bg_color = self.BG_COLOR if self.not_repost else self.REPOST_BG_COLOR
@@ -195,7 +195,7 @@ class CommonRenderer(ImageRenderer):
         # 单次遍历渲染各部分
         await self._render_header()
         await self._render_title()
-        await self._render_cover_or_images()
+        await self._render_main_content()
         await self._render_text()
         await self._render_extra()
         await self._render_repost()
@@ -233,10 +233,10 @@ class CommonRenderer(ImageRenderer):
 
         # 图文内容
         if graphics := self.result.graphics:
-            for text_or_img in graphics:
-                if isinstance(text_or_img, str):
+            for item in graphics:
+                if isinstance(item, str):
                     height += self._estimate_text_height(
-                        text_or_img,
+                        item,
                         self.fontset.text,
                         self.content_width,
                     )
@@ -351,7 +351,7 @@ class CommonRenderer(ImageRenderer):
         self.y_pos += await self._draw_text(lines, self.fontset.title)
         self.y_pos += self.SECTION_SPACING
 
-    async def _render_cover_or_images(self) -> None:
+    async def _render_main_content(self) -> None:
         """渲染封面/图片网格/图文内容"""
         try:
             cover_path = await self.result.cover_path()
@@ -377,11 +377,11 @@ class CommonRenderer(ImageRenderer):
 
         # 图文内容
         if graphics := self.result.graphics:
-            for text_or_img in graphics:
-                if isinstance(text_or_img, str):
-                    await self._render_text(text_or_img)
+            for item in graphics:
+                if isinstance(item, str):
+                    await self._render_text(item)
                 else:
-                    await self._render_img_in_graphics(text_or_img)
+                    await self._render_img_in_graphics(item)
 
     def _load_cover(self, cover_path: Path) -> PILImage | None:
         """加载并缩放封面"""
@@ -517,7 +517,10 @@ class CommonRenderer(ImageRenderer):
         with Image.open(path) as img:
             if img.width > self.content_width:
                 ratio = self.content_width / img.width
-                img = img.resize((self.content_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
+                img = img.resize(
+                    (self.content_width, int(img.height * ratio)),
+                    Image.Resampling.LANCZOS,
+                )
             else:
                 img = img.copy()
 
@@ -531,7 +534,10 @@ class CommonRenderer(ImageRenderer):
             text_w = self.fontset.extra.get_text_width(image_content.alt)
             text_x = self.PADDING + (self.content_width - text_w) // 2
             self._draw.text(
-                (text_x, self.y_pos), image_content.alt, font=self.fontset.extra.font, fill=self.fontset.extra.fill
+                (text_x, self.y_pos),
+                image_content.alt,
+                font=self.fontset.extra.font,
+                fill=self.fontset.extra.fill,
             )
             self.y_pos += self.fontset.extra.line_height
 
@@ -543,7 +549,11 @@ class CommonRenderer(ImageRenderer):
         if not text:
             return
 
-        lines = self._wrap_text(text, self.content_width, self.fontset.text)
+        lines = self._wrap_text(
+            text,
+            self.content_width,
+            self.fontset.text,
+        )
         self.y_pos += await self._draw_text(lines, self.fontset.text)
         self.y_pos += self.SECTION_SPACING
 
@@ -552,7 +562,11 @@ class CommonRenderer(ImageRenderer):
         if not self.result.extra_info:
             return
 
-        lines = self._wrap_text(self.result.extra_info, self.content_width, self.fontset.extra)
+        lines = self._wrap_text(
+            self.result.extra_info,
+            self.content_width,
+            self.fontset.extra,
+        )
         self.y_pos += await self._draw_text(lines, self.fontset.extra)
 
     async def _render_repost(self) -> None:
@@ -561,7 +575,10 @@ class CommonRenderer(ImageRenderer):
             return
 
         # 递归渲染转发内容
-        repost_img = await CommonRenderer(self.result.repost, False)._create_card_image()
+        repost_img = await CommonRenderer(
+            self.result.repost,
+            False,
+        )._render_image()
 
         # 缩放
         scaled_w = int(repost_img.width * self.REPOST_SCALE)
@@ -575,7 +592,10 @@ class CommonRenderer(ImageRenderer):
 
         # 背景和边框
         self._draw.rounded_rectangle(
-            (x1, y1, x2, y2), radius=8, fill=self.REPOST_BG_COLOR, outline=self.REPOST_BORDER_COLOR
+            (x1, y1, x2, y2),
+            radius=8,
+            fill=self.REPOST_BG_COLOR,
+            outline=self.REPOST_BORDER_COLOR,
         )
 
         # 居中贴图
@@ -591,7 +611,14 @@ class CommonRenderer(ImageRenderer):
 
         xy = (self.PADDING, self.y_pos)
         if emosvg is not None:
-            emosvg.text(self._image, xy, lines, font.font, fill=font.fill, line_height=font.line_height)
+            emosvg.text(
+                self._image,
+                xy,
+                lines,
+                font.font,
+                fill=font.fill,
+                line_height=font.line_height,
+            )
         else:
             await Apilmoji.text(
                 self._image,
