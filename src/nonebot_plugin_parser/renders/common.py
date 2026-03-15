@@ -355,7 +355,11 @@ class CommonRenderer(ImageRenderer):
         if not self.result.title:
             return
 
-        lines = self._wrap_text(self.result.title, self.content_width, self.fontset.title)
+        lines = self._wrap_text(
+            self.result.title,
+            self.content_width,
+            self.fontset.title,
+        )
         self.y_pos += await self._draw_text(lines, self.fontset.title)
         self.y_pos += self.SECTION_SPACING
 
@@ -407,45 +411,52 @@ class CommonRenderer(ImageRenderer):
                     ratio = self.MAX_COVER_HEIGHT / new_h
                     new_h = self.MAX_COVER_HEIGHT
                     content_width = int(content_width * ratio)
-                img = img.resize((content_width, new_h), Image.Resampling.LANCZOS)
+                img = img.resize(
+                    (content_width, new_h),
+                    Image.Resampling.LANCZOS,
+                )
 
             # 视频播放按钮
             btn_size = 100
             btn_x, btn_y = (img.width - btn_size) // 2, (img.height - btn_size) // 2
-            img.paste(self.video_button_image, (btn_x, btn_y), self.video_button_image)
+            img.paste(
+                self.video_button_image,
+                (btn_x, btn_y),
+                self.video_button_image,
+            )
 
             # 视频时长
-            display_duration = video_content.display_duration
+            # display_duration = video_content.display_duration
 
-            font = self.fontset.extra
-            text_width = font.get_text_width(display_duration)
-            # 计算文本绘制位置
-            text_x = img.width - text_width - 20
-            text_y = img.height - 50
+            # font = self.fontset.extra
+            # text_width = font.get_text_width(display_duration)
+            # # 计算文本绘制位置
+            # text_x = img.width - text_width - 20
+            # text_y = img.height - 50
 
-            # 根据文本位置和大小计算矩形范围，确保文本居中
-            padding = 4
-            rect_x1 = text_x - padding
-            rect_y1 = text_y - padding
-            rect_x2 = text_x + text_width + padding
-            rect_y2 = text_y + font.line_height + padding
+            # # 根据文本位置和大小计算矩形范围，确保文本居中
+            # padding = 4
+            # rect_x1 = text_x - padding
+            # rect_y1 = text_y - padding
+            # rect_x2 = text_x + text_width + padding
+            # rect_y2 = text_y + font.line_height + padding
 
-            # 创建一个临时的半透明图层
-            overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
-            ImageDraw.Draw(overlay).rounded_rectangle(
-                (rect_x1, rect_y1, rect_x2, rect_y2),
-                radius=8,
-                fill=(51, 51, 51, 204),
-            )
-            # 将半透明图层合成到原图
-            img = Image.alpha_composite(img, overlay)
+            # # 创建一个临时的半透明图层
+            # overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+            # ImageDraw.Draw(overlay).rounded_rectangle(
+            #     (rect_x1, rect_y1, rect_x2, rect_y2),
+            #     radius=8,
+            #     fill=(51, 51, 51, 204),
+            # )
+            # # 将半透明图层合成到原图
+            # img = Image.alpha_composite(img, overlay)
 
-            ImageDraw.Draw(img).text(
-                (text_x, text_y),
-                display_duration,
-                font=self.fontset.extra.font,
-                fill=self.fontset.extra.fill,
-            )
+            # ImageDraw.Draw(img).text(
+            #     (text_x, text_y),
+            #     display_duration,
+            #     font=self.fontset.extra.font,
+            #     fill=self.fontset.extra.fill,
+            # )
 
             return img.copy()
 
