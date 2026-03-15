@@ -326,7 +326,8 @@ class CommonRenderer(ImageRenderer):
                 logo_x = self._image.width - self.PADDING - logo.width
                 logo_y = self.y_pos + (self.AVATAR_SIZE - logo.height) // 2
                 self._image.paste(logo, (logo_x, logo_y), logo)
-                self.y_pos += self.AVATAR_SIZE + self.SECTION_SPACING
+
+        self.y_pos += self.AVATAR_SIZE + self.SECTION_SPACING
 
     def _load_avatar(self, avatar_path: Path | None) -> PILImage:
         """加载头像（带圆形裁剪）"""
