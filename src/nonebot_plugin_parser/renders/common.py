@@ -152,12 +152,15 @@ class CommonRenderer(ImageRenderer):
         from ..constants import PlatformEnum
 
         cls.platform_logos: dict[str, PILImage] = {}
+        success_loaded_platforms = []
         for platform_name in PlatformEnum:
             logo_path = resources.RESOURCES_DIR / f"{platform_name}.png"
+
             if logo_path.exists():
                 with Image.open(logo_path) as img:
                     cls.platform_logos[str(platform_name)] = img.convert("RGBA")
-                logger.debug(f"加载 logo「{platform_name}」成功")
+                    success_loaded_platforms.append(platform_name)
+        logger.debug(f"加载 Logo「{', '.join(success_loaded_platforms)}」成功")
 
     @classmethod
     def _load_other_resources(cls):
@@ -172,7 +175,7 @@ class CommonRenderer(ImageRenderer):
         alpha = cls.video_button_image.split()[-1]
         alpha = alpha.point(lambda x: int(x * 0.6))
         cls.video_button_image.putalpha(alpha)
-        logger.debug(f"加载视频按钮「{resources.DEFAULT_VIDEO_BUTTON_PATH.name}」成功")
+        logger.debug(f"加载视频播放按钮「{resources.DEFAULT_VIDEO_BUTTON_PATH.name}」成功")
 
     @override
     async def render_image(self) -> bytes:
