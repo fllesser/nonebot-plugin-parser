@@ -423,7 +423,7 @@ class CommonRenderer(ImageRenderer):
             text_y = img.height - 50
 
             # 根据文本位置和大小计算矩形范围，确保文本居中
-            padding = 8
+            padding = 4
             rect_x1 = text_x - padding
             rect_y1 = text_y - padding
             rect_x2 = text_x + text_width + padding
@@ -433,8 +433,8 @@ class CommonRenderer(ImageRenderer):
             overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
             ImageDraw.Draw(overlay).rounded_rectangle(
                 (rect_x1, rect_y1, rect_x2, rect_y2),
-                radius=15,
-                fill=(0, 0, 0, 200),
+                radius=8,
+                fill=(51, 51, 51, 204),
             )
             # 将半透明图层合成到原图
             img = Image.alpha_composite(img, overlay)
