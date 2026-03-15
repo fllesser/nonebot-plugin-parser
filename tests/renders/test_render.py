@@ -267,9 +267,8 @@ async def test_bilibili_opus_repost(result_collections: list[Result]):
         pytest.skip(str(e))
 
 
-@pytest.mark.xfail(reason="老版专栏已废弃")
 async def test_bilibili_read(result_collections: list[Result]):
-    """测试解析哔哩哔哩专栏"""
+    """测试解析哔哩哔哩专栏（失败时跳过）"""
     from nonebot_plugin_parser.parsers import BilibiliParser
 
     parser = BilibiliParser()
@@ -279,11 +278,14 @@ async def test_bilibili_read(result_collections: list[Result]):
     assert searched, f"无法匹配 URL: {url}"
 
     logger.info(f"{url} | 开始解析")
-    parse_result = await parser.parse(keyword, searched)
-    logger.debug(f"{url} | 解析成功")
+    try:
+        parse_result = await parser.parse(keyword, searched)
+        logger.debug(f"{url} | 解析成功")
 
-    # 收集解析结果
-    result_collections.append(Result(url, "bilibili-read", parse_result))
+        # 收集解析结果
+        result_collections.append(Result(url, "bilibili-read", parse_result))
+    except Exception as e:
+        pytest.skip(f"解析失败，可能是风控: {e}")
 
 
 @pytest.mark.asyncio
