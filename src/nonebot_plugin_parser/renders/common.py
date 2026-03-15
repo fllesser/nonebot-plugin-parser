@@ -134,6 +134,12 @@ class CommonRenderer(ImageRenderer):
         self._image: PILImage
         self._draw: PILImageDraw
 
+        if result.repost:
+            self.repost_renderer = CommonRenderer(
+                result.repost,
+                False,
+            )
+
     @classmethod
     def load_resources(cls):
         """加载资源"""
@@ -216,7 +222,8 @@ class CommonRenderer(ImageRenderer):
 
     def _estimate_height(self) -> int:
         """估算画布高度"""
-        height = self.PADDING * 2  # 上下边距
+        # 上下边距
+        height = self.PADDING * 2
 
         # 头部（头像 + 名称 + 时间）
         if self.result.author:
@@ -247,7 +254,7 @@ class CommonRenderer(ImageRenderer):
         else:
             height += self.MAX_COVER_HEIGHT + self.SECTION_SPACING
 
-        # 正文
+        # 简介
         if self.result.text:
             height += self._estimate_text_height(
                 self.result.text,
@@ -260,9 +267,9 @@ class CommonRenderer(ImageRenderer):
         if self.result.extra_info:
             height += self.fontset.extra.line_height * 3 + self.SECTION_SPACING
 
-        # 转发内容（递归估算）
+        # 转发内容
         if self.result.repost:
-            height += int(self._estimate_height() * self.REPOST_SCALE)
+            height += int(self.repost_renderer._estimate_height() * self.REPOST_SCALE)
             height += self.REPOST_PADDING * 2 + self.SECTION_SPACING
 
         return height
@@ -622,10 +629,7 @@ class CommonRenderer(ImageRenderer):
             return
 
         # 递归渲染转发内容
-        repost_img = await CommonRenderer(
-            self.result.repost,
-            False,
-        )._render_image()
+        repost_img = await self.repost_renderer._render_image()
 
         # 缩放
         scaled_w = int(repost_img.width * self.REPOST_SCALE)
