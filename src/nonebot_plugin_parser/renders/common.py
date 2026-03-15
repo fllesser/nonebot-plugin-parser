@@ -80,7 +80,12 @@ class FontSet:
         for name, size, fill in cls._FONT_INFOS:
             font = ImageFont.truetype(font_path, size)
             height = get_font_height(font)
-            font_infos[name] = FontInfo(font=font, fill=fill, line_height=height, cjk_width=size)
+            font_infos[name] = FontInfo(
+                font=font,
+                fill=fill,
+                line_height=height,
+                cjk_width=size,
+            )
         return FontSet(**font_infos)
 
 
@@ -181,7 +186,7 @@ class CommonRenderer(ImageRenderer):
     async def _create_card_image(self) -> PILImage:
         """单次遍历渲染"""
         # 初始估算高度（后续可动态扩展）
-        estimated_height = self._estimate_height(self.content_width)
+        estimated_height = self._estimate_height()
         bg_color = self.BG_COLOR if self.not_repost else self.REPOST_BG_COLOR
 
         self._image = Image.new("RGB", (self.card_width, estimated_height), bg_color)
@@ -200,11 +205,16 @@ class CommonRenderer(ImageRenderer):
         logger.debug(f"估算高度: {estimated_height}, 画布高度: {self._image.height}, 最终高度: {final_height}")
         return self._image.crop((0, 0, self.card_width, final_height))
 
-    def _estimate_text_height(self, text: str, font: FontInfo, content_width: int) -> int:
+    def _estimate_text_height(
+        self,
+        text: str,
+        font: FontInfo,
+        content_width: int,
+    ) -> int:
         """估算文本高度（考虑换行符）"""
         return (text.count("\n") + 1 + len(text) * font.cjk_width // content_width) * font.line_height
 
-    def _estimate_height(self, content_width: int) -> int:
+    def _estimate_height(self) -> int:
         """估算画布高度"""
         height = self.PADDING * 2  # 上下边距
 
@@ -214,14 +224,22 @@ class CommonRenderer(ImageRenderer):
 
         # 标题
         if self.result.title:
-            height += self._estimate_text_height(self.result.title, self.fontset.title, content_width)
+            height += self._estimate_text_height(
+                self.result.title,
+                self.fontset.title,
+                self.content_width,
+            )
             height += self.SECTION_SPACING
 
         # 图文内容
         if graphics := self.result.graphics:
             for text_or_img in graphics:
                 if isinstance(text_or_img, str):
-                    height += self._estimate_text_height(text_or_img, self.fontset.text, content_width)
+                    height += self._estimate_text_height(
+                        text_or_img,
+                        self.fontset.text,
+                        self.content_width,
+                    )
                 else:
                     height += self.MAX_COVER_HEIGHT
             height += (len(graphics) - 1) * self.SECTION_SPACING
@@ -231,7 +249,11 @@ class CommonRenderer(ImageRenderer):
 
         # 正文
         if self.result.text:
-            height += self._estimate_text_height(self.result.text, self.fontset.text, content_width)
+            height += self._estimate_text_height(
+                self.result.text,
+                self.fontset.text,
+                self.content_width,
+            )
             height += self.SECTION_SPACING
 
         # 额外信息
@@ -240,7 +262,7 @@ class CommonRenderer(ImageRenderer):
 
         # 转发内容（递归估算）
         if self.result.repost:
-            height += int(self._estimate_height(content_width) * self.REPOST_SCALE)
+            height += int(self._estimate_height() * self.REPOST_SCALE)
             height += self.REPOST_PADDING * 2 + self.SECTION_SPACING
 
         return height
@@ -337,7 +359,7 @@ class CommonRenderer(ImageRenderer):
             cover_path = None
 
         if cover_path and cover_path.exists():
-            if cover := self._load_cover(cover_path, self.content_width):
+            if cover := self._load_cover(cover_path):
                 x_pos = self.PADDING
                 self._image.paste(cover, (x_pos, self.y_pos))
                 # 视频按钮
@@ -361,7 +383,7 @@ class CommonRenderer(ImageRenderer):
                 else:
                     await self._render_img_in_graphics(text_or_img)
 
-    def _load_cover(self, cover_path: Path, content_width: int) -> PILImage | None:
+    def _load_cover(self, cover_path: Path) -> PILImage | None:
         """加载并缩放封面"""
         try:
             with Image.open(cover_path) as img:
@@ -369,14 +391,14 @@ class CommonRenderer(ImageRenderer):
                     img = img.convert("RGB")
 
                 # 缩放到内容宽度
-                if img.width != content_width:
-                    ratio = content_width / img.width
+                if img.width != self.content_width:
+                    ratio = self.content_width / img.width
                     new_h = int(img.height * ratio)
                     if new_h > self.MAX_COVER_HEIGHT:
                         ratio = self.MAX_COVER_HEIGHT / new_h
                         new_h = self.MAX_COVER_HEIGHT
-                        content_width = int(content_width * ratio)
-                    return img.resize((content_width, new_h), Image.Resampling.LANCZOS)
+                        self.content_width = int(self.content_width * ratio)
+                    return img.resize((self.content_width, new_h), Image.Resampling.LANCZOS)
                 return img.copy()
         except Exception as e:
             logger.debug(f"加载封面失败: {e}")
@@ -393,7 +415,7 @@ class CommonRenderer(ImageRenderer):
         for content in display_contents:
             try:
                 path = await content.get_path()
-                if img := self._load_grid_image(path, self.content_width, len(display_contents)):
+                if img := self._load_grid_image(path, len(display_contents)):
                     images.append(img)
             except Exception:
                 continue
@@ -442,7 +464,7 @@ class CommonRenderer(ImageRenderer):
 
         self.y_pos = current_y + spacing + self.SECTION_SPACING
 
-    def _load_grid_image(self, path: Path, content_width: int, count: int) -> PILImage | None:
+    def _load_grid_image(self, path: Path, count: int) -> PILImage | None:
         """加载网格图片"""
         try:
             with Image.open(path) as img:
@@ -457,12 +479,12 @@ class CommonRenderer(ImageRenderer):
 
                 # 计算目标尺寸
                 if count == 1:
-                    target = (content_width, min(self.MAX_IMAGE_HEIGHT, content_width))
+                    target = (self.content_width, min(self.MAX_IMAGE_HEIGHT, self.content_width))
                 else:
                     cols = 2 if count in (2, 4) else self.IMAGE_GRID_COLS
                     max_size = self.IMAGE_2_GRID_SIZE if cols == 2 else self.IMAGE_3_GRID_SIZE
                     num_gaps = cols + 1
-                    size = min((content_width - self.IMAGE_GRID_SPACING * num_gaps) // cols, max_size)
+                    size = min((self.content_width - self.IMAGE_GRID_SPACING * num_gaps) // cols, max_size)
                     target = (size, size)
 
                 if img.width > target[0] or img.height > target[1]:
