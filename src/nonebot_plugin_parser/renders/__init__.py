@@ -10,8 +10,6 @@ from .default import DefaultRenderer
 _HTML_RENDER_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlrender")
 _HTMLKIT_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlkit")
 
-RENDERER: type[BaseRenderer] | None = None
-
 from ..config import pconfig
 from ..constants import RenderType
 
