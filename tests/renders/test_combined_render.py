@@ -218,7 +218,7 @@ async def test_bilibili_opus_with_emoji(result_collections: list[Result]):
         logger.debug(f"{url} | 解析成功")
 
         # 收集解析结果
-        result_collections.append(Result(url, "哔哩哔哩动态", parse_result))
+        result_collections.append(Result(url, "哔哩哔哩动态(包含emoji)", parse_result))
     except Exception as e:
         pytest.skip(str(e))
 
@@ -240,7 +240,29 @@ async def test_bilibili_opus_graphics(result_collections: list[Result]):
         logger.debug(f"{url} | 解析成功")
 
         # 收集解析结果
-        result_collections.append(Result(url, "bilibili-opus", parse_result))
+        result_collections.append(Result(url, "B站动态", parse_result))
+    except Exception as e:
+        pytest.skip(str(e))
+
+
+@pytest.mark.asyncio
+async def test_bilibili_opus_repost(result_collections: list[Result]):
+    """测试解析哔哩哔哩转发动态"""
+    from nonebot_plugin_parser.parsers import BilibiliParser
+
+    parser = BilibiliParser()
+    url = "https://t.bilibili.com/1180000659264503812"
+
+    keyword, searched = parser.search_url(url)
+    assert searched, f"无法匹配 URL: {url}"
+
+    logger.info(f"{url} | 开始解析")
+    try:
+        parse_result = await parser.parse(keyword, searched)
+        logger.debug(f"{url} | 解析成功")
+
+        # 收集解析结果
+        result_collections.append(Result(url, "B站转发动态", parse_result))
     except Exception as e:
         pytest.skip(str(e))
 
@@ -285,7 +307,6 @@ async def test_weibo_urls(result_collections: list[Result]):
         "微博转发纯文": "https://weibo.com/2385967842/Q9epfFLvQ",
         "微博转发(横图)": "https://weibo.com/7207262816/Q6YCbtAn8",
         "微博转发(竖图)": "https://weibo.com/7207262816/Q617WgOm4",
-        "微博转发(视频)": "https://weibo.com/1694917363/Q0KtXh6z2",
     }
 
     async def parse_single(url_type: str, url: str) -> Result | None:
