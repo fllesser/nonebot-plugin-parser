@@ -24,7 +24,7 @@ class HtmlRenderer(ImageRenderer):
 
         return await template_to_pic(
             template_path=str(self.templates_dir),
-            template_name="card.html.jinja",
+            template_name="card.html.jinja2",
             templates={
                 "result": self.result,
                 "logo": logo,

@@ -518,12 +518,13 @@
     {% if not is_repost and result.content_type %}
     <span class="content-type-badge">
       <span class="badge-icon">
-        {% if result.content_type == '视频' %}
+        {% set content_type = result.content_type %}
+        {% if content_type == '视频' %}
         <svg viewBox="0 0 24 24">
           <path
             d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 2v12h16V6H4zm6 2.5l6 3.5-6 3.5v-7z" />
         </svg>
-        {% elif result.content_type == '图文' %}
+        {% elif content_type == '图文' %}
         <svg viewBox="0 0 24 24">
           <path
             d="M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h16V5H4zm2 2h5v5H6V7zm7 0h5v2h-5V7zm0 4h5v2h-5v-2zM6 14h12v2H6v-2z" />
@@ -535,7 +536,7 @@
         </svg>
         {% endif %}
       </span>
-      {{ result.content_type }}
+      {{ content_type }}
     </span>
     {% endif %}
     <div class="card {% if is_repost %}repost{% endif %}">
@@ -543,8 +544,8 @@
       {# ── Header ── #}
       {% if result.author %}
       <div class="header">
-        {% if result.author.avatar_path_uri %}
-        <img src="{{ result.author.avatar_path_uri | safe }}" class="avatar" alt="avatar" />
+        {% if result.author.avatar.uri %}
+        <img src="{{ result.author.avatar.uri | safe }}" class="avatar" alt="avatar" />
         {% endif %}
         <div class="user-info">
           <div class="username">{{ result.author.name }}</div>
@@ -560,21 +561,21 @@
 
       <div class="content-body">
         {# ── Title（非视频：标题属于动态本身，放在封面上方） ── #}
-        {% if result.title and not result.video_contents %}
+        {% if result.title and not result.video %}
         <div class="title">{{ result.title }}</div>
         {% endif %}
 
         {# ── 动态类型：文字显示在封面上方 ── #}
-        {% if result.content_type == '动态' and result.text %}
+        {% if content_type == '动态' and result.text %}
         <div class="text">{{ result.text }}</div>
         {% endif %}
 
         {# ── 视频封面 ── #}
-        {% if result.video_contents %}
-        {% set vc = result.video_contents[0] %}
-        {% if vc.cover_path_uri %}
+        {% if result.video %}
+        {% set vc = result.video %}
+        {% if vc.cover.uri %}
         <div class="cover-wrapper">
-          <img src="{{ vc.cover_path_uri | safe }}" class="cover-img" alt="cover" />
+          <img src="{{ vc.cover.uri | safe }}" class="cover-img" alt="cover" />
           {% if play_button %}
           <div class="play-button">
             <img src="{{ play_button | safe }}" alt="play" />
@@ -590,7 +591,7 @@
         {% endif %}
 
         {# ── Title（有视频：标题属于视频，放在封面下方） ── #}
-        {% if result.title and result.video_contents %}
+        {% if result.title and result.video %}
         <div class="title">{{ result.title }}</div>
         {% endif %}
 
@@ -600,7 +601,7 @@
         {% endif %}
 
         {# ── 非视频媒体 ── #}
-        {% if not result.video_contents %}
+        {% if not result.video %}
 
         {# ── Image Grid ── #}
         {% set imgs = result.img_contents %}
@@ -608,7 +609,7 @@
         {% set count = imgs|length %}
         {% if count == 1 %}
         <div class="image-container">
-          <img src="{{ imgs[0].path_uri | safe }}" class="single-image" alt="image" />
+          <img src="{{ imgs[0].path_task.uri | safe }}" class="single-image" alt="image" />
         </div>
         {% else %}
         {% set cols = 3 %}
@@ -616,7 +617,7 @@
         <div class="image-grid cols-{{ cols }}">
           {% for img in imgs[:9] %}
           <div class="grid-item">
-            <img src="{{ img.path_uri | safe }}" alt="image" />
+            <img src="{{ img.path_task.uri | safe }}" alt="image" />
             {% if loop.last and count > 9 %}
             <div class="more-count">+{{ count - 9 }}</div>
             {% endif %}
@@ -631,9 +632,9 @@
           {% if text_or_img is string %}
           <div class="text">{{ text_or_img }}</div>
           {% endif %}
-          {% if text_or_img.path_uri is defined %}
+          {% if text_or_img.path_task.uri is defined %}
           <div class="image-container">
-            <img src="{{ text_or_img.path_uri | safe }}" class="single-image" alt="graphics" />
+            <img src="{{ text_or_img.path_task.uri | safe }}" class="single-image" alt="graphics" />
           </div>
           {% if text_or_img.alt %}
           <div class="graphics-alt">{{ text_or_img.alt }}</div>
