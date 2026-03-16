@@ -383,7 +383,7 @@ class CommonRenderer(ImageRenderer):
 
     async def _load_cover(self) -> PILImage | None:
         """加载并缩放封面"""
-        if self.result.video is None or self.result.video.cover is None:
+        if self.result.video is None:
             return None
 
         cover_path = await self.result.video.cover.safe_get()

@@ -180,8 +180,7 @@ class ParseResult:
                 yield author.avatar.get()
 
         if self.video:
-            if self.video.cover:
-                yield self.video.cover.get()
+            yield self.video.cover.get()
             yield self.video.path_task.get()
 
         for cont in self.contents:
@@ -190,8 +189,7 @@ class ParseResult:
             elif isinstance(cont, ImageContent):
                 yield cont.path_task.get()
             elif isinstance(cont, VideoContent):
-                if cont.cover:
-                    yield cont.cover.get()
+                yield cont.cover.get()
 
         for gra in self.graphics:
             if isinstance(gra, ImageContent):
