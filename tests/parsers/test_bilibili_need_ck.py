@@ -15,7 +15,7 @@ async def test_favlist():
 
     assert result.title, "标题为空"
     assert result.author, "作者为空"
-    avatar_path = await result.author.get_avatar_path()
+    avatar_path = await result.author.avatar.get()
     assert avatar_path, "头像不存在"
     assert avatar_path.exists(), "头像不存在"
 
@@ -39,7 +39,8 @@ async def test_video():
     except Exception:
         pytest.skip("B站视频 BV1584y167sD p40 解析失败(风控)")
 
-    video_path = await result.video_contents[0].get_path()
+    assert result.video, "视频内容为空"
+    video_path = await result.video.path_task.get()
     assert video_path.exists(), "视频不存在"
 
 

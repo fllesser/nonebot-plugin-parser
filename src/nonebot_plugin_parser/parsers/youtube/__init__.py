@@ -31,44 +31,23 @@ class YouTubeParser(BaseParser):
         video_info = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
         author = await self._fetch_author_info(video_info.channel_id)
 
-        contents = []
+        result = self.result(
+            author=author,
+            title=video_info.title,
+            timestamp=video_info.timestamp,
+        )
+
         if video_info.duration <= pconfig.duration_maximum:
             video = YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
-            contents.append(
-                self.create_video_content(
-                    video,
-                    video_info.thumbnail,
-                    video_info.duration,
-                )
+            result.video = self.create_video_content(
+                video,
+                video_info.thumbnail,
+                video_info.duration,
             )
         else:
-            contents.extend(self.create_image_contents([video_info.thumbnail]))
+            result.contents.extend(self.create_image_contents([video_info.thumbnail]))
 
-        return self.result(
-            title=video_info.title,
-            author=author,
-            contents=contents,
-            timestamp=video_info.timestamp,
-        )
-
-    async def parse_audio(self, url: str):
-        """解析 YouTube URL 音频"""
-        video_info = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
-        author = await self._fetch_author_info(video_info.channel_id)
-
-        contents = []
-        contents.extend(self.create_image_contents([video_info.thumbnail]))
-
-        if video_info.duration <= pconfig.duration_maximum:
-            audio_task = YTDLP_DOWNLOADER.download_audio(url, self.cookies_file)
-            contents.append(self.create_audio_content(audio_task, duration=video_info.duration))
-
-        return self.result(
-            title=video_info.title,
-            author=author,
-            contents=contents,
-            timestamp=video_info.timestamp,
-        )
+        return result
 
     async def _fetch_author_info(self, channel_id: str):
         from . import meta

@@ -5,7 +5,6 @@ from httpx import Cookies, AsyncClient
 from nonebot import logger
 
 from ..base import Platform, BaseParser, PlatformEnum, ParseException, handle, pconfig
-from ..data import MediaContent
 
 
 class XiaoHongShuParser(BaseParser):
@@ -74,26 +73,26 @@ class XiaoHongShuParser(BaseParser):
 
         note_detail = note_detail_wrapper.note
 
-        contents = []
+        author = self.create_author(note_detail.nickname, note_detail.avatar_url)
+
+        result = self.result(
+            author=author,
+            title=note_detail.title,
+            text=note_detail.desc,
+        )
+
         # 添加视频内容
         if video_url := note_detail.video_url:
             # 使用第一张图片作为封面
             cover_url = note_detail.image_urls[0] if note_detail.image_urls else None
-            contents.append(self.create_video_content(video_url, cover_url))
+            # TODO 获取视频时长
+            result.video = self.create_video_content(video_url, cover_url)
 
         # 添加图片内容
         elif image_urls := note_detail.image_urls:
-            contents.extend(self.create_image_contents(image_urls))
+            result.contents.extend(self.create_image_contents(image_urls))
 
-        # 构建作者
-        author = self.create_author(note_detail.nickname, note_detail.avatar_url)
-
-        return self.result(
-            title=note_detail.title,
-            text=note_detail.desc,
-            author=author,
-            contents=contents,
-        )
+        return result
 
     async def parse_discovery(self, url: str):
         from . import discovery
@@ -114,25 +113,25 @@ class XiaoHongShuParser(BaseParser):
         note_data = init_state.noteData.data.noteData
         preload_data = init_state.noteData.normalNotePreloadData
 
-        contents: list[MediaContent] = []
+        author = self.create_author(note_data.user.nickName, note_data.user.avatar)
+
+        result = self.result(
+            author=author,
+            title=note_data.title,
+            text=note_data.desc,
+            timestamp=note_data.time // 1000,
+        )
+
         if video_url := note_data.video_url:
             if preload_data:
                 img_urls = preload_data.image_urls
             else:
                 img_urls = note_data.image_urls
-            contents.append(self.create_video_content(video_url, img_urls[0]))
+            result.video = self.create_video_content(video_url, img_urls[0])
         elif img_urls := note_data.image_urls:
-            contents.extend(self.create_image_contents(img_urls))
+            result.contents.extend(self.create_image_contents(img_urls))
 
-        author = self.create_author(note_data.user.nickName, note_data.user.avatar)
-
-        return self.result(
-            title=note_data.title,
-            author=author,
-            contents=contents,
-            text=note_data.desc,
-            timestamp=note_data.time // 1000,
-        )
+        return result
 
     def _extract_initial_state_raw(self, html: str) -> str:
         pattern = r"window\.__INITIAL_STATE__=(.*?)</script>"

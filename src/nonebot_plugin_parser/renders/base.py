@@ -6,6 +6,8 @@ from itertools import chain
 from collections.abc import AsyncGenerator
 from typing_extensions import override
 
+import aiofiles
+
 from ..config import pconfig
 from ..helper import UniHelper, UniMessage, ForwardNodeInner
 from ..parsers import ParseResult, AudioContent, ImageContent, VideoContent, DynamicContent
@@ -36,7 +38,7 @@ class BaseRenderer(ABC):
 
         for cont in chain(self.result.contents, self.result.repost.contents if self.result.repost else ()):
             try:
-                path = await cont.get_path()
+                path = await cont.path_task.get()
             except IgnoreException:
                 continue
             except DownloadException:
@@ -59,7 +61,7 @@ class BaseRenderer(ABC):
                 continue
 
             try:
-                path = await cont.get_path()
+                path = await cont.path_task.get()
             except IgnoreException:
                 continue
             except DownloadException:
@@ -127,8 +129,6 @@ class ImageRenderer(BaseRenderer):
     @classmethod
     async def save_img(cls, raw: bytes) -> Path:
         """保存图片"""
-        import aiofiles
-
         file_name = f"{uuid.uuid4().hex}.png"
         image_path = pconfig.cache_dir / file_name
         async with aiofiles.open(image_path, "wb+") as f:

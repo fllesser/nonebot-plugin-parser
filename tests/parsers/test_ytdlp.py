@@ -42,6 +42,4 @@ async def test_download_img():
     assert result.author
     assert result.contents
 
-    for content in result.contents:
-        path = await content.get_path()
-        assert path.exists()
+    await result.ensure_downloads_complete(img_only=True)

@@ -25,11 +25,8 @@ class DefaultRenderer(BaseRenderer):
         texts[:-1] = [text + "\n" for text in texts[:-1]]
         segs: list[Segment] = [Text(text) for text in texts]
 
-        try:
-            if cover_path := await self.result.get_cover_path():
-                segs.insert(1, UniHelper.img_seg(cover_path))
-        except Exception:
-            pass
+        if self.result.video and (cover_path := await self.result.video.cover.safe_get()):
+            segs.insert(1, UniHelper.img_seg(cover_path))
 
         if total_len > 300:
             yield UniMessage(UniHelper.construct_forward_message(segs))

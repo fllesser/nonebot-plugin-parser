@@ -98,7 +98,13 @@ class StreamDownloader:
         """download video file by url with stream"""
         if video_name is None:
             video_name = generate_file_name(url, ".mp4")
-        return await self.download_file(url, file_name=video_name, ext_headers=ext_headers, chunk_size=1024 * 1024)
+
+        return await self.download_file(
+            url,
+            file_name=video_name,
+            ext_headers=ext_headers,
+            chunk_size=1024 * 1024,
+        )
 
     @auto_task
     async def download_audio(
@@ -111,7 +117,12 @@ class StreamDownloader:
         """download audio file by url with stream"""
         if audio_name is None:
             audio_name = generate_file_name(url, ".mp3")
-        return await self.download_file(url, file_name=audio_name, ext_headers=ext_headers)
+
+        return await self.download_file(
+            url,
+            file_name=audio_name,
+            ext_headers=ext_headers,
+        )
 
     @auto_task
     async def download_img(
@@ -124,7 +135,12 @@ class StreamDownloader:
         """download image file by url with stream"""
         if img_name is None:
             img_name = generate_file_name(url, ".jpg")
-        return await self.download_file(url, file_name=img_name, ext_headers=ext_headers)
+
+        return await self.download_file(
+            url,
+            file_name=img_name,
+            ext_headers=ext_headers,
+        )
 
     @auto_task
     async def download_av_and_merge(

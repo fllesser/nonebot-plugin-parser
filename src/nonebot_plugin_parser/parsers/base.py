@@ -15,6 +15,7 @@ from ..constants import PlatformEnum as PlatformEnum
 from ..exception import ParseException
 from ..exception import IgnoreException as IgnoreException
 from ..exception import DownloadException as DownloadException
+from ..download.task import PathTask, OptionalPathTask
 
 T = TypeVar("T", bound="BaseParser")
 HandlerFunc = Callable[[T, Match[str]], Coroutine[Any, Any, ParseResult]]
@@ -169,13 +170,13 @@ class BaseParser:
         avatar_task = None
         if avatar_url:
             avatar_task = DOWNLOADER.download_img(avatar_url, ext_headers=self.headers)
-        return Author(name=name, avatar=avatar_task, description=description)
+        return Author(name=name, avatar=OptionalPathTask(avatar_task), description=description)
 
     def create_video_content(
         self,
-        url_or_task: str | Task[Path],
+        url_or_task: str | Task[Path] | PathTask,
         cover_url: str | None = None,
-        duration: float = 0.0,
+        duration: float | None = None,
     ):
         """创建视频内容"""
         from .data import VideoContent
@@ -183,10 +184,15 @@ class BaseParser:
         cover_task = None
         if cover_url:
             cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
-        if isinstance(url_or_task, str):
-            url_or_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
 
-        return VideoContent(url_or_task, cover_task, duration)
+        if isinstance(url_or_task, str):
+            path_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
+        elif isinstance(url_or_task, Task):
+            path_task = PathTask(url_or_task)
+        elif isinstance(url_or_task, PathTask):
+            path_task = url_or_task
+
+        return VideoContent(path_task, OptionalPathTask(cover_task), duration)
 
     def create_image_contents(
         self,
@@ -201,14 +207,18 @@ class BaseParser:
 
     def create_image_content(
         self,
-        url_or_task: str | Task[Path],
+        url_or_task: str | Task[Path] | PathTask,
         alt: str | None = None,
     ):
         """创建图片内容"""
         if isinstance(url_or_task, str):
-            url_or_task = DOWNLOADER.download_img(url_or_task, ext_headers=self.headers)
+            path_task = DOWNLOADER.download_img(url_or_task, ext_headers=self.headers)
+        elif isinstance(url_or_task, Task):
+            path_task = PathTask(url_or_task)
+        elif isinstance(url_or_task, PathTask):
+            path_task = url_or_task
 
-        return ImageContent(url_or_task, alt=alt)
+        return ImageContent(path_task, alt=alt)
 
     def create_dynamic_contents(
         self,
@@ -223,22 +233,38 @@ class BaseParser:
             contents.append(DynamicContent(task))
         return contents
 
+    def create_dynamic_content(
+        self,
+        url_or_task: str | Task[Path] | PathTask,
+    ):
+        """创建动态图片内容"""
+        from .data import DynamicContent
+
+        if isinstance(url_or_task, str):
+            path_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
+        elif isinstance(url_or_task, Task):
+            path_task = PathTask(url_or_task)
+        elif isinstance(url_or_task, PathTask):
+            path_task = url_or_task
+
+        return DynamicContent(path_task)
+
     def create_audio_content(
         self,
-        url_or_task: str | Task[Path],
+        url_or_task: str | Task[Path] | PathTask,
         duration: float = 0.0,
     ):
         """创建音频内容"""
         from .data import AudioContent
 
         if isinstance(url_or_task, str):
-            url_or_task = DOWNLOADER.download_audio(url_or_task, ext_headers=self.headers)
+            path_task = DOWNLOADER.download_audio(url_or_task, ext_headers=self.headers)
+        elif isinstance(url_or_task, Task):
+            path_task = PathTask(url_or_task)
+        elif isinstance(url_or_task, PathTask):
+            path_task = url_or_task
 
-        return AudioContent(url_or_task, duration)
-
-    def create_empty_graphics(self) -> list[str | ImageContent]:
-        """创建空的图片内容列表"""
-        return []
+        return AudioContent(path_task, duration)
 
     @property
     def downloader(self):

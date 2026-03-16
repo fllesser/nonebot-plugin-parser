@@ -134,15 +134,22 @@ class BilibiliParser(BaseParser):
                 logger.warning(f"视频时长 {page_info.duration} 秒, 超过 {pconfig.duration_maximum} 秒, 取消下载")
                 raise IgnoreException
             if a_url is not None:
-                return await self.downloader.download_av_and_merge(
-                    v_url, a_url, output_path=output_path, ext_headers=self.headers
+                path = await self.downloader.download_av_and_merge(
+                    v_url,
+                    a_url,
+                    output_path=output_path,
+                    ext_headers=self.headers,
                 )
             else:
-                return await self.downloader.download_file(v_url, file_name=output_path.name, ext_headers=self.headers)
+                path = await self.downloader.download_file(
+                    v_url,
+                    file_name=output_path.name,
+                    ext_headers=self.headers,
+                )
+            return path
 
-        video_task = asyncio.create_task(download_video())
         video_content = self.create_video_content(
-            video_task,
+            asyncio.create_task(download_video()),
             page_info.cover,
             page_info.duration,
         )
@@ -153,7 +160,7 @@ class BilibiliParser(BaseParser):
             timestamp=page_info.timestamp,
             text=video_info.desc,
             author=author,
-            contents=[video_content],
+            video=video_content,
             extra={"info": ai_summary},
         )
 
@@ -210,25 +217,26 @@ class BilibiliParser(BaseParser):
         opus_info = await bili_opus.get_info()
         if not isinstance(opus_info, dict):
             raise ParseException("获取图文动态信息失败")
+
         # 转换为结构体
         opus_data = convert(opus_info, OpusItem)
         logger.debug(f"opus_data: {opus_data}")
         author = self.create_author(*opus_data.name_avatar)
 
         # 按顺序处理图文内容
-        graphics = self.create_empty_graphics()
+        result = self.result(
+            author=author,
+            title=opus_data.title,
+            timestamp=opus_data.timestamp,
+        )
+
         for node in opus_data.extract_nodes():
             if isinstance(node, str):
-                graphics.append(node)
+                result.graphics.append(node)
             else:
-                graphics.append(self.create_image_content(node.url, alt=node.alt))
+                result.graphics.append(self.create_image_content(node.url, alt=node.alt))
 
-        return self.result(
-            title=opus_data.title,
-            author=author,
-            timestamp=opus_data.timestamp,
-            graphics=graphics,
-        )
+        return result
 
     async def parse_live(self, room_id: int):
         """解析直播"""

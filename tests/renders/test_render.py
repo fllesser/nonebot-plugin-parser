@@ -141,12 +141,15 @@ async def _download_all_media(result) -> float:
     download_tasks = []
 
     # 添加头像和封面下载任务
-    download_tasks.append(result.author.get_avatar_path())
-    download_tasks.append(result.get_cover_path())
-    if respot := result.repost:
-        assert respot.author
-        download_tasks.append(respot.author.get_avatar_path())
-        download_tasks.append(respot.get_cover_path())
+    if result.author.avatar:
+        download_tasks.append(result.author.avatar.get())
+    if result.video and result.video.cover:
+        download_tasks.append(result.video.cover.get())
+    if repost := result.repost:
+        assert repost.author
+        download_tasks.append(repost.author.avatar.get())
+        if repost.video:
+            download_tasks.append(repost.video.cover.get())
 
     # 添加所有内容下载任务（包括转发内容）
     # 与渲染器逻辑保持一致
@@ -154,7 +157,7 @@ async def _download_all_media(result) -> float:
         result.contents,
         result.repost.contents if result.repost else (),
     ):
-        download_tasks.append(content.get_path())
+        download_tasks.append(content.path_task.get())
 
     # 并发下载所有资源
     paths = await asyncio.gather(
@@ -285,7 +288,7 @@ async def test_bilibili_read(result_collections: list[Result]):
         # 收集解析结果
         result_collections.append(Result(url, "bilibili-read", parse_result))
     except Exception as e:
-        pytest.skip(f"解析失败，可能是风控: {e}")
+        pytest.skip(f"解析失败，风控: {e}")
 
 
 @pytest.mark.asyncio

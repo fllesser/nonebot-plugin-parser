@@ -4,7 +4,6 @@ from nonebot import logger
 
 @pytest.mark.asyncio
 async def test_parse():
-    from nonebot_plugin_parser.utils import fmt_size
     from nonebot_plugin_parser.parsers import AcfunParser
 
     # url = "https://www.acfun.cn/v/ac46593564"
@@ -16,18 +15,14 @@ async def test_parse():
         # 使用 patterns 匹配 URL
         keyword, searched = parser.search_url(url)
         assert searched, f"无法匹配 URL: {url}"
-        parse_result = await parser.parse(keyword, searched)
-        logger.debug(f"{url} | 解析结果: \n{parse_result}")
+        result = await parser.parse(keyword, searched)
+        logger.debug(f"{url} | 解析结果: \n{result}")
 
-        assert parse_result.title, "视频标题为空"
-        assert parse_result.author, "作者信息为空"
+        assert result.title, "视频标题为空"
+        assert result.author, "作者信息为空"
+        assert result.video, "视频内容为空"
 
-        video_contents = parse_result.contents
-        assert video_contents
-        for video_content in video_contents:
-            video_path = await video_content.get_path()
-            assert video_path.exists()
-            logger.info(f"{url} | 视频下载成功, 视频{fmt_size(video_path)}")
+        await result.ensure_downloads_complete()
 
         logger.success(f"{url} | Acfun 视频解析成功")
 

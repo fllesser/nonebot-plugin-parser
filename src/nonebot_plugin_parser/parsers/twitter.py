@@ -7,7 +7,7 @@ from msgspec import Struct, field
 from msgspec.json import Decoder
 
 from .base import BaseParser, PlatformEnum, handle
-from .data import Platform, ParseResult, MediaContent
+from .data import Platform, ParseResult
 from ..exception import ParseException
 
 
@@ -17,6 +17,10 @@ class MediaElement(Struct):
     altText: str | None = None
     thumbnail_url: str | None = None
     duration_millis: int | None = None
+
+    @property
+    def duration(self) -> float | None:
+        return self.duration_millis / 1000 if self.duration_millis else None
 
 
 class Article(Struct):
@@ -69,23 +73,29 @@ class TwitterParser(BaseParser):
         author = self.create_author(data.user_name, data.user_profile_image_url)
         title = data.article.title if isinstance(data.article, Article) else data.article
 
-        contents: list[MediaContent] = []
-        for media in data.media_extended:
-            if media.type in ("video", "gif"):
-                contents.append(self.create_video_content(media.url, media.thumbnail_url))
-            elif media.type == "image":
-                contents.append(self.create_image_content(media.url))
-
-        repost = self._collect_result(data.qrt) if data.qrt else None
-
-        return self.result(
+        result = self.result(
             author=author,
             title=title,
             text=data.text,
             timestamp=data.date_epoch,
-            contents=contents,
-            repost=repost,
         )
+
+        for media in data.media_extended:
+            if media.type == "video":
+                result.video = self.create_video_content(
+                    media.url,
+                    media.thumbnail_url,
+                    duration=media.duration,
+                )
+                break
+            elif media.type == "image":
+                result.contents.append(self.create_image_content(media.url))
+            elif media.type == "gif":
+                result.contents.append(self.create_dynamic_content(media.url))
+
+        result.repost = self._collect_result(data.qrt) if data.qrt else None
+
+        return result
 
     async def _parse_old(self, searched: re.Match[str]) -> ParseResult:
         # 从匹配对象中获取原始URL
@@ -123,11 +133,8 @@ class TwitterParser(BaseParser):
         soup = BeautifulSoup(html_content, "html.parser")
 
         # 初始化数据
-        title = None
         cover_url = None
-        video_url = None
-        images_urls = []
-        dynamic_urls = []
+        result = self.result()
 
         # 1. 提取缩略图链接
         thumb_tag = soup.find("img")
@@ -148,35 +155,16 @@ class TwitterParser(BaseParser):
             href = str(href)
             text = tag.get_text(strip=True)
             if "下载 MP4" in text:
-                video_url = href
+                result.video = self.create_video_content(href, cover_url)
                 break
             elif "下载图片" in text:
-                images_urls.append(href)
+                result.contents.append(self.create_image_content(href))
             elif "下载 gif" in text:
-                dynamic_urls.append(href)
+                result.contents.append(self.create_dynamic_content(href))
 
         # 3. 提取标题
         title_tag = soup.find("h3")
         if title_tag:
-            title = title_tag.get_text(strip=True)
+            result.title = title_tag.get_text(strip=True)
 
-        # 简洁的构建方式
-        contents = []
-
-        # 添加视频内容
-        if video_url:
-            contents.append(self.create_video_content(video_url, cover_url))
-
-        # 添加图片内容
-        if images_urls:
-            contents.extend(self.create_image_contents(images_urls))
-
-        # 添加动态内容
-        if dynamic_urls:
-            contents.extend(self.create_dynamic_contents(dynamic_urls))
-
-        return self.result(
-            title=title,
-            author=self.create_author("无用户名"),
-            contents=contents,
-        )
+        return result

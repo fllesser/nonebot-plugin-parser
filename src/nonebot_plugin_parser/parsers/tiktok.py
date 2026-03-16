@@ -2,8 +2,8 @@ import re
 from typing import ClassVar
 
 from .base import BaseParser, PlatformEnum, handle
-from .data import Author, Platform, VideoContent
-from ..download import DOWNLOADER, YTDLP_DOWNLOADER
+from .data import Author, Platform
+from ..download import YTDLP_DOWNLOADER
 
 
 class TikTokParser(BaseParser):
@@ -21,12 +21,16 @@ class TikTokParser(BaseParser):
         video_info = await YTDLP_DOWNLOADER.extract_video_info(url)
 
         # 下载封面和视频
-        cover = DOWNLOADER.download_img(video_info.thumbnail)
         video = YTDLP_DOWNLOADER.download_video(url)
+        video_content = self.create_video_content(
+            video,
+            video_info.thumbnail,
+            duration=video_info.duration,
+        )
 
         return self.result(
             title=video_info.title,
             author=Author(name=video_info.channel),
-            contents=[VideoContent(video, cover, duration=video_info.duration)],
+            video=video_content,
             timestamp=video_info.timestamp,
         )

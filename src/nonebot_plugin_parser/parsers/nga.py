@@ -80,14 +80,15 @@ class NGAParser(BaseParser):
 
         soup = BeautifulSoup(html, "html.parser")
 
+        # 初始化结果对象, 避免使用临时变量
+        result = self.result(url=url)
+
         # 提取 title - 从 postsubject0 标签提取
-        title = None
         title_tag = soup.find(id="postsubject0")
         if title_tag and isinstance(title_tag, Tag):
-            title = title_tag.get_text(strip=True)
+            result.title = title_tag.get_text(strip=True)
 
         # 提取作者信息 - 先从 postauthor0 标签提取 uid，再从 JavaScript 中查找用户名
-        author = None
         author_tag = soup.find(id="postauthor0")
         if author_tag and isinstance(author_tag, Tag):
             # 从 href 属性中提取 uid: href="nuke.php?func=ucp&uid=24278093"
@@ -102,20 +103,17 @@ class NGAParser(BaseParser):
                         user_info = json.loads(user_info)
                         if uid in user_info:
                             author = user_info[uid].get("username")
+                            result.author = self.create_author(author)
                     except (json.JSONDecodeError, KeyError):
                         pass
 
-        author = self.create_author(author) if author else None
-
         # 提取时间 - 从第一个帖子的 postdate0
-        timestamp = None
         time_tag = soup.find(id="postdate0")
         if time_tag and isinstance(time_tag, Tag):
             timestr = time_tag.get_text(strip=True)
-            timestamp = int(time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M")))
+            result.timestamp = int(time.mktime(time.strptime(timestr, "%Y-%m-%d %H:%M")))
 
         # 提取文本 - postcontent0
-        graphics = self.create_empty_graphics()
         content_tag = soup.find(id="postcontent0")
         if content_tag and isinstance(content_tag, Tag):
             text = content_tag.get_text("\n", strip=True)
@@ -127,18 +125,12 @@ class NGAParser(BaseParser):
                     if paths := re.findall(r"\[img\]\.(.*?)\[\/img\]", line):
                         for path in paths:
                             img_url = self.build_img_url(path)
-                            graphics.append(self.create_image_content(img_url))
+                            result.graphics.append(self.create_image_content(img_url))
                     else:
                         # 去除其他标签, 仅保留文本
                         if clean_line := re.sub(r"\[[^\]]*?\]", "", line).strip():
-                            graphics.append(clean_line)
+                            result.graphics.append(clean_line)
                 else:
-                    graphics.append(line)
+                    result.graphics.append(line)
 
-        return self.result(
-            title=title,
-            url=url,
-            author=author,
-            graphics=graphics,
-            timestamp=timestamp,
-        )
+        return result

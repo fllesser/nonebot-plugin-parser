@@ -25,10 +25,10 @@ async def test_common_video():
 
         assert result.title, "标题为空"
         assert result.author, "作者为空"
-        assert await result.get_cover_path(), "封面为空"
-        assert result.video_contents, "视频内容为空"
+        assert await result.author.avatar.get(), "头像为空"
+        assert result.video, "视频内容为空"
 
-        video_path = await result.video_contents[0].get_path()
+        video_path = await result.video.path_task.get()
 
         assert video_path.exists(), "视频不存在"
         logger.success(f"{url} | 抖音视频解析成功")
@@ -86,8 +86,8 @@ async def test_note():
         assert result.author, "作者为空"
         if img_contents := result.img_contents:
             for img_content in img_contents:
-                path = await img_content.get_path()
-                assert path.exists(), "图片不存在"
+                # 容易失败，使用 safe_get
+                await img_content.path_task.safe_get()
         logger.success(f"{url} | 抖音图文解析成功")
 
     for url in note_urls:
@@ -105,7 +105,6 @@ async def test_slides():
     https://www.douyin.com/note/7450744229229235491 # 解析成普通图片
     """
     from nonebot_plugin_parser.parsers import DouyinParser
-    from nonebot_plugin_parser.exception import DownloadException
 
     parser = DouyinParser()
 
@@ -120,11 +119,8 @@ async def test_slides():
     dynamic_contents = result.dynamic_contents
     assert dynamic_contents, "动态内容为空"
     for dynamic_content in dynamic_contents:
-        try:
-            path = await dynamic_content.get_path()
-        except DownloadException:
-            pytest.skip("抖音动态内容下载失败, 随机到的 cdn 过期")
-        assert path.exists(), "动态内容不存在"
+        # 容易失败，使用 safe_get
+        await dynamic_content.path_task.safe_get()
     logger.success(f"抖音图集(含视频解析出视频)解析成功 {dynamic_image_url}")
 
     static_image_url = "https://www.douyin.com/note/7450744229229235491"
@@ -137,9 +133,6 @@ async def test_slides():
     img_contents = result.img_contents
     assert img_contents, "图片内容为空"
     for img_content in img_contents:
-        try:
-            path = await img_content.get_path()
-        except DownloadException:
-            pytest.skip("抖音动态内容下载失败, 随机到的 cdn 过期")
-        assert path.exists(), "图片内容不存在"
+        # 容易失败，使用 safe_get
+        await img_content.path_task.safe_get()
     logger.success(f"抖音图集(含视频解析出静态图片)解析成功 {static_image_url}")

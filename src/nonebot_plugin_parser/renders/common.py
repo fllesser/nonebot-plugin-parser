@@ -282,10 +282,7 @@ class CommonRenderer(ImageRenderer):
         x_pos = self.PADDING
 
         # 头像
-        try:
-            avatar_path = await self.result.author.get_avatar_path()
-        except Exception:
-            avatar_path = None
+        avatar_path = await self.result.author.avatar.safe_get()
         avatar = self._load_avatar(avatar_path)
         self._image.paste(avatar, (x_pos, self.y_pos), avatar)
 
@@ -386,14 +383,10 @@ class CommonRenderer(ImageRenderer):
 
     async def _load_cover(self) -> PILImage | None:
         """加载并缩放封面"""
-        video_content = self.result.get_video()
-        if video_content is None:
+        if self.result.video is None:
             return None
 
-        try:
-            cover_path = await video_content.get_cover_path()
-        except Exception:
-            return None
+        cover_path = await self.result.video.cover.safe_get()
 
         if cover_path is None or not cover_path.exists():
             return None
@@ -469,12 +462,11 @@ class CommonRenderer(ImageRenderer):
 
         images: list[PILImage] = []
         for content in display_contents:
-            try:
-                path = await content.get_path()
-                if img := self._load_grid_image(path, len(display_contents)):
-                    images.append(img)
-            except Exception:
+            path = await content.path_task.safe_get()
+            if path is None or not path.exists():
                 continue
+            if img := self._load_grid_image(path, len(display_contents)):
+                images.append(img)
 
         if not images:
             return
@@ -575,9 +567,8 @@ class CommonRenderer(ImageRenderer):
 
     async def _render_img_in_graphics(self, image_content: ImageContent) -> None:
         """渲染图片"""
-        try:
-            path = await image_content.get_path()
-        except Exception:
+        path = await image_content.path_task.safe_get()
+        if path is None or not path.exists():
             return
 
         with Image.open(path) as img:
