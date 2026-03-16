@@ -7,6 +7,7 @@ from nonebot_plugin_htmlrender import template_to_pic
 
 from . import resources
 from .base import ImageRenderer, pconfig
+from ..download.task import PathTask, OptionalPathTask  # noqa: F401
 
 
 class HtmlRenderer(ImageRenderer):

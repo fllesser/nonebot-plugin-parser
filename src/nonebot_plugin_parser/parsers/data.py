@@ -15,6 +15,9 @@ from ..download.task import PathTask, OptionalPathTask
 class MediaContent:
     path_task: PathTask
 
+    def uri(self) -> str | None:
+        return self.path_task.uri
+
     def __repr__(self) -> str:
         prefix = self.__class__.__name__
         return f"{prefix}({self.path_task})"
