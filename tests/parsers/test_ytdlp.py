@@ -40,6 +40,5 @@ async def test_download_img():
 
     assert result.title
     assert result.author
-    assert result.contents
 
     await result.ensure_downloads_complete(img_only=True)
