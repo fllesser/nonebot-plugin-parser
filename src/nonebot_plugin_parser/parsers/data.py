@@ -15,7 +15,12 @@ from ..download.task import PathTask, OptionalPathTask
 class MediaContent:
     path_task: PathTask
 
+    async def get_path(self) -> Path:
+        return await self.path_task.get()
+
+    @property
     def uri(self) -> str | None:
+        """需要先调用 .path_task.get()/.get_path() 才能获取"""
         return self.path_task.uri
 
     def __repr__(self) -> str:
@@ -45,7 +50,7 @@ class VideoContent(MediaContent):
         return f"时长: {fmt_duration(self.duration)}" if self.duration else None
 
     def __repr__(self) -> str:
-        repr = f"VideoContent({self.path_task})"
+        repr = f"VideoContent({self.path_task}"
         if self.cover is not None:
             repr += f", cover={self.cover}"
         return repr + ")"
@@ -228,6 +233,7 @@ class ParseResult:
             f"text: {self.text}, "
             f"url: {self.url}, "
             f"author: {self.author}, "
+            f"video: {self.video}, "
             f"contents: {self.contents}, "
             f"graphics: {self.graphics}, "
             f"extra: {self.extra}, "

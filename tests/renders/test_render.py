@@ -288,7 +288,7 @@ async def test_bilibili_read(result_collections: list[Result]):
         # 收集解析结果
         result_collections.append(Result(url, "bilibili-read", parse_result))
     except Exception as e:
-        pytest.skip(f"解析失败，可能是风控: {e}")
+        pytest.skip(f"解析失败，风控: {e}")
 
 
 @pytest.mark.asyncio

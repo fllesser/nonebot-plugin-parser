@@ -33,16 +33,16 @@ class PathTask:
 
     def __repr__(self) -> str:
         if self._path is not None:
-            return f"(path={self._path.name})"
+            return f"PathTask(path={self._path.name})"
         else:
-            return f"(task={self._task.get_name()}, done={self._task.done()})"
+            return f"PathTask(task={self._task.get_name()}, done={self._task.done()})"
 
 
 class OptionalPathTask:
     """封装可选的 PathTask, 提供便捷的 API 避免频繁判空"""
 
     def __init__(self, path_task: PathTask | None = None):
-        self._path_task = path_task
+        self._path_task: PathTask | None = path_task
 
     async def get(self) -> Path | None:
         if self._path_task is None:
@@ -65,9 +65,7 @@ class OptionalPathTask:
         return self._path_task.uri
 
     def __repr__(self) -> str:
-        if self._path_task is None:
-            return "(None)"
-        return f"({self._path_task})"
+        return f"{self._path_task}"
 
 
 P = ParamSpec("P")

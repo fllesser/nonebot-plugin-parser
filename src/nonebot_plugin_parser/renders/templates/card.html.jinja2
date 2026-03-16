@@ -542,13 +542,14 @@
     <div class="card {% if is_repost %}repost{% endif %}">
 
       {# ── Header ── #}
-      {% if result.author %}
+      {% set author = result.author %}
+      {% if author %}
       <div class="header">
-        {% if result.author.avatar.uri %}
-        <img src="{{ result.author.avatar.uri | safe }}" class="avatar" alt="avatar" />
+        {% if author.avatar %}
+        <img src="{{ author.avatar.as_uri() | safe }}" class="avatar" alt="avatar" />
         {% endif %}
         <div class="user-info">
-          <div class="username">{{ result.author.name }}</div>
+          <div class="username">{{ author.name }}</div>
           {% if result.formartted_datetime %}
           <div class="time">{{ result.formartted_datetime }}</div>
           {% endif %}
@@ -573,9 +574,8 @@
         {# ── 视频封面 ── #}
         {% set video = result.video %}
         {% if video and video.cover %}
-          {% if video.cover.uri %}
           <div class="cover-wrapper">
-            <img src="{{ video.cover.uri | safe }}" class="cover-img" alt="cover" />
+            <img src="{{ video.cover.as_uri() | safe }}" class="cover-img" alt="cover" />
             {% if play_button %}
             <div class="play-button">
               <img src="{{ play_button | safe }}" alt="play" />
@@ -587,7 +587,6 @@
             </div>
             {% endif %}
           </div>
-          {% endif %}
         {% endif %}
 
         {# ── Title（有视频：标题属于视频，放在封面下方） ── #}
@@ -609,7 +608,7 @@
         {% set count = imgs|length %}
         {% if count == 1 %}
         <div class="image-container">
-          <img src="{{ imgs[0].path_task.uri | safe }}" class="single-image" alt="image" />
+          <img src="{{ imgs[0].uri | safe }}" class="single-image" alt="image" />
         </div>
         {% else %}
         {% set cols = 3 %}
@@ -617,7 +616,7 @@
         <div class="image-grid cols-{{ cols }}">
           {% for img in imgs[:9] %}
           <div class="grid-item">
-            <img src="{{ img.path_task.uri | safe }}" alt="image" />
+            <img src="{{ img.uri | safe }}" alt="image" />
             {% if loop.last and count > 9 %}
             <div class="more-count">+{{ count - 9 }}</div>
             {% endif %}
@@ -631,14 +630,13 @@
         <div class="graphics-item">
           {% if text_or_img is string %}
           <div class="text">{{ text_or_img }}</div>
-          {% endif %}
-          {% if text_or_img.path_task is defined %}
+          {% else %}
           <div class="image-container">
-            <img src="{{ text_or_img.path_task.uri | safe }}" class="single-image" alt="graphics" />
+            <img src="{{ text_or_img.uri | safe }}" class="single-image" alt="graphics" />
           </div>
+          {% endif %}
           {% if text_or_img.alt %}
           <div class="graphics-alt">{{ text_or_img.alt }}</div>
-          {% endif %}
           {% endif %}
         </div>
         {% endfor %}
