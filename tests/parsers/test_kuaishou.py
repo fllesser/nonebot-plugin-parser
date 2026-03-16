@@ -25,14 +25,14 @@ async def test_parse():
         assert searched, f"无法匹配 URL: {url}"
 
         try:
-            parse_result = await parser.parse(keyword, searched)
+            result = await parser.parse(keyword, searched)
         except httpx.ConnectTimeout:
             pytest.skip(f"解析超时(action 网络问题) ({url})")
 
-        logger.debug(f"{url} | 解析结果: \n{parse_result}")
-        assert parse_result.title, "视频标题为空"
+        logger.debug(f"{url} | 解析结果: \n{result}")
+        assert result.title, "视频标题为空"
 
-        await parse_result.ensure_downloads_complete()
+        await result.ensure_downloads_complete()
 
         logger.success(f"{url} | 快手视频解析成功")
 
