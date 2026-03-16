@@ -571,23 +571,23 @@
         {% endif %}
 
         {# ── 视频封面 ── #}
-        {% if result.video %}
-        {% set vc = result.video %}
-        {% if vc.cover.uri %}
-        <div class="cover-wrapper">
-          <img src="{{ vc.cover.uri | safe }}" class="cover-img" alt="cover" />
-          {% if play_button %}
-          <div class="play-button">
-            <img src="{{ play_button | safe }}" alt="play" />
+        {% set video = result.video %}
+        {% if video and video.cover %}
+          {% if video.cover.uri %}
+          <div class="cover-wrapper">
+            <img src="{{ video.cover.uri | safe }}" class="cover-img" alt="cover" />
+            {% if play_button %}
+            <div class="play-button">
+              <img src="{{ play_button | safe }}" alt="play" />
+            </div>
+            {% endif %}
+            {% if video.duration %}
+            <div class="cover-overlay">
+              <div class="duration-badge">{{ video.display_duration }}</div>
+            </div>
+            {% endif %}
           </div>
           {% endif %}
-          {% if vc.duration %}
-          <div class="cover-overlay">
-            <div class="duration-badge">{{ vc.display_duration }}</div>
-          </div>
-          {% endif %}
-        </div>
-        {% endif %}
         {% endif %}
 
         {# ── Title（有视频：标题属于视频，放在封面下方） ── #}
@@ -601,7 +601,7 @@
         {% endif %}
 
         {# ── 非视频媒体 ── #}
-        {% if not result.video %}
+        {% if not video %}
 
         {# ── Image Grid ── #}
         {% set imgs = result.img_contents %}
@@ -632,7 +632,7 @@
           {% if text_or_img is string %}
           <div class="text">{{ text_or_img }}</div>
           {% endif %}
-          {% if text_or_img.path_task.uri is defined %}
+          {% if text_or_img.path_task is defined %}
           <div class="image-container">
             <img src="{{ text_or_img.path_task.uri | safe }}" class="single-image" alt="graphics" />
           </div>

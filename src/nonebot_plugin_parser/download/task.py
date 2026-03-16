@@ -6,20 +6,16 @@ from collections.abc import Callable, Coroutine
 
 
 class PathTask:
-    def __init__(self, path_task: Path | Task[Path]):
-        self._path_task = path_task
-        self._resolved_path: Path | None = None
+    def __init__(self, task: Task[Path]):
+        self._task: Task[Path] = task
+        self._path: Path | None = None
 
     async def get(self) -> Path:
-        if self._resolved_path is not None:
-            return self._resolved_path
+        if self._path is not None:
+            return self._path
 
-        if isinstance(self._path_task, Path):
-            self._resolved_path = self._path_task
-            return self._resolved_path
-
-        self._resolved_path = await self._path_task
-        return self._resolved_path
+        self._path = await self._task
+        return self._path
 
     def __await__(self):
         return self.get().__await__()
@@ -33,17 +29,13 @@ class PathTask:
 
     @property
     def uri(self) -> str | None:
-        if isinstance(self._path_task, Path):
-            return self._path_task.as_uri()
-        elif self._resolved_path is not None:
-            return self._resolved_path.as_uri()
-        return None
+        return self._path.as_uri() if self._path is not None else None
 
     def __repr__(self) -> str:
-        if isinstance(self._path_task, Path):
-            return f"(path={self._path_task.name})"
+        if self._path is not None:
+            return f"(path={self._path.name})"
         else:
-            return f"(task={self._path_task.get_name()}, done={self._path_task.done()})"
+            return f"(task={self._task.get_name()}, done={self._task.done()})"
 
 
 class OptionalPathTask:

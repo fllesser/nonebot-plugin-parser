@@ -38,11 +38,6 @@ class VideoContent(MediaContent):
     """时长 单位: 秒"""
 
     @property
-    def cover_path_uri(self):
-        if isinstance(self.cover, Path):
-            return self.cover.as_uri()
-
-    @property
     def display_duration(self) -> str | None:
         return f"时长: {fmt_duration(self.duration)}" if self.duration else None
 
@@ -88,11 +83,6 @@ class Author:
     """作者头像 URL 或本地路径"""
     description: str | None = None
     """作者个性签名等"""
-
-    @property
-    def avatar_path_uri(self):
-        if isinstance(self.avatar, Path):
-            return self.avatar.as_uri()
 
     def __repr__(self) -> str:
         repr = f"Author(name={self.name}"
@@ -190,10 +180,6 @@ class ParseResult:
             if not img_only:
                 yield cont.path_task.get()
             elif isinstance(cont, ImageContent):
-                yield cont.path_task.get()
-            elif isinstance(cont, AudioContent):
-                yield cont.path_task.get()
-            elif isinstance(cont, DynamicContent):
                 yield cont.path_task.get()
             elif isinstance(cont, VideoContent):
                 if cont.cover:
