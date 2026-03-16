@@ -145,10 +145,10 @@ class WeiBoParser(BaseParser):
         )
 
         return self.result(
+            author=author,
             title=play_info.title,
             text=play_info.text,
-            author=author,
-            contents=[video_content],
+            video=video_content,
             timestamp=play_info.real_date,
         )
 
@@ -193,32 +193,34 @@ class WeiBoParser(BaseParser):
         return self._collect_result(weibo_data)
 
     def _collect_result(self, data: common.WeiboData):
-        contents = []
+        """收集微博数据并构建结果"""
+
+        # 作者
+        author = self.create_author(data.display_name, data.user.profile_image_url)
+
+        # 先以部分数据构建结果，后续再填充内容，避免使用临时变量
+        result = self.result(
+            title=data.title,
+            text=data.text_content,
+            author=author,
+            timestamp=data.timestamp,
+            url=data.url,
+        )
 
         # 添加视频内容
         if video_url := data.video_url:
             cover_url = data.cover_url
-            contents.append(self.create_video_content(video_url, cover_url))
+            result.video = self.create_video_content(video_url, cover_url)
 
         # 添加图片内容
         if image_urls := data.image_urls:
-            contents.extend(self.create_image_contents(image_urls))
+            result.contents.extend(self.create_image_contents(image_urls))
 
-        # 构建作者
-        author = self.create_author(data.display_name, data.user.profile_image_url)
-        repost = None
+        # 转发内容
         if data.retweeted_status:
-            repost = self._collect_result(data.retweeted_status)
+            result.repost = self._collect_result(data.retweeted_status)
 
-        return self.result(
-            title=data.title,
-            text=data.text_content,
-            author=author,
-            contents=contents,
-            timestamp=data.timestamp,
-            url=data.url,
-            repost=repost,
-        )
+        return result
 
     def _base62_encode(self, number: int) -> str:
         """将数字转换为 base62 编码"""

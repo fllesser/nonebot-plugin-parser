@@ -2,65 +2,40 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any, TypedDict
-from asyncio import Task
 from pathlib import Path
 from datetime import datetime
 from dataclasses import field, dataclass
 from collections.abc import Iterator, Awaitable
 
 from ..utils import fmt_duration
-
-
-def repr_path_task(path_task: Path | Task[Path]) -> str:
-    if isinstance(path_task, Path):
-        return f"path={path_task.name}"
-    else:
-        return f"task={path_task.get_name()}, done={path_task.done()}"
+from ..download.task import PathTask, OptionalPathTask
 
 
 @dataclass(repr=False, slots=True)
 class MediaContent:
-    path_task: Path | Task[Path]
-
-    async def get_path(self) -> Path:
-        if isinstance(self.path_task, Path):
-            return self.path_task
-        self.path_task = await self.path_task
-        return self.path_task
-
-    @property
-    def path_uri(self):
-        if isinstance(self.path_task, Path):
-            return self.path_task.as_uri()
+    path_task: PathTask
 
     def __repr__(self) -> str:
         prefix = self.__class__.__name__
-        return f"{prefix}({repr_path_task(self.path_task)})"
+        return f"{prefix}({self.path_task})"
 
 
 @dataclass(repr=False, slots=True)
 class AudioContent(MediaContent):
     """音频内容"""
 
-    duration: float = 0.0
+    duration: float | None = None
+    """时长 单位: 秒"""
 
 
 @dataclass(repr=False, slots=True)
 class VideoContent(MediaContent):
     """视频内容"""
 
-    cover: Path | Task[Path] | None = None
+    cover: OptionalPathTask = field(default_factory=OptionalPathTask)
     """视频封面"""
-    duration: float = 0.0
+    duration: float | None = None
     """时长 单位: 秒"""
-
-    async def get_cover_path(self) -> Path | None:
-        if self.cover is None:
-            return None
-        if isinstance(self.cover, Path):
-            return self.cover
-        self.cover = await self.cover
-        return self.cover
 
     @property
     def cover_path_uri(self):
@@ -68,13 +43,13 @@ class VideoContent(MediaContent):
             return self.cover.as_uri()
 
     @property
-    def display_duration(self) -> str:
-        return f"时长: {fmt_duration(self.duration)}"
+    def display_duration(self) -> str | None:
+        return f"时长: {fmt_duration(self.duration)}" if self.duration else None
 
     def __repr__(self) -> str:
-        repr = f"VideoContent({repr_path_task(self.path_task)}"
+        repr = f"VideoContent({self.path_task})"
         if self.cover is not None:
-            repr += f", cover={repr_path_task(self.cover)}"
+            repr += f", cover={self.cover}"
         return repr + ")"
 
 
@@ -109,18 +84,10 @@ class Author:
 
     name: str
     """作者名称"""
-    avatar: Path | Task[Path] | None = None
+    avatar: OptionalPathTask = field(default_factory=OptionalPathTask)
     """作者头像 URL 或本地路径"""
     description: str | None = None
     """作者个性签名等"""
-
-    async def get_avatar_path(self) -> Path | None:
-        if self.avatar is None:
-            return None
-        if isinstance(self.avatar, Path):
-            return self.avatar
-        self.avatar = await self.avatar
-        return self.avatar
 
     @property
     def avatar_path_uri(self):
@@ -130,7 +97,7 @@ class Author:
     def __repr__(self) -> str:
         repr = f"Author(name={self.name}"
         if self.avatar:
-            repr += f", avatar_{repr_path_task(self.avatar)}"
+            repr += f", avatar={self.avatar}"
         if self.description:
             repr += f", description={self.description}"
         return repr + ")"
@@ -152,10 +119,14 @@ class ParseResult:
     """发布时间戳, 秒"""
     url: str | None = None
     """来源链接"""
+
+    video: VideoContent | None = None
+    """视频内容"""
     contents: list[MediaContent] = field(default_factory=list)
     """媒体内容"""
     graphics: list[str | ImageContent] = field(default_factory=list)
     """图文内容"""
+
     extra: dict[str, Any] = field(default_factory=dict)
     """额外信息"""
     repost: ParseResult | None = None
@@ -186,10 +157,6 @@ class ParseResult:
         return self.extra.get("info")
 
     @property
-    def video_contents(self) -> list[VideoContent]:
-        return [cont for cont in self.contents if isinstance(cont, VideoContent)]
-
-    @property
     def img_contents(self) -> list[ImageContent]:
         return [cont for cont in self.contents if isinstance(cont, ImageContent)]
 
@@ -206,39 +173,35 @@ class ParseResult:
         """格式化时间戳"""
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
 
-    async def get_cover_path(self) -> Path | None:
-        """获取封面路径"""
-        for cont in self.contents:
-            if isinstance(cont, VideoContent):
-                return await cont.get_cover_path()
-        return None
-
-    def get_video(self) -> VideoContent | None:
-        """获取视频内容"""
-        for cont in self.contents:
-            if isinstance(cont, VideoContent):
-                return cont
-        return None
-
     def _iterate_download_coros(
         self,
         img_only: bool = False,
     ) -> Iterator[Awaitable[Path | None]]:
         if author := self.author:
             if author.avatar:
-                yield author.get_avatar_path()
+                yield author.avatar.get()
+
+        if self.video:
+            if self.video.cover:
+                yield self.video.cover.get()
+            yield self.video.path_task.get()
 
         for cont in self.contents:
             if not img_only:
-                yield cont.get_path()
-            elif isinstance(cont, VideoContent):
-                yield cont.get_cover_path()
+                yield cont.path_task.get()
             elif isinstance(cont, ImageContent):
-                yield cont.get_path()
+                yield cont.path_task.get()
+            elif isinstance(cont, AudioContent):
+                yield cont.path_task.get()
+            elif isinstance(cont, DynamicContent):
+                yield cont.path_task.get()
+            elif isinstance(cont, VideoContent):
+                if cont.cover:
+                    yield cont.cover.get()
 
         for gra in self.graphics:
             if isinstance(gra, ImageContent):
-                yield gra.get_path()
+                yield gra.path_task.get()
 
         if self.repost is not None:
             yield from self.repost._iterate_download_coros(img_only)
@@ -260,15 +223,12 @@ class ParseResult:
         content_type = self.extra.get("content_type")
 
         if content_type is None:
-            if self.video_contents:
+            if self.video:
                 return "视频"
             elif self.graphics:
                 return "图文"
-            elif self.img_contents:
+            else:
                 return "动态"
-            elif self.repost:
-                return "动态"
-
         return content_type
 
     def __repr__(self) -> str:
@@ -290,6 +250,7 @@ class ParseResult:
 class ParseResultKwargs(TypedDict, total=False):
     title: str | None
     text: str | None
+    video: VideoContent | None
     contents: list[MediaContent]
     graphics: list[str | ImageContent]
     timestamp: int | None

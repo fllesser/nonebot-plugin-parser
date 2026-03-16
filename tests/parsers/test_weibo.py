@@ -24,7 +24,7 @@ async def test_graphics():
         logger.debug(f"{url} | 解析结果: \n{parse_result}")
         if img_contents := parse_result.img_contents:
             for img_content in img_contents:
-                path = await img_content.get_path()
+                path = await img_content.path_task.get()
                 assert path.exists()
         logger.success(f"{url} | 微博图文解析成功")
 
@@ -53,13 +53,12 @@ async def test_repost():
 
         if img_contents := repost.img_contents:
             for img_content in img_contents:
-                path = await img_content.get_path()
+                path = await img_content.path_task.get()
                 assert path.exists()
 
-        if video_contents := repost.video_contents:
-            for video_content in video_contents:
-                path = await video_content.get_path()
-                assert path.exists()
+        if repost.video:
+            path = await repost.video.path_task.get()
+            assert path.exists()
 
     await asyncio.gather(*[parse_repost(url) for url in urls])
 
@@ -82,10 +81,9 @@ async def test_video():
         keyword, searched = parser.search_url(url)
         parse_result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: {parse_result}")
-        video_paths = parse_result.video_contents
-        for video_path in video_paths:
-            video_path = await video_path.get_path()
-            assert video_path.exists()
+        assert parse_result.video
+        video_path = await parse_result.video.path_task.get()
+        assert video_path.exists()
         logger.success(f"{url} | 微博视频下载成功")
 
     await asyncio.gather(*[parse_video(url) for url in urls])

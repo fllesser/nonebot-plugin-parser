@@ -51,23 +51,23 @@ class KuaiShouParser(BaseParser):
         if photo is None:
             raise ParseException("window.init_state don't contains videos or pics")
 
-        # 简洁的构建方式
-        contents = []
-
-        # 添加视频内容
-        if video_url := photo.video_url:
-            contents.append(self.create_video_content(video_url, photo.cover_url, photo.duration))
-
-        # 添加图片内容
-        if img_urls := photo.img_urls:
-            contents.extend(self.create_image_contents(img_urls))
-
         # 构建作者
         author = self.create_author(photo.name, photo.head_url)
 
-        return self.result(
+        # 先以部分数据构建结果，后续再填充内容，避免使用临时变量
+        result = self.result(
             title=photo.caption,
             author=author,
-            contents=contents,
+            contents=[],
             timestamp=photo.timestamp // 1000,
         )
+
+        # 添加视频内容
+        if video_url := photo.video_url:
+            result.video = self.create_video_content(video_url, photo.cover_url, photo.duration)
+
+        # 添加图片内容
+        if img_urls := photo.img_urls:
+            result.contents.extend(self.create_image_contents(img_urls))
+
+        return result

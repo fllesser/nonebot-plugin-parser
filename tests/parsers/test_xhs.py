@@ -29,7 +29,7 @@ async def test_parse():
 
         logger.debug(f"{url} | 解析结果: \n{result}")
         for content in result.contents:
-            path = await content.get_path()
+            path = await content.path_task.get()
             assert path.exists()
 
     await asyncio.gather(*[parse(url) for url in urls])

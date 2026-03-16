@@ -25,7 +25,7 @@ async def test_parse():
         video_contents = parse_result.contents
         assert video_contents
         for video_content in video_contents:
-            video_path = await video_content.get_path()
+            video_path = await video_content.path_task.get()
             assert video_path.exists()
             logger.info(f"{url} | 视频下载成功, 视频{fmt_size(video_path)}")
 

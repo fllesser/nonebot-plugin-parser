@@ -76,28 +76,27 @@ class DouyinParser(BaseParser):
             raise ParseException("can't find _ROUTER_DATA in html")
 
         video_data = video.decoder.decode(matched.group(1).strip()).video_data
-        # 使用新的简洁构建方式
-        contents = []
+
+        # 作者
+        author = self.create_author(video_data.author.nickname, video_data.avatar_url)
+
+        # 先以部分数据构建结果，后续再填充内容，避免使用临时变量
+        result = self.result(
+            title=video_data.desc,
+            author=author,
+            timestamp=video_data.create_time,
+        )
 
         # 添加图片内容
         if image_urls := video_data.image_urls:
-            contents.extend(self.create_image_contents(image_urls))
-
+            result.contents.extend(self.create_image_contents(image_urls))
         # 添加视频内容
         elif video_url := video_data.video_url:
             cover_url = video_data.cover_url
             duration = video_data.video.duration if video_data.video else 0
-            contents.append(self.create_video_content(video_url, cover_url, duration))
+            result.video = self.create_video_content(video_url, cover_url, duration)
 
-        # 构建作者
-        author = self.create_author(video_data.author.nickname, video_data.avatar_url)
-
-        return self.result(
-            title=video_data.desc,
-            author=author,
-            contents=contents,
-            timestamp=video_data.create_time,
-        )
+        return result
 
     async def parse_slides(self, video_id: str):
         from . import slides
@@ -112,22 +111,23 @@ class DouyinParser(BaseParser):
             response.raise_for_status()
 
         slides_data = slides.decoder.decode(response.content).aweme_details[0]
-        contents = []
+
+        # 作者
+        author = self.create_author(slides_data.name, slides_data.avatar_url)
+
+        # 先以部分数据构建结果，后续再填充内容，避免使用临时变量
+        result = self.result(
+            title=slides_data.desc,
+            author=author,
+            timestamp=slides_data.create_time,
+        )
 
         # 添加图片内容
         if image_urls := slides_data.image_urls:
-            contents.extend(self.create_image_contents(image_urls))
+            result.contents.extend(self.create_image_contents(image_urls))
 
         # 添加动态内容
         if dynamic_urls := slides_data.dynamic_urls:
-            contents.extend(self.create_dynamic_contents(dynamic_urls))
+            result.contents.extend(self.create_dynamic_contents(dynamic_urls))
 
-        # 构建作者
-        author = self.create_author(slides_data.name, slides_data.avatar_url)
-
-        return self.result(
-            title=slides_data.desc,
-            author=author,
-            contents=contents,
-            timestamp=slides_data.create_time,
-        )
+        return result
