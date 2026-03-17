@@ -14,12 +14,15 @@ class HtmlRenderer(ImageRenderer):
 
     @override
     async def render_image(self) -> bytes:
-        await self.result.ensure_downloads_complete(img_only=True)
+        # 利用 jinja 的 __await__ 转换，不再需要显式调用
+        # await self.result.ensure_downloads_complete(img_only=True)
 
         logo = resources.RESOURCES_DIR / f"{self.result.platform.name}.png"
         logo = logo.as_uri() if logo.exists() else None
+
         font = pconfig.custom_font or resources.DEFAULT_FONT_PATH
         font = font.as_uri() if font.exists() else None
+
         play_button = resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri()
 
         return await template_to_pic(
