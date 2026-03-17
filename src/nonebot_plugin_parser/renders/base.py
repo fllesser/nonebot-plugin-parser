@@ -36,7 +36,24 @@ class BaseRenderer(ABC):
         forwardable_segs: list[ForwardNodeInner] = []
         dynamic_segs: list[ForwardNodeInner] = []
 
-        for cont in chain(self.result.contents, self.result.repost.contents if self.result.repost else ()):
+        if self.result.video:
+            video_path = await self.result.video.path_task.get()
+            yield UniMessage(UniHelper.video_seg(video_path))
+
+        if self.result.repost and self.result.repost.video:
+            video_path = await self.result.repost.video.path_task.get()
+            yield UniMessage(UniHelper.video_seg(video_path))
+
+        for cont in chain(
+            self.result.contents,
+            self.result.repost.contents if self.result.repost else (),
+            self.result.graphics,
+            self.result.repost.graphics if self.result.repost else (),
+        ):
+            if isinstance(cont, str):
+                forwardable_segs.append(cont)
+                continue
+
             try:
                 path = await cont.path_task.get()
             except IgnoreException:
@@ -51,27 +68,12 @@ class BaseRenderer(ABC):
                 case AudioContent():
                     yield UniMessage(UniHelper.record_seg(path))
                 case ImageContent():
-                    forwardable_segs.append(UniHelper.img_seg(path))
+                    img_seg = UniHelper.img_seg(path)
+                    if cont.alt:
+                        img_seg += cont.alt
+                    forwardable_segs.append(img_seg)
                 case DynamicContent():
                     dynamic_segs.append(UniHelper.video_seg(path))
-
-        for cont in chain(self.result.graphics, self.result.repost.graphics if self.result.repost else ()):
-            if isinstance(cont, str):
-                forwardable_segs.append(cont)
-                continue
-
-            try:
-                path = await cont.path_task.get()
-            except IgnoreException:
-                continue
-            except DownloadException:
-                failed_count += 1
-                continue
-
-            img_seg = UniHelper.img_seg(path)
-            if cont.alt:
-                img_seg += cont.alt
-            forwardable_segs.append(img_seg)
 
         if forwardable_segs:
             if pconfig.need_forward_contents or len(forwardable_segs) > 4:

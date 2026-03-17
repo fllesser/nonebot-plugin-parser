@@ -15,7 +15,7 @@
       src: url('{{ font | safe }}');
     }
 
-      {
+    {
       % endif %
     }
 
@@ -608,7 +608,7 @@
         {% set count = imgs|length %}
         {% if count == 1 %}
         <div class="image-container">
-          <img src="{{ imgs[0].uri | safe }}" class="single-image" alt="image" />
+          <img src="{{ imgs[0].path_task.as_uri() | safe }}" class="single-image" alt="image" />
         </div>
         {% else %}
         {% set cols = 3 %}
@@ -616,7 +616,7 @@
         <div class="image-grid cols-{{ cols }}">
           {% for img in imgs[:9] %}
           <div class="grid-item">
-            <img src="{{ img.uri | safe }}" alt="image" />
+            <img src="{{ img.path_task.as_uri() | safe }}" alt="image" />
             {% if loop.last and count > 9 %}
             <div class="more-count">+{{ count - 9 }}</div>
             {% endif %}
