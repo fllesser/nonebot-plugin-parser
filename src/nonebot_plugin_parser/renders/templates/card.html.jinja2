@@ -572,11 +572,14 @@
                                     {% else %}
                                         {% set cols = 2 if count in [2, 4] else 3 %}
                                         <div class="image-grid cols-{{ cols }}">
-                                            {% for img in imgs[:9] %}
-                                                <div class="grid-item">
-                                                    <img src="{{ img.as_uri() | safe }}" alt="image" />
-                                                    {% if loop.last and count > 9 %}<div class="more-count">+{{ count - 9 }}</div>{% endif %}
-                                                </div>
+                                            {% for i in range(count if count < 9 else 9) %}
+                                                {% set img = imgs[i] %}
+                                                {% if img %}
+                                                    <div class="grid-item">
+                                                        <img src="{{ img.as_uri() | safe }}" alt="image" />
+                                                        {% if loop.last and count > 9 %}<div class="more-count">+{{ count - 9 }}</div>{% endif %}
+                                                    </div>
+                                                {% endif %}
                                             {% endfor %}
                                         </div>
                                     {% endif %}

@@ -6,8 +6,14 @@ from collections.abc import Callable, Coroutine
 
 
 class PathTask:
-    def __init__(self, task: Task[Path]):
-        self._task: Task[Path] = task
+    def __init__(
+        self,
+        task: Task[Path] | Coroutine[Any, Any, Path],
+    ):
+        if isinstance(task, Task):
+            self._task: Task[Path] = task
+        else:
+            self._task = create_task(task, name=task.__name__)
         self._path: Path | None = None
 
     async def get(self) -> Path:

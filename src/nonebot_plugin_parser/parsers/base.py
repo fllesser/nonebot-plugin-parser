@@ -180,6 +180,7 @@ class BaseParser:
     ):
         """创建视频内容"""
         from .data import VideoContent
+        from ..utils import extract_video_cover
 
         if isinstance(url_or_task, str):
             path_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
@@ -191,6 +192,16 @@ class BaseParser:
         cover_task = None
         if cover_url:
             cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
+        else:
+            # 如果没有封面 URL，使用 ffmpeg 提取封面
+            async def extract_cover():
+                video_path = await path_task.get()
+                cover_path = video_path.with_suffix(".jpg")
+                if not cover_path.exists():
+                    await extract_video_cover(video_path, cover_path)
+                return cover_path
+
+            cover_task = PathTask(extract_cover())
 
         return VideoContent(path_task, OptionalPathTask(cover_task), duration)
 
