@@ -61,10 +61,7 @@ class BaseRenderer(ABC):
                 case AudioContent():
                     yield UniMessage(UniHelper.record_seg(path))
                 case ImageContent():
-                    img_seg = UniHelper.img_seg(path)
-                    if cont.alt:
-                        img_seg += cont.alt
-                    forwardable_segs.append(img_seg)
+                    forwardable_segs.append(UniHelper.img_seg(path))
                 case DynamicContent():
                     dynamic_segs.append(UniHelper.video_seg(path))
 
@@ -81,7 +78,10 @@ class BaseRenderer(ABC):
                 continue
 
             if path := await cont.path_task.safe_get(on_error):
-                forwardable_segs.append(UniHelper.img_seg(path))
+                img_seg = UniHelper.img_seg(path)
+                if cont.alt:
+                    img_seg += cont.alt
+                forwardable_segs.append(img_seg)
 
         if forwardable_segs:
             if pconfig.need_forward_contents or len(forwardable_segs) > 4:
