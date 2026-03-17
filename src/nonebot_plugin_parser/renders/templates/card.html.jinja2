@@ -6,17 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Media Card</title>
   <style>
-    {
-      % if font %
-    }
-
     @font-face {
-      font-family: 'CustomFont';
+      font-family: "CustomFont";
       src: url('{{ font | safe }}');
-    }
-
-    {
-      % endif %
     }
 
     :root {
@@ -128,27 +120,14 @@
     }
 
     body {
-      font-family: {
-        % if font %
-      }
-
-      'CustomFont',
-      {
-      % endif %
-    }
-
-    "Noto Sans SC",
-    "PingFang SC",
-    "Microsoft YaHei",
-    system-ui,
-    sans-serif;
-    width: 800px;
-    padding: 24px;
-    background: linear-gradient(160deg, var(--grad-from) 0%, var(--grad-via) 50%, var(--grad-to) 100%);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    -webkit-font-smoothing: antialiased;
+      font-family: "CustomFont", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      width: 800px;
+      padding: 24px;
+      background: linear-gradient(160deg, var(--grad-from) 0%, var(--grad-via) 50%, var(--grad-to) 100%);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* ──────── 主卡片 ──────── */
@@ -573,19 +552,19 @@
         {# ── 视频封面 ── #}
         {% set video = result.video %}
         {% if video and video.cover %}
-          <div class="cover-wrapper">
-            <img src="{{ video.cover.as_uri() | safe }}" class="cover-img" alt="cover" />
-            {% if play_button %}
-            <div class="play-button">
-              <img src="{{ play_button | safe }}" alt="play" />
-            </div>
-            {% endif %}
-            {% if video.duration %}
-            <div class="cover-overlay">
-              <div class="duration-badge">{{ video.display_duration }}</div>
-            </div>
-            {% endif %}
+        <div class="cover-wrapper">
+          <img src="{{ video.cover.as_uri() | safe }}" class="cover-img" alt="cover" />
+          {% if play_button %}
+          <div class="play-button">
+            <img src="{{ play_button | safe }}" alt="play" />
           </div>
+          {% endif %}
+          {% if video.duration %}
+          <div class="cover-overlay">
+            <div class="duration-badge">{{ video.display_duration }}</div>
+          </div>
+          {% endif %}
+        </div>
         {% endif %}
 
         {# ── Title（有视频：标题属于视频，放在封面下方） ── #}
@@ -604,41 +583,41 @@
         {# ── Image Grid ── #}
         {% set imgs = result.img_contents %}
         {% if imgs%}
-          {% set count = imgs|length %}
-          {% if count == 1 %}
-          <div class="image-container">
-            <img src="{{ imgs[0].path_task.as_uri() | safe }}" class="single-image" alt="image" />
+        {% set count = imgs|length %}
+        {% if count == 1 %}
+        <div class="image-container">
+          <img src="{{ imgs[0].path_task.as_uri() | safe }}" class="single-image" alt="image" />
+        </div>
+        {% else %}
+        {% set cols = 2 if count in [2, 4] else 3 %}
+        <div class="image-grid cols-{{ cols }}">
+          {% for img in imgs[:9] %}
+          <div class="grid-item">
+            <img src="{{ img.path_task.as_uri() | safe }}" alt="image" />
+            {% if loop.last and count > 9 %}
+            <div class="more-count">+{{ count - 9 }}</div>
+            {% endif %}
           </div>
-          {% else %}
-          {% set cols = 2 if count in [2, 4] else 3 %}
-          <div class="image-grid cols-{{ cols }}">
-            {% for img in imgs[:9] %}
-            <div class="grid-item">
-              <img src="{{ img.path_task.as_uri() | safe }}" alt="image" />
-              {% if loop.last and count > 9 %}
-              <div class="more-count">+{{ count - 9 }}</div>
-              {% endif %}
-            </div>
-            {% endfor %}
-          </div>
+          {% endfor %}
+        </div>
         {% endif %}
 
         {# ── Graphics ── #}
         {% elif result.graphics %}
-          {% for text_or_img in result.graphics %}
-          <div class="graphics-item">
-            {% if text_or_img is string %}
-            <div class="text">{{ text_or_img }}</div>
-            {% else %}
-            <div class="image-container">
-              <img src="{{ text_or_img.path_task.as_uri() | safe }}" class="single-image" alt="graphics" />
-            </div>
-            {% endif %}
-            {% if text_or_img.alt %}
-            <div class="graphics-alt">{{ text_or_img.alt }}</div>
-            {% endif %}
+        {% for text_or_img in result.graphics %}
+        <div class="graphics-item">
+          {% if text_or_img is string %}
+          <div class="text">{{ text_or_img }}</div>
+          {% else %}
+          <div class="image-container">
+            <img src="{{ text_or_img.path_task.as_uri() | safe }}" class="single-image" alt="graphics" />
           </div>
-          {% endfor %}
+          {% endif %}
+          {% if text_or_img.alt %}
+          <div class="graphics-alt">{{ text_or_img.alt }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
         {% endif %}
 
         {% endif %} {# -- not video -- #}
