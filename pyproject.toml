@@ -68,7 +68,7 @@ emosvg = ["emosvg>=0.1.7"]
 all = [
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "nonebot-plugin-htmlrender>=0.6.7",
-  "yt-dlp[default]>=2026.2.21",
+  "yt-dlp[default]>=2026.3.13",
   "emosvg>=0.1.7",
 ]
 
@@ -76,7 +76,7 @@ all = [
 dev = [
   "nonebot2[fastapi]>=2.4.3,<3.0.0",
   "nonebot-adapter-onebot>=2.4.6",
-  "ruff>=0.15.0,<1.0.0",
+  "ruff>=0.15.6,<1.0.0",
   { include-group = "extras" },
   { include-group = "test" },
 ]
@@ -84,8 +84,8 @@ extras = [
   "emosvg>=0.1.7",
   "nonebot-plugin-htmlkit>=0.1.0rc4",
   "nonebot-plugin-htmlrender>=0.6.7",
-  "yt-dlp[default]>=2026.2.21",
-  "types-yt-dlp>=2026.2.21.20260223",
+  "yt-dlp[default]>=2026.3.13",
+  "types-yt-dlp>=2026.3.13.20260314",
 ]
 test = [
   "nonebug>=0.4.3,<1.0.0",
