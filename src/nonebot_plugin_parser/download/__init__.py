@@ -41,8 +41,7 @@ class StreamDownloader:
             task_id = progress.add_task(description=desc, total=total)
             yield partial(progress.update, task_id)
 
-    @auto_task
-    async def download_file(
+    async def _download_file(
         self,
         url: str,
         *,
@@ -88,6 +87,23 @@ class StreamDownloader:
         return file_path
 
     @auto_task
+    async def download_file(
+        self,
+        url: str,
+        *,
+        file_name: str | None = None,
+        ext_headers: dict[str, str] | None = None,
+        chunk_size: int = 64 * 1024,
+    ) -> Path:
+        """download file by url with stream"""
+        return await self._download_file(
+            url,
+            file_name=file_name,
+            ext_headers=ext_headers,
+            chunk_size=chunk_size,
+        )
+
+    @auto_task
     async def download_video(
         self,
         url: str,
@@ -99,7 +115,7 @@ class StreamDownloader:
         if video_name is None:
             video_name = generate_file_name(url, ".mp4")
 
-        return await self.download_file(
+        return await self._download_file(
             url,
             file_name=video_name,
             ext_headers=ext_headers,
@@ -118,7 +134,7 @@ class StreamDownloader:
         if audio_name is None:
             audio_name = generate_file_name(url, ".mp3")
 
-        return await self.download_file(
+        return await self._download_file(
             url,
             file_name=audio_name,
             ext_headers=ext_headers,
@@ -136,7 +152,7 @@ class StreamDownloader:
         if img_name is None:
             img_name = generate_file_name(url, ".jpg")
 
-        return await self.download_file(
+        return await self._download_file(
             url,
             file_name=img_name,
             ext_headers=ext_headers,
@@ -153,24 +169,11 @@ class StreamDownloader:
     ) -> Path:
         """download video and audio file by url with stream and merge"""
         v_path, a_path = await asyncio.gather(
-            self.download_video(v_url, ext_headers=ext_headers),
-            self.download_audio(a_url, ext_headers=ext_headers),
+            self._download_file(v_url, ext_headers=ext_headers),
+            self._download_file(a_url, ext_headers=ext_headers),
         )
         await merge_av(v_path=v_path, a_path=a_path, output_path=output_path)
         return output_path
-
-    async def download_imgs_without_raise(
-        self,
-        urls: list[str],
-        *,
-        ext_headers: dict[str, str] | None = None,
-    ) -> list[Path]:
-        """download image files by urls with stream, ignore errors"""
-        paths_or_errs = await asyncio.gather(
-            *[self.download_img(url, ext_headers=ext_headers) for url in urls],
-            return_exceptions=True,
-        )
-        return [p for p in paths_or_errs if isinstance(p, Path)]
 
     @auto_task
     async def download_m3u8(
