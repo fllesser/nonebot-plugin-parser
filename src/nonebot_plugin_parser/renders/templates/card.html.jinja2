@@ -514,11 +514,11 @@
 <body data-platform="{{ result.platform.name if result.platform else '' | safe }}">
   {% autoescape true %}
   {% macro render_card(result, is_repost=False) %}
-  <div class="{% if not is_repost %}card-wrapper{% if result.content_type %} has-badge{% endif %}{% endif %}">
+  {% set content_type = result.content_type %}
+  <div class="{% if not is_repost %}card-wrapper{% if content_type %} has-badge{% endif %}{% endif %}">
     {% if not is_repost and result.content_type %}
     <span class="content-type-badge">
       <span class="badge-icon">
-        {% set content_type = result.content_type %}
         {% if content_type == '视频' %}
         <svg viewBox="0 0 24 24">
           <path
@@ -540,7 +540,6 @@
     </span>
     {% endif %}
     <div class="card {% if is_repost %}repost{% endif %}">
-
       {# ── Header ── #}
       {% set author = result.author %}
       {% if author %}
@@ -595,7 +594,7 @@
         {% endif %}
 
         {# ── Text（非动态类型） ── #}
-        {% if result.content_type != '动态' and result.text %}
+        {% if content_type != '动态' and result.text %}
         <div class="text">{{ result.text }}</div>
         {% endif %}
 

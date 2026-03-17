@@ -210,7 +210,7 @@ class ParseResult:
         )
 
     @property
-    def content_type(self) -> str | None:
+    def content_type(self) -> str:
         """获取内容类型 (允许解析器通过 extra 显式指定)"""
         content_type = self.extra.get("content_type")
 
