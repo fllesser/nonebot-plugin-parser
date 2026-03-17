@@ -632,7 +632,7 @@
           <div class="text">{{ text_or_img }}</div>
           {% else %}
           <div class="image-container">
-            <img src="{{ text_or_img.uri | safe }}" class="single-image" alt="graphics" />
+            <img src="{{ text_or_img.path_task.as_uri() | safe }}" class="single-image" alt="graphics" />
           </div>
           {% endif %}
           {% if text_or_img.alt %}
