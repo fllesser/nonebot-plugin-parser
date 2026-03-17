@@ -20,11 +20,16 @@ class PathTask:
     def __await__(self):
         return self.get().__await__()
 
-    async def safe_get(self) -> Path | None:
+    async def safe_get(
+        self,
+        on_error: Callable[[Exception], None] | None = None,
+    ) -> Path | None:
         """任务失败, 返回 None"""
         try:
             return await self.get()
-        except Exception:
+        except Exception as e:
+            if on_error is not None:
+                on_error(e)
             return None
 
     @property
@@ -52,11 +57,14 @@ class OptionalPathTask:
     def __await__(self):
         return self.get().__await__()
 
-    async def safe_get(self) -> Path | None:
+    async def safe_get(
+        self,
+        on_error: Callable[[Exception], None] | None = None,
+    ) -> Path | None:
         """任务失败, 返回 None"""
         if self._path_task is None:
             return None
-        return await self._path_task.safe_get()
+        return await self._path_task.safe_get(on_error)
 
     @property
     def uri(self) -> str | None:
