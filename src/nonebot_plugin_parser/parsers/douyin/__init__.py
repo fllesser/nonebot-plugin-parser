@@ -128,6 +128,7 @@ class DouyinParser(BaseParser):
 
         # 添加动态内容
         if dynamic_urls := slides_data.dynamic_urls:
-            result.contents.extend(self.create_dynamic_contents(dynamic_urls))
+            for dynamic_url in dynamic_urls:
+                result.contents.append(self.create_video_content(dynamic_url))
 
         return result

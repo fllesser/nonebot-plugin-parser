@@ -44,6 +44,8 @@ class VideoContent(MediaContent):
     """视频封面"""
     duration: float | None = None
     """时长 单位: 秒"""
+    gif_path: Path | None = None
+    """视频转 GIF """
 
     @property
     def display_duration(self) -> str | None:
@@ -62,13 +64,6 @@ class ImageContent(MediaContent):
 
     alt: str | None = None
     """图片描述 用于图文"""
-
-
-@dataclass(repr=False, slots=True)
-class DynamicContent(MediaContent):
-    """动态内容 视频格式 后续转 gif"""
-
-    gif_path: Path | None = None
 
 
 @dataclass(slots=True)
@@ -121,7 +116,7 @@ class ParseResult:
     video: VideoContent | None = None
     """视频内容"""
     contents: list[MediaContent] = field(default_factory=list)
-    """媒体内容"""
+    """其他媒体内容"""
     graphics: list[str | ImageContent] = field(default_factory=list)
     """图文内容"""
 
@@ -155,6 +150,11 @@ class ParseResult:
         return self.extra.get("info")
 
     @property
+    def video_contents(self) -> list[VideoContent]:
+        """获取视频内容（如果有）"""
+        return [cont for cont in self.contents if isinstance(cont, VideoContent)]
+
+    @property
     def img_contents(self) -> list[ImageContent]:
         return [cont for cont in self.contents if isinstance(cont, ImageContent)]
 
@@ -163,8 +163,15 @@ class ParseResult:
         return [cont for cont in self.contents if isinstance(cont, AudioContent)]
 
     @property
-    def dynamic_contents(self) -> list[DynamicContent]:
-        return [cont for cont in self.contents if isinstance(cont, DynamicContent)]
+    def all_grid_images(self):
+        """获取所有用于渲染图片网格的图片（视频封面 + 图片）"""
+        covers: list[PathTask | OptionalPathTask] = []
+        for cont in self.contents:
+            if isinstance(cont, VideoContent):
+                covers.append(cont.cover)
+            elif isinstance(cont, ImageContent):
+                covers.append(cont.path_task)
+        return covers
 
     @property
     def formartted_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str | None:

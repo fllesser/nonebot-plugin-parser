@@ -559,12 +559,13 @@
                             {# ── 非视频媒体 ── #}
                             {% if not video %}
                                 {# ── Image Grid ── #}
-                                {% set imgs = result.img_contents %}
+                                {% set imgs = result.all_grid_images %}
                                 {% if imgs %}
                                     {% set count = imgs|length %}
                                     {% if count == 1 %}
+                                        {% set img = imgs[0] %}
                                         <div class="image-container">
-                                            <img src="{{ imgs[0].path_task.as_uri() | safe }}"
+                                            <img src="{{ img.as_uri() | safe }}"
                                                  class="single-image"
                                                  alt="image" />
                                         </div>
@@ -573,7 +574,7 @@
                                         <div class="image-grid cols-{{ cols }}">
                                             {% for img in imgs[:9] %}
                                                 <div class="grid-item">
-                                                    <img src="{{ img.path_task.as_uri() | safe }}" alt="image" />
+                                                    <img src="{{ img.as_uri() | safe }}" alt="image" />
                                                     {% if loop.last and count > 9 %}<div class="more-count">+{{ count - 9 }}</div>{% endif %}
                                                 </div>
                                             {% endfor %}

@@ -181,16 +181,16 @@ class BaseParser:
         """创建视频内容"""
         from .data import VideoContent
 
-        cover_task = None
-        if cover_url:
-            cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
-
         if isinstance(url_or_task, str):
             path_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
         elif isinstance(url_or_task, Task):
             path_task = PathTask(url_or_task)
         elif isinstance(url_or_task, PathTask):
             path_task = url_or_task
+
+        cover_task = None
+        if cover_url:
+            cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
 
         return VideoContent(path_task, OptionalPathTask(cover_task), duration)
 
@@ -219,35 +219,6 @@ class BaseParser:
             path_task = url_or_task
 
         return ImageContent(path_task, alt=alt)
-
-    def create_dynamic_contents(
-        self,
-        dynamic_urls: list[str],
-    ):
-        """创建动态图片内容列表"""
-        from .data import DynamicContent
-
-        contents: list[DynamicContent] = []
-        for url in dynamic_urls:
-            task = DOWNLOADER.download_video(url, ext_headers=self.headers)
-            contents.append(DynamicContent(task))
-        return contents
-
-    def create_dynamic_content(
-        self,
-        url_or_task: str | Task[Path] | PathTask,
-    ):
-        """创建动态图片内容"""
-        from .data import DynamicContent
-
-        if isinstance(url_or_task, str):
-            path_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
-        elif isinstance(url_or_task, Task):
-            path_task = PathTask(url_or_task)
-        elif isinstance(url_or_task, PathTask):
-            path_task = url_or_task
-
-        return DynamicContent(path_task)
 
     def create_audio_content(
         self,

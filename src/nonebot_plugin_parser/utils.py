@@ -144,6 +144,22 @@ async def encode_video_to_h264(video_path: Path) -> Path:
     return output_path
 
 
+async def extract_video_cover(video_path: Path, cover_path: Path) -> None:
+    """从视频中提取封面图（第一帧）"""
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(video_path),
+        "-ss",
+        "00:00:01",  # 从第1秒开始
+        "-vframes",
+        "1",
+        str(cover_path),
+    ]
+    await exec_ffmpeg_cmd(cmd)
+
+
 def fmt_size(file_path: Path) -> str:
     """格式化文件大小"""
     return f"大小: {file_path.stat().st_size / 1024 / 1024:.2f} MB"
