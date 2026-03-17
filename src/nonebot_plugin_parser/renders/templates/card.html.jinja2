@@ -579,7 +579,7 @@
                                             {% endfor %}
                                         </div>
                                     {% endif %}
-                                  {# ── Graphics ── #}
+                                {# ── Graphics ── #}
                                 {% elif result.graphics %}
                                     {% for text_or_img in result.graphics %}
                                         <div class="graphics-item">
@@ -597,7 +597,6 @@
                                     {% endfor %}
                                 {% endif %}
                             {% endif %}
-                            {# -- not video -- #}
                             {# ── Repost ── #}
                             {% if result.repost %}{{ render_card(result.repost, is_repost=True) }}{% endif %}
                         </div>
