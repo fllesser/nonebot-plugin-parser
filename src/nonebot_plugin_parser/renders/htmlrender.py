@@ -19,8 +19,10 @@ class HtmlRenderer(ImageRenderer):
 
         logo = resources.RESOURCES_DIR / f"{self.result.platform.name}.png"
         logo = logo.as_uri() if logo.exists() else None
+
         font = pconfig.custom_font or resources.DEFAULT_FONT_PATH
         font = font.as_uri() if font.exists() else None
+
         play_button = resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri()
 
         return await template_to_pic(
