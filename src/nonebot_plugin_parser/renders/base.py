@@ -40,15 +40,10 @@ class BaseRenderer(ABC):
             video_path = await self.result.video.path_task.get()
             yield UniMessage(UniHelper.video_seg(video_path))
 
-        if self.result.repost and self.result.repost.video:
-            video_path = await self.result.repost.video.path_task.get()
-            yield UniMessage(UniHelper.video_seg(video_path))
-
         for cont in chain(
             self.result.contents,
-            self.result.repost.contents if self.result.repost else (),
             self.result.graphics,
-            self.result.repost.graphics if self.result.repost else (),
+            *(self.result.repost.contents, self.result.repost.graphics) if self.result.repost else (),
         ):
             if isinstance(cont, str):
                 forwardable_segs.append(cont)
@@ -74,6 +69,10 @@ class BaseRenderer(ABC):
                     forwardable_segs.append(img_seg)
                 case DynamicContent():
                     dynamic_segs.append(UniHelper.video_seg(path))
+
+        if self.result.repost and self.result.repost.video:
+            video_path = await self.result.repost.video.path_task.get()
+            yield UniMessage(UniHelper.video_seg(video_path))
 
         if forwardable_segs:
             if pconfig.need_forward_contents or len(forwardable_segs) > 4:
