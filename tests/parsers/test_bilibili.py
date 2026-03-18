@@ -22,6 +22,7 @@ async def test_live():
     assert result.title, "标题为空"
     assert result.author, "作者为空"
 
+    assert result.author.avatar, "作者头像不存在"
     avatar_path = await result.author.avatar.get()
     assert avatar_path, "头像不存在"
     assert avatar_path.exists(), "头像不存在"
@@ -50,6 +51,7 @@ async def test_read():
     logger.debug(f"result: {result}")
     assert result.title, "标题为空"
     assert result.author, "作者为空"
+    assert result.author.avatar, "作者头像为空"
     avatar_path = await result.author.avatar.safe_get()
     assert avatar_path, "头像不存在"
     assert avatar_path.exists(), "头像不存在"
@@ -77,6 +79,7 @@ async def test_dynamic():
         dynamic_id = int(searched.group("dynamic_id"))
         result = await parser.parse_dynamic_or_opus(dynamic_id)
         assert result.author, "作者为空"
+        assert result.author.avatar, "作者头像为空"
         avatar_path = await result.author.avatar.get()
         assert avatar_path, "头像不存在"
         assert avatar_path.exists(), "头像不存在"

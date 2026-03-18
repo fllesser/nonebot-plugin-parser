@@ -24,6 +24,7 @@ async def test_video():
         assert result.video, "视频内容为空"
         path = await result.video.path_task.get()
         assert path.exists(), "视频不存在"
+        assert result.video.cover, "封面不存在"
         cover_path = await result.video.cover.get()
         assert cover_path, "封面不存在"
 

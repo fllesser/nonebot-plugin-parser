@@ -25,6 +25,7 @@ async def test_common_video():
 
         assert result.title, "标题为空"
         assert result.author, "作者为空"
+        assert result.author.avatar, "作者头像不存在"
         assert await result.author.avatar.get(), "头像为空"
         assert result.video, "视频内容为空"
 

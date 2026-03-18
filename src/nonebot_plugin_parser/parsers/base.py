@@ -7,7 +7,7 @@ from collections.abc import Callable, Coroutine
 from typing_extensions import Unpack, final
 
 from .data import Platform, ParseResult, ImageContent, ParseResultKwargs
-from .task import PathTask, OptionalPathTask
+from .task import PathTask
 from ..config import pconfig as pconfig
 from ..download import DOWNLOADER
 from ..constants import IOS_HEADER, COMMON_HEADER, ANDROID_HEADER, COMMON_TIMEOUT
@@ -167,10 +167,15 @@ class BaseParser:
         """创建作者对象"""
         from .data import Author
 
-        avatar_task = None
+        author = Author(name=name, description=description)
+
         if avatar_url:
-            avatar_task = DOWNLOADER.download_img(avatar_url, ext_headers=self.headers)
-        return Author(name=name, avatar=OptionalPathTask(avatar_task), description=description)
+            author.avatar = PathTask(
+                DOWNLOADER.download_img(
+                    avatar_url,
+                    ext_headers=self.headers,
+                )
+            )
 
     def create_video_content(
         self,
@@ -197,11 +202,13 @@ class BaseParser:
 
             cover_task = extract_cover()
 
-        return VideoContent(
+        video = VideoContent(
             PathTask(path_task),
-            OptionalPathTask(cover_task),
-            duration,
+            duration=duration,
         )
+        video.cover = PathTask(cover_task)
+
+        return video
 
     def create_image_contents(
         self,

@@ -15,6 +15,7 @@ async def test_favlist():
 
     assert result.title, "标题为空"
     assert result.author, "作者为空"
+    assert result.author.avatar, "作者头像不存在"
     avatar_path = await result.author.avatar.get()
     assert avatar_path, "头像不存在"
     assert avatar_path.exists(), "头像不存在"
