@@ -23,9 +23,6 @@ class PathTask:
         self._path = await self._task
         return self._path
 
-    def __await__(self):
-        return self.get().__await__()
-
     async def safe_get(
         self,
         on_error: Callable[[Exception], None] | None = None,
@@ -37,6 +34,9 @@ class PathTask:
             if on_error is not None:
                 on_error(e)
             return None
+
+    def __await__(self):
+        return self.safe_get().__await__()
 
     @property
     def uri(self) -> str | None:
@@ -70,9 +70,6 @@ class OptionalPathTask:
             return None
         return await self._path_task.get()
 
-    def __await__(self):
-        return self.get().__await__()
-
     async def safe_get(
         self,
         on_error: Callable[[Exception], None] | None = None,
@@ -81,6 +78,9 @@ class OptionalPathTask:
         if self._path_task is None:
             return None
         return await self._path_task.safe_get(on_error)
+
+    def __await__(self):
+        return self.safe_get().__await__()
 
     @property
     def uri(self) -> str | None:
