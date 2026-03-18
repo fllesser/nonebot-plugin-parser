@@ -23,14 +23,10 @@ class PathTask:
         self._path = await self._task
         return self._path
 
-    def __await__(self):
-        return self.get().__await__()
-
     async def safe_get(
         self,
         on_error: Callable[[Exception], None] | None = None,
     ) -> Path | None:
-        """任务失败, 返回 None"""
         try:
             return await self.get()
         except Exception as e:
@@ -39,8 +35,11 @@ class PathTask:
             return None
 
     @property
-    def uri(self) -> str | None:
-        return self._path.as_uri() if self._path is not None else None
+    async def uri(self) -> str | None:
+        path = await self.safe_get()
+        if path is not None:
+            return path.as_uri()
+        return None
 
     def __repr__(self) -> str:
         if self._path is not None:
@@ -50,8 +49,6 @@ class PathTask:
 
 
 class OptionalPathTask:
-    """封装可选的 PathTask, 提供便捷的 API 避免频繁判空"""
-
     def __init__(
         self,
         path_task: PathTask | Coroutine[Any, Any, Path] | None = None,
@@ -70,9 +67,6 @@ class OptionalPathTask:
             return None
         return await self._path_task.get()
 
-    def __await__(self):
-        return self.get().__await__()
-
     async def safe_get(
         self,
         on_error: Callable[[Exception], None] | None = None,
@@ -83,10 +77,11 @@ class OptionalPathTask:
         return await self._path_task.safe_get(on_error)
 
     @property
-    def uri(self) -> str | None:
-        if self._path_task is None:
-            return None
-        return self._path_task.uri
+    async def uri(self) -> str | None:
+        path = await self.safe_get()
+        if path is not None:
+            return path.as_uri()
+        return None
 
     def __repr__(self) -> str:
         return f"{self._path_task}"
