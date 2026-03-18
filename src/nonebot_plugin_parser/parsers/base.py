@@ -177,6 +177,8 @@ class BaseParser:
                 )
             )
 
+        return author
+
     def create_video_content(
         self,
         url_or_task: str | Task[Path],
