@@ -7,8 +7,8 @@ from datetime import datetime
 from dataclasses import field, dataclass
 from collections.abc import Iterator, Awaitable
 
-from .task import PathTask, OptionalPathTask
-from ..utils import fmt_duration
+from .task import PathTask
+from .utils import fmt_duration
 
 
 @dataclass(repr=False, slots=True)
@@ -35,7 +35,7 @@ class AudioContent(MediaContent):
 class VideoContent(MediaContent):
     """视频内容"""
 
-    cover: OptionalPathTask = field(default_factory=OptionalPathTask)
+    cover: PathTask | None = None
     """视频封面"""
     duration: float | None = None
     """时长 单位: 秒"""
@@ -77,7 +77,7 @@ class Author:
 
     name: str
     """作者名称"""
-    avatar: OptionalPathTask = field(default_factory=OptionalPathTask)
+    avatar: PathTask | None = None
     """作者头像 URL 或本地路径"""
     description: str | None = None
     """作者个性签名等"""
@@ -160,10 +160,11 @@ class ParseResult:
     @property
     def all_grid_images(self):
         """获取所有用于渲染图片网格的图片（视频封面 + 图片）"""
-        covers: list[PathTask | OptionalPathTask] = []
+        covers: list[PathTask] = []
         for cont in self.contents:
             if isinstance(cont, VideoContent):
-                covers.append(cont.cover)
+                if cont.cover is not None:
+                    covers.append(cont.cover)
             elif isinstance(cont, ImageContent):
                 covers.append(cont.path_task)
         return covers
@@ -182,7 +183,8 @@ class ParseResult:
                 yield author.avatar.get()
 
         if self.video:
-            yield self.video.cover.get()
+            if self.video.cover:
+                yield self.video.cover.get()
             yield self.video.path_task.get()
 
         for cont in self.contents:
@@ -191,7 +193,8 @@ class ParseResult:
             elif isinstance(cont, ImageContent):
                 yield cont.path_task.get()
             elif isinstance(cont, VideoContent):
-                yield cont.cover.get()
+                if cont.cover:
+                    yield cont.cover.get()
 
         for gra in self.graphics:
             if isinstance(gra, ImageContent):

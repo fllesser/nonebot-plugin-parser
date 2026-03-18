@@ -59,7 +59,7 @@ class BaseRenderer(ABC):
 
             match cont:
                 case VideoContent() as video:
-                    thumbnail = await video.cover.safe_get()
+                    thumbnail = await video.cover.safe_get() if video.cover else None
                     other_segs.append(UniHelper.video_seg(path, thumbnail))
                 case AudioContent():
                     yield UniMessage(UniHelper.record_seg(path))

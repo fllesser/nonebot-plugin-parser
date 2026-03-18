@@ -282,9 +282,10 @@ class CommonRenderer(ImageRenderer):
         x_pos = self.PADDING
 
         # 头像
-        avatar_path = await self.result.author.avatar.safe_get()
-        avatar = self._load_avatar(avatar_path)
-        self._image.paste(avatar, (x_pos, self.y_pos), avatar)
+        if avatar := self.result.author.avatar:
+            avatar_path = await self.result.author.avatar.safe_get()
+            avatar = self._load_avatar(avatar_path)
+            self._image.paste(avatar, (x_pos, self.y_pos), avatar)
 
         # 文字区域
         text_x = self.PADDING + self.AVATAR_SIZE + self.AVATAR_TEXT_GAP
@@ -386,7 +387,12 @@ class CommonRenderer(ImageRenderer):
         if self.result.video is None:
             return None
 
-        cover_path = await self.result.video.cover.safe_get()
+        cover_task = self.result.video.cover
+
+        if cover_task is None:
+            return None
+
+        cover_path = await cover_task.safe_get()
 
         if cover_path is None or not cover_path.exists():
             return None
