@@ -1,0 +1,39 @@
+from typing_extensions import override
+
+from nonebot import require
+
+require("nonebot_plugin_htmlkit")
+from nonebot_plugin_htmlkit import template_to_pic
+
+from . import resources
+from .base import ImageRenderer, pconfig
+
+
+class HtmlKitRenderer(ImageRenderer):
+    """HTML 渲染器"""
+
+    @override
+    async def render_image(self) -> bytes:
+        # 利用 jinja 的 __await__ 转换，不再需要显式调用
+        # await self.result.ensure_downloads_complete(img_only=True)
+
+        logo = resources.RESOURCES_DIR / f"{self.result.platform.name}.png"
+        logo = logo.as_uri() if logo.exists() else None
+
+        font = pconfig.custom_font or resources.DEFAULT_FONT_PATH
+        font = font.as_uri() if font.exists() else None
+
+        play_button = resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri()
+
+        return await template_to_pic(
+            template_path=str(self.templates_dir),
+            template_name="card.html.jinja2",
+            templates={
+                "result": self.result,
+                "logo": logo,
+                "font": font,
+                "font_weight": pconfig.custom_font_weight,
+                "play_button": play_button,
+            },
+            max_width=1000,
+        )

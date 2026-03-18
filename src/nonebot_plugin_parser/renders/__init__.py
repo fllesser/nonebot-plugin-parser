@@ -33,8 +33,13 @@ match pconfig.render_type:
             logger.warning("未安装 `nonebot_plugin_htmlrender`, 已回退到 common 渲染器")
             RENDERER = CommonRenderer
     case RenderType.htmlkit:
-        logger.warning("htmlkit 渲染器尚实现，已回退到 common 渲染器")
-        RENDERER = CommonRenderer
+        if is_module_available("nonebot_plugin_htmlkit"):
+            from .htmlkit import HtmlKitRenderer
+
+            RENDERER = HtmlKitRenderer
+        else:
+            logger.warning("未安装 `nonebot_plugin_htmlkit`, 已回退到 common 渲染器")
+            RENDERER = CommonRenderer
 
 
 def get_renderer(platform: str) -> type[BaseRenderer]:
