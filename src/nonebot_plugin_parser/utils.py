@@ -1,7 +1,6 @@
 import re
 import asyncio
 import hashlib
-import importlib.util
 from typing import Any, TypeVar
 from pathlib import Path
 from collections import OrderedDict
@@ -207,8 +206,3 @@ def write_json_to_data(data: dict[str, Any] | str, file_name: str):
     with open(path, "w") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
     logger.success(f"数据写入 {path} 成功")
-
-
-def is_module_available(module_name: str) -> bool:
-    """检查模块是否可用"""
-    return importlib.util.find_spec(module_name) is not None
