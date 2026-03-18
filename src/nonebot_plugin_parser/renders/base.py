@@ -91,10 +91,13 @@ class BaseRenderer(ABC):
                 or len(other_segs) > 1
                 or (len(mergeable_segs) + len(other_segs)) > 4
             ):
-                forward_msg = UniHelper.construct_forward_message(mergeable_segs + other_segs)
+                forward_msg = UniHelper.construct_forward_message(
+                    mergeable_segs + other_segs,
+                )
                 yield UniMessage(forward_msg)
             else:
-                yield UniMessage(mergeable_segs)
+                if mergeable_segs:
+                    yield UniMessage(mergeable_segs)
                 for other_seg in other_segs:
                     yield UniMessage(other_seg)
 
