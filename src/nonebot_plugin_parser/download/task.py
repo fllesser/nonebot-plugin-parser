@@ -6,6 +6,8 @@ from collections.abc import Callable, Coroutine
 
 
 class PathTask:
+    __slots__ = ("_path", "_task")
+
     def __init__(
         self,
         task: Task[Path] | Coroutine[Any, Any, Path],
@@ -49,6 +51,8 @@ class PathTask:
 
 
 class OptionalPathTask:
+    __slots__ = ("_path_task",)
+
     def __init__(
         self,
         path_task: PathTask | Coroutine[Any, Any, Path] | None = None,
