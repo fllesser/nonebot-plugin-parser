@@ -250,6 +250,9 @@ parser_append_url=False
 # 例如: ./config/nonebot_plugin_parser/
 parser_custom_font="LXGWZhenKaiGB-Regular.ttf"
 
+# [可选] 用户名及标题字体粗细程度(仅 htmlrender)，如果使用 LXGW ZhenKai 字体建议设置为 500～600 之间
+parser_custom_font_weight: int = 700
+
 # [可选] 是否需要转发媒体内容(超过 4 项时始终使用合并转发)
 parser_need_forward_contents=True
 
@@ -395,15 +398,6 @@ video = self.create_video_content(
 images = self.create_image_contents([
     "https://example.com/img1.jpg",
     "https://example.com/img2.jpg",
-])
-```
-
-> 创建动图内容（GIF)，平台一般只提供视频（后续插件会做自动转为 gif 的处理)
-
-```python
-dynamics = self.create_dynamic_contents([
-    "https://example.com/dynamic1.mp4",
-    "https://example.com/dynamic2.mp4",
 ])
 ```
 

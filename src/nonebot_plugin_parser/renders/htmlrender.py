@@ -32,6 +32,7 @@ class HtmlRenderer(ImageRenderer):
                 "result": self.result,
                 "logo": logo,
                 "font": font,
+                "font_weight": pconfig.custom_font_weight,
                 "play_button": play_button,
             },
             pages={"viewport": {"width": 800, "height": 100}},

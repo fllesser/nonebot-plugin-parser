@@ -48,6 +48,8 @@ class Config(BaseModel):
     """Renderer 类型"""
     parser_custom_font: str | None = None
     """自定义字体"""
+    parser_custom_font_weight: int = 700
+    """字体粗细程度"""
     parser_need_forward_contents: bool = True
     """是否需要转发媒体内容"""
     parser_emoji_cdn: str = ELK_SH_CDN
@@ -159,6 +161,11 @@ class Config(BaseModel):
                     return old_path
 
                 return font_path
+
+    @property
+    def custom_font_weight(self) -> int:
+        """字体粗细程度"""
+        return self.parser_custom_font_weight
 
     @property
     def need_forward_contents(self) -> bool:
