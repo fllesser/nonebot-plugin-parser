@@ -1,29 +1,40 @@
 import importlib
 
-from nonebot import get_driver
+from nonebot import logger, get_driver
 
-from .. import utils
 from .base import BaseRenderer
 from .common import CommonRenderer
 from .default import DefaultRenderer
 
-_HTML_RENDER_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlrender")
-_HTMLKIT_AVAILABLE = utils.is_module_available("nonebot_plugin_htmlkit")
+
+def is_module_available(module_name: str) -> bool:
+    """检查模块是否可用"""
+    import importlib.util
+
+    return importlib.util.find_spec(module_name) is not None
+
 
 from ..config import pconfig
 from ..constants import RenderType
+
+RENDERER: type[BaseRenderer] | None = None
 
 match pconfig.render_type:
     case RenderType.common:
         RENDERER = CommonRenderer
     case RenderType.default:
         RENDERER = DefaultRenderer
-    case RenderType.htmlrender if _HTML_RENDER_AVAILABLE:
-        from .htmlrender import HtmlRenderer
+    case RenderType.htmlrender:
+        if is_module_available("nonebot_plugin_htmlrender"):
+            from .htmlrender import HtmlRenderer
 
-        RENDERER = HtmlRenderer
+            RENDERER = HtmlRenderer
+        else:
+            logger.warning("未安装 `nonebot_plugin_htmlrender`, 已回退到 common 渲染器")
+            RENDERER = CommonRenderer
     case RenderType.htmlkit:
-        RENDERER = None
+        logger.warning("htmlkit 渲染器尚实现，已回退到 common 渲染器")
+        RENDERER = CommonRenderer
 
 
 def get_renderer(platform: str) -> type[BaseRenderer]:
@@ -31,11 +42,8 @@ def get_renderer(platform: str) -> type[BaseRenderer]:
     if RENDERER:
         return RENDERER
 
-    if not _HTMLKIT_AVAILABLE:
-        return CommonRenderer
-    else:
-        module = importlib.import_module("." + platform, package=__name__)
-        return getattr(module, "Renderer")
+    module = importlib.import_module("." + platform, package=__name__)
+    return getattr(module, "Renderer")
 
 
 @get_driver().on_startup
