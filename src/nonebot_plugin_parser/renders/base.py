@@ -33,7 +33,10 @@ class BaseRenderer(ABC):
 
     async def render_contents(self) -> AsyncGenerator[UniMessage[Any], None]:
         failed_count = 0
-        forwardable_segs: list[ForwardNodeInner] = []
+        # 可合并的 Seg，例如 文字，图片
+        mergeable_segs: list[ForwardNodeInner] = []
+        # 不可合并的 Seg，例如 视频，语音
+        other_segs: list[ForwardNodeInner] = []
 
         def on_error(e: Exception):
             if isinstance(e, IgnoreException):
@@ -57,11 +60,11 @@ class BaseRenderer(ABC):
             match cont:
                 case VideoContent() as video:
                     thumbnail = await video.cover.safe_get()
-                    forwardable_segs.append(UniHelper.video_seg(path, thumbnail))
+                    other_segs.append(UniHelper.video_seg(path, thumbnail))
                 case AudioContent():
                     yield UniMessage(UniHelper.record_seg(path))
                 case ImageContent():
-                    forwardable_segs.append(UniHelper.img_seg(path))
+                    mergeable_segs.append(UniHelper.img_seg(path))
 
         if self.result.repost and self.result.repost.video:
             if video_path := await self.result.repost.video.path_task.safe_get(on_error):
@@ -72,21 +75,23 @@ class BaseRenderer(ABC):
             self.result.repost.graphics if self.result.repost else (),
         ):
             if isinstance(cont, str):
-                forwardable_segs.append(cont)
+                mergeable_segs.append(cont)
                 continue
 
             if path := await cont.path_task.safe_get(on_error):
                 img_seg = UniHelper.img_seg(path)
                 if cont.alt:
                     img_seg += cont.alt
-                forwardable_segs.append(img_seg)
+                mergeable_segs.append(img_seg)
 
-        if forwardable_segs:
-            if pconfig.need_forward_contents or len(forwardable_segs) > 4:
-                forward_msg = UniHelper.construct_forward_message(forwardable_segs)
+        if mergeable_segs or other_segs:
+            if pconfig.need_forward_contents or len(mergeable_segs) > 4 or len(other_segs) > 1:
+                forward_msg = UniHelper.construct_forward_message(mergeable_segs + other_segs)
                 yield UniMessage(forward_msg)
             else:
-                yield UniMessage(forwardable_segs)
+                yield UniMessage(mergeable_segs)
+                for other_seg in other_segs:
+                    yield UniMessage(other_seg)
 
         if failed_count > 0:
             message = f"{failed_count} 项媒体下载失败"
