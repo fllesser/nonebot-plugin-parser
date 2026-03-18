@@ -401,15 +401,6 @@ images = self.create_image_contents([
 ])
 ```
 
-> 创建动图内容（GIF)，平台一般只提供视频（后续插件会做自动转为 gif 的处理)
-
-```python
-dynamics = self.create_dynamic_contents([
-    "https://example.com/dynamic1.mp4",
-    "https://example.com/dynamic2.mp4",
-])
-```
-
 > 重定向 url
 
 ```python
