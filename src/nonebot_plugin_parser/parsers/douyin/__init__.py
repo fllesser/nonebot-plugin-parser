@@ -78,7 +78,10 @@ class DouyinParser(BaseParser):
         video_data = video.decoder.decode(matched.group(1).strip()).video_data
 
         # 作者
-        author = self.create_author(video_data.author.nickname, video_data.avatar_url)
+        author = self.create_author(
+            video_data.author.nickname,
+            video_data.avatar_url,
+        )
 
         # 先以部分数据构建结果，后续再填充内容，避免使用临时变量
         result = self.result(
@@ -92,9 +95,11 @@ class DouyinParser(BaseParser):
             result.contents.extend(self.create_image_contents(image_urls))
         # 添加视频内容
         elif video_url := video_data.video_url:
-            cover_url = video_data.cover_url
-            duration = video_data.video.duration if video_data.video else 0
-            result.video = self.create_video_content(video_url, cover_url, duration)
+            result.video = self.create_video_content(
+                video_url,
+                video_data.cover_url,
+                video_data.duration,
+            )
 
         return result
 

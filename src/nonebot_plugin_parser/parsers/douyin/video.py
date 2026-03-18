@@ -56,6 +56,10 @@ class VideoData(Struct):
         return choice(self.video.cover.url_list) if self.video else None
 
     @property
+    def duration(self) -> int | None:
+        return self.video.duration // 1000 if self.video else None
+
+    @property
     def avatar_url(self) -> str | None:
         if avatar := self.author.avatar_thumb:
             return choice(avatar.url_list)

@@ -139,10 +139,7 @@ class WeiBoParser(BaseParser):
             play_info.avatar,
             play_info.description,
         )
-        video_content = self.create_video_content(
-            play_info.video_url,
-            play_info.cover_url,
-        )
+        video_content = self.create_video_content(play_info.video_url, play_info.cover_url)
 
         return self.result(
             author=author,
