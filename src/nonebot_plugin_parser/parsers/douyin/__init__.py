@@ -122,12 +122,11 @@ class DouyinParser(BaseParser):
             timestamp=slides_data.create_time,
         )
 
-        # 添加图片内容
-        if image_urls := slides_data.image_urls:
-            result.contents.extend(self.create_image_contents(image_urls))
-
-        # 添加动态内容
+        # 优先取动图
         if dynamic_urls := slides_data.dynamic_urls:
-            result.contents.extend(self.create_dynamic_contents(dynamic_urls))
+            for dynamic_url in dynamic_urls:
+                result.contents.append(self.create_video_content(dynamic_url))
+        elif image_urls := slides_data.image_urls:
+            result.contents.extend(self.create_image_contents(image_urls))
 
         return result

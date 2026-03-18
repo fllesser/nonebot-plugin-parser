@@ -116,11 +116,11 @@ async def test_slides():
     result = await parser.parse(keyword, searched)
     logger.debug(f"{dynamic_image_url} | 解析结果: \n{result}")
     assert result.title, "标题为空"
-    dynamic_contents = result.dynamic_contents
-    assert dynamic_contents, "动态内容为空"
-    for dynamic_content in dynamic_contents:
+    video_contents = result.video_contents
+    assert video_contents, "视频内容为空"
+    for video_content in video_contents:
         # 容易失败，使用 safe_get
-        await dynamic_content.path_task.safe_get()
+        await video_content.path_task.safe_get()
     logger.success(f"抖音图集(含视频解析出视频)解析成功 {dynamic_image_url}")
 
     static_image_url = "https://www.douyin.com/note/7450744229229235491"

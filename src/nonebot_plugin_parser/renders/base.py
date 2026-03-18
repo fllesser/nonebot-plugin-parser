@@ -10,7 +10,7 @@ import aiofiles
 
 from ..config import pconfig
 from ..helper import UniHelper, UniMessage, ForwardNodeInner
-from ..parsers import ParseResult, AudioContent, ImageContent, VideoContent, DynamicContent
+from ..parsers import ParseResult, AudioContent, ImageContent, VideoContent
 from ..exception import IgnoreException, DownloadException
 
 
@@ -57,13 +57,11 @@ class BaseRenderer(ABC):
 
             match cont:
                 case VideoContent():
-                    yield UniMessage(UniHelper.video_seg(path))
+                    forwardable_segs.append(UniHelper.video_seg(path))
                 case AudioContent():
                     yield UniMessage(UniHelper.record_seg(path))
                 case ImageContent():
                     forwardable_segs.append(UniHelper.img_seg(path))
-                case DynamicContent():
-                    dynamic_segs.append(UniHelper.video_seg(path))
 
         if self.result.repost and self.result.repost.video:
             if video_path := await self.result.repost.video.path_task.safe_get(on_error):

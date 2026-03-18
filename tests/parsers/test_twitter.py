@@ -74,10 +74,10 @@ async def test_gif():
         result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
 
-        dynamic_contents = result.dynamic_contents
-        assert dynamic_contents, "GIF 内容为空"
-        for dynamic_content in dynamic_contents:
-            path = await dynamic_content.path_task.get()
+        video_contents = result.video_contents
+        assert video_contents, "GIF 内容为空"
+        for video_content in video_contents:
+            path = await video_content.path_task.get()
             assert path.exists(), "GIF 不存在"
 
     await asyncio.gather(*[parse_gif(url) for url in urls])
