@@ -170,12 +170,7 @@ class BaseParser:
         author = Author(name=name, description=description)
 
         if avatar_url:
-            author.avatar = PathTask(
-                DOWNLOADER.download_img(
-                    avatar_url,
-                    ext_headers=self.headers,
-                )
-            )
+            author.avatar = PathTask(DOWNLOADER.download_img(avatar_url, ext_headers=self.headers))
 
         return author
 
@@ -204,13 +199,11 @@ class BaseParser:
 
             cover_task = extract_cover()
 
-        video = VideoContent(
+        return VideoContent(
             PathTask(path_task),
+            cover=PathTask(cover_task),
             duration=duration,
         )
-        video.cover = PathTask(cover_task)
-
-        return video
 
     def create_image_contents(
         self,
