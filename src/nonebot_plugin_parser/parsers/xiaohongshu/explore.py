@@ -34,10 +34,20 @@ class NoteDetail(Struct):
         return [item.urlDefault for item in self.imageList]
 
     @property
-    def video_url(self) -> str | None:
-        if self.type != "video" or not self.video:
-            return None
-        return self.video.video_url
+    def _cover_url(self) -> str | None:
+        # 取第一张图片作为封面，如果没有图片则返回 None
+        return self.imageList[0].urlDefault if self.imageList else None
+
+    @property
+    def is_video(self) -> bool:
+        return self.type == "video" and self.video is not None
+
+    @property
+    def video_cover_duration(self):
+        assert self.video is not None
+        video_url, duration = self.video.url_and_duration
+        assert video_url is not None
+        return video_url, self._cover_url, duration
 
 
 class NoteDetailWrapper(Struct):

@@ -82,11 +82,9 @@ class XiaoHongShuParser(BaseParser):
         )
 
         # 添加视频内容
-        if video_url := note_detail.video_url:
-            # 使用第一张图片作为封面
-            cover_url = note_detail.image_urls[0] if note_detail.image_urls else None
-            # TODO 获取视频时长
-            result.video = self.create_video_content(video_url, cover_url)
+        if note_detail.is_video:
+            video_cover_duration = note_detail.video_cover_duration
+            result.video = self.create_video_content(*video_cover_duration)
 
         # 添加图片内容
         elif image_urls := note_detail.image_urls:
@@ -122,12 +120,19 @@ class XiaoHongShuParser(BaseParser):
             timestamp=note_data.time // 1000,
         )
 
-        if video_url := note_data.video_url:
+        if note_data.is_video:
+            video_url, duration = note_data.url_and_duration
+
             if preload_data:
-                img_urls = preload_data.image_urls
+                cover_url = preload_data.image_urls[0]
             else:
-                img_urls = note_data.image_urls
-            result.video = self.create_video_content(video_url, img_urls[0])
+                cover_url = note_data.image_urls[0]
+
+            result.video = self.create_video_content(
+                video_url,
+                cover_url,
+                duration,
+            )
         elif img_urls := note_data.image_urls:
             result.contents.extend(self.create_image_contents(img_urls))
 

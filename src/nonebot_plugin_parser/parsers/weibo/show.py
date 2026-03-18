@@ -22,6 +22,7 @@ class PlayInfo(Struct):
     stream_url: str
     real_date: int
     urls: dict[str, str]
+    duration_time: float
 
     @property
     def name(self) -> str:
@@ -48,6 +49,10 @@ class PlayInfo(Struct):
     def video_url(self) -> str:
         url = next(iter(self.urls.values()), None)
         return "https:" + url if url else self.stream_url
+
+    @property
+    def duration(self) -> float:
+        return self.duration_time
 
 
 class Data(Struct):

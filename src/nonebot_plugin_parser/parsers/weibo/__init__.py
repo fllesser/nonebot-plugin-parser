@@ -139,9 +139,11 @@ class WeiBoParser(BaseParser):
             play_info.avatar,
             play_info.description,
         )
+
         video_content = self.create_video_content(
             play_info.video_url,
             play_info.cover_url,
+            duration=play_info.duration,
         )
 
         return self.result(
@@ -209,8 +211,11 @@ class WeiBoParser(BaseParser):
 
         # 添加视频内容
         if video_url := data.video_url:
-            cover_url = data.cover_url
-            result.video = self.create_video_content(video_url, cover_url)
+            result.video = self.create_video_content(
+                video_url,
+                data.cover_url,
+                data.duration,
+            )
 
         # 添加图片内容
         if image_urls := data.image_urls:
