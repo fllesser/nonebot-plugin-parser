@@ -37,6 +37,7 @@ async def safe_unlink(path: Path):
 
 async def exec_ffmpeg_cmd(cmd: list[str]) -> None:
     """执行 ffmpeg 命令"""
+    logger.debug(f"Executing ffmpeg command: {' '.join(cmd)}")
     try:
         process = await asyncio.create_subprocess_exec(
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
@@ -147,6 +148,9 @@ async def encode_video_to_h264(video_path: Path) -> Path:
 async def extract_video_cover(video_path: Path) -> Path:
     """从视频中提取封面图（第一帧）"""
     cover_path = video_path.with_suffix(".jpg")
+    if cover_path.exists():
+        return cover_path
+
     cmd = [
         "ffmpeg",
         "-y",
@@ -158,6 +162,7 @@ async def extract_video_cover(video_path: Path) -> Path:
         "1",
         str(cover_path),
     ]
+
     await exec_ffmpeg_cmd(cmd)
     return cover_path
 

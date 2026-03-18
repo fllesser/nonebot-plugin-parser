@@ -189,11 +189,10 @@ class BaseParser:
         elif isinstance(url_or_task, PathTask):
             path_task = url_or_task
 
-        cover_task = None
         if cover_url:
             cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
         else:
-            # 如果没有封面 URL，使用 ffmpeg 提取封面
+
             async def extract_cover():
                 video_path = await path_task.get()
                 return await extract_video_cover(video_path)
