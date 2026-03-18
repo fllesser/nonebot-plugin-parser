@@ -14,7 +14,7 @@ async def test_extract_video_info():
 async def test_download_video():
     from nonebot_plugin_parser.download import YTDLP_DOWNLOADER
 
-    video_path = await YTDLP_DOWNLOADER.download_video(TIKTOK_URL)
+    video_path = await YTDLP_DOWNLOADER.download_video(TIKTOK_URL).get()
 
     assert video_path.exists()
 
@@ -25,7 +25,7 @@ async def test_download_audio():
 
     url = "https://www.tiktok.com/@fdznews/video/7575810064078884116?is_from_webapp=1&sender_device=pc"
 
-    audio_path = await YTDLP_DOWNLOADER.download_audio(url)
+    audio_path = await YTDLP_DOWNLOADER.download_audio(url).get()
 
     assert audio_path.exists()
 
