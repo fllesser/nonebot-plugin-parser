@@ -26,8 +26,15 @@ class PagePic(Struct):
     url: str
 
 
+class MediaInfo(Struct):
+    stream_url: str | None = None
+    stream_urls_hd: str | None = None
+    duration: float | None = None
+
+
 class PageInfo(Struct):
     title: str | None = None
+    media_info: MediaInfo | None = None
     urls: Urls | None = None
     page_pic: PagePic | None = None
 
@@ -83,6 +90,12 @@ class WeiboData(Struct):
     def video_url(self) -> str | None:
         if self.page_info and self.page_info.urls:
             return self.page_info.urls.get_video_url()
+        return None
+
+    @property
+    def duration(self) -> float | None:
+        if self.page_info and self.page_info.media_info:
+            return self.page_info.media_info.duration
         return None
 
     @property
