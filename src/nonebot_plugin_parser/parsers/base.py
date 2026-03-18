@@ -192,7 +192,7 @@ class BaseParser:
         if cover_url:
             cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
         else:
-
+            # 如果没有封面 URL，尝试从视频中提取封面
             async def extract_cover():
                 video_path = await path_task.get()
                 return await extract_video_cover(video_path)
