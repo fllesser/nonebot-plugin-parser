@@ -34,7 +34,6 @@ class BaseRenderer(ABC):
     async def render_contents(self) -> AsyncGenerator[UniMessage[Any], None]:
         failed_count = 0
         forwardable_segs: list[ForwardNodeInner] = []
-        dynamic_segs: list[ForwardNodeInner] = []
 
         def on_error(e: Exception):
             if isinstance(e, IgnoreException):
@@ -56,8 +55,9 @@ class BaseRenderer(ABC):
                 continue
 
             match cont:
-                case VideoContent():
-                    forwardable_segs.append(UniHelper.video_seg(path))
+                case VideoContent() as video:
+                    thumbnail = await video.cover.safe_get()
+                    forwardable_segs.append(UniHelper.video_seg(path, thumbnail))
                 case AudioContent():
                     yield UniMessage(UniHelper.record_seg(path))
                 case ImageContent():
@@ -83,13 +83,10 @@ class BaseRenderer(ABC):
 
         if forwardable_segs:
             if pconfig.need_forward_contents or len(forwardable_segs) > 4:
-                forward_msg = UniHelper.construct_forward_message(forwardable_segs + dynamic_segs)
+                forward_msg = UniHelper.construct_forward_message(forwardable_segs)
                 yield UniMessage(forward_msg)
             else:
                 yield UniMessage(forwardable_segs)
-
-                if dynamic_segs:
-                    yield UniMessage(UniHelper.construct_forward_message(dynamic_segs))
 
         if failed_count > 0:
             message = f"{failed_count} 项媒体下载失败"

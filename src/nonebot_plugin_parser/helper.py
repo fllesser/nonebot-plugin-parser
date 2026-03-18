@@ -78,7 +78,11 @@ class UniHelper:
             return Voice(path=audio_path)
 
     @classmethod
-    def video_seg(cls, video_path: Path) -> Video | File | Text:
+    def video_seg(
+        cls,
+        video_path: Path,
+        thumbnail: Path | None = None,
+    ) -> Video | File | Text:
         """视频 Seg"""
         # 检测文件大小
         file_size_byte_count = int(video_path.stat().st_size)
@@ -89,9 +93,15 @@ class UniHelper:
             return cls.file_seg(video_path, display_name=video_path.name)
         else:
             if pconfig.use_base64:
-                return Video(raw=video_path.read_bytes())
+                video = Video(raw=video_path.read_bytes())
+                if thumbnail and thumbnail.stat().st_size > 0:
+                    video.thumbnail = cls.img_seg(thumbnail.read_bytes())
+                return video
             else:
-                return Video(path=video_path)
+                video = Video(path=video_path)
+                if thumbnail and thumbnail.stat().st_size > 0:
+                    video.thumbnail = cls.img_seg(thumbnail)
+                return video
 
     @staticmethod
     def file_seg(
