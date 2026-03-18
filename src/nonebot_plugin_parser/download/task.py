@@ -52,8 +52,18 @@ class PathTask:
 class OptionalPathTask:
     """封装可选的 PathTask, 提供便捷的 API 避免频繁判空"""
 
-    def __init__(self, path_task: PathTask | None = None):
-        self._path_task: PathTask | None = path_task
+    def __init__(
+        self,
+        path_task: PathTask | Coroutine[Any, Any, Path] | None = None,
+    ):
+        self._path_task: PathTask | None = None
+
+        if path_task is None:
+            pass
+        elif isinstance(path_task, PathTask):
+            self._path_task = path_task
+        else:
+            self._path_task = PathTask(path_task)
 
     async def get(self) -> Path | None:
         if self._path_task is None:

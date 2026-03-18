@@ -144,20 +144,22 @@ async def encode_video_to_h264(video_path: Path) -> Path:
     return output_path
 
 
-async def extract_video_cover(video_path: Path, cover_path: Path) -> None:
+async def extract_video_cover(video_path: Path) -> Path:
     """从视频中提取封面图（第一帧）"""
+    cover_path = video_path.with_suffix(".jpg")
     cmd = [
         "ffmpeg",
         "-y",
         "-i",
         str(video_path),
         "-ss",
-        "00:00:01",  # 从第1秒开始
+        "00:00:01",
         "-vframes",
         "1",
         str(cover_path),
     ]
     await exec_ffmpeg_cmd(cmd)
+    return cover_path
 
 
 def fmt_size(file_path: Path) -> str:

@@ -196,10 +196,7 @@ class BaseParser:
             # 如果没有封面 URL，使用 ffmpeg 提取封面
             async def extract_cover():
                 video_path = await path_task.get()
-                cover_path = video_path.with_suffix(".jpg")
-                if not cover_path.exists():
-                    await extract_video_cover(video_path, cover_path)
-                return cover_path
+                return await extract_video_cover(video_path)
 
             cover_task = PathTask(extract_cover())
 
