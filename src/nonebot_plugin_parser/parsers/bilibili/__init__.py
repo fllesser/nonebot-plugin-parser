@@ -139,13 +139,13 @@ class BilibiliParser(BaseParser):
                     a_url,
                     output_path=output_path,
                     ext_headers=self.headers,
-                ).get()
+                )
             else:
                 path = await self.downloader.download_file(
                     v_url,
                     file_name=output_path.name,
                     ext_headers=self.headers,
-                ).get()
+                )
             return path
 
         video_content = self.create_video_content(
