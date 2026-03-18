@@ -7,8 +7,8 @@ from datetime import datetime
 from dataclasses import field, dataclass
 from collections.abc import Iterator, Awaitable
 
+from .task import PathTask, OptionalPathTask
 from ..utils import fmt_duration
-from ..download.task import PathTask, OptionalPathTask
 
 
 @dataclass(repr=False, slots=True)
@@ -17,11 +17,6 @@ class MediaContent:
 
     async def get_path(self) -> Path:
         return await self.path_task.get()
-
-    @property
-    def uri(self) -> str | None:
-        """需要先调用 .path_task.get()/.get_path() 才能获取"""
-        return self.path_task.uri
 
     def __repr__(self) -> str:
         prefix = self.__class__.__name__

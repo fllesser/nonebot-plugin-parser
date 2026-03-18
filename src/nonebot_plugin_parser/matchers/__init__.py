@@ -105,7 +105,7 @@ async def _(message: Message = CommandArg()):
 
     audio_path = await parser.downloader.download_audio(
         audio_url, audio_name=f"{bvid}-{page_idx}.mp3", ext_headers=parser.headers
-    ).get()
+    )
     await UniMessage(UniHelper.record_seg(audio_path)).send()
 
     if pconfig.need_upload:
@@ -128,7 +128,7 @@ if YTDLP_DOWNLOADER is not None:
 
         url = matched.group(0)
 
-        audio_path = await YTDLP_DOWNLOADER.download_audio(url).get()
+        audio_path = await YTDLP_DOWNLOADER.download_audio(url)
         await UniMessage(UniHelper.record_seg(audio_path)).send()
 
         if pconfig.need_upload:
