@@ -369,7 +369,7 @@ class CommonRenderer(ImageRenderer):
             return
 
         # 图片网格
-        if self.result.img_contents:
+        if self.result.contents:
             await self._render_image_grid()
             return
 
@@ -455,14 +455,17 @@ class CommonRenderer(ImageRenderer):
 
     async def _render_image_grid(self) -> None:
         """渲染图片网格"""
-        contents = self.result.img_contents
-        total = len(contents)
+        grid_images = self.result.all_grid_images
+        if not grid_images:
+            return
+
+        total = len(grid_images)
         has_more = total > self.MAX_IMAGES_DISPLAY
-        display_contents = contents[: self.MAX_IMAGES_DISPLAY]
+        display_contents = grid_images[: self.MAX_IMAGES_DISPLAY]
 
         images: list[PILImage] = []
         for content in display_contents:
-            path = await content.path_task.safe_get()
+            path = await content.safe_get()
             if path is None or not path.exists():
                 continue
             if img := self._load_grid_image(path, len(display_contents)):
