@@ -29,10 +29,15 @@ class NoteData(Struct):
         return [item.url for item in self.imageList]
 
     @property
-    def video_url(self) -> str | None:
-        if self.type != "video" or not self.video:
-            return None
-        return self.video.video_url
+    def is_video(self) -> bool:
+        return self.type == "video" and self.video is not None
+
+    @property
+    def url_and_duration(self):
+        assert self.video is not None
+        video_url, duration = self.video.url_and_duration
+        assert video_url is not None
+        return video_url, duration
 
 
 class NormalNotePreloadData(Struct):

@@ -120,12 +120,19 @@ class XiaoHongShuParser(BaseParser):
             timestamp=note_data.time // 1000,
         )
 
-        if video_url := note_data.video_url:
+        if note_data.is_video:
+            video_url, duration = note_data.url_and_duration
+
             if preload_data:
-                img_urls = preload_data.image_urls
+                cover_url = preload_data.image_urls[0]
             else:
-                img_urls = note_data.image_urls
-            result.video = self.create_video_content(video_url, img_urls[0])
+                cover_url = note_data.image_urls[0]
+
+            result.video = self.create_video_content(
+                video_url,
+                cover_url,
+                duration,
+            )
         elif img_urls := note_data.image_urls:
             result.contents.extend(self.create_image_contents(img_urls))
 
