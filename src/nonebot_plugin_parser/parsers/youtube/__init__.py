@@ -5,7 +5,7 @@ from httpx import AsyncClient
 
 from ..base import Platform, BaseParser, PlatformEnum, handle, pconfig
 from ..cookie import save_cookies_with_netscape
-from ...download import YTDLP_DOWNLOADER
+from ...download import yt_dlp_downloader
 
 
 class YouTubeParser(BaseParser):
@@ -28,7 +28,7 @@ class YouTubeParser(BaseParser):
         return await self.parse_video(url)
 
     async def parse_video(self, url: str):
-        video_info = await YTDLP_DOWNLOADER.extract_video_info(url, self.cookies_file)
+        video_info = await yt_dlp_downloader.extract_video_info(url, self.cookies_file)
         author = await self._fetch_author_info(video_info.channel_id)
 
         result = self.result(
@@ -38,7 +38,7 @@ class YouTubeParser(BaseParser):
         )
 
         if video_info.duration <= pconfig.duration_maximum:
-            video = YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
+            video = yt_dlp_downloader.download_video(url, self.cookies_file)
             result.video = self.create_video(
                 video,
                 video_info.thumbnail,

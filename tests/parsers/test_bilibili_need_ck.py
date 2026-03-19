@@ -48,7 +48,7 @@ async def test_video():
 @pytest.mark.asyncio
 async def test_max_size_video():
     from nonebot_plugin_parser.parsers import BilibiliParser
-    from nonebot_plugin_parser.download import DOWNLOADER
+    from nonebot_plugin_parser.download import downloader
     from nonebot_plugin_parser.exception import IgnoreException
 
     parser = BilibiliParser()
@@ -61,7 +61,7 @@ async def test_max_size_video():
 
     assert audio_url is not None
     try:
-        await DOWNLOADER.download_audio(audio_url, ext_headers=parser.headers)
+        await downloader.download_audio(audio_url, ext_headers=parser.headers)
     except IgnoreException:
         pass
 

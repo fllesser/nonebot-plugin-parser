@@ -224,13 +224,13 @@ class StreamDownloader:
         return slices
 
 
-DOWNLOADER: StreamDownloader = StreamDownloader()
+downloader: StreamDownloader = StreamDownloader()
 
 try:
     import yt_dlp as yt_dlp
 
     from .ytdlp import YtdlpDownloader
 
-    YTDLP_DOWNLOADER = YtdlpDownloader()
+    yt_dlp_downloader = YtdlpDownloader()
 except ImportError:
-    YTDLP_DOWNLOADER = None
+    yt_dlp_downloader = None

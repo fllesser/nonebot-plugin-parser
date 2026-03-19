@@ -112,9 +112,9 @@ async def _(message: Message = CommandArg()):
         await UniMessage(UniHelper.file_seg(audio_path)).send()
 
 
-from ..download import YTDLP_DOWNLOADER
+from ..download import yt_dlp_downloader
 
-if YTDLP_DOWNLOADER is not None:
+if yt_dlp_downloader is not None:
     from ..parsers import YouTubeParser
 
     @on_command("ym", priority=3, block=True).handle()
@@ -128,7 +128,7 @@ if YTDLP_DOWNLOADER is not None:
 
         url = matched.group(0)
 
-        audio_path = await YTDLP_DOWNLOADER.download_audio(url)
+        audio_path = await yt_dlp_downloader.download_audio(url)
         await UniMessage(UniHelper.record_seg(audio_path)).send()
 
         if pconfig.need_upload:
