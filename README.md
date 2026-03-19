@@ -419,5 +419,5 @@ real_url = await self.get_redirect_url(
 
 ## 🎉 致谢
 
-[nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
-[parse-video-py](https://github.com/wujunwei928/parse-video-py)
+- [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) | 初代解析插件
+- [parse-video-py](https://github.com/wujunwei928/parse-video-py) | 借鉴了抖音解析
