@@ -92,10 +92,10 @@ class DouyinParser(BaseParser):
 
         # 添加图片内容
         if image_urls := video_data.image_urls:
-            result.contents.extend(self.create_image_contents(image_urls))
+            result.contents.extend(self.create_images(image_urls))
         # 添加视频内容
         elif video_url := video_data.video_url:
-            result.video = self.create_video_content(
+            result.video = self.create_video(
                 video_url,
                 video_data.cover_url,
                 video_data.duration,
@@ -130,8 +130,8 @@ class DouyinParser(BaseParser):
         # 优先取动图
         if dynamic_urls := slides_data.dynamic_urls:
             for dynamic_url in dynamic_urls:
-                result.contents.append(self.create_video_content(dynamic_url))
+                result.contents.append(self.create_video(dynamic_url))
         elif image_urls := slides_data.image_urls:
-            result.contents.extend(self.create_image_contents(image_urls))
+            result.contents.extend(self.create_images(image_urls))
 
         return result

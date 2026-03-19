@@ -64,10 +64,10 @@ class KuaiShouParser(BaseParser):
 
         # 添加视频内容
         if video_url := photo.video_url:
-            result.video = self.create_video_content(video_url, photo.cover_url, photo.duration)
+            result.video = self.create_video(video_url, photo.cover_url, photo.duration)
 
         # 添加图片内容
         if img_urls := photo.img_urls:
-            result.contents.extend(self.create_image_contents(img_urls))
+            result.contents.extend(self.create_images(img_urls))
 
         return result

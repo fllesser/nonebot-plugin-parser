@@ -22,7 +22,7 @@ class TikTokParser(BaseParser):
 
         # 下载封面和视频
         video = YTDLP_DOWNLOADER.download_video(url)
-        video_content = self.create_video_content(
+        video_content = self.create_video(
             video,
             video_info.thumbnail,
             duration=video_info.duration,

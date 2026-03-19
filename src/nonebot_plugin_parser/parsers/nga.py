@@ -125,7 +125,7 @@ class NGAParser(BaseParser):
                     if paths := re.findall(r"\[img\]\.(.*?)\[\/img\]", line):
                         for path in paths:
                             img_url = self.build_img_url(path)
-                            result.graphics.append(self.create_image_content(img_url))
+                            result.graphics.append(self.create_image(img_url))
                     else:
                         # 去除其他标签, 仅保留文本
                         if clean_line := re.sub(r"\[[^\]]*?\]", "", line).strip():

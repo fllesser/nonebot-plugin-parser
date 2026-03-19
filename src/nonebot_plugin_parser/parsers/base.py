@@ -174,7 +174,7 @@ class BaseParser:
 
         return author
 
-    def create_video_content(
+    def create_video(
         self,
         url_or_task: str | Task[Path],
         cover_url: str | None = None,
@@ -205,7 +205,7 @@ class BaseParser:
             duration=duration,
         )
 
-    def create_image_contents(
+    def create_images(
         self,
         image_urls: list[str],
     ):
@@ -216,12 +216,12 @@ class BaseParser:
             contents.append(ImageContent(PathTask(task)))
         return contents
 
-    def create_image_content(
+    def create_image(
         self,
         url_or_task: str | Task[Path],
         alt: str | None = None,
     ):
-        """创建图片内容"""
+        """创建单个图片内容"""
         if isinstance(url_or_task, str):
             path_task = DOWNLOADER.download_img(url_or_task, ext_headers=self.headers)
         elif isinstance(url_or_task, Task):
@@ -229,7 +229,7 @@ class BaseParser:
 
         return ImageContent(PathTask(path_task), alt=alt)
 
-    def create_audio_content(
+    def create_audio(
         self,
         url_or_task: str | Task[Path],
         duration: float = 0.0,
