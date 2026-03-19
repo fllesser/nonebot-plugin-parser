@@ -148,7 +148,7 @@ class BilibiliParser(BaseParser):
                 )
             return path
 
-        video_content = self.create_video_content(
+        video_content = self.create_video(
             asyncio.create_task(download_video()),
             page_info.cover,
             page_info.duration,
@@ -188,7 +188,7 @@ class BilibiliParser(BaseParser):
         # 下载图片
         author = self.create_author(dynamic_info.name, dynamic_info.avatar)
         contents: list[MediaContent] = []
-        contents.extend(self.create_image_contents(dynamic_info.image_urls))
+        contents.extend(self.create_images(dynamic_info.image_urls))
 
         repost = None
         if dynamic_info.type == "DYNAMIC_TYPE_FORWARD" and dynamic_info.orig is not None:
@@ -234,7 +234,7 @@ class BilibiliParser(BaseParser):
             if isinstance(node, str):
                 result.graphics.append(node)
             else:
-                result.graphics.append(self.create_image_content(node.url, alt=node.alt))
+                result.graphics.append(self.create_image(node.url, alt=node.alt))
 
         return result
 
@@ -252,12 +252,12 @@ class BilibiliParser(BaseParser):
         # 下载封面
         if cover := room_data.cover:
             cover_task = self.downloader.download_img(cover, ext_headers=self.headers)
-            contents.append(self.create_image_content(cover_task))
+            contents.append(self.create_image(cover_task))
 
         # 下载关键帧
         if keyframe := room_data.keyframe:
             keyframe_task = self.downloader.download_img(keyframe, ext_headers=self.headers)
-            contents.append(self.create_image_content(keyframe_task))
+            contents.append(self.create_image(keyframe_task))
 
         author = self.create_author(room_data.name, room_data.avatar)
 
@@ -288,7 +288,7 @@ class BilibiliParser(BaseParser):
 
         graphics: list[str | ImageContent] = []
         for fav in favdata.medias:
-            graphics.append(self.create_image_content(fav.cover, alt=fav.desc))
+            graphics.append(self.create_image(fav.cover, alt=fav.desc))
             graphics.append(fav.desc)
 
         return self.result(

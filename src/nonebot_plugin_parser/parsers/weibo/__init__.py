@@ -101,7 +101,7 @@ class WeiBoParser(BaseParser):
             elif element.name == "img":
                 src = element.get("src")
                 if isinstance(src, str):
-                    graphics.append(self.create_image_content(src))
+                    graphics.append(self.create_image(src))
 
         author = self.create_author(
             data.userinfo.screen_name,
@@ -140,7 +140,7 @@ class WeiBoParser(BaseParser):
             play_info.description,
         )
 
-        video_content = self.create_video_content(
+        video_content = self.create_video(
             play_info.video_url,
             play_info.cover_url,
             duration=play_info.duration,
@@ -211,7 +211,7 @@ class WeiBoParser(BaseParser):
 
         # 添加视频内容
         if video_url := data.video_url:
-            result.video = self.create_video_content(
+            result.video = self.create_video(
                 video_url,
                 data.cover_url,
                 data.duration,
@@ -219,7 +219,7 @@ class WeiBoParser(BaseParser):
 
         # 添加图片内容
         if image_urls := data.image_urls:
-            result.contents.extend(self.create_image_contents(image_urls))
+            result.contents.extend(self.create_images(image_urls))
 
         # 转发内容
         if data.retweeted_status:

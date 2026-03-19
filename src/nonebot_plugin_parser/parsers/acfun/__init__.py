@@ -40,7 +40,7 @@ class AcfunParser(BaseParser):
             video_name=f"acfun_{acid}.mp4",
         )
 
-        video_content = self.create_video_content(
+        video_content = self.create_video(
             video_task,
             cover_url=video_info.coverUrl,
         )

@@ -39,13 +39,13 @@ class YouTubeParser(BaseParser):
 
         if video_info.duration <= pconfig.duration_maximum:
             video = YTDLP_DOWNLOADER.download_video(url, self.cookies_file)
-            result.video = self.create_video_content(
+            result.video = self.create_video(
                 video,
                 video_info.thumbnail,
                 video_info.duration,
             )
         else:
-            result.contents.extend(self.create_image_contents([video_info.thumbnail]))
+            result.contents.extend(self.create_images([video_info.thumbnail]))
 
         return result
 

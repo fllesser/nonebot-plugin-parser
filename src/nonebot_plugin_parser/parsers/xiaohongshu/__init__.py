@@ -83,12 +83,11 @@ class XiaoHongShuParser(BaseParser):
 
         # 添加视频内容
         if note_detail.is_video:
-            video_cover_duration = note_detail.video_cover_duration
-            result.video = self.create_video_content(*video_cover_duration)
+            result.video = self.create_video(*note_detail.video_cover_duration)
 
         # 添加图片内容
         elif image_urls := note_detail.image_urls:
-            result.contents.extend(self.create_image_contents(image_urls))
+            result.contents.extend(self.create_images(image_urls))
 
         return result
 
@@ -128,13 +127,13 @@ class XiaoHongShuParser(BaseParser):
             else:
                 cover_url = note_data.image_urls[0]
 
-            result.video = self.create_video_content(
+            result.video = self.create_video(
                 video_url,
                 cover_url,
                 duration,
             )
         elif img_urls := note_data.image_urls:
-            result.contents.extend(self.create_image_contents(img_urls))
+            result.contents.extend(self.create_images(img_urls))
 
         return result
 

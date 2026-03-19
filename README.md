@@ -17,7 +17,7 @@
 
 </div>
 
-> [!IMPORTANT] 
+> [!IMPORTANT]
 > **收藏项目**，你将从 GitHub 上无延迟地接收所有发布通知～ ⭐️
 
 <img width="100%" src="https://starify.komoridevs.icu/api/starify?owner=fllesser&repo=nonebot-plugin-parser" alt="starify" />
@@ -27,14 +27,14 @@
 | 平台    | 触发的消息形态                    | 视频 | 图集 | 音频 |
 | ------- | --------------------------------- | ---- | ---- | ---- |
 | B 站    | av 号/BV 号/链接/短链/卡片/小程序 | ✅​  | ✅​  | ✅​  |
-| 抖音    | 链接(分享链接，兼容电脑端链接)    | ✅​  | ✅​  | ❌️  |
-| 微博    | 链接(博文，视频，show, 文章)      | ✅​  | ✅​  | ❌️  |
-| 小红书  | 链接(含短链)/卡片                 | ✅​  | ✅​  | ❌️  |
-| 快手    | 链接(包含标准链接和短链)          | ✅​  | ✅​  | ❌️  |
-| acfun   | 链接                              | ✅​  | ❌️  | ❌️  |
-| youtube | 链接(含短链)                      | ✅​  | ❌️  | ✅​  |
-| tiktok  | 链接                              | ✅​  | ❌️  | ❌️  |
-| twitter | 链接                              | ✅​  | ✅​  | ❌️  |
+| 抖音    | 链接(分享链接，兼容电脑端链接)    | ✅​  | ✅​  | ❌️   |
+| 微博    | 链接(博文，视频，show, 文章)      | ✅​  | ✅​  | ❌️   |
+| 小红书  | 链接(含短链)/卡片                 | ✅​  | ✅​  | ❌️   |
+| 快手    | 链接(包含标准链接和短链)          | ✅​  | ✅​  | ❌️   |
+| acfun   | 链接                              | ✅​  | ❌️   | ❌️   |
+| youtube | 链接(含短链)                      | ✅​  | ❌️   | ✅​  |
+| tiktok  | 链接                              | ✅​  | ❌️   | ❌️   |
+| twitter | 链接                              | ✅​  | ✅​  | ❌️   |
 
 支持的链接，可参考 [测试链接](https://github.com/fllesser/nonebot-plugin-parser/blob/master/tests/others/test_urls.md)
 
@@ -54,7 +54,7 @@
 
 ## 💿 安装
 
-> [!Warning] 
+> [!Warning]
 > **如果你已经在使用 nonebot-plugin-resolver[2]，请在安装此插件前卸载**
 
 <details>
@@ -339,18 +339,19 @@ class ExampleParser(BaseParser):
 
         # 4. 视频内容
         author = self.create_author(author_name, avatar_url)
-        video = self.create_video_content(video_url, cover_url, duration)
+        video = self.create_video(video_url, cover_url, duration)
 
         # 5. 图集内容
         image_urls = data.get("images")
-        images = self.create_image_contents(image_urls)
+        images = self.create_image(image_urls)
 
         # 6. 返回解析结果
         return self.result(
             title=title,
             text=description,
             author=author,
-            contents=[video, *images],
+            video=video,
+            contents=[*images],
             timestamp=timestamp,
             url=f"https://example.com/video/{video_id}",
         )
@@ -375,7 +376,7 @@ author = self.create_author(
 
 ```python
 # 方式1：传入 URL，自动下载
-video = self.create_video_content(
+video = self.create_video(
     url_or_task="https://example.com/video.mp4",
     cover_url="https://example.com/cover.jpg",  # 可选
     duration=120.5                               # 可选，单位：秒
@@ -384,7 +385,7 @@ video = self.create_video_content(
 # 方式2：传入已创建的下载任务
 from nonebot_plugin_parser.download import DOWNLOADER
 video_task = DOWNLOADER.download_video(url, ext_headers=self.headers)
-video = self.create_video_content(
+video = self.create_video(
     url_or_task=video_task,
     cover_url=cover_url,
     duration=duration
@@ -395,7 +396,7 @@ video = self.create_video_content(
 
 ```python
 # 并发下载图集内容
-images = self.create_image_contents([
+images = self.create_images([
     "https://example.com/img1.jpg",
     "https://example.com/img2.jpg",
 ])
@@ -418,5 +419,5 @@ real_url = await self.get_redirect_url(
 
 ## 🎉 致谢
 
-[nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver)
-[parse-video-py](https://github.com/wujunwei928/parse-video-py)
+- [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) | 初代解析插件
+- [parse-video-py](https://github.com/wujunwei928/parse-video-py) | 借鉴了抖音解析
