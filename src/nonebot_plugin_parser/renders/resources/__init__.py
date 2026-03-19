@@ -1,3 +1,4 @@
+import random
 from pathlib import Path
 
 RESOURCES_DIR = Path(__file__).parent
@@ -8,5 +9,9 @@ DEFAULT_AVATAR_PATH = RESOURCES_DIR / "avatar.png"
 """默认头像文件路径"""
 DEFAULT_VIDEO_BUTTON_PATH = RESOURCES_DIR / "play.png"
 """默认视频播放按钮文件路径"""
-FAILED_PIC_DIR = RESOURCES_DIR / "failed_pic"
+FALLBACK_PIC_DIR = RESOURCES_DIR / "fallback_pic"
 """下载失败显示的图片文件路径"""
+
+
+def random_fallback_pic() -> Path:
+    return FALLBACK_PIC_DIR / f"{random.randint(1, 9)}.jpg"

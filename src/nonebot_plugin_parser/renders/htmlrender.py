@@ -1,4 +1,3 @@
-import random
 from typing_extensions import override
 
 from nonebot import require
@@ -23,9 +22,6 @@ class HtmlRenderer(ImageRenderer):
         font = pconfig.custom_font or resources.DEFAULT_FONT_PATH
         font = font.as_uri() if font.exists() else None
 
-        fallback_pics = list(resources.FAILED_PIC_DIR.glob("*.jpg"))
-        fallback_pic = random.choice(fallback_pics).as_uri() if fallback_pics else None
-
         return await template_to_pic(
             template_path=str(self.templates_dir),
             template_name="card.html.jinja2",
@@ -33,8 +29,8 @@ class HtmlRenderer(ImageRenderer):
                 "logo": logo,
                 "font": font,
                 "result": self.result,
-                "fallback_pic": fallback_pic,
                 "font_weight": pconfig.custom_font_weight,
+                "fallback_pic": resources.random_fallback_pic().as_uri(),
                 "play_button": resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri(),
                 "default_avatar": resources.DEFAULT_AVATAR_PATH.as_uri(),
             },
