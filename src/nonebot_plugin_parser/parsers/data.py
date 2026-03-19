@@ -188,13 +188,11 @@ class ParseResult:
             yield self.video.path_task.get()
 
         for cont in self.contents:
-            if not img_only:
+            if not img_only or isinstance(cont, ImageContent):
                 yield cont.path_task.get()
-            elif isinstance(cont, ImageContent):
-                yield cont.path_task.get()
-            elif isinstance(cont, VideoContent):
-                if cont.cover:
-                    yield cont.cover.get()
+
+            if isinstance(cont, VideoContent) and cont.cover:
+                yield cont.cover.get()
 
         for gra in self.graphics:
             if isinstance(gra, ImageContent):
