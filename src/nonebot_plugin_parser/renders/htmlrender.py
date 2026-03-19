@@ -30,7 +30,7 @@ class HtmlRenderer(ImageRenderer):
                 "font": font,
                 "result": self.result,
                 "font_weight": pconfig.custom_font_weight,
-                "fallback_pic": resources.random_failed_pic().as_uri(),
+                "fallback_pic": resources.random_fallback_pic().as_uri(),
                 "play_button": resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri(),
                 "default_avatar": resources.DEFAULT_AVATAR_PATH.as_uri(),
             },

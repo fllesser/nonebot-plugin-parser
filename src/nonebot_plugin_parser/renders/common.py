@@ -392,7 +392,7 @@ class CommonRenderer(ImageRenderer):
             cover_path = await cover_task.safe_get()
 
         if cover_path is None:
-            return Image.open(resources.random_failed_pic())
+            return Image.open(resources.random_fallback_pic())
 
         with Image.open(cover_path) as img:
             if img.mode != "RGBA":
@@ -470,7 +470,7 @@ class CommonRenderer(ImageRenderer):
         for content in display_contents:
             path = await content.safe_get()
             if path is None or not path.exists():
-                path = resources.random_failed_pic()
+                path = resources.random_fallback_pic()
             if img := self._load_grid_image(path, len(display_contents)):
                 images.append(img)
 
@@ -575,7 +575,7 @@ class CommonRenderer(ImageRenderer):
         """渲染图片"""
         path = await image_content.path_task.safe_get()
         if path is None or not path.exists():
-            path = resources.random_failed_pic()
+            path = resources.random_fallback_pic()
 
         with Image.open(path) as img:
             if img.width > self.content_width:
