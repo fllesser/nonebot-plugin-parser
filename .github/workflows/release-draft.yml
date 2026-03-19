@@ -4,12 +4,9 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    types: [opened, reopened, synchronize]
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   update_release_draft:
