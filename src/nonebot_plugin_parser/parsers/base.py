@@ -7,6 +7,7 @@ from collections.abc import Callable, Coroutine
 from typing_extensions import Unpack, final
 
 from .data import Platform, ParseResult, ImageContent, ParseResultKwargs
+from .task import PathTask
 from ..config import pconfig as pconfig
 from ..download import DOWNLOADER
 from ..constants import IOS_HEADER, COMMON_HEADER, ANDROID_HEADER, COMMON_TIMEOUT
@@ -15,7 +16,6 @@ from ..constants import PlatformEnum as PlatformEnum
 from ..exception import ParseException
 from ..exception import IgnoreException as IgnoreException
 from ..exception import DownloadException as DownloadException
-from ..download.task import PathTask, OptionalPathTask
 
 T = TypeVar("T", bound="BaseParser")
 HandlerFunc = Callable[[T, Match[str]], Coroutine[Any, Any, ParseResult]]
@@ -167,14 +167,16 @@ class BaseParser:
         """创建作者对象"""
         from .data import Author
 
-        avatar_task = None
+        author = Author(name=name, description=description)
+
         if avatar_url:
-            avatar_task = DOWNLOADER.download_img(avatar_url, ext_headers=self.headers)
-        return Author(name=name, avatar=OptionalPathTask(avatar_task), description=description)
+            author.avatar = PathTask(DOWNLOADER.download_img(avatar_url, ext_headers=self.headers))
+
+        return author
 
     def create_video_content(
         self,
-        url_or_task: str | Task[Path] | PathTask,
+        url_or_task: str | Task[Path],
         cover_url: str | None = None,
         duration: float | None = None,
     ):
@@ -185,8 +187,6 @@ class BaseParser:
         if isinstance(url_or_task, str):
             path_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
         elif isinstance(url_or_task, Task):
-            path_task = PathTask(url_or_task)
-        elif isinstance(url_or_task, PathTask):
             path_task = url_or_task
 
         if cover_url:
@@ -194,12 +194,16 @@ class BaseParser:
         else:
             # 如果没有封面 URL，尝试从视频中提取封面
             async def extract_cover():
-                video_path = await path_task.get()
+                video_path = await path_task
                 return await extract_video_cover(video_path)
 
-            cover_task = PathTask(extract_cover())
+            cover_task = extract_cover()
 
-        return VideoContent(path_task, OptionalPathTask(cover_task), duration)
+        return VideoContent(
+            PathTask(path_task),
+            cover=PathTask(cover_task),
+            duration=duration,
+        )
 
     def create_image_contents(
         self,
@@ -209,27 +213,25 @@ class BaseParser:
         contents: list[ImageContent] = []
         for url in image_urls:
             task = DOWNLOADER.download_img(url, ext_headers=self.headers)
-            contents.append(ImageContent(task))
+            contents.append(ImageContent(PathTask(task)))
         return contents
 
     def create_image_content(
         self,
-        url_or_task: str | Task[Path] | PathTask,
+        url_or_task: str | Task[Path],
         alt: str | None = None,
     ):
         """创建图片内容"""
         if isinstance(url_or_task, str):
             path_task = DOWNLOADER.download_img(url_or_task, ext_headers=self.headers)
         elif isinstance(url_or_task, Task):
-            path_task = PathTask(url_or_task)
-        elif isinstance(url_or_task, PathTask):
             path_task = url_or_task
 
-        return ImageContent(path_task, alt=alt)
+        return ImageContent(PathTask(path_task), alt=alt)
 
     def create_audio_content(
         self,
-        url_or_task: str | Task[Path] | PathTask,
+        url_or_task: str | Task[Path],
         duration: float = 0.0,
     ):
         """创建音频内容"""
@@ -238,11 +240,9 @@ class BaseParser:
         if isinstance(url_or_task, str):
             path_task = DOWNLOADER.download_audio(url_or_task, ext_headers=self.headers)
         elif isinstance(url_or_task, Task):
-            path_task = PathTask(url_or_task)
-        elif isinstance(url_or_task, PathTask):
             path_task = url_or_task
 
-        return AudioContent(path_task, duration)
+        return AudioContent(PathTask(path_task), duration)
 
     @property
     def downloader(self):

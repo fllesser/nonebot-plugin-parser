@@ -17,7 +17,7 @@ def test_keep_zh_en_num():
 
 
 def test_fmt_duration():
-    from nonebot_plugin_parser.utils import fmt_duration
+    from nonebot_plugin_parser.parsers.utils import fmt_duration
 
     assert fmt_duration(59) == "0:59"
     assert fmt_duration(3599) == "59:59"

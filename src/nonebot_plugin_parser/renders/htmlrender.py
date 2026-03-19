@@ -1,3 +1,4 @@
+import random
 from typing_extensions import override
 
 from nonebot import require
@@ -14,7 +15,6 @@ class HtmlRenderer(ImageRenderer):
 
     @override
     async def render_image(self) -> bytes:
-        # 利用 jinja 的 __await__ 转换，不再需要显式调用
         # await self.result.ensure_downloads_complete(img_only=True)
 
         logo = resources.RESOURCES_DIR / f"{self.result.platform.name}.png"
@@ -23,17 +23,20 @@ class HtmlRenderer(ImageRenderer):
         font = pconfig.custom_font or resources.DEFAULT_FONT_PATH
         font = font.as_uri() if font.exists() else None
 
-        play_button = resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri()
+        fallback_pics = list(resources.FAILED_PIC_DIR.glob("*.jpg"))
+        fallback_pic = random.choice(fallback_pics).as_uri() if fallback_pics else None
 
         return await template_to_pic(
             template_path=str(self.templates_dir),
             template_name="card.html.jinja2",
             templates={
-                "result": self.result,
                 "logo": logo,
                 "font": font,
+                "result": self.result,
+                "fallback_pic": fallback_pic,
                 "font_weight": pconfig.custom_font_weight,
-                "play_button": play_button,
+                "play_button": resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri(),
+                "default_avatar": resources.DEFAULT_AVATAR_PATH.as_uri(),
             },
             pages={"viewport": {"width": 800, "height": 100}},
         )

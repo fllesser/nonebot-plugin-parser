@@ -25,7 +25,7 @@ class DefaultRenderer(BaseRenderer):
         texts[:-1] = [text + "\n" for text in texts[:-1]]
         segs: list[Segment] = [Text(text) for text in texts]
 
-        if self.result.video and (cover_path := await self.result.video.cover.safe_get()):
+        if self.result.video and (cover := self.result.video.cover) and (cover_path := await cover.safe_get()):
             segs.insert(1, UniHelper.img_seg(cover_path))
 
         if total_len > 300:

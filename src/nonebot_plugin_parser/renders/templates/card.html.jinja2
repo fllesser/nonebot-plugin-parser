@@ -379,6 +379,25 @@
               object-fit: cover;
             }
 
+            .grid-item .text {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              
+              color: #999;
+              font-size: 20px;
+              background-color: var(--repost-bg);
+              text-align: center;
+              padding: 10px;
+              box-sizing: border-box;
+          }
+
             .more-count {
               position: absolute;
               top: 0;
@@ -518,7 +537,8 @@
                         {% set author = result.author %}
                         {% if author %}
                             <div class="header">
-                                {% if author.avatar %}<img src="{{ author.avatar.as_uri() | safe }}" class="avatar" alt="avatar" />{% endif %}
+                                {% set avatar_uri = author.avatar.uri if (author.avatar and author.avatar.uri) else default_avatar %}
+                                <img src="{{ avatar_uri | safe }}" class="avatar" alt="avatar" />
                                 <div class="user-info">
                                     <div class="username">{{ author.name }}</div>
                                     {% if result.formartted_datetime %}<div class="time">{{ result.formartted_datetime }}</div>{% endif %}
@@ -538,8 +558,9 @@
                             {# ── 视频封面 ── #}
                             {% set video = result.video %}
                             {% if video and video.cover %}
+                                {% set cover_uri = (video.cover.uri if video.cover.uri else fallback_pic) %}
                                 <div class="cover-wrapper">
-                                    <img src="{{ video.cover.as_uri() | safe }}" class="cover-img" alt="cover" />
+                                    <img src="{{ cover_uri | safe }}" class="cover-img" alt="cover" />
                                     {% if play_button %}
                                         <div class="play-button">
                                             <img src="{{ play_button | safe }}" alt="play" />
@@ -565,21 +586,21 @@
                                     {% if count == 1 %}
                                         {% set img = imgs[0] %}
                                         <div class="image-container">
-                                            <img src="{{ img.as_uri() | safe }}"
+                                            <img src="{{ img.uri | safe }}"
                                                  class="single-image"
                                                  alt="image" />
                                         </div>
                                     {% else %}
                                         {% set cols = 2 if count in [2, 4] else 3 %}
                                         <div class="image-grid cols-{{ cols }}">
-                                            {% for i in range(count if count < 9 else 9) %}
-                                                {% set img = imgs[i] %}
-                                                {% if img %}
-                                                    <div class="grid-item">
-                                                        <img src="{{ img.as_uri() | safe }}" alt="image" />
-                                                        {% if loop.last and count > 9 %}<div class="more-count">+{{ count - 9 }}</div>{% endif %}
-                                                    </div>
-                                                {% endif %}
+                                            {% for img in imgs[:9] %}
+                                                {% set img_uri = (img.uri if img.uri else fallback_pic) %}
+                                                <div class="grid-item">
+                                                    <img src="{{ img_uri | safe }}" alt="image" />
+                                                    {% if loop.last and count > 9 %}
+                                                        <div class="more-count">+{{ count - 9 }}</div>
+                                                    {% endif %}
+                                                </div>
                                             {% endfor %}
                                         </div>
                                     {% endif %}
@@ -590,8 +611,10 @@
                                             {% if text_or_img is string %}
                                                 <div class="text">{{ text_or_img }}</div>
                                             {% else %}
+                                                {% set img_uri = text_or_img.path_task.uri %}
+                                                {% set img_uri = (img_uri if img_uri else fallback_pic) %}
                                                 <div class="image-container">
-                                                    <img src="{{ text_or_img.path_task.as_uri() | safe }}"
+                                                    <img src="{{ img_uri | safe }}"
                                                          class="single-image"
                                                          alt="graphics" />
                                                 </div>

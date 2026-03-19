@@ -147,8 +147,10 @@ async def _download_all_media(result) -> float:
         download_tasks.append(result.video.cover.get())
     if repost := result.repost:
         assert repost.author
+        assert repost.author.avatar, "转发作者头像不存在"
         download_tasks.append(repost.author.avatar.get())
         if repost.video:
+            assert repost.video.cover, "转发视频封面不存在"
             download_tasks.append(repost.video.cover.get())
 
     # 添加所有内容下载任务（包括转发内容）
