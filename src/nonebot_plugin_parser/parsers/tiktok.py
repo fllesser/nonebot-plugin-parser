@@ -3,7 +3,7 @@ from typing import ClassVar
 
 from .base import BaseParser, PlatformEnum, handle
 from .data import Author, Platform
-from ..download import YTDLP_DOWNLOADER
+from ..download import yt_dlp_downloader
 
 
 class TikTokParser(BaseParser):
@@ -18,10 +18,10 @@ class TikTokParser(BaseParser):
             url = await self.get_redirect_url(url)
 
         # 获取视频信息
-        video_info = await YTDLP_DOWNLOADER.extract_video_info(url)
+        video_info = await yt_dlp_downloader.extract_video_info(url)
 
         # 下载封面和视频
-        video = YTDLP_DOWNLOADER.download_video(url)
+        video = yt_dlp_downloader.download_video(url)
         video_content = self.create_video(
             video,
             video_info.thumbnail,

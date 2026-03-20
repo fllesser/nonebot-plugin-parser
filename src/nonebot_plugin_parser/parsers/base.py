@@ -9,7 +9,7 @@ from typing_extensions import Unpack, final
 from .data import Platform, ParseResult, ImageContent, ParseResultKwargs
 from .task import PathTask
 from ..config import pconfig as pconfig
-from ..download import DOWNLOADER
+from ..download import downloader
 from ..constants import IOS_HEADER, COMMON_HEADER, ANDROID_HEADER, COMMON_TIMEOUT
 from ..constants import DOWNLOAD_TIMEOUT as DOWNLOAD_TIMEOUT
 from ..constants import PlatformEnum as PlatformEnum
@@ -170,7 +170,7 @@ class BaseParser:
         author = Author(name=name, description=description)
 
         if avatar_url:
-            author.avatar = PathTask(DOWNLOADER.download_img(avatar_url, ext_headers=self.headers))
+            author.avatar = PathTask(downloader.download_img(avatar_url, ext_headers=self.headers))
 
         return author
 
@@ -185,12 +185,12 @@ class BaseParser:
         from ..utils import extract_video_cover
 
         if isinstance(url_or_task, str):
-            path_task = DOWNLOADER.download_video(url_or_task, ext_headers=self.headers)
+            path_task = downloader.download_video(url_or_task, ext_headers=self.headers)
         elif isinstance(url_or_task, Task):
             path_task = url_or_task
 
         if cover_url:
-            cover_task = DOWNLOADER.download_img(cover_url, ext_headers=self.headers)
+            cover_task = downloader.download_img(cover_url, ext_headers=self.headers)
         else:
             # 如果没有封面 URL，尝试从视频中提取封面
             async def extract_cover():
@@ -212,7 +212,7 @@ class BaseParser:
         """创建图片内容列表"""
         contents: list[ImageContent] = []
         for url in image_urls:
-            task = DOWNLOADER.download_img(url, ext_headers=self.headers)
+            task = downloader.download_img(url, ext_headers=self.headers)
             contents.append(ImageContent(PathTask(task)))
         return contents
 
@@ -223,7 +223,7 @@ class BaseParser:
     ):
         """创建单个图片内容"""
         if isinstance(url_or_task, str):
-            path_task = DOWNLOADER.download_img(url_or_task, ext_headers=self.headers)
+            path_task = downloader.download_img(url_or_task, ext_headers=self.headers)
         elif isinstance(url_or_task, Task):
             path_task = url_or_task
 
@@ -238,7 +238,7 @@ class BaseParser:
         from .data import AudioContent
 
         if isinstance(url_or_task, str):
-            path_task = DOWNLOADER.download_audio(url_or_task, ext_headers=self.headers)
+            path_task = downloader.download_audio(url_or_task, ext_headers=self.headers)
         elif isinstance(url_or_task, Task):
             path_task = url_or_task
 
@@ -246,4 +246,4 @@ class BaseParser:
 
     @property
     def downloader(self):
-        return DOWNLOADER
+        return downloader

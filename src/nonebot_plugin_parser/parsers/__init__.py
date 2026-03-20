@@ -7,10 +7,10 @@ from .douyin import DouyinParser as DouyinParser
 from .twitter import TwitterParser as TwitterParser
 from .bilibili import BilibiliParser as BilibiliParser
 from .kuaishou import KuaiShouParser as KuaiShouParser
-from ..download import YTDLP_DOWNLOADER
+from ..download import yt_dlp_downloader as yt_dlp_downloader
 from .xiaohongshu import XiaoHongShuParser as XiaoHongShuParser
 
-if YTDLP_DOWNLOADER is not None:
+if yt_dlp_downloader is not None:
     from .tiktok import TikTokParser as TikTokParser
     from .youtube import YouTubeParser as YouTubeParser
 

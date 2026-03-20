@@ -6,18 +6,11 @@ from .base import BaseRenderer
 from .common import CommonRenderer
 from .default import DefaultRenderer
 
+RENDERER: type[BaseRenderer] | None = None
 
-def is_module_available(module_name: str) -> bool:
-    """检查模块是否可用"""
-    import importlib.util
-
-    return importlib.util.find_spec(module_name) is not None
-
-
+from ..utils import is_module_available
 from ..config import pconfig
 from ..constants import RenderType
-
-RENDERER: type[BaseRenderer] | None = None
 
 match pconfig.render_type:
     case RenderType.common:
