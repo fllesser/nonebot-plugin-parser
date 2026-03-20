@@ -225,12 +225,13 @@ class StreamDownloader:
 
 
 downloader: StreamDownloader = StreamDownloader()
+"""全局下载器实例，提供下载功能"""
+yt_dlp_downloader = None
+"""yt-dlp 下载器实例，提供下载视频功能，若 yt-dlp 未安装则为 None"""
 
-try:
-    import yt_dlp as yt_dlp
+from ..utils import is_module_available
 
+if is_module_available("yt_dlp"):
     from .ytdlp import YtdlpDownloader
 
     yt_dlp_downloader = YtdlpDownloader()
-except ImportError:
-    yt_dlp_downloader = None
