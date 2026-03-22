@@ -362,7 +362,7 @@ class ExampleParser(BaseParser):
 <details>
 <summary>辅助函数</summary>
 
-> 构建作者信息
+> 构建作者
 
 ```python
 author = self.create_author(
@@ -419,5 +419,5 @@ real_url = await self.get_redirect_url(
 
 ## 🎉 致谢
 
-- [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) | 初代解析插件
-- [parse-video-py](https://github.com/wujunwei928/parse-video-py) | 借鉴了抖音解析
+- [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) - 本项目最初基于此插件进行开发，在此表示感谢。尽管当前版本代码已完全重构，但仍感谢原项目提供的初始思路和参考。 
+- [parse-video-py](https://github.com/wujunwei928/parse-video-py) - 在抖音解析功能实现方面提供了技术参考和借鉴。
