@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 import aiofiles
 from httpx import HTTPError, AsyncClient
 from nonebot import logger
+from curl_cffi import CurlError
 from rich.progress import (
     Progress,
     BarColumn,
@@ -59,27 +60,54 @@ class StreamDownloader:
 
         headers = {**self.headers, **(ext_headers or {})}
 
+        async with self.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
+            response.raise_for_status()
+            content_length = response.headers.get("Content-Length")
+            content_length = int(content_length) if content_length else 0
+
+            if content_length == 0:
+                logger.warning(f"媒体 url: {url}, 大小为 0, 取消下载")
+                raise IgnoreException
+
+            if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
+                logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB, 超过 {pconfig.max_size} MB, 取消下载")
+                raise IgnoreException
+
+            with self.rich_progress(file_name, content_length) as update_progress:
+                async with aiofiles.open(file_path, "wb") as file:
+                    async for chunk in response.aiter_bytes(chunk_size):
+                        await file.write(chunk)
+                        update_progress(advance=len(chunk))
+
+        return file_path
+
+    async def _download_file_with_curl_cffi(
+        self,
+        url: str,
+        *,
+        file_name: str | None = None,
+        ext_headers: dict[str, str] | None = None,
+    ) -> Path:
+        from curl_cffi import Response, CurlError, AsyncSession
+
+        if not file_name:
+            file_name = generate_file_name(url)
+        file_path = self.cache_dir / file_name
+        # 如果文件存在，则直接返回
+        if file_path.exists():
+            return file_path
+
+        headers = {**self.headers, **(ext_headers or {})}
         try:
-            async with self.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
-                response.raise_for_status()
-                content_length = response.headers.get("Content-Length")
-                content_length = int(content_length) if content_length else 0
-
-                if content_length == 0:
-                    logger.warning(f"媒体 url: {url}, 大小为 0, 取消下载")
-                    raise IgnoreException
-
-                if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
-                    logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB, 超过 {pconfig.max_size} MB, 取消下载")
-                    raise IgnoreException
-
-                with self.rich_progress(file_name, content_length) as update_progress:
-                    async with aiofiles.open(file_path, "wb") as file:
-                        async for chunk in response.aiter_bytes(chunk_size):
-                            await file.write(chunk)
-                            update_progress(advance=len(chunk))
-
-        except HTTPError:
+            async with AsyncSession() as session:
+                response: Response = await session.get(
+                    url,
+                    headers=headers,
+                    timeout=DOWNLOAD_TIMEOUT,
+                )
+                async with aiofiles.open(file_path, "wb") as file:
+                    await file.write(response.content)
+        except CurlError:
             await safe_unlink(file_path)
             logger.exception(f"下载失败 | url: {url}, file_path: {file_path}")
             raise DownloadException("媒体下载失败")
@@ -96,12 +124,26 @@ class StreamDownloader:
         chunk_size: int = 64 * 1024,
     ) -> Path:
         """download file by url with stream"""
-        return await self._download_file(
-            url,
-            file_name=file_name,
-            ext_headers=ext_headers,
-            chunk_size=chunk_size,
-        )
+        try:
+            path = await self._download_file(
+                url,
+                file_name=file_name,
+                ext_headers=ext_headers,
+                chunk_size=chunk_size,
+            )
+        except HTTPError:
+            logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
+            try:
+                path = await self._download_file_with_curl_cffi(
+                    url,
+                    file_name=file_name,
+                    ext_headers=ext_headers,
+                )
+            except CurlError:
+                logger.opt(exception=True).warning(f"下载失败(curl_cffi) | url: {url}")
+                raise DownloadException("媒体下载失败")
+
+        return path
 
     @auto_task
     async def download_video(
