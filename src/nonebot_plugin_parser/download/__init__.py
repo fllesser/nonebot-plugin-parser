@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from pathlib import Path
 from functools import partial
@@ -114,6 +116,33 @@ class StreamDownloader:
 
         return file_path
 
+    async def _download_file_with_reqwest(
+        self,
+        url: str,
+        *,
+        file_name: str | None = None,
+        ext_headers: dict[str, str] | None = None,
+    ):
+        """download file by url with reqwest"""
+        from pyreqwest.simple.request import pyreqwest_get
+
+        if not file_name:
+            file_name = generate_file_name(url)
+
+        file_path = self.cache_dir / file_name
+        # 如果文件存在，则直接返回
+        if file_path.exists():
+            return file_path
+
+        headers = {**self.headers, **(ext_headers or {})}
+
+        reponse = await pyreqwest_get(url).headers(headers).send()
+
+        async with aiofiles.open(file_path, "wb") as file:
+            await file.write(await reponse.bytes())
+
+        return file_path
+
     @auto_task
     async def download_file(
         self,
@@ -125,20 +154,11 @@ class StreamDownloader:
     ) -> Path:
         """download file by url with stream"""
         try:
-            path = await self._download_file(
-                url,
-                file_name=file_name,
-                ext_headers=ext_headers,
-                chunk_size=chunk_size,
-            )
+            path = await self._download_file(url, file_name=file_name, ext_headers=ext_headers, chunk_size=chunk_size)
         except HTTPError:
             logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
             try:
-                path = await self._download_file_with_curl_cffi(
-                    url,
-                    file_name=file_name,
-                    ext_headers=ext_headers,
-                )
+                path = await self._download_file_with_reqwest(url, file_name=file_name, ext_headers=ext_headers)
             except CurlError:
                 logger.opt(exception=True).warning(f"下载失败(curl_cffi) | url: {url}")
                 raise DownloadException("媒体下载失败")

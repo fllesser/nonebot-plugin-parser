@@ -3,7 +3,7 @@ name = "nonebot-plugin-parser"
 version = "2.6.0"
 description = "NoneBot2 链接分享解析 Alconna 版, 现支持B站|抖音|快手|微博|小红书|YouTube|TikTok|Twitter|AcFun|NGA"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
 keywords = [
   "acfun",
@@ -53,6 +53,7 @@ dependencies = [
   "nonebot-plugin-apscheduler>=0.5.0,<1.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
   "nonebot-plugin-uninfo>=0.10.1,<1.0.0",
+  "pyreqwest>=0.11.6",
 ]
 
 [project.urls]
@@ -150,8 +151,8 @@ test-render = "pytest tests/renders --cov=src --cov-report=xml --junitxml=junit.
 bump = "bump-my-version bump"
 show-bump = "bump-my-version show-bump"
 
-[tool.pyright]
-pythonVersion = "3.10"
+[tool.basedpyright]
+pythonVersion = "3.11"
 pythonPlatform = "All"
 defineConstant = { PYDANTIC_V2 = true }
 executionEnvironments = [
