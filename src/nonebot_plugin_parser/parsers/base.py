@@ -1,10 +1,10 @@
 from re import Match, Pattern, compile
 from abc import ABC
-from typing import TYPE_CHECKING, Any, TypeVar, ClassVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, ClassVar, cast, final
 from asyncio import Task
 from pathlib import Path
 from collections.abc import Callable, Coroutine
-from typing_extensions import Unpack, final
+from typing_extensions import Unpack
 
 from .data import Platform, ParseResult, ImageContent, ParseResultKwargs
 from .task import PathTask

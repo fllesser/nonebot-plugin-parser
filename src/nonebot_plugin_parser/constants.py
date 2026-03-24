@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Final
 
 from httpx import Timeout
@@ -29,7 +29,7 @@ COMMON_TIMEOUT: Final[Timeout] = Timeout(connect=15.0, read=20.0, write=10.0, po
 DOWNLOAD_TIMEOUT: Final[Timeout] = Timeout(connect=15.0, read=240.0, write=10.0, pool=10.0)
 
 
-class PlatformEnum(str, Enum):
+class PlatformEnum(StrEnum):
     ACFUN = "acfun"
     BILIBILI = "bilibili"
     DOUYIN = "douyin"
@@ -45,7 +45,7 @@ class PlatformEnum(str, Enum):
         return self.value
 
 
-class RenderType(str, Enum):
+class RenderType(StrEnum):
     default = "default"
     common = "common"
     htmlkit = "htmlkit"
