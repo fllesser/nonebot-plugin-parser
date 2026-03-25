@@ -130,7 +130,7 @@ class StreamDownloader:
             ) as update_progress:
                 async with aiofiles.open(file_path, "wb") as file:
                     async for chunk in response.aiter_content(chunk_size=8192):
-                        await file.write(response.content)
+                        await file.write(chunk)
                         update_progress(advance=len(chunk))
 
         return file_path
