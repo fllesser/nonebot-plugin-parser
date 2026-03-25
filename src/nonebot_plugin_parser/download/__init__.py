@@ -31,7 +31,11 @@ class StreamDownloader:
         self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
 
     @contextmanager
-    def rich_progress(self, desc: str, total: int | None = None):
+    def rich_progress(
+        self,
+        desc: str,
+        total: int | None = None,
+    ):
         with Progress(
             TextColumn("[bold blue]{task.description}", justify="right"),
             BarColumn(bar_width=None),
@@ -92,7 +96,10 @@ class StreamDownloader:
             response.raise_for_status()
             content_length = self._validate_content_length(response)
 
-            with self.rich_progress(file_path.name, content_length) as update_progress:
+            with self.rich_progress(
+                f"curl_cffi | {file_path.name}",
+                content_length,
+            ) as update_progress:
                 async with aiofiles.open(file_path, "wb") as file:
                     async for chunk in response.aiter_bytes(chunk_size):
                         await file.write(chunk)
@@ -112,10 +119,19 @@ class StreamDownloader:
                 url,
                 headers=headers,
                 timeout=DOWNLOAD_TIMEOUT,
+                stream=True,
             )
-            self._validate_content_length(response)
-            async with aiofiles.open(file_path, "wb") as file:
-                await file.write(response.content)
+            response.raise_for_status()
+            content_length = self._validate_content_length(response)
+
+            with self.rich_progress(
+                f"curl_cffi | {file_path.name}",
+                content_length,
+            ) as update_progress:
+                async for chunk in response.aiter_content(chunk_size=8192):
+                    async with aiofiles.open(file_path, "wb") as file:
+                        await file.write(response.content)
+                        update_progress(advance=len(chunk))
 
         return file_path
 
@@ -136,7 +152,6 @@ class StreamDownloader:
             )
         except httpx.HTTPError:
             logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
-            logger.info(f"使用 curl_cffi 重试下载(不支持流式, 故无下载进度条) | url: {url}")
             try:
                 path = await self._download_file_with_curl_cffi(url, file_path=file_path, headers=headers)
             except curl_cffi.CurlError:
