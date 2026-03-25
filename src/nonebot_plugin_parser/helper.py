@@ -31,6 +31,14 @@ EMOJI_MAP = {
     "resolving": ("424", "👀"),
     "done": ("144", "🎉"),
 }
+"""emoji 映射"""
+
+ID_ADAPTERS = {
+    SupportAdapter.onebot11,
+    SupportAdapter.qq,
+    SupportAdapter.milky,
+}
+"""支持的传入 emoji id 发送 reaction 的适配器"""
 
 
 class UniHelper:
@@ -127,15 +135,12 @@ class UniHelper:
         message_id = uniseg.get_message_id(event)
         target = uniseg.get_target(event)
 
-        if target.adapter in (SupportAdapter.onebot11, SupportAdapter.qq):
-            emoji = EMOJI_MAP[status][0]
-        else:
-            emoji = EMOJI_MAP[status][1]
+        emoji = EMOJI_MAP[status][0 if target.adapter in ID_ADAPTERS else 1]
 
         try:
             await uniseg.message_reaction(emoji, message_id=message_id)
         except Exception:
-            logger.warning(f"reaction {emoji} to {message_id} failed, maybe not support")
+            logger.opt(exception=True).warning(f"reaction {emoji} to {message_id} failed, maybe not support")
 
     @classmethod
     def with_reaction(cls, func: Callable[..., Awaitable[Any]]):
