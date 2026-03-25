@@ -97,7 +97,7 @@ class StreamDownloader:
             content_length = self._validate_content_length(response)
 
             with self.rich_progress(
-                f"curl_cffi | {file_path.name}",
+                f"httpx | {file_path.name}",
                 content_length,
             ) as update_progress:
                 async with aiofiles.open(file_path, "wb") as file:
