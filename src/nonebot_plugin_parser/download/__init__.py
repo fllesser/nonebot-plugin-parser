@@ -42,7 +42,7 @@ class StreamDownloader:
             task_id = progress.add_task(description=desc, total=total)
             yield partial(progress.update, task_id)
 
-    async def _download_file(
+    async def _download_file_with_httpx(
         self,
         url: str,
         *,
@@ -141,8 +141,7 @@ class StreamDownloader:
 
         return file_path
 
-    @auto_task
-    async def download_file(
+    async def _download_file(
         self,
         url: str,
         *,
@@ -151,14 +150,18 @@ class StreamDownloader:
         chunk_size: int = 64 * 1024,
     ) -> Path:
         """download file by url with stream"""
-        logger.info(f"下载媒体(httpx) | url: {url}")
         try:
-            path = await self._download_file(url, file_name=file_name, ext_headers=ext_headers, chunk_size=chunk_size)
+            path = await self._download_file_with_httpx(
+                url, file_name=file_name, ext_headers=ext_headers, chunk_size=chunk_size
+            )
         except HTTPError:
             logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
             try:
-                logger.info(f"下载媒体(curl_cffi) | url: {url}")
-                path = await self._download_file_with_curl_cffi(url, file_name=file_name, ext_headers=ext_headers)
+                path = await self._download_file_with_curl_cffi(
+                    url,
+                    file_name=file_name,
+                    ext_headers=ext_headers,
+                )
             except CurlError:
                 logger.opt(exception=True).warning(f"下载失败(curl_cffi) | url: {url}")
                 raise DownloadException("媒体下载失败")
