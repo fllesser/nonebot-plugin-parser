@@ -128,8 +128,8 @@ class StreamDownloader:
                 f"curl_cffi | {file_path.name}",
                 content_length,
             ) as update_progress:
-                async for chunk in response.aiter_content(chunk_size=8192):
-                    async with aiofiles.open(file_path, "wb") as file:
+                async with aiofiles.open(file_path, "wb") as file:
+                    async for chunk in response.aiter_content(chunk_size=8192):
                         await file.write(response.content)
                         update_progress(advance=len(chunk))
 
