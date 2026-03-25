@@ -136,7 +136,9 @@ class StreamDownloader:
                 url, file_name=file_name, ext_headers=ext_headers, chunk_size=chunk_size
             )
         except httpx.HTTPError:
-            logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
+            logger.opt(exception=True).warning(
+                f"下载失败(httpx), 尝试使用 curl_cffi(不支持流式，无进度条) | url: {url}"
+            )
             try:
                 path = await self._download_file_with_curl_cffi(
                     url,
