@@ -151,11 +151,13 @@ class StreamDownloader:
         chunk_size: int = 64 * 1024,
     ) -> Path:
         """download file by url with stream"""
+        logger.info(f"下载媒体(httpx) | url: {url}")
         try:
             path = await self._download_file(url, file_name=file_name, ext_headers=ext_headers, chunk_size=chunk_size)
         except HTTPError:
             logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
             try:
+                logger.info(f"下载媒体(curl_cffi) | url: {url}")
                 path = await self._download_file_with_curl_cffi(url, file_name=file_name, ext_headers=ext_headers)
             except CurlError:
                 logger.opt(exception=True).warning(f"下载失败(curl_cffi) | url: {url}")
