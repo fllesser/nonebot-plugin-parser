@@ -156,7 +156,7 @@ class StreamDownloader:
         except HTTPError:
             logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
             try:
-                path = await self._download_file_with_reqwest(url, file_name=file_name, ext_headers=ext_headers)
+                path = await self._download_file_with_curl_cffi(url, file_name=file_name, ext_headers=ext_headers)
             except CurlError:
                 logger.opt(exception=True).warning(f"下载失败(curl_cffi) | url: {url}")
                 raise DownloadException("媒体下载失败")
