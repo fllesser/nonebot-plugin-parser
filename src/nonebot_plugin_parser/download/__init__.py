@@ -82,34 +82,31 @@ class StreamDownloader:
         self,
         url: str,
         *,
-        file_name: str | None = None,
-        ext_headers: dict[str, str] | None = None,
+        file_path: Path,
+        headers: dict[str, str],
         chunk_size: int = 64 * 1024,
     ) -> Path:
         """download file by url with stream"""
-        path, headers = self._prepare_download_params(url, file_name, ext_headers)
 
         async with self.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
             response.raise_for_status()
             content_length = self._validate_content_length(response)
 
-            with self.rich_progress(path.name, content_length) as update_progress:
-                async with aiofiles.open(path, "wb") as file:
+            with self.rich_progress(file_path.name, content_length) as update_progress:
+                async with aiofiles.open(file_path, "wb") as file:
                     async for chunk in response.aiter_bytes(chunk_size):
                         await file.write(chunk)
                         update_progress(advance=len(chunk))
 
-        return path
+        return file_path
 
     async def _download_file_with_curl_cffi(
         self,
         url: str,
         *,
-        file_name: str | None = None,
-        ext_headers: dict[str, str] | None = None,
+        file_path: Path,
+        headers: dict[str, str],
     ) -> Path:
-        path, headers = self._prepare_download_params(url, file_name, ext_headers)
-
         async with curl_cffi.AsyncSession() as session:
             response: curl_cffi.Response = await session.get(
                 url,
@@ -117,10 +114,10 @@ class StreamDownloader:
                 timeout=DOWNLOAD_TIMEOUT,
             )
             self._validate_content_length(response)
-            async with aiofiles.open(path, "wb") as file:
+            async with aiofiles.open(file_path, "wb") as file:
                 await file.write(response.content)
 
-        return path
+        return file_path
 
     async def _download_file(
         self,
@@ -130,21 +127,18 @@ class StreamDownloader:
         ext_headers: dict[str, str] | None = None,
         chunk_size: int = 64 * 1024,
     ) -> Path:
-        """download file by url with stream"""
+        """download file by url with fallback"""
+        file_path, headers = self._prepare_download_params(url, file_name, ext_headers)
+
         try:
             path = await self._download_file_with_httpx(
-                url, file_name=file_name, ext_headers=ext_headers, chunk_size=chunk_size
+                url, file_path=file_path, headers=headers, chunk_size=chunk_size
             )
         except httpx.HTTPError:
-            logger.opt(exception=True).warning(
-                f"下载失败(httpx), 尝试使用 curl_cffi(不支持流式，无进度条) | url: {url}"
-            )
+            logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
+            logger.info(f"使用 curl_cffi 重试下载(不支持流式, 故无下载进度条) | url: {url}")
             try:
-                path = await self._download_file_with_curl_cffi(
-                    url,
-                    file_name=file_name,
-                    ext_headers=ext_headers,
-                )
+                path = await self._download_file_with_curl_cffi(url, file_path=file_path, headers=headers)
             except curl_cffi.CurlError:
                 logger.opt(exception=True).warning(f"下载失败(curl_cffi) | url: {url}")
                 raise DownloadException("媒体下载失败")
