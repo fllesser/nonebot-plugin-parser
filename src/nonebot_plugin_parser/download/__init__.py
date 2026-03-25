@@ -4,10 +4,10 @@ from functools import partial
 from contextlib import contextmanager
 from urllib.parse import urljoin
 
+import httpx
 import aiofiles
-from httpx import HTTPError, AsyncClient
+import curl_cffi
 from nonebot import logger
-from curl_cffi import CurlError
 from rich.progress import (
     Progress,
     BarColumn,
@@ -28,7 +28,7 @@ class StreamDownloader:
     def __init__(self):
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
-        self.client: AsyncClient = AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
+        self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
 
     @contextmanager
     def rich_progress(self, desc: str, total: int | None = None):
@@ -42,6 +42,42 @@ class StreamDownloader:
             task_id = progress.add_task(description=desc, total=total)
             yield partial(progress.update, task_id)
 
+    def _prepare_download_params(
+        self,
+        url: str,
+        file_name: str | None = None,
+        ext_headers: dict[str, str] | None = None,
+    ) -> tuple[Path, dict[str, str]]:
+        """准备下载参数"""
+        if not file_name:
+            file_name = generate_file_name(url)
+        file_path = self.cache_dir / file_name
+
+        # 如果文件存在，则直接返回
+        if file_path.exists():
+            return file_path, {}
+
+        headers = {**self.headers, **(ext_headers or {})}
+        return file_path, headers
+
+    def _validate_content_length(
+        self,
+        response: httpx.Response | curl_cffi.Response,
+    ) -> int:
+        """获取文件长度"""
+        content_length = response.headers.get("Content-Length")
+        content_length = int(content_length) if content_length else 0
+
+        if content_length == 0:
+            logger.warning(f"媒体 url: {response.url}, 大小为 0, 取消下载")
+            raise IgnoreException
+
+        if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
+            logger.warning(f"媒体 url: {response.url} 大小 {file_size:.2f} MB, 超过 {pconfig.max_size} MB, 取消下载")
+            raise IgnoreException
+
+        return content_length
+
     async def _download_file_with_httpx(
         self,
         url: str,
@@ -51,35 +87,19 @@ class StreamDownloader:
         chunk_size: int = 64 * 1024,
     ) -> Path:
         """download file by url with stream"""
-        if not file_name:
-            file_name = generate_file_name(url)
-        file_path = self.cache_dir / file_name
-        # 如果文件存在，则直接返回
-        if file_path.exists():
-            return file_path
-
-        headers = {**self.headers, **(ext_headers or {})}
+        path, headers = self._prepare_download_params(url, file_name, ext_headers)
 
         async with self.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
             response.raise_for_status()
-            content_length = response.headers.get("Content-Length")
-            content_length = int(content_length) if content_length else 0
+            content_length = self._validate_content_length(response)
 
-            if content_length == 0:
-                logger.warning(f"媒体 url: {url}, 大小为 0, 取消下载")
-                raise IgnoreException
-
-            if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
-                logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB, 超过 {pconfig.max_size} MB, 取消下载")
-                raise IgnoreException
-
-            with self.rich_progress(file_name, content_length) as update_progress:
-                async with aiofiles.open(file_path, "wb") as file:
+            with self.rich_progress(path.name, content_length) as update_progress:
+                async with aiofiles.open(path, "wb") as file:
                     async for chunk in response.aiter_bytes(chunk_size):
                         await file.write(chunk)
                         update_progress(advance=len(chunk))
 
-        return file_path
+        return path
 
     async def _download_file_with_curl_cffi(
         self,
@@ -88,58 +108,19 @@ class StreamDownloader:
         file_name: str | None = None,
         ext_headers: dict[str, str] | None = None,
     ) -> Path:
-        from curl_cffi import Response, CurlError, AsyncSession
+        path, headers = self._prepare_download_params(url, file_name, ext_headers)
 
-        if not file_name:
-            file_name = generate_file_name(url)
-        file_path = self.cache_dir / file_name
-        # 如果文件存在，则直接返回
-        if file_path.exists():
-            return file_path
+        async with curl_cffi.AsyncSession() as session:
+            response: curl_cffi.Response = await session.get(
+                url,
+                headers=headers,
+                timeout=DOWNLOAD_TIMEOUT,
+            )
+            self._validate_content_length(response)
+            async with aiofiles.open(path, "wb") as file:
+                await file.write(response.content)
 
-        headers = {**self.headers, **(ext_headers or {})}
-        try:
-            async with AsyncSession() as session:
-                response: Response = await session.get(
-                    url,
-                    headers=headers,
-                    timeout=DOWNLOAD_TIMEOUT,
-                )
-                async with aiofiles.open(file_path, "wb") as file:
-                    await file.write(response.content)
-        except CurlError:
-            await safe_unlink(file_path)
-            logger.exception(f"下载失败 | url: {url}, file_path: {file_path}")
-            raise DownloadException("媒体下载失败")
-
-        return file_path
-
-    async def _download_file_with_reqwest(
-        self,
-        url: str,
-        *,
-        file_name: str | None = None,
-        ext_headers: dict[str, str] | None = None,
-    ):
-        """download file by url with reqwest"""
-        from pyreqwest.simple.request import pyreqwest_get
-
-        if not file_name:
-            file_name = generate_file_name(url)
-
-        file_path = self.cache_dir / file_name
-        # 如果文件存在，则直接返回
-        if file_path.exists():
-            return file_path
-
-        headers = {**self.headers, **(ext_headers or {})}
-
-        reponse = await pyreqwest_get(url).headers(headers).send()
-
-        async with aiofiles.open(file_path, "wb") as file:
-            await file.write(await reponse.bytes())
-
-        return file_path
+        return path
 
     async def _download_file(
         self,
@@ -154,7 +135,7 @@ class StreamDownloader:
             path = await self._download_file_with_httpx(
                 url, file_name=file_name, ext_headers=ext_headers, chunk_size=chunk_size
             )
-        except HTTPError:
+        except httpx.HTTPError:
             logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
             try:
                 path = await self._download_file_with_curl_cffi(
@@ -162,7 +143,7 @@ class StreamDownloader:
                     file_name=file_name,
                     ext_headers=ext_headers,
                 )
-            except CurlError:
+            except curl_cffi.CurlError:
                 logger.opt(exception=True).warning(f"下载失败(curl_cffi) | url: {url}")
                 raise DownloadException("媒体下载失败")
 
@@ -264,7 +245,7 @@ class StreamDownloader:
                                 await f.write(chunk)
                                 total_size += len(chunk)
                                 update_progress(advance=len(chunk), total=total_size)
-        except HTTPError:
+        except httpx.HTTPError:
             await safe_unlink(video_path)
             logger.exception("m3u8 视频下载失败")
             raise DownloadException("m3u8 视频下载失败")
