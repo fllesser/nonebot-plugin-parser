@@ -114,7 +114,7 @@ class StreamDownloader:
         file_path: Path,
         headers: dict[str, str],
     ) -> Path:
-        async with curl_cffi.AsyncSession() as session:
+        async with curl_cffi.AsyncSession(allow_redirects=True) as session:
             response: curl_cffi.Response = await session.get(
                 url,
                 headers=headers,
