@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import httpx
 import aiofiles
 import curl_cffi
-from nonebot import logger
+from nonebot import logger, get_driver
 from rich.progress import (
     Progress,
     BarColumn,
@@ -29,6 +29,10 @@ class StreamDownloader:
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
         self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
+
+    async def aclose(self):
+        """关闭 httpx client, 清理资源"""
+        await self.client.aclose()
 
     @contextmanager
     def rich_progress(
@@ -292,3 +296,9 @@ if is_module_available("yt_dlp"):
     from .ytdlp import YtdlpDownloader
 
     yt_dlp_downloader = YtdlpDownloader()
+
+
+@get_driver().on_shutdown
+async def close_download_client():
+    logger.debug("正在关闭下载器...")
+    await downloader.aclose()
