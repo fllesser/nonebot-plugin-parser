@@ -43,6 +43,10 @@ class Photo(Struct):
         return self.user_name.replace("\u3164", "").strip()
 
     @property
+    def duration_ins(self):
+        return self.duration // 1000
+
+    @property
     def cover_url(self):
         return choice(self.cover_urls).url if len(self.cover_urls) != 0 else None
 

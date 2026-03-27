@@ -54,7 +54,6 @@ class KuaiShouParser(BaseParser):
         # 构建作者
         author = self.create_author(photo.name, photo.head_url)
 
-        # 先以部分数据构建结果，后续再填充内容，避免使用临时变量
         result = self.result(
             title=photo.caption,
             author=author,
@@ -64,7 +63,11 @@ class KuaiShouParser(BaseParser):
 
         # 添加视频内容
         if video_url := photo.video_url:
-            result.video = self.create_video(video_url, photo.cover_url, photo.duration)
+            result.video = self.create_video(
+                video_url,
+                photo.cover_url,
+                photo.duration_ins,
+            )
 
         # 添加图片内容
         if img_urls := photo.img_urls:
