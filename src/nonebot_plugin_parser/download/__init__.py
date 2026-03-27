@@ -16,15 +16,13 @@ from rich.progress import (
 )
 
 from .task import auto_task
-from ..utils import merge_av, safe_unlink, generate_file_name
+from ..utils import merge_av, safe_unlink, generate_file_name, is_module_available
 from ..config import pconfig
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import IgnoreException, DownloadException
 
 
 class StreamDownloader:
-    """Downloader class for downloading files with stream"""
-
     def __init__(self):
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
@@ -282,8 +280,6 @@ downloader: StreamDownloader = StreamDownloader()
 """全局下载器实例，提供下载功能"""
 yt_dlp_downloader = None
 """yt-dlp 下载器实例，提供下载视频功能，若 yt-dlp 未安装则为 None"""
-
-from ..utils import is_module_available
 
 if is_module_available("yt_dlp"):
     from .ytdlp import YtdlpDownloader
