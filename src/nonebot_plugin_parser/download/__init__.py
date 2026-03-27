@@ -50,24 +50,6 @@ class StreamDownloader:
             task_id = progress.add_task(description=desc, total=total)
             yield partial(progress.update, task_id)
 
-    def _prepare_download_params(
-        self,
-        url: str,
-        file_name: str | None = None,
-        ext_headers: dict[str, str] | None = None,
-    ) -> tuple[Path, dict[str, str]]:
-        """准备下载参数"""
-        if not file_name:
-            file_name = generate_file_name(url)
-        file_path = self.cache_dir / file_name
-
-        # 如果文件存在，则直接返回
-        if file_path.exists():
-            return file_path, {}
-
-        headers = {**self.headers, **(ext_headers or {})}
-        return file_path, headers
-
     def _validate_content_length(
         self,
         response: httpx.Response | curl_cffi.Response,
@@ -96,7 +78,12 @@ class StreamDownloader:
     ) -> Path:
         """download file by url with stream"""
 
-        async with self.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
+        async with self.client.stream(
+            "GET",
+            url,
+            headers=headers,
+            follow_redirects=True,
+        ) as response:
             response.raise_for_status()
             content_length = self._validate_content_length(response)
 
@@ -148,7 +135,13 @@ class StreamDownloader:
         chunk_size: int = 64 * 1024,
     ) -> Path:
         """download file by url with fallback"""
-        file_path, headers = self._prepare_download_params(url, file_name, ext_headers)
+        if not file_name:
+            file_name = generate_file_name(url)
+        file_path = self.cache_dir / file_name
+        if file_path.exists():
+            return file_path
+
+        headers = {**self.headers, **(ext_headers or {})}
 
         try:
             path = await self._download_file_with_httpx(
