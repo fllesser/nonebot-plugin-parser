@@ -50,6 +50,8 @@ class VideoContent(MediaContent):
         repr = f"VideoContent({self.path_task}"
         if self.cover is not None:
             repr += f", cover={self.cover}"
+        if self.duration:
+            repr += f", duration={self.duration}"
         return repr + ")"
 
 
