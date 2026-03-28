@@ -29,7 +29,6 @@ class StreamDownloader:
         self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
 
     async def aclose(self):
-        """关闭 httpx client, 清理资源"""
         await self.client.aclose()
 
     @staticmethod
