@@ -141,7 +141,7 @@ class BilibiliParser(BaseParser):
                     ext_headers=self.headers,
                 )
             else:
-                path = await self.downloader.download_file(
+                path = await self.downloader._download_file(
                     v_url,
                     file_name=output_path.name,
                     ext_headers=self.headers,

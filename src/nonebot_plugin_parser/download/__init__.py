@@ -4,9 +4,10 @@ from functools import partial
 from contextlib import contextmanager
 from urllib.parse import urljoin
 
+import httpx
 import aiofiles
-from httpx import HTTPError, AsyncClient
-from nonebot import logger
+import curl_cffi
+from nonebot import logger, get_driver
 from rich.progress import (
     Progress,
     BarColumn,
@@ -15,22 +16,27 @@ from rich.progress import (
 )
 
 from .task import auto_task
-from ..utils import merge_av, safe_unlink, generate_file_name
+from ..utils import merge_av, safe_unlink, generate_file_name, is_module_available
 from ..config import pconfig
 from ..constants import COMMON_HEADER, DOWNLOAD_TIMEOUT
 from ..exception import IgnoreException, DownloadException
 
 
 class StreamDownloader:
-    """Downloader class for downloading files with stream"""
-
     def __init__(self):
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
-        self.client: AsyncClient = AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
+        self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
 
+    async def aclose(self):
+        await self.client.aclose()
+
+    @staticmethod
     @contextmanager
-    def rich_progress(self, desc: str, total: int | None = None):
+    def rich_progress(
+        desc: str,
+        total: int | None = None,
+    ):
         with Progress(
             TextColumn("[bold blue]{task.description}", justify="right"),
             BarColumn(bar_width=None),
@@ -41,6 +47,82 @@ class StreamDownloader:
             task_id = progress.add_task(description=desc, total=total)
             yield partial(progress.update, task_id)
 
+    @staticmethod
+    def _validate_content_length(
+        response: httpx.Response | curl_cffi.Response,
+    ) -> int:
+        """获取文件长度"""
+        content_length = response.headers.get("Content-Length")
+        content_length = int(content_length) if content_length else 0
+
+        if content_length == 0:
+            logger.warning(f"媒体 url: {response.url}, 大小为 0, 取消下载")
+            raise IgnoreException
+
+        if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
+            logger.warning(f"媒体 url: {response.url} 大小 {file_size:.2f} MB, 超过 {pconfig.max_size} MB, 取消下载")
+            raise IgnoreException
+
+        return content_length
+
+    async def _download_file_with_httpx(
+        self,
+        url: str,
+        *,
+        file_path: Path,
+        headers: dict[str, str],
+        chunk_size: int = 64 * 1024,
+    ) -> Path:
+        """download file by url with stream"""
+
+        async with self.client.stream(
+            "GET",
+            url,
+            headers=headers,
+            follow_redirects=True,
+        ) as response:
+            response.raise_for_status()
+            content_length = self._validate_content_length(response)
+
+            with self.rich_progress(
+                f"httpx | {file_path.name}",
+                content_length,
+            ) as update_progress:
+                async with aiofiles.open(file_path, "wb") as file:
+                    async for chunk in response.aiter_bytes(chunk_size):
+                        await file.write(chunk)
+                        update_progress(advance=len(chunk))
+
+        return file_path
+
+    async def _download_file_with_curl_cffi(
+        self,
+        url: str,
+        *,
+        file_path: Path,
+        headers: dict[str, str],
+    ) -> Path:
+        async with curl_cffi.AsyncSession(allow_redirects=True) as session:
+            response: curl_cffi.Response = await session.get(
+                url,
+                headers=headers,
+                timeout=DOWNLOAD_TIMEOUT,
+                stream=True,
+            )
+            response.raise_for_status()
+            content_length = self._validate_content_length(response)
+
+            with self.rich_progress(
+                f"curl_cffi | {file_path.name}",
+                content_length,
+            ) as update_progress:
+                async with aiofiles.open(file_path, "wb") as file:
+                    async for chunk in response.aiter_content(chunk_size=8192):
+                        await file.write(chunk)
+                        update_progress(advance=len(chunk))
+
+        return file_path
+
     async def _download_file(
         self,
         url: str,
@@ -49,59 +131,28 @@ class StreamDownloader:
         ext_headers: dict[str, str] | None = None,
         chunk_size: int = 64 * 1024,
     ) -> Path:
-        """download file by url with stream"""
+        """download file by url with fallback"""
         if not file_name:
             file_name = generate_file_name(url)
         file_path = self.cache_dir / file_name
-        # 如果文件存在，则直接返回
         if file_path.exists():
             return file_path
 
         headers = {**self.headers, **(ext_headers or {})}
 
         try:
-            async with self.client.stream("GET", url, headers=headers, follow_redirects=True) as response:
-                response.raise_for_status()
-                content_length = response.headers.get("Content-Length")
-                content_length = int(content_length) if content_length else 0
+            path = await self._download_file_with_httpx(
+                url, file_path=file_path, headers=headers, chunk_size=chunk_size
+            )
+        except httpx.HTTPError:
+            logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
+            try:
+                path = await self._download_file_with_curl_cffi(url, file_path=file_path, headers=headers)
+            except curl_cffi.CurlError:
+                logger.opt(exception=True).warning(f"下载失败(curl_cffi) | url: {url}")
+                raise DownloadException("媒体下载失败")
 
-                if content_length == 0:
-                    logger.warning(f"媒体 url: {url}, 大小为 0, 取消下载")
-                    raise IgnoreException
-
-                if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
-                    logger.warning(f"媒体 url: {url} 大小 {file_size:.2f} MB, 超过 {pconfig.max_size} MB, 取消下载")
-                    raise IgnoreException
-
-                with self.rich_progress(file_name, content_length) as update_progress:
-                    async with aiofiles.open(file_path, "wb") as file:
-                        async for chunk in response.aiter_bytes(chunk_size):
-                            await file.write(chunk)
-                            update_progress(advance=len(chunk))
-
-        except HTTPError:
-            await safe_unlink(file_path)
-            logger.exception(f"下载失败 | url: {url}, file_path: {file_path}")
-            raise DownloadException("媒体下载失败")
-
-        return file_path
-
-    @auto_task
-    async def download_file(
-        self,
-        url: str,
-        *,
-        file_name: str | None = None,
-        ext_headers: dict[str, str] | None = None,
-        chunk_size: int = 64 * 1024,
-    ) -> Path:
-        """download file by url with stream"""
-        return await self._download_file(
-            url,
-            file_name=file_name,
-            ext_headers=ext_headers,
-            chunk_size=chunk_size,
-        )
+        return path
 
     @auto_task
     async def download_video(
@@ -199,7 +250,7 @@ class StreamDownloader:
                                 await f.write(chunk)
                                 total_size += len(chunk)
                                 update_progress(advance=len(chunk), total=total_size)
-        except HTTPError:
+        except httpx.HTTPError:
             await safe_unlink(video_path)
             logger.exception("m3u8 视频下载失败")
             raise DownloadException("m3u8 视频下载失败")
@@ -229,9 +280,13 @@ downloader: StreamDownloader = StreamDownloader()
 yt_dlp_downloader = None
 """yt-dlp 下载器实例，提供下载视频功能，若 yt-dlp 未安装则为 None"""
 
-from ..utils import is_module_available
-
 if is_module_available("yt_dlp"):
     from .ytdlp import YtdlpDownloader
 
     yt_dlp_downloader = YtdlpDownloader()
+
+
+@get_driver().on_shutdown
+async def close_download_client():
+    logger.debug("正在关闭下载器...")
+    await downloader.aclose()
