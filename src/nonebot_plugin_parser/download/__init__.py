@@ -32,9 +32,9 @@ class StreamDownloader:
         """关闭 httpx client, 清理资源"""
         await self.client.aclose()
 
+    @staticmethod
     @contextmanager
     def rich_progress(
-        self,
         desc: str,
         total: int | None = None,
     ):
@@ -48,8 +48,8 @@ class StreamDownloader:
             task_id = progress.add_task(description=desc, total=total)
             yield partial(progress.update, task_id)
 
+    @staticmethod
     def _validate_content_length(
-        self,
         response: httpx.Response | curl_cffi.Response,
     ) -> int:
         """获取文件长度"""
