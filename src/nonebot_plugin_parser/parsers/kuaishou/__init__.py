@@ -66,7 +66,7 @@ class KuaiShouParser(BaseParser):
             result.video = self.create_video(
                 video_url,
                 photo.cover_url,
-                photo.duration_ins,
+                photo.duration_in_seconds,
             )
 
         # 添加图片内容

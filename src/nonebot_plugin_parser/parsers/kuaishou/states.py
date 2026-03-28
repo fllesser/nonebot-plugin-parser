@@ -43,7 +43,7 @@ class Photo(Struct):
         return self.user_name.replace("\u3164", "").strip()
 
     @property
-    def duration_ins(self):
+    def duration_in_seconds(self):
         return self.duration // 1000
 
     @property
