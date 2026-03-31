@@ -80,24 +80,21 @@ class TwitterParser(BaseParser):
             timestamp=data.date_epoch,
         )
 
+        video_count = len([media for media in data.media_extended if media.type == "video"])
+
         for media in data.media_extended:
-            if media.type == "video":
-                result.video = self.create_video(
+            if media.type in ["video", "gif"]:
+                video = self.create_video(
                     media.url,
                     media.thumbnail_url,
                     duration=media.duration,
                 )
-                break
+                if media.type == "video" and video_count == 1:
+                    result.video = video
+                else:
+                    result.contents.append(video)
             elif media.type == "image":
                 result.contents.append(self.create_image(media.url))
-            elif media.type == "gif":
-                result.contents.append(
-                    self.create_video(
-                        media.url,
-                        media.thumbnail_url,
-                        duration=media.duration,
-                    )
-                )
 
         result.repost = self._collect_result(data.qrt) if data.qrt else None
 
