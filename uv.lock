@@ -1643,7 +1643,7 @@ requires-dist = [
     { name = "nonebot-plugin-htmlrender", marker = "extra == 'htmlrender'", specifier = ">=0.6.7" },
     { name = "nonebot-plugin-localstore", specifier = ">=0.7.4,<1.0.0" },
     { name = "nonebot-plugin-uninfo", specifier = ">=0.10.1,<1.0.0" },
-    { name = "nonebot2", specifier = ">=2.4.3,<3.0.0" },
+    { name = "nonebot2", specifier = ">=2.5.0,<3.0.0" },
     { name = "pillow", specifier = ">=11.0.0" },
     { name = "rich", specifier = ">=13.0.0" },
     { name = "yt-dlp", extras = ["default"], marker = "extra == 'all'", specifier = ">=2026.3.13" },
@@ -1657,9 +1657,9 @@ dev = [
     { name = "nonebot-adapter-onebot", specifier = ">=2.4.6" },
     { name = "nonebot-plugin-htmlkit", specifier = ">=0.1.0rc4" },
     { name = "nonebot-plugin-htmlrender", specifier = ">=0.6.7" },
-    { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.4.3,<3.0.0" },
-    { name = "nonebug", git = "https://github.com/nonebot/nonebug?rev=master" },
-    { name = "poethepoet", specifier = ">=0.42.1" },
+    { name = "nonebot2", extras = ["fastapi"], specifier = ">=2.5.0,<3.0.0" },
+    { name = "nonebug", specifier = ">=0.4.4,<1.0.0" },
+    { name = "poethepoet", specifier = ">=0.42.1,<1.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.3.0,<1.4.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0,<4.0.0" },
@@ -1679,8 +1679,8 @@ pydantic-v1 = [{ name = "pydantic", specifier = "<2.0.0" }]
 pydantic-v2 = [{ name = "pydantic", specifier = ">=2.0.0" }]
 telegram = [{ name = "nonebot-adapter-telegram", specifier = ">=0.1.0b20" }]
 test = [
-    { name = "nonebug", git = "https://github.com/nonebot/nonebug?rev=master" },
-    { name = "poethepoet", specifier = ">=0.42.1" },
+    { name = "nonebug", specifier = ">=0.4.4,<1.0.0" },
+    { name = "poethepoet", specifier = ">=0.42.1,<1.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.3.0,<1.4.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0,<4.0.0" },
@@ -1714,7 +1714,7 @@ wheels = [
 
 [[package]]
 name = "nonebot2"
-version = "2.4.4"
+version = "2.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1728,9 +1728,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "yarl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0a/85/d2201a11ec3c6e1ba4f663c61ff65a4da06becd3d66c3536c26694325361/nonebot2-2.4.4.tar.gz", hash = "sha256:b367c17f31ae0d548e374bb80b719ed12885620f29f3cbc305a5a88a6175f4e3", size = 90954, upload-time = "2025-10-29T04:02:55.577Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/9c/3c7b17e8bea5c929d748560bae2d79e68d8e1a6905384b00428ed0dd672f/nonebot2-2.5.0.tar.gz", hash = "sha256:5dca27d1d20d86bea823d2c3e0f5118f66af07788bc9d38f3e630bef36dfdf71", size = 91776, upload-time = "2026-04-01T03:33:46.512Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/ef/fa4a179d56f372619ce3899890277760b138ff6d5b395420e6d01e4523fd/nonebot2-2.4.4-py3-none-any.whl", hash = "sha256:8885d02906f1def83c138f298a7aa99ca1975351f44d8d290ea0eeec5aec1f0b", size = 118319, upload-time = "2025-10-29T04:02:54.55Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/4c/a8d2a4f4dab031965fc6ff9498cc76c2070c4a9989aee83509d4a551264a/nonebot2-2.5.0-py3-none-any.whl", hash = "sha256:12380d396a3d5126eeeae0a1aa53af45e9d99b63896e3e2dd6340ee436869e36", size = 119117, upload-time = "2026-04-01T03:33:47.728Z" },
 ]
 
 [package.optional-dependencies]
@@ -1741,13 +1741,17 @@ fastapi = [
 
 [[package]]
 name = "nonebug"
-version = "0.4.3"
-source = { git = "https://github.com/nonebot/nonebug?rev=master#53b893b7d412f941c2d0d769cc2e1c5526565296" }
+version = "0.4.4"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asgiref" },
     { name = "async-asgi-testclient" },
     { name = "nonebot2" },
     { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d2/15/15b438080a56ddd79e5f258728a4f36ba6ced30e2f08293eebcbc4f60474/nonebug-0.4.4.tar.gz", hash = "sha256:694bebcac66e295f5cf75e3f11a869049365f4979870aa0f5521a0205efe956d", size = 10407, upload-time = "2026-04-01T03:47:11.8Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/26/46/9e1be80866f9f7283b553c53f74b083cb720ffcdafc7392015a0d6b039a9/nonebug-0.4.4-py3-none-any.whl", hash = "sha256:0bbd3ea2147b2d213fca41755aa16493159f900f53d65d284a4d3517b2e4dd10", size = 14766, upload-time = "2026-04-01T03:47:12.588Z" },
 ]
 
 [[package]]
