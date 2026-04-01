@@ -148,7 +148,7 @@ class ParseResult:
 
     @property
     def video(self) -> VideoContent | None:
-        """主视频 (只有一个视频的时候才返回 否则返回 None)"""
+        """主视频 (只有 contents 首项为视频的时候才返回 否则为 None)"""
         if len(self.contents) != 1:
             return None
         cont = self.contents[0]
