@@ -45,10 +45,6 @@ class BaseRenderer(ABC):
                 nonlocal failed_count
                 failed_count += 1
 
-        if self.result.video:
-            if video_path := await self.result.video.path_task.safe_get(on_error):
-                yield UniMessage(UniHelper.video_seg(video_path))
-
         for cont in chain(
             self.result.contents,
             self.result.repost.contents if self.result.repost else (),
@@ -65,10 +61,6 @@ class BaseRenderer(ABC):
                     yield UniMessage(UniHelper.record_seg(path))
                 case ImageContent():
                     mergeable_segs.append(UniHelper.img_seg(path))
-
-        if self.result.repost and self.result.repost.video:
-            if video_path := await self.result.repost.video.path_task.safe_get(on_error):
-                yield UniMessage(UniHelper.video_seg(video_path))
 
         for cont in chain(
             self.result.graphics,

@@ -31,6 +31,6 @@ class TikTokParser(BaseParser):
         return self.result(
             title=video_info.title,
             author=Author(name=video_info.channel),
-            video=video_content,
+            contents=[video_content],
             timestamp=video_info.timestamp,
         )

@@ -150,7 +150,7 @@ class WeiBoParser(BaseParser):
             author=author,
             title=play_info.title,
             text=play_info.text,
-            video=video_content,
+            contents=[video_content],
             timestamp=play_info.real_date,
         )
 
@@ -209,14 +209,13 @@ class WeiBoParser(BaseParser):
             url=data.url,
         )
 
-        # 添加视频内容
+        # 主视频
         if video_url := data.video_url:
             result.video = self.create_video(
                 video_url,
                 data.cover_url,
                 data.duration,
             )
-
         # 添加图片内容
         if image_urls := data.image_urls:
             result.contents.extend(self.create_images(image_urls))

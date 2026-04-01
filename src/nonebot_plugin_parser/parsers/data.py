@@ -39,8 +39,10 @@ class VideoContent(MediaContent):
     """视频封面"""
     duration: float | None = None
     """时长 单位: 秒"""
+    is_gif: bool = False
+    """是否是 GIF"""
     gif_path: Path | None = None
-    """视频转 GIF """
+    """视频转为 GIF 的路径"""
 
     @property
     def display_duration(self) -> str | None:
@@ -110,10 +112,8 @@ class ParseResult:
     url: str | None = None
     """来源链接"""
 
-    video: VideoContent | None = None
-    """视频内容"""
     contents: list[MediaContent] = field(default_factory=list)
-    """其他媒体内容"""
+    """媒体内容"""
     graphics: list[str | ImageContent] = field(default_factory=list)
     """图文内容"""
 
@@ -147,8 +147,24 @@ class ParseResult:
         return self.extra.get("info")
 
     @property
+    def video(self) -> VideoContent | None:
+        """主视频 (只有一个视频的时候才返回 否则返回 None)"""
+        one: VideoContent | None = None
+        for cont in self.contents:
+            if isinstance(cont, VideoContent):
+                if one is not None:
+                    return None
+                one = cont
+        return one
+
+    @video.setter
+    def video(self, video: VideoContent | None):
+        if video is not None and len(self.contents) == 0:
+            self.contents.append(video)
+
+    @property
     def video_contents(self) -> list[VideoContent]:
-        """获取视频内容（如果有）"""
+        """获取所有视频内容（如果有）"""
         return [cont for cont in self.contents if isinstance(cont, VideoContent)]
 
     @property
@@ -172,6 +188,11 @@ class ParseResult:
         return covers
 
     @property
+    def grid_medias(self) -> list[VideoContent | ImageContent]:
+        """获取所有用于渲染图片网格的媒体内容（视频封面 + 图片）"""
+        return [cont for cont in self.contents if isinstance(cont, (VideoContent, ImageContent))]
+
+    @property
     def formartted_datetime(self, fmt: str = "%Y-%m-%d %H:%M:%S") -> str | None:
         """格式化时间戳"""
         return datetime.fromtimestamp(self.timestamp).strftime(fmt) if self.timestamp is not None else None
@@ -183,11 +204,6 @@ class ParseResult:
         if author := self.author:
             if author.avatar:
                 yield author.avatar.get()
-
-        if self.video:
-            if self.video.cover:
-                yield self.video.cover.get()
-            yield self.video.path_task.get()
 
         for cont in self.contents:
             if not img_only or isinstance(cont, ImageContent):
@@ -248,7 +264,6 @@ class ParseResult:
 class ParseResultKwargs(TypedDict, total=False):
     title: str | None
     text: str | None
-    video: VideoContent | None
     contents: list[MediaContent]
     graphics: list[str | ImageContent]
     timestamp: int | None
