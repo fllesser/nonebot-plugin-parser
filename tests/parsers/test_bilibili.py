@@ -4,6 +4,47 @@ import pytest
 from nonebot import logger
 
 
+def test_bv_regex():
+    from re import compile
+
+    bv_pattern = compile(r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9A-Za-z]{10})(?:.*?[?&]p=(?P<page_num>\d{1,3}))?")
+    urls = {
+        "https://bilibili.com/BV1uCzoYEEir": ("BV1uCzoYEEir", None),
+        "https://www.bilibili.com/video/BV1Qb411W76D?p=1": ("BV1Qb411W76D", "1"),
+        "https://www.bilibili.com/video/BV1Qb411W76D": ("BV1Qb411W76D", None),
+        "https://www.bilibili.com/video/BV1Qb411W76D/?p=1": ("BV1Qb411W76D", "1"),
+        (
+            "https://www.bilibili.com/video/BV1pSouYsrRi/"
+            "?buvid=XU7938D792855D2619DF1156C583C95ACD4A8"
+            "&from_spmid=search.search-result.0.0"
+            "&is_story_h5=false&mid=v6x8VuMawAnqsFPDnfgaIw%3D%3D&p=2"
+        ): ("BV1pSouYsrRi", "2"),
+    }
+    for url, (bvid, page_num) in urls.items():
+        matched = bv_pattern.search(url)
+        assert matched, f"{url} | 匹配失败"
+        assert matched.group("bvid") == bvid, f"{url} | bvid 不匹配"
+        assert matched.group("page_num") == page_num, f"{url} |page_num 不匹配"
+
+
+def test_av_regex():
+    from re import compile
+
+    av_pattern = compile(r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:.*?[?&]p=(?P<page_num>\d{1,3}))?")
+    urls = {
+        "https://bilibili.com/av123456": ("123456", None),
+        "https://www.bilibili.com/video/av123456?p=1": ("123456", "1"),
+        "https://www.bilibili.com/video/av123456": ("123456", None),
+        "https://www.bilibili.com/video/av123456/?p=1": ("123456", "1"),
+        "https://www.bilibili.com/video/av123456/?a=1&b=2&p=3": ("123456", "3"),
+    }
+    for url, (avid, page_num) in urls.items():
+        matched = av_pattern.search(url)
+        assert matched, f"{url} | 匹配失败"
+        assert matched.group("avid") == avid, f"{url} | avid 不匹配"
+        assert matched.group("page_num") == page_num, f"{url} | page_num 不匹配"
+
+
 @pytest.mark.asyncio
 async def test_live():
     logger.info("开始解析B站直播 https://live.bilibili.com/6")
