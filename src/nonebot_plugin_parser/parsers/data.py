@@ -152,7 +152,7 @@ class ParseResult:
         if len(self.contents) != 1:
             return None
         cont = self.contents[0]
-        return cont if isinstance(cont, VideoContent) else None
+        return cont if isinstance(cont, VideoContent) and not cont.is_gif else None
 
     @video.setter
     def video(self, video: VideoContent | None):
