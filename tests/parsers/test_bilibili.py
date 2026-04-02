@@ -14,11 +14,11 @@ def test_bv_regex():
         "https://www.bilibili.com/video/BV1Qb411W76D": ("BV1Qb411W76D", None),
         "https://www.bilibili.com/video/BV1Qb411W76D/?p=1": ("BV1Qb411W76D", "1"),
         (
-            "https://www.bilibili.com/video/BV1pSouYSERi/"
+            "https://www.bilibili.com/video/BV1pSouYsrRi/"
             "?buvid=XU7938D792855D2619DF1156C583C95ACD4A8"
             "&from_spmid=search.search-result.0.0"
             "&is_story_h5=false&mid=v6x8VuMawAnqsFPDnfgaIw%3D%3D&p=2"
-        ): ("BV1pSouYSERi", "2"),
+        ): ("BV1pSouYsrRi", "2"),
     }
     for url, (bvid, page_num) in urls.items():
         matched = bv_pattern.search(url)
