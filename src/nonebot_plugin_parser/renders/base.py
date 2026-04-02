@@ -45,10 +45,6 @@ class BaseRenderer(ABC):
                 nonlocal failed_count
                 failed_count += 1
 
-        if self.result.video:
-            if video_path := await self.result.video.path_task.safe_get(on_error):
-                yield UniMessage(UniHelper.video_seg(video_path))
-
         for cont in chain(
             self.result.contents,
             self.result.repost.contents if self.result.repost else (),
@@ -59,16 +55,15 @@ class BaseRenderer(ABC):
 
             match cont:
                 case VideoContent() as video:
-                    thumbnail = await video.cover.safe_get() if video.cover else None
-                    other_segs.append(UniHelper.video_seg(path, thumbnail))
+                    if video.gif_path and (gif_path := await video.gif_path.safe_get()):
+                        mergeable_segs.append(UniHelper.img_seg(gif_path))
+                    else:
+                        thumbnail = await video.cover.safe_get() if video.cover else None
+                        yield UniMessage(UniHelper.video_seg(path, thumbnail))
                 case AudioContent():
                     yield UniMessage(UniHelper.record_seg(path))
                 case ImageContent():
                     mergeable_segs.append(UniHelper.img_seg(path))
-
-        if self.result.repost and self.result.repost.video:
-            if video_path := await self.result.repost.video.path_task.safe_get(on_error):
-                yield UniMessage(UniHelper.video_seg(video_path))
 
         for cont in chain(
             self.result.graphics,
@@ -85,15 +80,8 @@ class BaseRenderer(ABC):
                 mergeable_segs.append(img_seg)
 
         if mergeable_segs or other_segs:
-            if (
-                pconfig.need_forward_contents
-                or len(mergeable_segs) > 4
-                or len(other_segs) > 1
-                or (len(mergeable_segs) + len(other_segs)) > 4
-            ):
-                forward_msg = UniHelper.construct_forward_message(
-                    mergeable_segs + other_segs,
-                )
+            if pconfig.need_forward_contents or len(other_segs) > 1 or (len(mergeable_segs) + len(other_segs)) > 4:
+                forward_msg = UniHelper.construct_forward_message(mergeable_segs + other_segs)
                 yield UniMessage(forward_msg)
             else:
                 if mergeable_segs:

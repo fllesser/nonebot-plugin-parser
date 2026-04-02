@@ -577,52 +577,50 @@
                             {% if result.title and result.video %}<div class="title">{{ result.title }}</div>{% endif %}
                             {# ── Text（非动态类型） ── #}
                             {% if content_type != '动态' and result.text %}<div class="text">{{ result.text }}</div>{% endif %}
-                            {# ── 非视频媒体 ── #}
-                            {% if not video %}
-                                {# ── Image Grid ── #}
-                                {% set imgs = result.all_grid_images %}
-                                {% if imgs %}
-                                    {% set count = imgs|length %}
-                                    {% if count == 1 %}
-                                        {% set img = imgs[0] %}
-                                        <div class="image-container">
-                                            <img src="{{ img.uri | safe }}"
-                                                 class="single-image"
-                                                 alt="image" />
-                                        </div>
-                                    {% else %}
-                                        {% set cols = 2 if count in [2, 4] else 3 %}
-                                        <div class="image-grid cols-{{ cols }}">
-                                            {% for img in imgs[:9] %}
-                                                {% set img_uri = (img.uri if img.uri else fallback_pic) %}
-                                                <div class="grid-item">
-                                                    <img src="{{ img_uri | safe }}" alt="image" />
-                                                    {% if loop.last and count > 9 %}
-                                                        <div class="more-count">+{{ count - 9 }}</div>
-                                                    {% endif %}
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                {# ── Graphics ── #}
-                                {% elif result.graphics %}
-                                    {% for text_or_img in result.graphics %}
-                                        <div class="graphics-item">
-                                            {% if text_or_img is string %}
-                                                <div class="text">{{ text_or_img }}</div>
-                                            {% else %}
-                                                {% set img_uri = text_or_img.path_task.uri %}
-                                                {% set img_uri = (img_uri if img_uri else fallback_pic) %}
-                                                <div class="image-container">
-                                                    <img src="{{ img_uri | safe }}"
-                                                         class="single-image"
-                                                         alt="graphics" />
-                                                </div>
-                                            {% endif %}
-                                            {% if text_or_img.alt %}<div class="graphics-alt">{{ text_or_img.alt }}</div>{% endif %}
-                                        </div>
-                                    {% endfor %}
+
+                            {# ── Image Grid ── #}
+                            {% set imgs = result.all_grid_images %}
+                            {% if imgs %}
+                                {% set count = imgs|length %}
+                                {% if count == 1 %}
+                                    {% set img = imgs[0] %}
+                                    <div class="image-container">
+                                        <img src="{{ img.uri | safe }}"
+                                              class="single-image"
+                                              alt="image" />
+                                    </div>
+                                {% else %}
+                                    {% set cols = 2 if count in [2, 4] else 3 %}
+                                    <div class="image-grid cols-{{ cols }}">
+                                        {% for img in imgs[:9] %}
+                                            {% set img_uri = (img.uri if img.uri else fallback_pic) %}
+                                            <div class="grid-item">
+                                                <img src="{{ img_uri | safe }}" alt="image" />
+                                                {% if loop.last and count > 9 %}
+                                                    <div class="more-count">+{{ count - 9 }}</div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
                                 {% endif %}
+                            {# ── Graphics ── #}
+                            {% elif result.graphics %}
+                                {% for text_or_img in result.graphics %}
+                                    <div class="graphics-item">
+                                        {% if text_or_img is string %}
+                                            <div class="text">{{ text_or_img }}</div>
+                                        {% else %}
+                                            {% set img_uri = text_or_img.path_task.uri %}
+                                            {% set img_uri = (img_uri if img_uri else fallback_pic) %}
+                                            <div class="image-container">
+                                                <img src="{{ img_uri | safe }}"
+                                                      class="single-image"
+                                                      alt="graphics" />
+                                            </div>
+                                        {% endif %}
+                                        {% if text_or_img.alt %}<div class="graphics-alt">{{ text_or_img.alt }}</div>{% endif %}
+                                    </div>
+                                {% endfor %}
                             {% endif %}
                             {# ── Repost ── #}
                             {% if result.repost %}{{ render_card(result.repost, is_repost=True) }}{% endif %}

@@ -179,15 +179,18 @@ class BaseParser:
         url_or_task: str | Task[Path],
         cover_url: str | None = None,
         duration: float | None = None,
+        is_gif: bool = False,
     ):
-        """创建视频内容"""
+        """创建视频内容, 未指定封面时会尝试从视频中提取封面"""
         from .data import VideoContent
-        from ..utils import extract_video_cover
+        from ..utils import convert_video_to_gif, extract_video_first_frame
 
         if isinstance(url_or_task, str):
             path_task = downloader.download_video(url_or_task, ext_headers=self.headers)
         elif isinstance(url_or_task, Task):
             path_task = url_or_task
+
+        video_content = VideoContent(PathTask(path_task), duration=duration, is_gif=is_gif)
 
         if cover_url:
             cover_task = downloader.download_img(cover_url, ext_headers=self.headers)
@@ -195,15 +198,29 @@ class BaseParser:
             # 如果没有封面 URL，尝试从视频中提取封面
             async def extract_cover():
                 video_path = await path_task
-                return await extract_video_cover(video_path)
+                return await extract_video_first_frame(video_path)
 
             cover_task = extract_cover()
 
-        return VideoContent(
-            PathTask(path_task),
-            cover=PathTask(cover_task),
-            duration=duration,
-        )
+        video_content.cover = PathTask(cover_task)
+
+        if is_gif:
+            # 需要转换为 GIF
+            async def convert_to_gif():
+                video_path = await path_task
+                return await convert_video_to_gif(video_path)
+
+            video_content.gif_path = PathTask(convert_to_gif())
+
+        return video_content
+
+    def create_gif(
+        self,
+        url_or_task: str | Task[Path],
+        cover_url: str | None = None,
+    ):
+        """创建 GIF 内容"""
+        return self.create_video(url_or_task, cover_url=cover_url, is_gif=True)
 
     def create_images(
         self,

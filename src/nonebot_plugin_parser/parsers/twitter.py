@@ -81,23 +81,16 @@ class TwitterParser(BaseParser):
         )
 
         for media in data.media_extended:
-            if media.type == "video":
-                result.video = self.create_video(
+            if media.type in ["video", "gif"]:
+                video = self.create_video(
                     media.url,
                     media.thumbnail_url,
                     duration=media.duration,
+                    is_gif=media.type == "gif",
                 )
-                break
+                result.contents.append(video)
             elif media.type == "image":
                 result.contents.append(self.create_image(media.url))
-            elif media.type == "gif":
-                result.contents.append(
-                    self.create_video(
-                        media.url,
-                        media.thumbnail_url,
-                        duration=media.duration,
-                    )
-                )
 
         result.repost = self._collect_result(data.qrt) if data.qrt else None
 
@@ -166,7 +159,7 @@ class TwitterParser(BaseParser):
             elif "下载图片" in text:
                 result.contents.append(self.create_image(href))
             elif "下载 gif" in text:
-                result.contents.append(self.create_video(href))
+                result.contents.append(self.create_gif(href))
 
         # 3. 提取标题
         title_tag = soup.find("h3")

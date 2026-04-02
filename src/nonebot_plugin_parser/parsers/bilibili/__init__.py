@@ -160,7 +160,7 @@ class BilibiliParser(BaseParser):
             timestamp=page_info.timestamp,
             text=video_info.desc,
             author=author,
-            video=video_content,
+            contents=[video_content],
             extra={"info": ai_summary},
         )
 

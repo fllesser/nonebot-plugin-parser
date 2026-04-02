@@ -130,7 +130,7 @@ class DouyinParser(BaseParser):
         # 优先取动图
         if dynamic_urls := slides_data.dynamic_urls:
             for dynamic_url in dynamic_urls:
-                result.contents.append(self.create_video(dynamic_url))
+                result.contents.append(self.create_gif(dynamic_url))
         elif image_urls := slides_data.image_urls:
             result.contents.extend(self.create_images(image_urls))
 

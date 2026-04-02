@@ -144,11 +144,11 @@ async def encode_video_to_h264(video_path: Path) -> Path:
     return output_path
 
 
-async def extract_video_cover(video_path: Path) -> Path:
-    """从视频中提取封面图（第一帧）"""
-    cover_path = video_path.with_suffix(".jpg")
-    if cover_path.exists():
-        return cover_path
+async def extract_video_first_frame(video_path: Path) -> Path:
+    """从视频中提取第一帧"""
+    first_frame_path = video_path.with_suffix(".jpg")
+    if first_frame_path.exists():
+        return first_frame_path
 
     cmd = [
         "ffmpeg",
@@ -159,11 +159,30 @@ async def extract_video_cover(video_path: Path) -> Path:
         "00:00:01",
         "-vframes",
         "1",
-        str(cover_path),
+        str(first_frame_path),
     ]
 
     await exec_ffmpeg_cmd(cmd)
-    return cover_path
+    return first_frame_path
+
+
+async def convert_video_to_gif(video_path: Path) -> Path:
+    """将视频转换为 GIF"""
+    gif_path = video_path.with_suffix(".gif")
+    if gif_path.exists():
+        return gif_path
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(video_path),
+        "-c:v",
+        "gif",
+        str(gif_path),
+    ]
+    await exec_ffmpeg_cmd(cmd)
+    return gif_path
 
 
 def fmt_size(file_path: Path) -> str:
