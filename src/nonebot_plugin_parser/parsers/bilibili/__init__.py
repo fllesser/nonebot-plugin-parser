@@ -65,8 +65,8 @@ class BilibiliParser(BaseParser):
         return await self.parse_video(avid=avid, page_num=page_num)
 
     @handle("/dynamic/", r"bilibili\.com/dynamic/(?P<dynamic_id>\d+)")
-    @handle("t.bili", r"t\.bilibili\.com/(?P<dynamic_id>\d+)")
     @handle("/opus/", r"bilibili\.com/opus/(?P<dynamic_id>\d+)")
+    @handle("t.bili", r"t\.bilibili\.com/(?P<dynamic_id>\d+)")
     async def _parse_dynamic(self, searched: Match[str]):
         """解析动态信息"""
         dynamic_id = int(searched.group("dynamic_id"))
@@ -105,7 +105,7 @@ class BilibiliParser(BaseParser):
 
         from .video import VideoInfo, AIConclusion
 
-        video = await self._get_video(bvid=bvid, avid=avid)
+        video = Video(bvid=bvid, aid=avid, credential=await self.credential)
         video_info = convert(await video.get_info(), VideoInfo)
         # UP
         author = self.create_author(video_info.owner.name, video_info.owner.face)
@@ -298,15 +298,6 @@ class BilibiliParser(BaseParser):
             graphics=graphics,
         )
 
-    async def _get_video(self, *, bvid: str | None = None, avid: int | None = None) -> Video:
-        """解析视频"""
-        if avid:
-            return Video(aid=avid, credential=await self.credential)
-        elif bvid:
-            return Video(bvid=bvid, credential=await self.credential)
-        else:
-            raise ParseException("avid 和 bvid 至少指定一项")
-
     async def extract_download_urls(
         self,
         video: Video | None = None,
@@ -324,7 +315,7 @@ class BilibiliParser(BaseParser):
         )
 
         if video is None:
-            video = await self._get_video(bvid=bvid, avid=avid)
+            video = Video(bvid=bvid, aid=avid, credential=await self.credential)
 
         # 获取下载数据
         download_url_data = await video.get_download_url(page_index=page_index)
