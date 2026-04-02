@@ -47,7 +47,7 @@ class BilibiliParser(BaseParser):
         return await self.parse_with_redirect(url)
 
     @handle("BV", r"^(?P<bvid>BV[0-9a-zA-Z]{10})(?:\s)?(?P<page_num>\d{1,3})?$")
-    @handle("/BV", r"bilibili\.com/video/(?P<bvid>BV[0-9A-Za-z]{10})(?:.*?[?&]p=(?P<page_num>\d{1,3}))?")
+    @handle("/BV", r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9A-Za-z]{10})(?:.*?[?&]p=(?P<page_num>\d{1,3}))?")
     async def _parse_bv(self, searched: Match[str]):
         """解析视频信息"""
         bvid = str(searched.group("bvid"))

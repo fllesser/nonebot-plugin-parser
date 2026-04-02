@@ -7,8 +7,9 @@ from nonebot import logger
 def test_bv_regex():
     from re import compile
 
-    bv_pattern = compile(r"bilibili\.com/video/(?P<bvid>BV[0-9A-Za-z]{10})(?:.*?[?&]p=(?P<page_num>\d{1,3}))?")
+    bv_pattern = compile(r"bilibili\.com(?:/video)?/(?P<bvid>BV[0-9A-Za-z]{10})(?:.*?[?&]p=(?P<page_num>\d{1,3}))?")
     urls = {
+        "https://bilibili.com/BV1uCzoYEEir": ("BV1uCzoYEEir", None),
         "https://www.bilibili.com/video/BV1Qb411W76D?p=1": ("BV1Qb411W76D", "1"),
         "https://www.bilibili.com/video/BV1Qb411W76D": ("BV1Qb411W76D", None),
         "https://www.bilibili.com/video/BV1Qb411W76D/?p=1": ("BV1Qb411W76D", "1"),
@@ -29,8 +30,9 @@ def test_bv_regex():
 def test_av_regex():
     from re import compile
 
-    av_pattern = compile(r"bilibili\.com/video/av(?P<avid>\d{6,})(?:.*?[?&]p=(?P<page_num>\d{1,3}))?")
+    av_pattern = compile(r"bilibili\.com(?:/video)?/av(?P<avid>\d{6,})(?:.*?[?&]p=(?P<page_num>\d{1,3}))?")
     urls = {
+        "https://bilibili.com/av123456": ("123456", None),
         "https://www.bilibili.com/video/av123456?p=1": ("123456", "1"),
         "https://www.bilibili.com/video/av123456": ("123456", None),
         "https://www.bilibili.com/video/av123456/?p=1": ("123456", "1"),
