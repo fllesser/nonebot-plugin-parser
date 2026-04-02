@@ -41,7 +41,7 @@ class VideoContent(MediaContent):
     """时长 单位: 秒"""
     is_gif: bool = False
     """是否是 GIF"""
-    gif_path: Path | None = None
+    gif_path: PathTask | None = None
     """视频转为 GIF 的路径"""
 
     @property
