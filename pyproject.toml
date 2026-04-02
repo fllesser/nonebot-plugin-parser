@@ -44,7 +44,7 @@ dependencies = [
   "aiofiles>=25.1.0",
   "httpx>=0.27.2,<1.0.0",
   "msgspec>=0.20.0,<1.0.0",
-  "nonebot2>=2.4.3,<3.0.0",
+  "nonebot2>=2.5.0,<3.0.0",
   "apilmoji[rich]>=0.3.1,<1.0.0",
   "beautifulsoup4>=4.12.0,<5.0.0",
   "curl_cffi>=0.13.0,<1.0.0,!=0.14.0",
@@ -74,7 +74,7 @@ all = [
 
 [dependency-groups]
 dev = [
-  "nonebot2[fastapi]>=2.4.3,<3.0.0",
+  "nonebot2[fastapi]>=2.5.0,<3.0.0",
   "nonebot-adapter-onebot>=2.4.6",
   "ruff>=0.15.6,<1.0.0",
   { include-group = "extras" },
@@ -88,8 +88,8 @@ extras = [
   "types-yt-dlp>=2026.3.13.20260314",
 ]
 test = [
-  "nonebug>=0.4.3,<1.0.0",
-  "poethepoet>=0.42.1",
+  "nonebug>=0.4.4,<1.0.0",
+  "poethepoet>=0.42.1,<1.0.0",
   "pytest-asyncio>=1.3.0,<1.4.0",
   "pytest-cov>=7.0.0",
   "pytest-xdist>=3.8.0,<4.0.0",
@@ -112,8 +112,6 @@ conflicts = [
   ],
 ]
 
-[tool.uv.sources]
-nonebug = { git = "https://github.com/nonebot/nonebug", rev = "master" }
 
 [tool.bumpversion]
 tag = true
