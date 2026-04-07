@@ -579,8 +579,11 @@
                             {% if content_type != '动态' and result.text %}<div class="text">{{ result.text }}</div>{% endif %}
 
                             {# ── Image Grid ── #}
+                                                        
                             {% set imgs = result.all_grid_images %}
-                            {% if imgs %}
+                            {% if video%}
+                                {# 如果有视频，则不显示图片网格 #}
+                            {% elif imgs %}
                                 {% set count = imgs|length %}
                                 {% if count == 1 %}
                                     {% set img = imgs[0] %}
