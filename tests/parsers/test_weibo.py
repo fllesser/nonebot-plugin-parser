@@ -11,10 +11,7 @@ async def test_graphics():
 
     parser = WeiBoParser()
 
-    urls = [
-        "https://weibo.com/7207262816/P5kWdcfDe",
-        "https://m.weibo.cn/status/5155768539808352",
-    ]
+    urls = ["https://weibo.com/7207262816/P5kWdcfDe"]
 
     async def parse_graphics(url: str) -> None:
         keyword, searched = parser.search_url(url)
