@@ -22,6 +22,10 @@ class MediaElement(Struct):
     def duration(self) -> float | None:
         return self.duration_millis / 1000 if self.duration_millis else None
 
+    @property
+    def original_url(self) -> str:
+        return self.url + ":orig"
+
 
 class Article(Struct):
     image: str | None = None
@@ -90,9 +94,10 @@ class TwitterParser(BaseParser):
                 )
                 result.contents.append(video)
             elif media.type == "image":
-                result.contents.append(self.create_image(media.url))
+                result.contents.append(self.create_image(media.original_url))
 
-        result.repost = self._collect_result(data.qrt) if data.qrt else None
+        if data.qrt:
+            result.repost = self._collect_result(data.qrt)
 
         return result
 
