@@ -95,7 +95,7 @@ async def _(message: Message = CommandArg()):
         await UniMessage("请发送正确的 BV 号").finish()
 
     bvid, page_num = matched.group(1), matched.group(2)
-    page_idx = int(page_num) if page_num else 0
+    page_idx = int(page_num) - 1 if page_num else 0
 
     parser = get_parser_by_type(BilibiliParser)
 
