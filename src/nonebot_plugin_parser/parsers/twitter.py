@@ -24,7 +24,7 @@ class MediaElement(Struct):
 
     @property
     def original_url(self) -> str:
-        return self.url + ":orig"
+        return self.url + "?format=jpg&name=orig"
 
 
 class Article(Struct):
