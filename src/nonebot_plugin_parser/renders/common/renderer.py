@@ -8,18 +8,10 @@ from PIL import Image, ImageDraw, ImageFont
 from nonebot import logger
 from apilmoji import Apilmoji
 
+from . import assets
+from .. import resources
 from .font import StyledFont, FontMetrics
 from ..base import ParseResult, ImageContent, ImageRenderer
-from .assets import (
-    FONTS,
-    AVATAR_SIZE,
-    AVATAR_IMAGE,
-    EMOJI_SOURCE,
-    PLATFORM_LOGOS,
-    VIDEO_BUTTON_IMAGE,
-    ensure_resources,
-)
-from ..resources import DEFAULT_FONT_PATH, random_fallback_pic
 
 Color = tuple[int, int, int]
 PILImage = Image.Image
@@ -64,7 +56,7 @@ class CommonRenderer(ImageRenderer):
 
     def __init__(self, result: ParseResult, not_repost: bool = True):
         super().__init__(result, not_repost)
-        ensure_resources()
+        assets.ensure_resources()
 
         self.card_width: int = self.DEFAULT_CARD_WIDTH
         self.content_width: int = self.card_width - 2 * self.PADDING
@@ -123,13 +115,13 @@ class CommonRenderer(ImageRenderer):
 
         # 头部（头像 + 名称 + 时间）
         if self.result.author:
-            height += AVATAR_SIZE + self.SECTION_SPACING
+            height += assets.AVATAR_SIZE + self.SECTION_SPACING
 
         # 标题
         if self.result.title:
             height += self._estimate_text_height(
                 self.result.title,
-                FONTS.title.metrics,
+                assets.FONTS.title.metrics,
                 self.content_width,
             )
             height += self.SECTION_SPACING
@@ -140,7 +132,7 @@ class CommonRenderer(ImageRenderer):
                 if isinstance(item, str):
                     height += self._estimate_text_height(
                         item,
-                        FONTS.body.metrics,
+                        assets.FONTS.body.metrics,
                         self.content_width,
                     )
                 else:
@@ -154,7 +146,7 @@ class CommonRenderer(ImageRenderer):
         if self.result.text:
             height += self._estimate_text_height(
                 self.result.text,
-                FONTS.body.metrics,
+                assets.FONTS.body.metrics,
                 self.content_width,
             )
             height += self.SECTION_SPACING
@@ -163,7 +155,7 @@ class CommonRenderer(ImageRenderer):
         if self.result.extra_info:
             height += self._estimate_text_height(
                 self.result.extra_info,
-                FONTS.muted.metrics,
+                assets.FONTS.muted.metrics,
                 self.content_width,
             )
             height += self.SECTION_SPACING
@@ -189,21 +181,21 @@ class CommonRenderer(ImageRenderer):
             self._image.paste(avatar, (x_pos, self.y_pos), avatar)
 
         # 文字区域
-        text_x = self.PADDING + AVATAR_SIZE + self.AVATAR_TEXT_GAP
-        name_height = FONTS.name.metrics.line_height
+        text_x = self.PADDING + assets.AVATAR_SIZE + self.AVATAR_TEXT_GAP
+        name_height = assets.FONTS.name.metrics.line_height
         time_str = self.result.formartted_datetime
-        time_height = (self.NAME_TIME_GAP + FONTS.muted.metrics.line_height) if time_str else 0
+        time_height = (self.NAME_TIME_GAP + assets.FONTS.muted.metrics.line_height) if time_str else 0
         text_height = name_height + time_height
 
         # 垂直居中
-        text_y = self.y_pos + (AVATAR_SIZE - text_height) // 2
+        text_y = self.y_pos + (assets.AVATAR_SIZE - text_height) // 2
 
         # 名称
         self._draw.text(
             (text_x, text_y),
             self.result.author.name,
-            font=FONTS.name.metrics.font,
-            fill=FONTS.name.fill,
+            font=assets.FONTS.name.metrics.font,
+            fill=assets.FONTS.name.fill,
         )
         text_y += name_height
 
@@ -213,39 +205,39 @@ class CommonRenderer(ImageRenderer):
             self._draw.text(
                 (text_x, text_y),
                 time_str,
-                font=FONTS.muted.metrics.font,
-                fill=FONTS.muted.fill,
+                font=assets.FONTS.muted.metrics.font,
+                fill=assets.FONTS.muted.fill,
             )
 
         # 平台 Logo
         if self.not_repost:
             platform_name = self.result.platform.name
-            if platform_name in PLATFORM_LOGOS:
-                logo = PLATFORM_LOGOS[platform_name]
+            if platform_name in assets.PLATFORM_LOGOS:
+                logo = assets.PLATFORM_LOGOS[platform_name]
                 logo_x = self._image.width - self.PADDING - logo.width
-                logo_y = self.y_pos + (AVATAR_SIZE - logo.height) // 2
+                logo_y = self.y_pos + (assets.AVATAR_SIZE - logo.height) // 2
                 self._image.paste(logo, (logo_x, logo_y), logo)
 
-        self.y_pos += AVATAR_SIZE + self.SECTION_SPACING
+        self.y_pos += assets.AVATAR_SIZE + self.SECTION_SPACING
 
     def _load_avatar(self, avatar_path: Path | None) -> PILImage:
         """加载头像（带圆形裁剪）"""
         if avatar_path is None or not avatar_path.exists():
-            return AVATAR_IMAGE
+            return assets.AVATAR_IMAGE
 
         try:
             with Image.open(avatar_path) as img:
                 avatar = img.convert("RGBA")
                 avatar = avatar.resize(
-                    (AVATAR_SIZE, AVATAR_SIZE),
+                    (assets.AVATAR_SIZE, assets.AVATAR_SIZE),
                     Image.Resampling.LANCZOS,
                 )
         except Exception:
-            return AVATAR_IMAGE
+            return assets.AVATAR_IMAGE
 
         # 圆形遮罩
-        mask = Image.new("L", (AVATAR_SIZE, AVATAR_SIZE), 0)
-        ImageDraw.Draw(mask).ellipse((0, 0, AVATAR_SIZE - 1, AVATAR_SIZE - 1), fill=255)
+        mask = Image.new("L", (assets.AVATAR_SIZE, assets.AVATAR_SIZE), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, assets.AVATAR_SIZE - 1, assets.AVATAR_SIZE - 1), fill=255)
         avatar.putalpha(mask)
         return avatar
 
@@ -257,9 +249,9 @@ class CommonRenderer(ImageRenderer):
         lines = self._wrap_text(
             self.result.title,
             self.content_width,
-            FONTS.title.metrics,
+            assets.FONTS.title.metrics,
         )
-        self.y_pos += await self._draw_text(lines, FONTS.title)
+        self.y_pos += await self._draw_text(lines, assets.FONTS.title)
         self.y_pos += self.SECTION_SPACING
 
     async def _render_main_content(self) -> None:
@@ -293,7 +285,7 @@ class CommonRenderer(ImageRenderer):
             cover_path = await cover_task.safe_get()
 
         if cover_path is None:
-            return Image.open(random_fallback_pic())
+            return Image.open(resources.random_fallback_pic())
 
         with Image.open(cover_path) as img:
             if img.mode != "RGBA":
@@ -317,15 +309,15 @@ class CommonRenderer(ImageRenderer):
             btn_size = 100
             btn_x, btn_y = (img.width - btn_size) // 2, (img.height - btn_size) // 2
             img.paste(
-                VIDEO_BUTTON_IMAGE,
+                assets.VIDEO_BUTTON_IMAGE,
                 (btn_x, btn_y),
-                VIDEO_BUTTON_IMAGE,
+                assets.VIDEO_BUTTON_IMAGE,
             )
 
             # 视频时长
             # display_duration = video_content.display_duration
 
-            # paint = FONTS.muted
+            # paint = assets.FONTS.muted
             # text_width = font.get_text_width(display_duration)
             # # 计算文本绘制位置
             # text_x = img.width - text_width - 20
@@ -371,7 +363,7 @@ class CommonRenderer(ImageRenderer):
         for content in display_contents:
             path = await content.safe_get()
             if path is None or not path.exists():
-                path = random_fallback_pic()
+                path = resources.random_fallback_pic()
             if img := self._load_grid_image(path, len(display_contents)):
                 images.append(img)
 
@@ -466,7 +458,7 @@ class CommonRenderer(ImageRenderer):
         indicator_text = f"+{count}"
         font_size, color = 60, (255, 255, 255)
         # 这里统一使用默认字体
-        font = ImageFont.truetype(DEFAULT_FONT_PATH, font_size)
+        font = ImageFont.truetype(resources.DEFAULT_FONT_PATH, font_size)
         text_w = font.getbbox(indicator_text)[2]
         text_x = x + (w - text_w) // 2
         text_y = y + (h - font_size) // 2
@@ -476,7 +468,7 @@ class CommonRenderer(ImageRenderer):
         """渲染图片"""
         path = await image_content.path_task.safe_get()
         if path is None or not path.exists():
-            path = random_fallback_pic()
+            path = resources.random_fallback_pic()
 
         with Image.open(path) as img:
             if img.width > self.content_width:
@@ -495,7 +487,7 @@ class CommonRenderer(ImageRenderer):
         # Alt 文本
         if image_content.alt:
             self.y_pos += self.SECTION_SPACING
-            paint = FONTS.muted
+            paint = assets.FONTS.muted
             text_w = paint.metrics.get_text_width(image_content.alt)
             text_x = self.PADDING + (self.content_width - text_w) // 2
             self._draw.text(
@@ -517,9 +509,9 @@ class CommonRenderer(ImageRenderer):
         lines = self._wrap_text(
             text,
             self.content_width,
-            FONTS.body.metrics,
+            assets.FONTS.body.metrics,
         )
-        self.y_pos += await self._draw_text(lines, FONTS.body)
+        self.y_pos += await self._draw_text(lines, assets.FONTS.body)
         self.y_pos += self.SECTION_SPACING
 
     async def _render_extra(self) -> None:
@@ -530,9 +522,9 @@ class CommonRenderer(ImageRenderer):
         lines = self._wrap_text(
             self.result.extra_info,
             self.content_width,
-            FONTS.muted.metrics,
+            assets.FONTS.muted.metrics,
         )
-        self.y_pos += await self._draw_text(lines, FONTS.muted)
+        self.y_pos += await self._draw_text(lines, assets.FONTS.muted)
 
     async def _render_repost(self) -> None:
         """渲染转发内容"""
@@ -590,7 +582,7 @@ class CommonRenderer(ImageRenderer):
                 metrics.font,
                 fill=styled.fill,
                 line_height=metrics.line_height,
-                source=EMOJI_SOURCE,
+                source=assets.EMOJI_SOURCE,
             )
         return metrics.line_height * len(lines)
 
