@@ -69,7 +69,7 @@ def _load_styled(font_path: Path, size: int, fill: Color) -> StyledFont:
 
 @dataclass(frozen=True, slots=True)
 class CardFonts:
-    """卡片各区块字体（加载时组合 theme）"""
+    """卡片各区块字体（加载时组合 theme)"""
 
     name: StyledFont
     title: StyledFont

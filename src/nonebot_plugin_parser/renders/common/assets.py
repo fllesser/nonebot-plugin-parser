@@ -5,8 +5,8 @@ from nonebot import logger, get_driver
 from apilmoji import EmojiCDNSource
 
 from .. import resources
+from .font import CardFonts, CardTheme
 from ...config import pconfig
-from .typography import CardFonts, CardTheme
 
 PILImage = Image.Image
 
