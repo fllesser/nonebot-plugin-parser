@@ -1,6 +1,6 @@
 import importlib
 
-from nonebot import logger, get_driver
+from nonebot import logger
 
 from .base import BaseRenderer
 from .common import CommonRenderer
@@ -37,8 +37,3 @@ def get_renderer(platform: str) -> type[BaseRenderer]:
 
     module = importlib.import_module("." + platform, package=__name__)
     return getattr(module, "Renderer")
-
-
-@get_driver().on_startup
-async def load_resources():
-    CommonRenderer.load_resources()
