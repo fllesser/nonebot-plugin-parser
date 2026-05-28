@@ -6,13 +6,12 @@ from typing_extensions import override
 import emoji
 from PIL import Image, ImageDraw, ImageFont
 from nonebot import logger
-from apilmoji import Apilmoji, EmojiCDNSource
+from apilmoji import Apilmoji
 
 from . import assets
 from .. import resources
 from ..base import ParseResult, ImageContent, ImageRenderer
 from .assets import AVATAR_SIZE as _AVATAR_SIZE
-from ...config import pconfig
 from .typography import StyledFont, FontMetrics
 
 Color = tuple[int, int, int]
@@ -26,14 +25,6 @@ except ImportError:
 except OSError:
     logger.error("未安装 cairo, 无法使用 emosvg 渲染 emoji")
     emosvg = None
-
-# apilmoji emoji 源
-EMOJI_SOURCE = EmojiCDNSource(
-    base_url=pconfig.emoji_cdn,
-    style=pconfig.emoji_style,
-    cache_dir=pconfig.cache_dir / "emojis",
-    show_progress=True,
-)
 
 
 class CommonRenderer(ImageRenderer):
@@ -593,7 +584,7 @@ class CommonRenderer(ImageRenderer):
                 metrics.font,
                 fill=styled.fill,
                 line_height=metrics.line_height,
-                source=EMOJI_SOURCE,
+                source=assets.EMOJI_SOURCE,
             )
         return metrics.line_height * len(lines)
 

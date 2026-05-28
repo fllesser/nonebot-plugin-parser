@@ -2,12 +2,21 @@ from __future__ import annotations
 
 from PIL import Image
 from nonebot import logger, get_driver
+from apilmoji import EmojiCDNSource
 
 from .. import resources
 from ...config import pconfig
 from .typography import CardFonts, CardTheme
 
 PILImage = Image.Image
+
+# apilmoji emoji 源
+EMOJI_SOURCE = EmojiCDNSource(
+    base_url=pconfig.emoji_cdn,
+    style=pconfig.emoji_style,
+    cache_dir=pconfig.cache_dir / "emojis",
+    show_progress=True,
+)
 
 DEFAULT_THEME = CardTheme(
     name=(0, 122, 255),
