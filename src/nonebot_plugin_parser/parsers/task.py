@@ -3,6 +3,10 @@ from asyncio import Task, create_task
 from pathlib import Path
 from collections.abc import Callable, Coroutine
 
+from nonebot import logger
+
+from ..exception import ParseException
+
 
 class PathTask:
     __slots__ = ("_path", "_task")
@@ -31,6 +35,8 @@ class PathTask:
         try:
             return await self.get()
         except Exception as e:
+            if not isinstance(e, ParseException):
+                logger.opt(exception=e).error(f"task {self._task.get_name()} failed")
             if on_error is not None:
                 on_error(e)
             return None
