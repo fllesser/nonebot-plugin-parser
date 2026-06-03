@@ -11,7 +11,7 @@ import aiofiles
 from ..config import pconfig
 from ..helper import UniHelper, UniMessage, ForwardNodeInner
 from ..parsers import ParseResult, AudioContent, ImageContent, VideoContent
-from ..exception import DownloadException
+from ..exception import IgnoreException, DownloadException
 
 
 class BaseRenderer(ABC):
@@ -39,7 +39,7 @@ class BaseRenderer(ABC):
         other_segs: list[ForwardNodeInner] = []
 
         def on_error(e: Exception):
-            if isinstance(e, DownloadException):
+            if not isinstance(e, IgnoreException):
                 nonlocal failed_count
                 failed_count += 1
 
