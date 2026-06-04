@@ -108,16 +108,21 @@ class ImageRenderer(BaseRenderer):
     @override
     async def render_messages(self):
         image_seg = await self.cache_or_render_image()
+        if True and self.result.content_type == "视频":
+            # 将 render image 作为视频的新封面
+            if (video := self.result.video) and (video_path := await video.path_task.safe_get()):
+                video_seg = UniHelper.video_seg(video_path, self.result.render_image)
+                yield UniMessage(video_seg)
+        else:
+            msg = UniMessage(image_seg)
+            if self.append_url:
+                urls = (self.result.display_url, self.result.repost_display_url)
+                msg += "\n".join(url for url in urls if url)
+            yield msg
 
-        msg = UniMessage(image_seg)
-        if self.append_url:
-            urls = (self.result.display_url, self.result.repost_display_url)
-            msg += "\n".join(url for url in urls if url)
-        yield msg
-
-        # 媒体内容
-        async for message in self.render_contents():
-            yield message
+            # 媒体内容
+            async for message in self.render_contents():
+                yield message
 
     async def cache_or_render_image(self):
         """获取缓存图片"""
