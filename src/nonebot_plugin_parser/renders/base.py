@@ -8,6 +8,7 @@ from typing_extensions import override
 
 import aiofiles
 
+from ..utils import replace_video_cover
 from ..config import pconfig
 from ..helper import UniHelper, UniMessage, ForwardNodeInner
 from ..parsers import ParseResult, AudioContent, ImageContent, VideoContent
@@ -111,8 +112,11 @@ class ImageRenderer(BaseRenderer):
         if True and self.result.content_type == "视频":
             # 将 render image 作为视频的新封面
             if (video := self.result.video) and (video_path := await video.path_task.safe_get()):
-                video_seg = UniHelper.video_seg(video_path, self.result.render_image)
-                yield UniMessage(video_seg)
+                # 使用 ffmpeg 进行封面替换
+                if render_image := self.result.render_image:
+                    await replace_video_cover(video_path, render_image)
+                    video_seg = UniHelper.video_seg(video_path, render_image)
+                    yield UniMessage(video_seg)
         else:
             msg = UniMessage(image_seg)
             if self.append_url:

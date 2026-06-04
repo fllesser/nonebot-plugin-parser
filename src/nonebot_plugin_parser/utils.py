@@ -185,6 +185,29 @@ async def convert_video_to_gif(video_path: Path) -> Path:
     return gif_path
 
 
+async def replace_video_cover(video_path: Path, new_cover_path: Path):
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(video_path),
+        "-i",
+        str(new_cover_path),
+        "-map",
+        "0:v",
+        "-map",
+        "1:a",
+        "-c:v",
+        "copy",
+        "-c:a",
+        "copy",
+        "-disposition:v:0",
+        "attached_pic",
+        str(video_path),
+    ]
+    await exec_ffmpeg_cmd(cmd)
+
+
 def fmt_size(file_path: Path) -> str:
     """格式化文件大小"""
     return f"大小: {file_path.stat().st_size / 1024 / 1024:.2f} MB"
