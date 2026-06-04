@@ -192,7 +192,7 @@ async def replace_video_cover(video_path: Path, new_cover_path: Path):
         video_path: 原视频路径
         new_cover_path: 新封面图片路径
     """
-    temp_output = video_path.with_suffix(f".temp_{video_path}")
+    temp_output = video_path.with_suffix(f".temp_{video_path.suffix}")
 
     cmd = [
         "ffmpeg",
