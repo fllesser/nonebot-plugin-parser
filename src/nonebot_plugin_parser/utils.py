@@ -192,7 +192,8 @@ async def replace_video_cover(video_path: Path, new_cover_path: Path):
         video_path: 原视频路径
         new_cover_path: 新封面图片路径
     """
-    output_path = video_path.with_name(f"{video_path.stem}_new.{video_path.suffix}")
+    temp_output = video_path.with_suffix(f".temp_{video_path}")
+
     cmd = [
         "ffmpeg",
         "-y",
@@ -201,22 +202,18 @@ async def replace_video_cover(video_path: Path, new_cover_path: Path):
         "-i",
         str(new_cover_path),
         "-map",
-        "0:v",  # 从原视频映射视频流
+        "0",  # 映射原视频的所有流
         "-map",
-        "0:a?",  # 从原视频映射音频流（可选）
-        "-map",
-        "1:v",  # 从封面图片映射视频流（作为附加图片）
-        "-c:v",
-        "copy",  # 视频流复制
-        "-c:a",
-        "copy",  # 音频流复制
-        "-disposition:v:0",
-        "attached_pic",  # 将第一个视频流设为附加图片（即封面）
-        str(output_path),
+        "1",  # 映射封面图片
+        "-c",
+        "copy",  # 复制所有流
+        "-disposition:v:1",  # 将第二个视频流设为附加图片
+        "attached_pic",
+        str(temp_output),
     ]
+
     await exec_ffmpeg_cmd(cmd)
-    await safe_unlink(video_path)
-    output_path.rename(video_path)
+    temp_output.replace(video_path)
 
 
 def fmt_size(file_path: Path) -> str:
