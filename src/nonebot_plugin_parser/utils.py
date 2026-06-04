@@ -186,6 +186,13 @@ async def convert_video_to_gif(video_path: Path) -> Path:
 
 
 async def replace_video_cover(video_path: Path, new_cover_path: Path):
+    """
+    替换视频封面
+    Args:
+        video_path: 原视频路径
+        new_cover_path: 新封面图片路径
+    """
+
     cmd = [
         "ffmpeg",
         "-y",
@@ -194,15 +201,17 @@ async def replace_video_cover(video_path: Path, new_cover_path: Path):
         "-i",
         str(new_cover_path),
         "-map",
-        "0:v",
+        "0:v",  # 从原视频映射视频流
         "-map",
-        "1:a",
+        "0:a?",  # 从原视频映射音频流（可选）
+        "-map",
+        "1:v",  # 从封面图片映射视频流（作为附加图片）
         "-c:v",
-        "copy",
+        "copy",  # 视频流复制
         "-c:a",
-        "copy",
+        "copy",  # 音频流复制
         "-disposition:v:0",
-        "attached_pic",
+        "attached_pic",  # 将第一个视频流设为附加图片（即封面）
         str(video_path),
     ]
     await exec_ffmpeg_cmd(cmd)
