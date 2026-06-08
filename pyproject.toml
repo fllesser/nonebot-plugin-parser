@@ -24,6 +24,7 @@ keywords = [
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: AsyncIO",
+  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
@@ -47,9 +48,7 @@ dependencies = [
   "apilmoji[rich]>=0.3.1,<1.0.0",
   "beautifulsoup4>=4.12.0,<5.0.0",
   "curl_cffi>=0.13.0,<1.0.0,!=0.14.0",
-  # "bilibili-api-python>=17.4.1,<18.0.0",
-  "chompjs>=1.4.1",
-  "bilibili-api-dev[fingerprint]>=18.0.0a0",
+  "bilibili-api-python>=17.4.1,<18.0.0",
   "nonebot-plugin-uninfo>=0.10.1,<1.0.0",
   "nonebot-plugin-alconna>=0.60.4,<1.0.0",
   "nonebot-plugin-localstore>=0.7.4,<1.0.0",
@@ -101,7 +100,7 @@ pydantic-v2 = ["pydantic>=2.0.0"]
 telegram = ["nonebot-adapter-telegram>=0.1.0b20"]
 
 [build-system]
-requires = ["uv_build>=0.11.0,<0.12.0"]
+requires = ["uv_build>=0.10.0,<0.11.0"]
 build-backend = "uv_build"
 
 [tool.uv]
