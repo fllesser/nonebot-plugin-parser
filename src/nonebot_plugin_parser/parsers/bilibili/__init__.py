@@ -6,7 +6,7 @@ from collections.abc import AsyncGenerator
 
 from msgspec import convert
 from nonebot import logger
-from bilibili_api import Credential, select_client, get_bili_headers, request_settings
+from bilibili_api import HEADERS, Credential, select_client, request_settings
 from bilibili_api.opus import Opus
 from bilibili_api.video import Video
 from bilibili_api.login_v2 import QrCodeLogin, QrCodeLoginEvents
@@ -35,7 +35,7 @@ class BilibiliParser(BaseParser):
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
 
     def __init__(self):
-        self.headers: dict[str, str] = get_bili_headers()
+        self.headers = HEADERS.copy()
         self._credential: Credential | None = None
         self._cookies_file = pconfig.config_dir / "bilibili_cookies.json"
 
