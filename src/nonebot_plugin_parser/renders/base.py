@@ -53,7 +53,14 @@ class BaseRenderer(ABC):
 
             match cont:
                 case VideoContent() as video:
-                    if video.gif_path and (gif_path := await video.gif_path.safe_get()):
+                    if video.is_gif or video.gif_path:
+                        if video.cover and (cover_path := await video.cover.safe_get()):
+                            mergeable_segs.append(UniHelper.img_seg(cover_path))
+                        if video.gif_path and (gif_path := await video.gif_path.safe_get()):
+                            mergeable_segs.append(UniHelper.img_seg(gif_path))
+                        elif video.is_gif:
+                            mergeable_segs.append(UniHelper.img_seg(path))
+                    elif video.gif_path and (gif_path := await video.gif_path.safe_get()):
                         mergeable_segs.append(UniHelper.img_seg(gif_path))
                     else:
                         thumbnail = await video.cover.safe_get() if video.cover else None

@@ -48,6 +48,7 @@ class CommonRenderer(ImageRenderer):
     # 转发
     REPOST_PADDING = 12
     REPOST_SCALE = 0.88
+    SUBREDDIT_ICON_SIZE = 32
 
     # 颜色
     BG_COLOR: ClassVar[Color] = (255, 255, 255)
@@ -80,6 +81,9 @@ class CommonRenderer(ImageRenderer):
 
     async def _render_image(self) -> PILImage:
         """渲染图片 (内部方法)"""
+        from ...translate import apply_card_translation
+
+        await apply_card_translation(self.result)
         estimated_height = self._estimate_height()
         bg_color = self.BG_COLOR if self.not_repost else self.REPOST_BG_COLOR
 
@@ -113,8 +117,12 @@ class CommonRenderer(ImageRenderer):
         # 上下边距
         height = self.PADDING * 2
 
-        # 头部（头像 + 名称 + 时间）
-        if self.result.author:
+        # 头部
+        if self.result.platform.name == "reddit" and self.result.extra.get("subreddit_prefixed"):
+            height += self.SUBREDDIT_ICON_SIZE + self.SECTION_SPACING
+            if self.result.author:
+                height += assets.AVATAR_SIZE + self.SECTION_SPACING
+        elif self.result.author:
             height += assets.AVATAR_SIZE + self.SECTION_SPACING
 
         # 标题
@@ -168,7 +176,12 @@ class CommonRenderer(ImageRenderer):
         return height
 
     async def _render_header(self) -> None:
-        """渲染头部（头像 + 名称 + 时间）"""
+        """渲染头部"""
+        if self.result.platform.name == "reddit" and self.result.extra.get("subreddit_prefixed"):
+            await self._render_reddit_subreddit_header()
+            if self.result.author:
+                await self._render_reddit_op_row()
+            return
         if self.result.author is None:
             return
 
@@ -213,7 +226,7 @@ class CommonRenderer(ImageRenderer):
         if self.not_repost:
             platform_name = self.result.platform.name
             if platform_name in assets.PLATFORM_LOGOS:
-                logo = assets.PLATFORM_LOGOS[platform_name]
+                logo = self._resize_platform_logo(platform_name, assets.PLATFORM_LOGOS[platform_name])
                 logo_x = self._image.width - self.PADDING - logo.width
                 logo_y = self.y_pos + (assets.AVATAR_SIZE - logo.height) // 2
                 self._image.paste(logo, (logo_x, logo_y), logo)
@@ -241,6 +254,106 @@ class CommonRenderer(ImageRenderer):
         avatar.putalpha(mask)
         return avatar
 
+
+    async def _render_reddit_subreddit_header(self) -> None:
+        """Reddit 卡片左上角：版块图标 + r/子版块名"""
+        x_pos = self.PADDING
+        size = self.SUBREDDIT_ICON_SIZE
+        gap = 8
+        label = str(self.result.extra.get("subreddit_prefixed", ""))
+
+        icon_task = self.result.extra.get("subreddit_icon")
+        if icon_task is not None:
+            icon_path = await icon_task.safe_get()
+            icon = self._load_subreddit_icon(icon_path, size)
+            self._image.paste(icon, (x_pos, self.y_pos), icon)
+            x_pos += size + gap
+
+        metrics = assets.FONTS.name.metrics
+        text_y = self.y_pos + (size - metrics.line_height) // 2
+
+        logo_reserved = 0
+        if self.not_repost and self.result.platform.name in assets.PLATFORM_LOGOS:
+            logo = self._resize_platform_logo(self.result.platform.name, assets.PLATFORM_LOGOS[self.result.platform.name])
+            logo_w = logo.width
+            logo_reserved = logo_w + 8
+
+        max_label_w = max(40, self.content_width - (x_pos - self.PADDING) - logo_reserved)
+        if hasattr(self, "_truncate_text_to_width"):
+            label = self._truncate_text_to_width(label, max_label_w, metrics)
+
+        self._draw.text(
+            (x_pos, text_y),
+            label,
+            font=metrics.font,
+            fill=assets.FONTS.name.fill,
+        )
+
+        if self.not_repost and self.result.platform.name in assets.PLATFORM_LOGOS:
+            logo = self._resize_platform_logo(self.result.platform.name, assets.PLATFORM_LOGOS[self.result.platform.name])
+            logo_x = self._image.width - self.PADDING - logo.width
+            logo_y = self.y_pos + (size - logo.height) // 2
+            self._image.paste(logo, (logo_x, logo_y), logo)
+
+        self.y_pos += size + self.SECTION_SPACING
+
+
+
+
+    async def _render_reddit_op_row(self) -> None:
+        """Reddit 卡片：版块行下方展示 OP 头像、用户名、发帖时间"""
+        author = self.result.author
+        if author is None:
+            return
+
+        x_pos = self.PADDING
+
+        if author.avatar:
+            avatar_path = await author.avatar.safe_get()
+            avatar_img = self._load_avatar(avatar_path)
+            self._image.paste(avatar_img, (x_pos, self.y_pos), avatar_img)
+
+        text_x = self.PADDING + assets.AVATAR_SIZE + self.AVATAR_TEXT_GAP
+        name_height = assets.FONTS.name.metrics.line_height
+        time_str = self.result.formartted_datetime
+        time_height = (
+            self.NAME_TIME_GAP + assets.FONTS.muted.metrics.line_height
+        ) if time_str else 0
+        text_height = name_height + time_height
+        text_y = self.y_pos + (assets.AVATAR_SIZE - text_height) // 2
+
+        self._draw.text(
+            (text_x, text_y),
+            author.name,
+            font=assets.FONTS.name.metrics.font,
+            fill=assets.FONTS.name.fill,
+        )
+        text_y += name_height
+
+        if time_str:
+            text_y += self.NAME_TIME_GAP
+            self._draw.text(
+                (text_x, text_y),
+                time_str,
+                font=assets.FONTS.muted.metrics.font,
+                fill=assets.FONTS.muted.fill,
+            )
+
+        self.y_pos += assets.AVATAR_SIZE + self.SECTION_SPACING
+
+    def _load_subreddit_icon(self, icon_path: Path | None, size: int) -> PILImage:
+        if icon_path is None or not icon_path.exists():
+            return assets.AVATAR_IMAGE.resize((size, size), Image.Resampling.LANCZOS)
+        try:
+            with Image.open(icon_path) as img:
+                icon = img.convert("RGBA").resize((size, size), Image.Resampling.LANCZOS)
+        except Exception:
+            return assets.AVATAR_IMAGE.resize((size, size), Image.Resampling.LANCZOS)
+        mask = Image.new("L", (size, size), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, size - 1, size - 1), fill=255)
+        icon.putalpha(mask)
+        return icon
+
     async def _render_title(self) -> None:
         """渲染标题"""
         if not self.result.title:
@@ -265,6 +378,23 @@ class CommonRenderer(ImageRenderer):
         # 图片网格
         if self.result.contents:
             await self._render_image_grid()
+            return
+
+        # 无媒体时仍显示占位封面（避免只有标题的窄条卡片）
+        if self.result.extra.get("post_removed") or (
+            not self.result.graphics and self.result.extra.get("info")
+        ):
+            from .. import resources
+            with resources.random_fallback_pic().open("rb") as _f:
+                from PIL import Image
+                from io import BytesIO
+                img = Image.open(BytesIO(_f.read())).convert("RGBA")
+            content_width = self.content_width
+            if img.width != content_width:
+                ratio = content_width / img.width
+                img = img.resize((content_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
+            self._image.paste(img, (self.PADDING, self.y_pos), img)
+            self.y_pos += img.height + self.SECTION_SPACING
             return
 
         # 图文内容
@@ -647,3 +777,33 @@ class CommonRenderer(ImageRenderer):
     def is_trailing_punctuation(c: str) -> bool:
         """判断是否可作为行尾的标点符号"""
         return c in "，。！？；：、）】》〉」』〕〗〙〛…—·,.;:!?)]}"
+    # 卡片右上角平台 logo（reddit.png 原图很大，需限制高度）
+    PLATFORM_LOGO_HEADER_HEIGHT = 30
+    PLATFORM_LOGO_HEADER_HEIGHTS: ClassVar[dict[str, int]] = {
+        "reddit": 30,
+    }
+    PLATFORM_LOGO_HEADER_WIDTHS: ClassVar[dict[str, int]] = {
+        "instagram": 240,
+    }
+
+
+    def _resize_platform_logo(self, platform_name: str, logo: PILImage) -> PILImage:
+        target_w = self.PLATFORM_LOGO_HEADER_WIDTHS.get(platform_name)
+        if target_w and logo.width != target_w:
+            return logo.resize(
+                (target_w, max(1, int(logo.height * target_w / max(logo.width, 1)))),
+                Image.Resampling.LANCZOS,
+            )
+        target_h = self._platform_logo_header_height(platform_name)
+        if logo.height > target_h:
+            return logo.resize(
+                (max(1, int(logo.width * target_h / logo.height)), target_h),
+                Image.Resampling.LANCZOS,
+            )
+        return logo
+
+    def _platform_logo_header_height(self, platform_name: str) -> int:
+        return self.PLATFORM_LOGO_HEADER_HEIGHTS.get(
+            platform_name,
+            getattr(self, "PLATFORM_LOGO_HEADER_HEIGHT", 30),
+        )

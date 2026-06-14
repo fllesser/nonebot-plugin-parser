@@ -50,20 +50,36 @@ class StreamDownloader:
     @staticmethod
     def _validate_content_length(
         response: httpx.Response | curl_cffi.Response,
-    ) -> int:
-        """获取文件长度"""
+        *,
+        allow_unknown: bool = False,
+    ) -> int | None:
+        """获取文件长度；未知长度时返回 None（分块下载）。"""
         content_length = response.headers.get("Content-Length")
-        content_length = int(content_length) if content_length else 0
+        if not content_length:
+            return None if allow_unknown else 0
 
+        content_length = int(content_length)
         if content_length == 0:
             logger.warning(f"媒体 url: {response.url}, 大小为 0, 取消下载")
             raise IgnoreException
 
         if (file_size := content_length / 1024 / 1024) > pconfig.max_size:
-            logger.warning(f"媒体 url: {response.url} 大小 {file_size:.2f} MB, 超过 {pconfig.max_size} MB, 取消下载")
+            logger.warning(
+                f"媒体 url: {response.url} 大小 {file_size:.2f} MB, 超过 {pconfig.max_size} MB, 取消下载"
+            )
             raise IgnoreException
 
         return content_length
+
+    @staticmethod
+    def _reuse_cached_file(file_path: Path) -> Path | None:
+        if not file_path.exists():
+            return None
+        size = file_path.stat().st_size
+        if size <= 0:
+            safe_unlink(file_path)
+            return None
+        return file_path
 
     async def _download_file_with_httpx(
         self,
@@ -82,7 +98,7 @@ class StreamDownloader:
             follow_redirects=True,
         ) as response:
             response.raise_for_status()
-            content_length = self._validate_content_length(response)
+            content_length = self._validate_content_length(response, allow_unknown=True)
 
             with self.rich_progress(
                 f"httpx | {file_path.name}",
@@ -93,6 +109,10 @@ class StreamDownloader:
                         await file.write(chunk)
                         update_progress(advance=len(chunk))
 
+        if file_path.stat().st_size <= 0:
+            await safe_unlink(file_path)
+            raise DownloadException("媒体下载失败")
+
         return file_path
 
     async def _download_file_with_curl_cffi(
@@ -102,7 +122,7 @@ class StreamDownloader:
         file_path: Path,
         headers: dict[str, str],
     ) -> Path:
-        async with curl_cffi.AsyncSession(allow_redirects=True) as session:
+        async with curl_cffi.AsyncSession(impersonate="chrome131", allow_redirects=True) as session:
             response: curl_cffi.Response = await session.get(
                 url,
                 headers=headers,
@@ -110,7 +130,7 @@ class StreamDownloader:
                 stream=True,
             )
             response.raise_for_status()
-            content_length = self._validate_content_length(response)
+            content_length = self._validate_content_length(response, allow_unknown=True)
 
             with self.rich_progress(
                 f"curl_cffi | {file_path.name}",
@@ -120,6 +140,10 @@ class StreamDownloader:
                     async for chunk in response.aiter_content(chunk_size=8192):
                         await file.write(chunk)
                         update_progress(advance=len(chunk))
+
+        if file_path.stat().st_size <= 0:
+            await safe_unlink(file_path)
+            raise DownloadException("媒体下载失败")
 
         return file_path
 
@@ -135,8 +159,8 @@ class StreamDownloader:
         if not file_name:
             file_name = generate_file_name(url)
         file_path = self.cache_dir / file_name
-        if file_path.exists():
-            return file_path
+        if cached := self._reuse_cached_file(file_path):
+            return cached
 
         headers = {**self.headers, **(ext_headers or {})}
 
@@ -146,11 +170,12 @@ class StreamDownloader:
             )
         except httpx.HTTPError:
             logger.opt(exception=True).warning(f"下载失败(httpx) | url: {url}")
+            await safe_unlink(file_path)
             try:
                 path = await self._download_file_with_curl_cffi(url, file_path=file_path, headers=headers)
             except curl_cffi.CurlError:
                 logger.opt(exception=True).warning(f"下载失败(curl_cffi) | url: {url}")
-                raise DownloadException("媒体下载失败")
+                raise DownloadException("媒体下载失败") from None
 
         return path
 

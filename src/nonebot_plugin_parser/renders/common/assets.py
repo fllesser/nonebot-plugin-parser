@@ -78,7 +78,22 @@ def _load_platform_logos() -> dict[str, PILImage]:
         logo_path = resources.RESOURCES_DIR / f"{platform_name}.png"
         if logo_path.exists():
             with Image.open(logo_path) as img:
-                logos[str(platform_name)] = img.convert("RGBA")
+                logo = img.convert("RGBA")
+                if str(platform_name) == "reddit" and logo.height > 40:
+                    ratio = 30 / logo.height
+                    logo = logo.resize(
+                        (max(1, int(logo.width * ratio)), 30),
+                        Image.Resampling.LANCZOS,
+                    )
+                elif str(platform_name) == "instagram":
+                    target_w = 240
+                    if logo.width != target_w:
+                        ratio = target_w / logo.width
+                        logo = logo.resize(
+                            (target_w, max(1, int(logo.height * ratio))),
+                            Image.Resampling.LANCZOS,
+                        )
+                logos[str(platform_name)] = logo
                 loaded_platforms.append(platform_name)
     logger.debug(f"加载 Logo「{', '.join(loaded_platforms)}」成功")
     return logos

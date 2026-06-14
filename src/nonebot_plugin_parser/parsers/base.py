@@ -180,13 +180,15 @@ class BaseParser:
         cover_url: str | None = None,
         duration: float | None = None,
         is_gif: bool = False,
+        download_headers: dict[str, str] | None = None,
     ):
         """创建视频内容, 未指定封面时会尝试从视频中提取封面"""
         from .data import VideoContent
         from ..utils import convert_video_to_gif, extract_video_first_frame
 
         if isinstance(url_or_task, str):
-            path_task = downloader.download_video(url_or_task, ext_headers=self.headers)
+            dl_headers = download_headers if download_headers is not None else self.headers
+            path_task = downloader.download_video(url_or_task, ext_headers=dl_headers)
         elif isinstance(url_or_task, Task):
             path_task = url_or_task
 

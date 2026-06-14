@@ -53,6 +53,29 @@ class YtdlpDownloader:
             self._download_base_opts["proxy"] = proxy
             self._extract_base_opts["proxy"] = proxy
 
+    @staticmethod
+    def _coerce_info_dict(info_dict: dict) -> dict:
+        data = dict(info_dict)
+        duration = data.get("duration")
+        if isinstance(duration, float):
+            data["duration"] = int(duration)
+        elif data.get("duration") is None:
+            data["duration"] = 0
+        timestamp = data.get("timestamp")
+        if isinstance(timestamp, float):
+            data["timestamp"] = int(timestamp)
+        elif data.get("timestamp") is None:
+            data["timestamp"] = 0
+        channel = (data.get("channel") or data.get("uploader") or "").strip()
+        uploader = (data.get("uploader") or channel or "unknown").strip()
+        data["channel"] = channel
+        data["uploader"] = uploader
+        data["channel_id"] = str(data.get("channel_id") or data.get("uploader_id") or uploader)
+        data["title"] = (data.get("title") or "").strip()
+        data["thumbnail"] = data.get("thumbnail") or ""
+        data["description"] = (data.get("description") or "").strip()
+        return data
+
     async def extract_video_info(self, url: str, cookiefile: Path | None = None) -> VideoInfo:
         """Get video info by yt-dlp"""
 
@@ -69,6 +92,7 @@ class YtdlpDownloader:
             if not info_dict:
                 raise ParseException("获取视频信息失败")
 
+        info_dict = self._coerce_info_dict(info_dict)
         video_info = convert(info_dict, VideoInfo)
         self._video_info_mapping[url] = video_info
         return video_info
@@ -96,15 +120,37 @@ class YtdlpDownloader:
             ydl_opts = self._download_base_opts.copy()
             ydl_opts["outtmpl"] = str(video_path)
             ydl_opts["merge_output_format"] = "mp4"
-            ydl_opts["format"] = f"bv[filesize<={duration // 10 + 10}M]+ba/b[filesize<={duration // 8 + 10}M]"
             ydl_opts["postprocessors"] = [{"key": "FFmpegVideoConvertor", "preferedformat": "mp4"}]
 
             if cookiefile:
                 ydl_opts["cookiefile"] = str(cookiefile)
 
-            try:
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Instagram 等站点格式常无 filesize，严格 filesize 过滤会报 Requested format is not available
+            format_strict = (
+                f"bv[filesize<={duration // 10 + 10}M]+ba/b[filesize<={duration // 8 + 10}M]"
+            )
+            format_fallback = "bestvideo*+bestaudio/best[ext=mp4]/best"
+
+            async def _run_download(fmt: str) -> None:
+                opts = ydl_opts.copy()
+                opts["format"] = fmt
+                with yt_dlp.YoutubeDL(opts) as ydl:
                     await asyncio.to_thread(ydl.download, [url])
+
+            try:
+                try:
+                    await _run_download(format_strict)
+                except Exception as first_exc:
+                    if video_path.exists():
+                        return video_path
+                    msg = str(first_exc).lower()
+                    if "requested format is not available" in msg or "format is not available" in msg:
+                        logger.warning(
+                            f"yt-dlp 严格格式不可用，回退通用格式 | url={url}"
+                        )
+                        await _run_download(format_fallback)
+                    else:
+                        raise
             except Exception:
                 if video_path.exists():
                     return video_path

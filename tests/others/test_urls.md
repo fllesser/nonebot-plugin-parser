@@ -95,3 +95,11 @@ nga:
 - https://nga.178.com/read.php?tid=45263995
 - https://ngabbs.com/read.php\?tid=45263995
 - https://bbs.nga.cn/read.php\?tid=45263995
+reddit:
+视频:
+- https://www.reddit.com/r/Seedance_AI/comments/1u1taif/shooting_ai_fantasy_as_a_bystanders_shaky_phone/
+单图:
+- https://www.reddit.com/r/ClaudeAI/comments/1u4cyvh/fable_5_indefinitely_suspended_due_to_national/
+图集:
+- https://www.reddit.com/r/CheatingPOV/comments/1u4jidb/your_wife_doesnt_need_to_know/
+- https://www.reddit.com/r/ChatGPT/comments/1u4nlmw/ai_needs_to_calm_down_with_the_gender_swap_prompt/
