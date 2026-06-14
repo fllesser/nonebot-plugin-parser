@@ -337,13 +337,29 @@ def _extract_video_urls(html_text: str) -> list[str]:
 def _pick_best_video(urls: list[str]) -> str | None:
     if not urls:
         return None
-    for u in urls:
+    normalized = [_normalize_media_url(u) for u in urls]
+
+    def _score(u: str) -> tuple[int, int]:
+        # 越小越优先：transcode-cae 可访客下载；裸 tieba-smallvideo/ 常 401
+        if "smallvideo-transcode-cae" in u or "tieba-smallvideo-transcode" in u:
+            return (0, len(u))
+        if "tieba-movideo" in u:
+            return (1, len(u))
+        if "tieba-smallvideo/" in u and "transcode" not in u:
+            return (9, len(u))
         if "smallvideo" in u:
-            return _normalize_media_url(u)
-    for u in urls:
-        if "tieba-movideo" not in u:
-            return _normalize_media_url(u)
-    return _normalize_media_url(urls[0])
+            return (2, len(u))
+        return (3, len(u))
+
+    return min(normalized, key=_score)
+
+
+def _tieba_video_download_headers(tid: str) -> dict[str, str]:
+    h = {
+        "Referer": f"https://tieba.baidu.com/p/{tid}/",
+        "Accept-Language": "zh-CN,zh;q=0.9",
+    }
+    return h
 
 
 def _mo_first_floor(soup: BeautifulSoup) -> Any | None:
@@ -499,7 +515,14 @@ class TiebaParser(BaseParser):
             cover = pic_urls[0] if pic_urls else None
             if cover:
                 cover = _tieba_pic_to_imgsrc(cover)
-            contents.append(self.create_video(vurl, cover, duration=None))
+            contents.append(
+                self.create_video(
+                    vurl,
+                    cover,
+                    duration=None,
+                    download_headers=_tieba_video_download_headers(tid),
+                )
+            )
         else:
             for pu in pic_urls[:12]:
                 if _is_placeholder_image_url(pu):
@@ -603,7 +626,14 @@ class TiebaParser(BaseParser):
         if video_urls:
             vurl = _pick_best_video(video_urls)
             cover = pic_urls[0] if pic_urls else None
-            contents.append(self.create_video(vurl, cover, duration=None))
+            contents.append(
+                self.create_video(
+                    vurl,
+                    cover,
+                    duration=None,
+                    download_headers=_tieba_video_download_headers(tid),
+                )
+            )
         else:
             for pu in pic_urls[:12]:
                 if _is_placeholder_image_url(pu):

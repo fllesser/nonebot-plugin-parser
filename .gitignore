@@ -172,3 +172,25 @@ release/
 .tieba_ck_probe
 scripts/_mo_*.html
 scripts/_tieba_saved_page.html
+
+# 本地调试脚本（PR 仅保留 delivery + 文档）
+scripts/_*
+scripts/instagram_delivery_*.py
+!scripts/instagram_delivery.py
+scripts/instagram_post_card.py
+scripts/reddit_delivery*.py
+scripts/reddit_media_check_download.py
+scripts/reddit_share_preview.py
+scripts/reddit_translate_media_test.py
+
+# 根目录落盘与临时文件
+_tmp_*.html
+reddit.png
+reddit_*_card.png
+reddit_delivery/
+reddit_media_check/
+reddit_share_previews/
+reddit_translate_test/
+
+# 允许提交测试环境示例
+!.env.test.example
