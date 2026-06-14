@@ -33,13 +33,16 @@ class PlatformEnum(str, Enum):
     ACFUN = "acfun"
     BILIBILI = "bilibili"
     DOUYIN = "douyin"
+    INSTAGRAM = "instagram"
     KUAISHOU = "kuaishou"
     NGA = "nga"
+    REDDIT = "reddit"
     TIKTOK = "tiktok"
     TWITTER = "twitter"
     WEIBO = "weibo"
     XIAOHONGSHU = "xiaohongshu"
     YOUTUBE = "youtube"
+    TIEBA = "tieba"
 
     def __str__(self) -> str:
         return self.value

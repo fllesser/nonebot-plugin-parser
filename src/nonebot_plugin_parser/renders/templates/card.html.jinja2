@@ -111,6 +111,14 @@
               --accent-bg: rgba(129, 107, 69, 0.08);
             }
 
+            [data-platform="tieba"] {
+              --primary: #4070ff;
+              --grad-from: #e8eeff;
+              --grad-via: #d4dfff;
+              --grad-to: #b8c9ff;
+              --accent-bg: rgba(64, 112, 255, 0.10);
+            }
+
             /* ──────── Reset ──────── */
             * {
               box-sizing: border-box;
@@ -195,6 +203,21 @@
               height: 30px;
               width: auto;
               opacity: 0.8;
+            }
+
+            [data-platform="instagram"] .platform-logo {
+              height: 96px;
+              max-width: 320px;
+              width: auto;
+              opacity: 1;
+            }
+
+            [data-platform="tieba"] .platform-logo {
+              height: 96px;
+              width: 96px;
+              max-width: none;
+              object-fit: contain;
+              opacity: 1;
             }
 
             /* ──────── 卡片包裹层 ──────── */

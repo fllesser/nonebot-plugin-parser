@@ -22,6 +22,12 @@ class Config(BaseModel):
     """youtube cookies"""
     parser_xhs_ck: str | None = None
     """小红书 cookies"""
+    parser_reddit_ck: str | None = None
+    """reddit cookies"""
+    parser_instagram_ck: str | None = None
+    """instagram cookies"""
+    parser_tieba_ck: str | None = None
+    """tieba cookies"""
     parser_proxy: str | None = None
     """代理"""
     parser_need_upload: bool = False
@@ -56,6 +62,20 @@ class Config(BaseModel):
     """Pilmoji 表情 CDN"""
     parser_emoji_style: EmojiStyle = EmojiStyle.FACEBOOK
     """Pilmoji 表情样式"""
+    parser_llm_translate_enable: bool = False
+    """是否对国外平台卡片标题/正文调用大模型翻译"""
+    parser_llm_translate_api_url: str | None = None
+    """OpenAI 兼容 API 根地址，如 https://api.openai.com/v1"""
+    parser_llm_translate_api_key: str | None = None
+    """API Key"""
+    parser_llm_translate_model: str = "gpt-4o-mini"
+    """模型名"""
+    parser_llm_translate_prompt: str | None = None
+    """系统提示词；空则用内置简体中文模板"""
+    parser_llm_translate_timeout: float = 60.0
+    """翻译超时（秒）"""
+    parser_llm_translate_platforms: str | None = None
+    """逗号分隔平台名，如 reddit,twitter,youtube；空则默认国外平台"""
 
     @property
     def nickname(self) -> str:
@@ -121,6 +141,21 @@ class Config(BaseModel):
     def xhs_ck(self) -> str | None:
         """小红书 cookies"""
         return self.parser_xhs_ck
+
+    @property
+    def reddit_ck(self) -> str | None:
+        """reddit cookies"""
+        return self.parser_reddit_ck
+
+    @property
+    def instagram_ck(self) -> str | None:
+        """instagram cookies"""
+        return self.parser_instagram_ck
+
+    @property
+    def tieba_ck(self) -> str | None:
+        """tieba cookies"""
+        return self.parser_tieba_ck
 
     @property
     def proxy(self) -> str | None:

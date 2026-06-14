@@ -163,3 +163,12 @@ coverage*.xml
 render_result.md
 render_result_html.md
 render_result_combined.md
+
+# local delivery / probe
+*_out/
+release/
+*_ck_probe
+.reddit_ck_probe
+.tieba_ck_probe
+scripts/_mo_*.html
+scripts/_tieba_saved_page.html

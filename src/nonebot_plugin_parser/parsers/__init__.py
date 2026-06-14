@@ -1,9 +1,11 @@
 # 导出所有 Parser 类
+from .tieba import TiebaParser as TiebaParser
 from .nga import NGAParser as NGAParser
 from .base import BaseParser as BaseParser
 from .acfun import AcfunParser as AcfunParser
 from .weibo import WeiBoParser as WeiBoParser
 from .douyin import DouyinParser as DouyinParser
+from .reddit import RedditParser as RedditParser
 from .twitter import TwitterParser as TwitterParser
 from .bilibili import BilibiliParser as BilibiliParser
 from .kuaishou import KuaiShouParser as KuaiShouParser
@@ -12,6 +14,7 @@ from .xiaohongshu import XiaoHongShuParser as XiaoHongShuParser
 
 if yt_dlp_downloader is not None:
     from .tiktok import TikTokParser as TikTokParser
+    from .instagram import InstagramParser as InstagramParser
     from .youtube import YouTubeParser as YouTubeParser
 
 from .base import handle
