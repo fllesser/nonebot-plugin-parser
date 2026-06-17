@@ -3162,16 +3162,16 @@ wheels = [
 
 [[package]]
 name = "yt-dlp"
-version = "2026.3.13"
+version = "2026.6.9"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/34/69/59253e5627f583939e742a592f56dc7d7f30d164473e58f055e1fccdc02b/yt_dlp-2026.3.13.tar.gz", hash = "sha256:fb43659db684a3db6ff2f5c92e0f1641262f6ecc71dbb64fefe84177aaba9e36", size = 3117911, upload-time = "2026-03-13T09:02:22.711Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/88/a4/1b0979d28f87774bb67fbbc66bce44f9dd1aa0e547a99e22985fac945c33/yt_dlp-2026.6.9.tar.gz", hash = "sha256:d50fcb95f48d61bedde33e408c1881d4c279e51c31354a599ce09e96ba0f4b86", size = 3030590, upload-time = "2026-06-09T23:27:14.831Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f0/ef/52ed7ed10d2e1a22badf74b520b617c48b0a725a981620393245ac842bf9/yt_dlp-2026.3.13-py3-none-any.whl", hash = "sha256:e22e7716f94c08e76b29c0172a3fe0c01d8cabab9bce7f528ad440d70a0d213c", size = 3315062, upload-time = "2026-03-13T09:02:20.357Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/ee/188a3dadf9dfdac713243521f919feca1cd091d4358c9ea7e8ebb710a7cc/yt_dlp-2026.6.9-py3-none-any.whl", hash = "sha256:442ba4c75724b9496144c8434b617962ee08d0ee7c26ec663848fe9b78d5a3e4", size = 3169035, upload-time = "2026-06-09T23:27:12.58Z" },
 ]
 
 [package.optional-dependencies]
 default = [
-    { name = "brotli", marker = "implementation_name == 'cpython' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
+    { name = "brotli", marker = "(implementation_name == 'cpython' and sys_platform != 'ios') or (implementation_name != 'cpython' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (implementation_name != 'cpython' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (implementation_name != 'cpython' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram') or (sys_platform == 'ios' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (sys_platform == 'ios' and extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (sys_platform == 'ios' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
     { name = "brotlicffi", marker = "implementation_name != 'cpython' or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-pydantic-v2') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v1' and extra == 'group-21-nonebot-plugin-parser-telegram') or (extra == 'group-21-nonebot-plugin-parser-pydantic-v2' and extra == 'group-21-nonebot-plugin-parser-telegram')" },
     { name = "certifi" },
     { name = "mutagen" },
@@ -3184,11 +3184,11 @@ default = [
 
 [[package]]
 name = "yt-dlp-ejs"
-version = "0.7.0"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/63/39/57bc2dedbcd4c921fa740fc99f83ada045a219a0e9bb3283b9ab2102e840/yt_dlp_ejs-0.7.0.tar.gz", hash = "sha256:ecac13eb9ff948da84b39f1030fa03422abaf32dc58a0edd78f5dbcc03843556", size = 95961, upload-time = "2026-03-13T07:34:43.612Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/e6/cceb9530e8f4e5940f6f7822d90e9d94f1b85343329a16baaf47bbbb3de1/yt_dlp_ejs-0.8.0.tar.gz", hash = "sha256:d5fa1639f63b5c4af8d932495f60689d5370f1a095782c944f7f62a303eb104e", size = 96571, upload-time = "2026-03-17T22:49:19.299Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/59/f6/54fe93b9db02b7727043fb48816504f09066ca6d7f7d6145cd9d713a1047/yt_dlp_ejs-0.7.0-py3-none-any.whl", hash = "sha256:967e9cbe114ddfd046ff4668af18b1827b4597e2e47a83deea668a355828c798", size = 53444, upload-time = "2026-03-13T07:34:42.195Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/bd/520769863744b669440a924271a6159ddd82ad5ae26b4ac4d4b69e9f8d44/yt_dlp_ejs-0.8.0-py3-none-any.whl", hash = "sha256:79300e5fca7f937a1eeede11f0456862c1b41107ce1d726871e0207424f4bdb4", size = 53443, upload-time = "2026-03-17T22:49:17.736Z" },
 ]
 
 [[package]]
