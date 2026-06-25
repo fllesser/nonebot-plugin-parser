@@ -11,7 +11,7 @@ class Author(Struct):
     face: str
     mid: int
     pub_time: str
-    pub_ts: int
+    pub_ts: str
 
 
 class Image(Struct):
@@ -115,7 +115,7 @@ class OpusItem(Struct):
         """获取发布时间戳"""
         for module in self.item.modules:
             if module.module_type == "MODULE_TYPE_AUTHOR" and module.module_author:
-                return module.module_author.pub_ts
+                return int(module.module_author.pub_ts)
         return None
 
     def extract_nodes(self):
