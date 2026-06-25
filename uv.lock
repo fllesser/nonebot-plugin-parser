@@ -157,8 +157,8 @@ wheels = [
 
 [[package]]
 name = "bilibili-api-python"
-version = "17.4.1"
-source = { git = "https://github.com/Nemo2011/bilibili-api?rev=dev#29427bce09e253f0fd8fdc32a09824e8a00f3d9b" }
+version = "17.4.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "apscheduler" },
     { name = "beautifulsoup4" },
@@ -172,6 +172,10 @@ dependencies = [
     { name = "qrcode" },
     { name = "qrcode-terminal" },
     { name = "yarl" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2e/09/d091a888423185038b232555868c4bd82cf351677b24ec633f287acca0d3/bilibili_api_python-17.4.2.tar.gz", hash = "sha256:3ec62eaa45702779957eaf70fba0c5ff7c858054804cb605780f76fee388ebd5", size = 1422431, upload-time = "2026-06-19T12:55:26.74Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8e/41/c12f4c52cecd6ca6c4bee49a8949ed3df3561e5dd12b891aba96dcdc4502/bilibili_api_python-17.4.2-py3-none-any.whl", hash = "sha256:91e002b2e0bcd3eb50239e35ceb849133b574f407a92a06636e1de1031b6d09d", size = 387324, upload-time = "2026-06-19T12:55:25.586Z" },
 ]
 
 [[package]]
@@ -1619,7 +1623,7 @@ requires-dist = [
     { name = "aiofiles", specifier = ">=25.1.0" },
     { name = "apilmoji", extras = ["rich"], specifier = ">=0.3.1,<1.0.0" },
     { name = "beautifulsoup4", specifier = ">=4.12.0,<5.0.0" },
-    { name = "bilibili-api-python", git = "https://github.com/Nemo2011/bilibili-api?rev=dev" },
+    { name = "bilibili-api-python", specifier = ">=17.4.2,<18.0.0" },
     { name = "curl-cffi", specifier = ">=0.13.0,!=0.14.0,<1.0.0" },
     { name = "emosvg", marker = "extra == 'all'", specifier = ">=0.1.7" },
     { name = "emosvg", marker = "extra == 'emosvg'", specifier = ">=0.1.7" },
