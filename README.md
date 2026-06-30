@@ -262,6 +262,10 @@ parser_emoji_cdn="https://emojicdn.elk.sh"
 
 # [可选] emoji 渲染样式 "apple", "google", "twitter", "facebook"(默认)
 parser_emoji_style="facebook"
+
+# [可选] 是否启用群组黑名单模式(默认启用，即所有群聊的解析都是开启的)
+parser_group_blacklist_enabled=True
+
 ```
 
 </details>

@@ -54,7 +54,7 @@ def is_enabled(session: Session = UniSession()) -> bool:
         return True
 
     group_key = _get_group_key(session)
-    if pconfig.blacklist_mode:
+    if pconfig.group_blacklist_enabled:
         return group_key not in _GROUP_SET
     else:
         return group_key in _GROUP_SET
@@ -64,7 +64,7 @@ def is_enabled(session: Session = UniSession()) -> bool:
 async def _(matcher: Matcher, session: Session = UniSession()):
     """开启解析"""
     group_key = _get_group_key(session)
-    if pconfig.blacklist_mode:
+    if pconfig.group_blacklist_enabled:
         _remove_group(group_key)
     else:
         _add_group(group_key)
@@ -75,7 +75,7 @@ async def _(matcher: Matcher, session: Session = UniSession()):
 async def _(matcher: Matcher, session: Session = UniSession()):
     """关闭解析"""
     group_key = _get_group_key(session)
-    if pconfig.blacklist_mode:
+    if pconfig.group_blacklist_enabled:
         _add_group(group_key)
     else:
         _remove_group(group_key)
