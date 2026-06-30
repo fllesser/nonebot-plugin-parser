@@ -56,6 +56,8 @@ class Config(BaseModel):
     """Pilmoji 表情 CDN"""
     parser_emoji_style: EmojiStyle = EmojiStyle.FACEBOOK
     """Pilmoji 表情样式"""
+    parser_group_blacklist_enabled: bool = True
+    """是否启用群组黑名单模式(默认启用，即所有群聊的解析都是开启的)"""
 
     @property
     def nickname(self) -> str:
@@ -181,6 +183,11 @@ class Config(BaseModel):
     def emoji_style(self) -> EmojiStyle:
         """Pilmoji 表情样式"""
         return self.parser_emoji_style
+
+    @property
+    def group_blacklist_enabled(self) -> bool:
+        """是否启用群组黑名单模式"""
+        return self.parser_group_blacklist_enabled
 
 
 pconfig: Config = get_plugin_config(Config)
