@@ -21,7 +21,7 @@ def _load_or_initialize_set() -> set[str]:
             # 迁移旧的关闭解析名单
             _DISABLED_GROUPS_PATH.rename(_GROUP_SET_PATH)
         else:
-            _GROUP_SET_PATH.write_text(json.dumps({}))
+            _GROUP_SET_PATH.write_text(json.dumps([]))
 
     return set(json.loads(_GROUP_SET_PATH.read_text()))
 
