@@ -262,6 +262,9 @@ parser_emoji_cdn="https://emojicdn.elk.sh"
 
 # [可选] emoji 渲染样式 "apple", "google", "twitter", "facebook"(默认)
 parser_emoji_style="facebook"
+
+# [可选] 是否默认在群聊中启用接卸，默认启用
+parser_enable_by_default=True
 ```
 
 </details>

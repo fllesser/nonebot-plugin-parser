@@ -56,6 +56,8 @@ class Config(BaseModel):
     """Pilmoji 表情 CDN"""
     parser_emoji_style: EmojiStyle = EmojiStyle.FACEBOOK
     """Pilmoji 表情样式"""
+    parser_enable_by_default: bool = True
+    """是否默认启用解析器"""
 
     @property
     def nickname(self) -> str:
@@ -181,6 +183,11 @@ class Config(BaseModel):
     def emoji_style(self) -> EmojiStyle:
         """Pilmoji 表情样式"""
         return self.parser_emoji_style
+    
+    @property
+    def enable_by_default(self) -> bool:
+        """是否默认启用解析器"""
+        return self.parser_enable_by_default
 
 
 pconfig: Config = get_plugin_config(Config)
