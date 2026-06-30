@@ -1,6 +1,6 @@
 import json
-from dataclasses import dataclass, asdict
 from pathlib import Path
+from dataclasses import asdict, dataclass
 
 from nonebot import logger, on_command
 from nonebot.rule import to_me
@@ -14,6 +14,7 @@ from ..config import pconfig
 @dataclass
 class GroupConfig:
     """群组配置"""
+
     enabled: bool = True
 
 
@@ -46,10 +47,7 @@ def load_or_initialize_group_config() -> dict[str, GroupConfig]:
         return {}
 
     raw: dict = json.loads(_GROUP_CONFIG_PATH.read_text())
-    return {
-        k: GroupConfig(**v) if isinstance(v, dict) else GroupConfig(enabled=v)
-        for k, v in raw.items()
-    }
+    return {k: GroupConfig(**v) if isinstance(v, dict) else GroupConfig(enabled=v) for k, v in raw.items()}
 
 
 def _save_group_config_to_file(group_config: dict[str, GroupConfig]):

@@ -183,7 +183,7 @@ class Config(BaseModel):
     def emoji_style(self) -> EmojiStyle:
         """Pilmoji 表情样式"""
         return self.parser_emoji_style
-    
+
     @property
     def enable_by_default(self) -> bool:
         """是否默认启用解析器"""
