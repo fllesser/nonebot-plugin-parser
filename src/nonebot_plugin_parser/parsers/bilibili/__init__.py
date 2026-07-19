@@ -523,7 +523,7 @@ class BilibiliParser(BaseParser):
                 status = data.get("code", -1)
                 if status == 0:
                     yield "登录成功"
-                    cookies = {c.name: c.value for c in self._qr_session.cookies.jar}
+                    cookies = {c.name: c.value for c in self._qr_session.cookies.jar if c.value is not None}
                     self._credential = BiliCredential.from_cookies(cookies)
                     self._save_credential()
                     break

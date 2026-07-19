@@ -1,4 +1,7 @@
-"""Bilibili API 客户端 — 基于 curl_cffi"""
+"""Bilibili API 客户端 — 基于 curl_cffi
+
+包含 BiliAPIClient + 响应模型 + BiliCredential
+"""
 
 from __future__ import annotations
 
@@ -6,16 +9,100 @@ import time
 import uuid
 import hashlib
 import urllib.parse
+from typing import Any, cast
 from functools import reduce
 
+from msgspec import Struct
 from msgspec import json as msgspec_json
+from msgspec import field as msgspec_field
 from nonebot import logger
 from curl_cffi.requests import AsyncSession
 
-from .models import NavData, ApiResponse, PlayUrlData
-from ....exception import ParseException
+from ...exception import ParseException
 
-# WBI 签名用索引表 (来自 bilibili-api-python)
+# ── 响应模型 ──
+
+
+class ApiResponse(Struct, kw_only=True):
+    """B站 API 通用响应包装"""
+
+    code: int = 0
+    message: str = ""
+    data: Any = None
+
+
+class WbiImg(Struct, kw_only=True):
+    """WBI 签名图片"""
+
+    img_url: str = ""
+    sub_url: str = ""
+
+
+class NavData(Struct, kw_only=True):
+    """导航栏信息 (用于 wbi key 和登录状态)"""
+
+    isLogin: bool = False
+    wbi_img: WbiImg | None = None
+    face: str = ""
+    uname: str = ""
+
+
+class DashVideoStream(Struct, kw_only=True):
+    """DASH 视频流"""
+
+    id: int = 0
+    base_url: str = ""
+    backup_url: list[str] | None = None
+    bandwidth: int = 0
+    codecs: str = ""
+    frame_rate: str = ""
+    width: int = 0
+    height: int = 0
+    sar: str = ""
+    mime_type: str = ""
+    segment_base: dict[str, Any] = msgspec_field(default_factory=dict)
+
+
+class DashAudioStream(Struct, kw_only=True):
+    """DASH 音频流"""
+
+    id: int = 0
+    base_url: str = ""
+    backup_url: list[str] | None = None
+    bandwidth: int = 0
+    codecs: str = ""
+    mime_type: str = ""
+
+
+class DashData(Struct, kw_only=True):
+    """DASH 数据"""
+
+    video: list[DashVideoStream] = msgspec_field(default_factory=list)
+    audio: list[DashAudioStream] | None = None
+    dolby: dict[str, Any] | None = None
+    flac: dict[str, Any] | None = None
+
+
+class DurlItem(Struct, kw_only=True):
+    """FLV/MP4 直链"""
+
+    url: str = ""
+    backup_url: list[str] | None = None
+
+
+class PlayUrlData(Struct, kw_only=True):
+    """播放 URL 接口返回 data"""
+
+    dash: DashData | None = None
+    durl: list[DurlItem] | None = None
+    format: str = ""
+    quality: int = 0
+    video_codecid: int = 0
+    video_info: PlayUrlData | None = None  # bangumi 包装
+
+
+# ── WBI 签名 ──
+
 _OE = [
     46,
     47,
@@ -96,6 +183,9 @@ def _enc_wbi(params: dict, mixin_key: str) -> dict:
     return params
 
 
+# ── 凭证 ──
+
+
 class BiliCredential:
     """B站登录凭证 (替代 bilibili_api.Credential)"""
 
@@ -148,6 +238,9 @@ class BiliCredential:
         return bool(self.ac_time_value)
 
 
+# ── API 客户端 ──
+
+
 class BiliAPIClient:
     """B站 API 客户端，封装 curl_cffi session 和 WBI 签名"""
 
@@ -169,7 +262,6 @@ class BiliAPIClient:
     async def _get_session(self) -> AsyncSession:
         if self._session is None:
             cookies = self._credential.get_cookies() if self._credential else {}
-            # 即使没有 credential 也需要基础 cookie
             defaults = self._default_cookies()
             for k, v in defaults.items():
                 cookies.setdefault(k, v)
@@ -178,7 +270,6 @@ class BiliAPIClient:
                 headers=self._headers,
                 cookies=cookies,
             )
-        # 每次请求前更新 cookie (credential 可能已刷新)
         if self._credential:
             self._session.cookies.update(self._credential.get_cookies())
         return self._session
@@ -206,10 +297,12 @@ class BiliAPIClient:
             mixin_key = await self._get_wbi_mixin_key()
             params = _enc_wbi(params, mixin_key)
 
+        from curl_cffi.requests.session import HttpMethod
+
         for attempt in range(2):
             try:
                 resp = await session.request(
-                    method=method,
+                    method=cast("HttpMethod", method),
                     url=url,
                     params=params,
                     data=data,
@@ -218,7 +311,6 @@ class BiliAPIClient:
                 resp.raise_for_status()
             except Exception as e:
                 if attempt == 0 and wbi:
-                    # WBI key 可能过期，刷新重试
                     self._wbi_mixin_key = ""
                     continue
                 raise ParseException(f"B站 API 请求失败: {e}") from e
@@ -268,7 +360,6 @@ class BiliAPIClient:
     # ── 凭证管理 ──
 
     async def check_valid(self) -> bool:
-        """检查凭证是否有效"""
         try:
             nav = await self._get("https://api.bilibili.com/x/web-interface/nav")
             nav_data = msgspec_json.decode(msgspec_json.encode(nav.data), type=NavData) if nav.data else NavData()
@@ -277,7 +368,6 @@ class BiliAPIClient:
             return False
 
     async def check_refresh(self) -> bool:
-        """检查是否需要刷新 cookies"""
         try:
             resp = await self._get("https://passport.bilibili.com/x/passport-login/web/cookie/info")
             return bool(resp.data.get("refresh", False)) if resp.data else False
@@ -285,12 +375,10 @@ class BiliAPIClient:
             return False
 
     async def refresh_credential(self) -> bool:
-        """刷新登录凭证"""
         if not self._credential or not self._credential.has_bili_jct() or not self._credential.has_ac_time_value():
             logger.warning("B站凭证刷新需要 `bili_jct` 和 `ac_time_value`")
             return False
 
-        # 获取 refresh_csrf
         try:
             session = await self._get_session()
             corr_resp = await session.get(f"https://www.bilibili.com/correspond/1/{self._credential.bili_jct}")
@@ -314,16 +402,13 @@ class BiliAPIClient:
                 },
             )
             new_cookies = resp.data or {}
-
             self._credential.sessdata = new_cookies.get("SESSDATA", self._credential.sessdata)
             self._credential.bili_jct = new_cookies.get("bili_jct", self._credential.bili_jct)
             self._credential.dedeuserid = new_cookies.get("DedeUserID", self._credential.dedeuserid)
             new_refresh_token = new_cookies.get("refresh_token") or (resp.data or {}).get("refresh_token")
-
             if new_refresh_token:
                 self._credential.ac_time_value = new_refresh_token
 
-            # 确认刷新
             if self._credential.has_bili_jct():
                 await self._post(
                     "https://passport.bilibili.com/x/passport-login/web/cookie/confirm",
@@ -337,7 +422,6 @@ class BiliAPIClient:
     # ── 视频 ──
 
     async def get_video_info(self, *, bvid: str | None = None, aid: int | None = None) -> dict:
-        """获取视频信息"""
         params = {}
         if bvid:
             params["bvid"] = bvid
@@ -347,7 +431,6 @@ class BiliAPIClient:
         return resp.data
 
     async def get_play_url(self, bvid: str, cid: int, *, platform: str = "") -> PlayUrlData:
-        """获取视频播放/下载 URL"""
         params: dict = {
             "bvid": bvid,
             "cid": cid,
@@ -364,10 +447,8 @@ class BiliAPIClient:
             params["platform"] = platform
             params["high_quality"] = "1"
         else:
-            params.pop("web_location")
-            params.pop("from_client")
-            params.pop("gaia_source")
-            params.pop("isGaiaAvoided")
+            for k in ("web_location", "from_client", "gaia_source", "isGaiaAvoided"):
+                params.pop(k, None)
 
         resp = await self._get(
             "https://api.bilibili.com/x/player/wbi/playurl",
@@ -375,13 +456,11 @@ class BiliAPIClient:
             wbi=True,
         )
         play_data: PlayUrlData = msgspec_json.decode(msgspec_json.encode(resp.data), type=PlayUrlData)
-        # 处理番剧包装
         if play_data.video_info:
             play_data = play_data.video_info
         return play_data
 
     async def get_ai_conclusion(self, bvid: str, cid: int) -> dict:
-        """获取 AI 总结"""
         resp = await self._get(
             "https://api.bilibili.com/x/web-interface/view/conclusion",
             params={"bvid": bvid, "cid": cid, "up_mid": ""},
@@ -390,7 +469,6 @@ class BiliAPIClient:
         return resp.data
 
     async def get_cid(self, bvid: str, page_index: int = 0) -> int:
-        """获取分 P 的 cid"""
         resp = await self._get(
             "https://api.bilibili.com/x/player/pagelist",
             params={"bvid": bvid},
@@ -405,7 +483,6 @@ class BiliAPIClient:
     # ── 动态 ──
 
     async def get_dynamic_detail(self, dynamic_id: int) -> dict:
-        """获取动态详情 (WBI)"""
         resp = await self._get(
             "https://api.bilibili.com/x/polymer/web-dynamic/v1/detail",
             params={
@@ -423,7 +500,6 @@ class BiliAPIClient:
         return resp.data
 
     async def get_opus_detail(self, opus_id: int) -> dict:
-        """获取图文动态 (opus) 详情"""
         resp = await self._get(
             "https://api.bilibili.com/x/opus/detail",
             params={"opus_id": opus_id},
@@ -431,9 +507,6 @@ class BiliAPIClient:
         return resp.data
 
     async def turn_article_to_opus(self, article_id: int) -> int:
-        """将专栏转为 opus，返回 opus_id
-        通过 x/article/view 获取 dyn_id_str (即 opus_id)
-        """
         resp = await self._get(
             "https://api.bilibili.com/x/article/view",
             params={"id": article_id},
@@ -445,13 +518,11 @@ class BiliAPIClient:
     # ── 直播 ──
 
     async def get_live_room_info(self, room_id: int) -> dict:
-        """获取直播房间信息"""
         room_resp = await self._get(
             "https://api.live.bilibili.com/room/v1/Room/get_info",
             params={"room_id": room_id},
         )
         result = room_resp.data or {}
-        # 通过 uid 查主播信息
         if uid := result.get("uid"):
             card_resp = await self._get(
                 "https://api.bilibili.com/x/web-interface/card",
@@ -466,29 +537,9 @@ class BiliAPIClient:
                 }
         return result
 
-    async def is_dynamic_article(self, dynamic_id: int) -> bool:
-        """判断动态是否是专栏类型"""
-        # 先获取动态信息检查 type 字段
-        resp = await self._get(
-            "https://api.bilibili.com/x/dynamic/identify",
-            params={"dynamic_id": dynamic_id},
-        )
-        if resp.data and isinstance(resp.data, dict):
-            return resp.data.get("type", "") == "article"
-        return False
-
     # ── 收藏夹 ──
 
-    async def get_fav_folder_info(self, fid: int) -> dict:
-        """获取收藏夹信息"""
-        resp = await self._get(
-            "https://api.bilibili.com/x/v3/fav/folder/info",
-            params={"fid": fid},
-        )
-        return resp.data
-
     async def get_fav_resource_list(self, media_id: int, pn: int = 1, ps: int = 20) -> dict:
-        """获取收藏夹内容列表 (参数名 media_id, 非 fid)"""
         resp = await self._get(
             "https://api.bilibili.com/x/v3/fav/resource/list",
             params={
@@ -502,5 +553,4 @@ class BiliAPIClient:
                 "web_location": "333.1387",
             },
         )
-        # B站 API 可能返回 data: null (私有收藏夹等)
         return resp.data if resp.data else {"info": None, "medias": None}
