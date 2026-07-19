@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import Final
 
 from httpx import Timeout
@@ -27,6 +27,26 @@ ANDROID_HEADER: Final[dict[str, str]] = {
 COMMON_TIMEOUT: Final[Timeout] = Timeout(connect=15.0, read=20.0, write=10.0, pool=10.0)
 
 DOWNLOAD_TIMEOUT: Final[Timeout] = Timeout(connect=15.0, read=240.0, write=10.0, pool=10.0)
+
+
+class BiliVideoCodec(str, Enum):
+    """B站视频编码"""
+
+    AVC = "avc"
+    AV1 = "av1"
+    HEV = "hev"
+
+
+class BiliVideoQuality(IntEnum):
+    """B站视频分辨率"""
+
+    _360P = 16
+    _480P = 32
+    _720P = 64
+    _1080P = 80
+    _1080P_PLUS = 112
+    _1080P_60 = 116
+    _4K = 120
 
 
 class PlatformEnum(str, Enum):

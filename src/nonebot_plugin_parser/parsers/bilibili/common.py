@@ -1,3 +1,5 @@
+"""Bilibili 通用类型"""
+
 from msgspec import Struct
 
 
