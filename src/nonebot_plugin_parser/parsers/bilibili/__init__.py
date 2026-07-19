@@ -290,20 +290,18 @@ class BilibiliParser(BaseParser):
         """解析视频下载链接 — 直接使用 curl_cffi 获取 playurl 并选择最佳流"""
         from ...constants import BiliVideoCodec, BiliVideoQuality
 
-        client = self._api_client
-
         if bvid is None and avid is not None:
-            video_data = await client.get_video_info(aid=avid)
+            video_data = await self._api_client.get_video_info(aid=avid)
             bvid = video_data.get("bvid", "")
 
         if bvid is None:
             raise DownloadException("无法获取 bvid")
 
         # 获取 cid
-        cid = await client.get_cid(bvid, page_index)
+        cid = await self._api_client.get_cid(bvid, page_index)
 
         # 获取播放 URL 数据
-        play_data = await client.get_play_url(bvid, cid, platform="")
+        play_data = await self._api_client.get_play_url(bvid, cid, platform="")
 
         # 选择最佳视频/音频流 (移植自 bilibili-api-python 的 VideoDownloadURLDataDetecter)
         video_url: str | None = None
@@ -331,11 +329,20 @@ class BilibiliParser(BaseParser):
             120: BiliVideoQuality._4K,
         }
 
+        # 音频质量映射
+        audio_quality_map = {
+            30216: "64K",
+            30232: "128K",
+            30280: "192K",
+            30250: "Dolby",
+            30251: "Hi-Res",
+        }
+
         # 编码优先级
         codec_priority = {
-            BiliVideoCodec.AV1: 0,
+            BiliVideoCodec.AVC: 0,
             BiliVideoCodec.HEV: 1,
-            BiliVideoCodec.AVC: 2,
+            BiliVideoCodec.AV1: 2,
         }
         codec_keywords = {
             BiliVideoCodec.AVC: ["avc"],
@@ -346,9 +353,10 @@ class BilibiliParser(BaseParser):
         max_quality = pconfig.bili_video_quality
         allowed_codecs = pconfig.bili_video_codes
 
-        # 选视频: 最高质量 + 最高优先级编码
+        # 选视频: 最高质量 + 最高优先级编码，并过滤 mcdn
         best_video_stream = None
-        best_video_score = (-1, -1)  # (quality_score, codec_score)
+        best_video_matached_codec = None
+        best_video_score = (-1, -1, 0)  # (quality_score, codec_score, not_mcdn)
 
         for stream in dash.video:
             q = quality_map.get(stream.id)
@@ -367,30 +375,50 @@ class BilibiliParser(BaseParser):
 
             quality_score = q.value
             codec_score = codec_priority.get(matched_codec, 99)
-            score = (quality_score, -codec_score)  # 高画质优先，编码优先级高优先
+            not_mcdn = 0 if "mcdn" in stream.base_url else 1  # 优先非 mcdn
+            score = (quality_score, -codec_score, not_mcdn)  # 高画质优先，编码优先级高优先，非 mcdn 优先
 
             if score > best_video_score:
                 best_video_score = score
                 best_video_stream = stream
+                best_video_matached_codec = matched_codec
 
         if best_video_stream is None:
             raise DownloadException("未找到匹配的视频流")
 
+        # 若选中的 stream 是 mcdn，尝试用 backup_url 替换
         video_url = best_video_stream.base_url
-        logger.debug(
-            f"视频流质量: {quality_map.get(best_video_stream.id, 'unknown')}, 编码: {best_video_stream.codecs}"
-        )
+        if "mcdn" in video_url and best_video_stream.backup_url:
+            for bu in best_video_stream.backup_url:
+                if "mcdn" not in bu:
+                    video_url = bu
+                    logger.debug("mcdn 链接替换为备用链接")
+                    break
 
-        # 选音频: 最高质量
+        q_name = quality_map[best_video_stream.id].name.lstrip("_")
+        matched_codec_name = best_video_matached_codec.name  # type: ignore[union-attr]
+        logger.debug(f"视频流 {q_name} | {matched_codec_name} | {video_url[:64]}...")
+
+        # 选音频: 最高质量，并过滤 mcdn
         if dash.audio:
             best_audio_stream = max(
-                dash.audio,
+                (s for s in dash.audio if "mcdn" not in s.base_url),
                 key=lambda s: s.id,
                 default=None,
             )
+            if best_audio_stream is None:
+                # 全是 mcdn，选最高质量
+                best_audio_stream = max(dash.audio, key=lambda s: s.id)
+
             if best_audio_stream:
                 audio_url = best_audio_stream.base_url
-                logger.debug(f"音频流质量: {best_audio_stream.id}")
+                if "mcdn" in audio_url and best_audio_stream.backup_url:
+                    for bu in best_audio_stream.backup_url:
+                        if "mcdn" not in bu:
+                            audio_url = bu
+                            break
+                aq_name = audio_quality_map.get(best_audio_stream.id, f"id={best_audio_stream.id}")
+                logger.debug(f"音频流 {aq_name} | {audio_url[:64]}...")
 
         if video_url:
             return video_url, audio_url

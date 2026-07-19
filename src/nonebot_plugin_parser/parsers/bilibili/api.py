@@ -105,7 +105,11 @@ class PlayUrlData(Struct, kw_only=True):
     video_info: PlayUrlData | None = None  # bangumi 包装
 
 
-nav_data_decoder = Decoder(NavData)
+# 预编译的 Decoder，避免重复解析类型
+_api_response_decoder = Decoder(ApiResponse)
+_nav_data_decoder = Decoder(NavData)
+_play_url_data_decoder = Decoder(PlayUrlData)
+
 # ── WBI 签名 ──
 
 _OE = [
@@ -330,7 +334,7 @@ class BiliAPIClient:
                     )
                 return ApiResponse(code=-1, message="风控响应")
 
-            api_resp: ApiResponse = msgspec_json.decode(resp.content, type=ApiResponse)
+            api_resp: ApiResponse = _api_response_decoder.decode(resp.content)
             if api_resp.code != 0 and raise_on_error:
                 raise ParseException(f"B站 API 错误 (code={api_resp.code}): {api_resp.message}")
             return api_resp
@@ -352,7 +356,7 @@ class BiliAPIClient:
             return self._wbi_mixin_key
 
         nav = await self._get("https://api.bilibili.com/x/web-interface/nav", raise_on_error=False)
-        nav_data = msgspec_json.decode(msgspec_json.encode(nav.data), type=NavData) if nav.data else NavData()
+        nav_data = _nav_data_decoder.decode(msgspec_json.encode(nav.data)) if nav.data else NavData()
 
         if not nav_data.wbi_img:
             raise ParseException("无法获取 WBI 签名密钥")
@@ -368,7 +372,7 @@ class BiliAPIClient:
     async def check_valid(self) -> bool:
         try:
             nav = await self._get("https://api.bilibili.com/x/web-interface/nav")
-            nav_data = msgspec_json.decode(msgspec_json.encode(nav.data), type=NavData) if nav.data else NavData()
+            nav_data = _nav_data_decoder.decode(msgspec_json.encode(nav.data)) if nav.data else NavData()
             return nav_data.isLogin
         except ParseException:
             return False
@@ -546,7 +550,7 @@ class BiliAPIClient:
             params=params,
             wbi=True,
         )
-        play_data: PlayUrlData = msgspec_json.decode(msgspec_json.encode(resp.data), type=PlayUrlData)
+        play_data: PlayUrlData = _play_url_data_decoder.decode(msgspec_json.encode(resp.data))
         if play_data.video_info:
             play_data = play_data.video_info
         return play_data
