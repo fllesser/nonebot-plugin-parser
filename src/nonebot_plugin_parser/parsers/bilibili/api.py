@@ -5,22 +5,26 @@
 
 from __future__ import annotations
 
+import json
 import time
 import uuid
+import asyncio
 import hashlib
 import urllib.parse
 from typing import Any, cast
 from functools import reduce
+from collections.abc import AsyncGenerator
 
 from msgspec import Struct
 from msgspec import json as msgspec_json
 from msgspec import field as msgspec_field
 from nonebot import logger
+from msgspec.json import Decoder
 from curl_cffi.requests import AsyncSession
 
+from ..cookie import ck2dict
+from ...config import pconfig
 from ...exception import ParseException
-
-# ── 响应模型 ──
 
 
 class ApiResponse(Struct, kw_only=True):
@@ -101,6 +105,7 @@ class PlayUrlData(Struct, kw_only=True):
     video_info: PlayUrlData | None = None  # bangumi 包装
 
 
+nav_data_decoder = Decoder(NavData)
 # ── WBI 签名 ──
 
 _OE = [
@@ -238,9 +243,6 @@ class BiliCredential:
         return bool(self.ac_time_value)
 
 
-# ── API 客户端 ──
-
-
 class BiliAPIClient:
     """B站 API 客户端，封装 curl_cffi session 和 WBI 签名"""
 
@@ -249,6 +251,10 @@ class BiliAPIClient:
         self._session: AsyncSession | None = None
         self._wbi_mixin_key: str = ""
         self._headers = BILI_HEADERS.copy()
+        self._cookies_file = pconfig.config_dir / "bilibili_cookies.json"
+        # 自动从配置或文件加载凭证（如果未显式传入）
+        if self._credential is None:
+            self._init_credential()
 
     _IMPERSONATE = "chrome131"
 
@@ -418,6 +424,91 @@ class BiliAPIClient:
         except Exception as e:
             logger.warning(f"刷新 B站凭证失败: {e}")
             return False
+
+    # ── 凭证持久化 ──
+
+    def has_credential(self) -> bool:
+        """检查是否持有有效凭证（包含 SESSDATA)"""
+        return self._credential is not None and self._credential.has_sessdata()
+
+    def _save_credential(self):
+        """存储哔哩哔哩登录凭证到文件"""
+        if self._credential is None:
+            return
+        self._cookies_file.write_text(json.dumps(self._credential.get_cookies()))
+
+    def _load_credential(self):
+        """从文件加载哔哩哔哩登录凭证"""
+        if not self._cookies_file.exists():
+            return
+        cookies = json.loads(self._cookies_file.read_text())
+        self._credential = BiliCredential.from_cookies(cookies)
+
+    def _init_credential(self):
+        """初始化凭证：优先从配置 `parser_bili_ck` 加载，否则从文件加载"""
+        if pconfig.bili_ck is None:
+            self._load_credential()
+            return
+
+        credential = BiliCredential.from_cookies(ck2dict(pconfig.bili_ck))
+        if credential.has_sessdata():
+            logger.info(f"`parser_bili_ck` 有效, 保存到 {self._cookies_file}")
+            self._credential = credential
+            self._save_credential()
+        else:
+            logger.info(f"`parser_bili_ck` 已过期, 尝试从 {self._cookies_file} 加载")
+            self._load_credential()
+
+    # ── 二维码登录 ──
+
+    async def login_with_qrcode(self) -> bytes:
+        """通过二维码登录获取哔哩哔哩登录凭证"""
+        session = AsyncSession(impersonate="chrome131")
+        resp = await session.get("https://passport.bilibili.com/x/passport-login/web/qrcode/generate")
+        data = resp.json().get("data", {})
+        self._qr_url = data.get("url", "")
+        qr_resp = await session.get(data.get("qrcode_url", ""))
+        qr_pic = qr_resp.content
+        self._qr_session = session
+        self._qr_auth_code = data.get("qrcode_key", "")
+        return qr_pic
+
+    async def check_qr_state(self) -> AsyncGenerator[str]:
+        """检查二维码登录状态"""
+        scan_tip_pending = True
+
+        for _ in range(30):
+            try:
+                resp = await self._qr_session.get(
+                    "https://passport.bilibili.com/x/passport-login/web/qrcode/poll",
+                    params={"qrcode_key": self._qr_auth_code},
+                )
+                data = resp.json().get("data", {})
+                status = data.get("code", -1)
+
+                if status == 0:
+                    yield "登录成功"
+                    cookies = {c.name: c.value for c in self._qr_session.cookies.jar if c.value is not None}
+                    self._credential = BiliCredential.from_cookies(cookies)
+                    self._save_credential()
+                    break
+                elif status == 86101 and scan_tip_pending:
+                    yield "请扫描二维码"
+                    scan_tip_pending = False
+                elif status == 86090:
+                    if scan_tip_pending:
+                        yield "二维码已扫描, 请确认登录"
+                        scan_tip_pending = False
+                elif status == 86038:
+                    yield "二维码过期, 请重新生成"
+                    break
+            except Exception:
+                pass
+            await asyncio.sleep(2)
+        else:
+            yield "二维码登录超时, 请重新生成"
+
+        await self._qr_session.close()
 
     # ── 视频 ──
 

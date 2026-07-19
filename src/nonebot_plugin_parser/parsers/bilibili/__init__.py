@@ -1,16 +1,13 @@
 """Bilibili 解析器 — 基于 curl_cffi 直连 API"""
 
-import json
 import asyncio
 from re import Match
 from typing import ClassVar
-from collections.abc import AsyncGenerator
 
 from msgspec import convert
 from nonebot import logger
-from curl_cffi.requests import AsyncSession
 
-from .api import BILI_HEADERS, BiliAPIClient, BiliCredential
+from .api import BILI_HEADERS, BiliAPIClient
 from ..base import (
     BaseParser,
     PlatformEnum,
@@ -21,7 +18,6 @@ from ..base import (
     pconfig,
 )
 from ..data import Platform, ImageContent, MediaContent
-from ..cookie import ck2dict
 from .dynamic import DynamicInfo
 
 
@@ -30,16 +26,7 @@ class BilibiliParser(BaseParser):
 
     def __init__(self):
         self.headers = BILI_HEADERS.copy()
-        self._credential: BiliCredential | None = None
-        self._api_client: BiliAPIClient | None = None
-        self._cookies_file = pconfig.config_dir / "bilibili_cookies.json"
-
-    @property
-    async def api(self) -> BiliAPIClient:
-        """获取 API 客户端"""
-        if self._api_client is None:
-            self._api_client = BiliAPIClient(credential=await self._get_credential())
-        return self._api_client
+        self._api_client = BiliAPIClient()
 
     @handle("b23.tv", r"b23\.tv/[0-9a-zA-Z._?%&+-=/#]+")
     @handle("bili2233", r"bili2233\.cn/[0-9a-zA-Z._?%&+-=/#]+")
@@ -88,8 +75,7 @@ class BilibiliParser(BaseParser):
     async def _parse_read(self, searched: Match[str]):
         """解析专栏信息"""
         read_id = int(searched.group("read_id"))
-        client = await self.api
-        opus_id = await client.turn_article_to_opus(read_id)
+        opus_id = await self._api_client.turn_article_to_opus(read_id)
         return await self._parse_opus_by_id(opus_id)
 
     async def parse_video(
@@ -102,10 +88,8 @@ class BilibiliParser(BaseParser):
         """解析视频信息"""
         from .video import VideoInfo, AIConclusion
 
-        client = await self.api
-
         # 获取视频信息
-        video_data = await client.get_video_info(bvid=bvid, aid=avid)
+        video_data = await self._api_client.get_video_info(bvid=bvid, aid=avid)
         video_info = convert(video_data, VideoInfo)
 
         # UP主
@@ -115,10 +99,10 @@ class BilibiliParser(BaseParser):
         page_info = video_info.extract_info_with_page(page_num)
 
         # 获取 AI 总结
-        if self._credential and self._credential.has_sessdata():
+        if self._api_client.has_credential():
             try:
-                cid = await client.get_cid(video_info.bvid, page_info.index)
-                ai_data = await client.get_ai_conclusion(video_info.bvid, cid)
+                cid = await self._api_client.get_cid(video_info.bvid, page_info.index)
+                ai_data = await self._api_client.get_ai_conclusion(video_info.bvid, cid)
                 ai_conclusion = convert(ai_data, AIConclusion) if ai_data else AIConclusion()
                 ai_summary = ai_conclusion.summary
             except ParseException:
@@ -171,18 +155,16 @@ class BilibiliParser(BaseParser):
 
     async def parse_dynamic_or_opus(self, dynamic_id: int):
         """解析动态或图文"""
-        client = await self.api
-
         try:
             # 先尝试作为图文动态 (opus) 解析
-            opus_data = await client.get_opus_detail(dynamic_id)
+            opus_data = await self._api_client.get_opus_detail(dynamic_id)
             if opus_data and opus_data.get("item"):
                 return await self._parse_opus_data(opus_data)
         except ParseException:
             pass
 
         # 作为普通动态解析
-        dynamic_data = await client.get_dynamic_detail(dynamic_id)
+        dynamic_data = await self._api_client.get_dynamic_detail(dynamic_id)
         dynamic_info = convert(dynamic_data["item"], DynamicInfo)
         return await self._parse_dynamic_info(dynamic_info)
 
@@ -215,7 +197,7 @@ class BilibiliParser(BaseParser):
 
     async def _parse_opus_by_id(self, opus_id: int):
         """根据 opus_id 解析图文动态"""
-        client = await self.api
+        client = self._api_client
         opus_data = await client.get_opus_detail(opus_id)
         return await self._parse_opus_data(opus_data)
 
@@ -246,7 +228,7 @@ class BilibiliParser(BaseParser):
         """解析直播"""
         from .live import RoomData
 
-        client = await self.api
+        client = self._api_client
         info_dict = await client.get_live_room_info(room_id)
 
         room_data = convert(info_dict, RoomData)
@@ -276,7 +258,7 @@ class BilibiliParser(BaseParser):
         """解析收藏夹"""
         from .favlist import FavData
 
-        client = await self.api
+        client = self._api_client
         resource_list = await client.get_fav_resource_list(fav_id)
 
         if resource_list.get("medias") is None:
@@ -308,7 +290,7 @@ class BilibiliParser(BaseParser):
         """解析视频下载链接 — 直接使用 curl_cffi 获取 playurl 并选择最佳流"""
         from ...constants import BiliVideoCodec, BiliVideoQuality
 
-        client = await self.api
+        client = self._api_client
 
         if bvid is None and avid is not None:
             video_data = await client.get_video_info(aid=avid)
@@ -413,123 +395,3 @@ class BilibiliParser(BaseParser):
         if video_url:
             return video_url, audio_url
         raise DownloadException("未找到可下载的视频流")
-
-    # ── 凭证管理 ──
-
-    def _save_credential(self):
-        """存储哔哩哔哩登录凭证"""
-        if self._credential is None:
-            return
-        self._cookies_file.write_text(json.dumps(self._credential.get_cookies()))
-
-    def _load_credential(self):
-        """从文件加载哔哩哔哩登录凭证"""
-        if not self._cookies_file.exists():
-            return
-        cookies = json.loads(self._cookies_file.read_text())
-        self._credential = BiliCredential.from_cookies(cookies)
-
-    async def _init_credential(self):
-        """初始化哔哩哔哩登录凭证"""
-        if pconfig.bili_ck is None:
-            self._load_credential()
-            return
-
-        credential = BiliCredential.from_cookies(ck2dict(pconfig.bili_ck))
-        # 快速验证：检查是否有 SESSDATA
-        if credential.has_sessdata():
-            logger.info(f"`parser_bili_ck` 有效, 保存到 {self._cookies_file}")
-            self._credential = credential
-            self._save_credential()
-        else:
-            logger.info(f"`parser_bili_ck` 已过期, 尝试从 {self._cookies_file} 加载")
-            self._load_credential()
-
-    async def _get_credential(self) -> BiliCredential | None:
-        """获取并验证凭证"""
-        if self._credential is None:
-            await self._init_credential()
-            return self._credential
-
-        # 校验凭证是否有效
-        try:
-            client = BiliAPIClient(credential=self._credential)
-            valid = await client.check_valid()
-            await client.close()
-        except Exception:
-            valid = False
-
-        if not valid:
-            logger.warning("哔哩哔哩凭证已过期, 请重新配置")
-            return None
-
-        # 检查是否需要刷新
-        try:
-            client = BiliAPIClient(credential=self._credential)
-            need_refresh = await client.check_refresh()
-            if need_refresh:
-                logger.info("哔哩哔哩凭证需要刷新")
-                success = await client.refresh_credential()
-                if success:
-                    logger.info(f"哔哩哔哩凭证刷新成功, 保存到 {self._cookies_file}")
-                    self._save_credential()
-                else:
-                    logger.warning("哔哩哔哩凭证刷新失败")
-            await client.close()
-        except Exception as e:
-            logger.warning(f"哔哩哔哩凭证检查失败: {e}")
-
-        return self._credential
-
-    # ── 二维码登录 (保持不变，改用 curl_cffi) ──
-
-    async def login_with_qrcode(self) -> bytes:
-        """通过二维码登录获取哔哩哔哩登录凭证"""
-        session = AsyncSession(impersonate="chrome131")
-        resp = await session.get("https://passport.bilibili.com/x/passport-login/web/qrcode/generate")
-        data = resp.json().get("data", {})
-        self._qr_url = data.get("url", "")
-        qr_resp = await session.get(data.get("qrcode_url", ""))
-        qr_pic = qr_resp.content
-        self._qr_session = session
-        self._qr_auth_code = data.get("qrcode_key", "")
-        return qr_pic
-
-    async def check_qr_state(self) -> AsyncGenerator[str]:
-        """检查二维码登录状态"""
-        if not hasattr(self, "_qr_session") or not hasattr(self, "_qr_auth_code"):
-            yield "请先生成二维码"
-            return
-
-        scan_tip_pending = True
-        for _ in range(30):
-            try:
-                resp = await self._qr_session.get(
-                    "https://passport.bilibili.com/x/passport-login/web/qrcode/poll",
-                    params={"qrcode_key": self._qr_auth_code},
-                )
-                data = resp.json().get("data", {})
-                status = data.get("code", -1)
-                if status == 0:
-                    yield "登录成功"
-                    cookies = {c.name: c.value for c in self._qr_session.cookies.jar if c.value is not None}
-                    self._credential = BiliCredential.from_cookies(cookies)
-                    self._save_credential()
-                    break
-                elif status == 86101 and scan_tip_pending:
-                    yield "请扫描二维码"
-                    scan_tip_pending = False
-                elif status == 86090:
-                    if scan_tip_pending:
-                        yield "二维码已扫描, 请确认登录"
-                        scan_tip_pending = False
-                elif status == 86038:
-                    yield "二维码过期, 请重新生成"
-                    break
-            except Exception:
-                pass
-            await asyncio.sleep(2)
-        else:
-            yield "二维码登录超时, 请重新生成"
-
-        await self._qr_session.close()

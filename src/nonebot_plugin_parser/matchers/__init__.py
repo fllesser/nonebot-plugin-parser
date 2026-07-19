@@ -138,7 +138,7 @@ if yt_dlp_downloader is not None:
 @on_command("blogin", block=True, permission=SUPER_PRIVATE).handle()
 async def _():
     parser = get_parser_by_type(BilibiliParser)
-    qrcode = await parser.login_with_qrcode()
+    qrcode = await parser._api_client.login_with_qrcode()
     await UniMessage(UniHelper.img_seg(qrcode)).send()
-    async for msg in parser.check_qr_state():
+    async for msg in parser._api_client.check_qr_state():
         await UniMessage(msg).send()
