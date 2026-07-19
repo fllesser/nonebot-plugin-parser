@@ -10,7 +10,7 @@ from msgspec import convert
 from nonebot import logger
 from curl_cffi.requests import AsyncSession
 
-from .api import BiliAPIClient, BiliCredential
+from .api import BILI_HEADERS, BiliAPIClient, BiliCredential
 from ..base import (
     BaseParser,
     PlatformEnum,
@@ -23,17 +23,6 @@ from ..base import (
 from ..data import Platform, ImageContent, MediaContent
 from ..cookie import ck2dict
 from .dynamic import DynamicInfo
-
-# B站 API 请求头
-BILI_HEADERS: dict[str, str] = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/131.0.0.0 Safari/537.36"
-    ),
-    "Referer": "https://www.bilibili.com",
-    "Origin": "https://www.bilibili.com",
-}
 
 
 class BilibiliParser(BaseParser):
