@@ -15,11 +15,9 @@ from typing import Any, cast
 from functools import reduce
 from collections.abc import AsyncGenerator
 
+import msgspec
 from msgspec import Struct
-from msgspec import json as msgspec_json
-from msgspec import field as msgspec_field
 from nonebot import logger
-from msgspec.json import Decoder
 from curl_cffi.requests import AsyncSession
 
 from ..cookie import ck2dict
@@ -64,7 +62,7 @@ class DashVideoStream(Struct, kw_only=True):
     height: int = 0
     sar: str = ""
     mime_type: str = ""
-    segment_base: dict[str, Any] = msgspec_field(default_factory=dict)
+    segment_base: dict[str, Any] = msgspec.field(default_factory=dict)
 
 
 class DashAudioStream(Struct, kw_only=True):
@@ -81,7 +79,7 @@ class DashAudioStream(Struct, kw_only=True):
 class DashData(Struct, kw_only=True):
     """DASH 数据"""
 
-    video: list[DashVideoStream] = msgspec_field(default_factory=list)
+    video: list[DashVideoStream] = msgspec.field(default_factory=list)
     audio: list[DashAudioStream] | None = None
     dolby: dict[str, Any] | None = None
     flac: dict[str, Any] | None = None
@@ -106,9 +104,9 @@ class PlayUrlData(Struct, kw_only=True):
 
 
 # 预编译的 Decoder，避免重复解析类型
-_api_response_decoder = Decoder(ApiResponse)
-_nav_data_decoder = Decoder(NavData)
-_play_url_data_decoder = Decoder(PlayUrlData)
+_api_response_decoder = msgspec.json.Decoder(ApiResponse)
+_nav_data_decoder = msgspec.json.Decoder(NavData)
+_play_url_data_decoder = msgspec.json.Decoder(PlayUrlData)
 
 # ── WBI 签名 ──
 
@@ -356,7 +354,7 @@ class BiliAPIClient:
             return self._wbi_mixin_key
 
         nav = await self._get("https://api.bilibili.com/x/web-interface/nav", raise_on_error=False)
-        nav_data = _nav_data_decoder.decode(msgspec_json.encode(nav.data)) if nav.data else NavData()
+        nav_data = _nav_data_decoder.decode(msgspec.json.encode(nav.data)) if nav.data else NavData()
 
         if not nav_data.wbi_img:
             raise ParseException("无法获取 WBI 签名密钥")
@@ -372,7 +370,7 @@ class BiliAPIClient:
     async def check_valid(self) -> bool:
         try:
             nav = await self._get("https://api.bilibili.com/x/web-interface/nav")
-            nav_data = _nav_data_decoder.decode(msgspec_json.encode(nav.data)) if nav.data else NavData()
+            nav_data = _nav_data_decoder.decode(msgspec.json.encode(nav.data)) if nav.data else NavData()
             return nav_data.isLogin
         except ParseException:
             return False
@@ -550,7 +548,7 @@ class BiliAPIClient:
             params=params,
             wbi=True,
         )
-        play_data: PlayUrlData = _play_url_data_decoder.decode(msgspec_json.encode(resp.data))
+        play_data: PlayUrlData = _play_url_data_decoder.decode(msgspec.json.encode(resp.data))
         if play_data.video_info:
             play_data = play_data.video_info
         return play_data
