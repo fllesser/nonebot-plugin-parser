@@ -33,7 +33,7 @@ class XiaoHongShuParser(BaseParser):
             self.headers["cookie"] = pconfig.xhs_ck
             self.ios_headers["cookie"] = pconfig.xhs_ck
 
-    @handle("xhslink.com", r"xhslink\.com/[A-Za-z0-9._?%&+=/#@-]+")
+    @handle("xhslink", r"xhslink\.(com|cn)/[A-Za-z0-9._?%&+=/#@-]+")
     async def _parse_short_link(self, searched: re.Match[str]):
         url = f"https://{searched.group(0)}"
         return await self.parse_with_redirect(url, self.ios_headers)
