@@ -1,6 +1,8 @@
 from pathlib import Path
+from typing import Any
 
 from nonebot import logger, require, get_driver, get_plugin_config
+from nonebot.compat import field_validator
 from apilmoji import ELK_SH_CDN, EmojiStyle
 from pydantic import BaseModel
 from bilibili_api.video import VideoCodecs, VideoQuality
@@ -58,6 +60,32 @@ class Config(BaseModel):
     """Pilmoji 表情样式"""
     parser_group_blacklist_enabled: bool = True
     """是否启用群组黑名单模式(默认启用，即所有群聊的解析都是开启的)"""
+
+    @field_validator("parser_bili_video_codes", mode="before")
+    @classmethod
+    def _validate_bili_video_codes(cls, v: Any) -> Any:
+        """兼容转换 B站视频编码配置"""
+        if isinstance(v, str):
+            import json
+
+            try:
+                v = json.loads(v)
+            except Exception:
+                v = [x.strip() for x in v.split(",")]
+        if isinstance(v, (list, tuple)):
+            codecs = []
+            for item in v:
+                if isinstance(item, VideoCodecs):
+                    codecs.append(item)
+                    continue
+                s = str(item).lower()
+                for c in VideoCodecs:
+                    val = c.value
+                    if s == c.name.lower() or (isinstance(val, tuple) and s in val) or val == s:
+                        codecs.append(c)
+                        break
+            return codecs
+        return v
 
     @property
     def nickname(self) -> str:
