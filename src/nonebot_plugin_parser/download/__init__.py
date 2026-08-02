@@ -1,7 +1,6 @@
 import asyncio
 from pathlib import Path
 from functools import partial
-from contextlib import contextmanager
 from urllib.parse import urljoin
 
 import httpx
@@ -27,25 +26,26 @@ class StreamDownloader:
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
         self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
-
-    async def aclose(self):
-        await self.client.aclose()
-
-    @staticmethod
-    @contextmanager
-    def rich_progress(
-        desc: str,
-        total: int | None = None,
-    ):
-        with Progress(
+        self.progress_bar: Progress = Progress(
             TextColumn("[bold blue]{task.description}", justify="right"),
             BarColumn(bar_width=None),
             "[progress.percentage]{task.percentage:>3.1f}%",
             "•",
             DownloadColumn(),
-        ) as progress:
-            task_id = progress.add_task(description=desc, total=total)
-            yield partial(progress.update, task_id)
+        )
+
+    async def aclose(self):
+        await self.client.aclose()
+        self.progress_bar.stop()
+
+    def rich_progress(
+        self,
+        desc: str,
+        total: int | None = None,
+    ):
+        task_id = self.progress_bar.add_task(description=desc, total=total)
+        self.progress_bar.start_task(task_id)
+        return partial(self.progress_bar.update, task_id)
 
     @staticmethod
     def _validate_content_length(
@@ -84,10 +84,11 @@ class StreamDownloader:
             response.raise_for_status()
             content_length = self._validate_content_length(response)
 
-            with self.rich_progress(
-                f"httpx | {file_path.name}",
-                content_length,
-            ) as update_progress:
+            with self.progress_bar:
+                update_progress = self.rich_progress(
+                    f"httpx | {file_path.name}",
+                    content_length,
+                )
                 async with aiofiles.open(file_path, "wb") as file:
                     async for chunk in response.aiter_bytes(chunk_size):
                         await file.write(chunk)
@@ -112,10 +113,11 @@ class StreamDownloader:
             response.raise_for_status()
             content_length = self._validate_content_length(response)
 
-            with self.rich_progress(
-                f"curl_cffi | {file_path.name}",
-                content_length,
-            ) as update_progress:
+            with self.progress_bar:
+                update_progress = self.rich_progress(
+                    f"curl_cffi | {file_path.name}",
+                    content_length,
+                )
                 async with aiofiles.open(file_path, "wb") as file:
                     async for chunk in response.aiter_content(chunk_size=8192):
                         await file.write(chunk)
@@ -243,7 +245,8 @@ class StreamDownloader:
         try:
             async with aiofiles.open(video_path, "wb") as f:
                 total_size = 0
-                with self.rich_progress(desc=video_name) as update_progress:
+                with self.progress_bar:
+                    update_progress = self.rich_progress(desc=video_name)
                     for url in await self._get_m3u8_slices(m3u8_url):
                         async with self.client.stream("GET", url, headers=ext_headers) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
