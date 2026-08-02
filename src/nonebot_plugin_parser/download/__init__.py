@@ -1,19 +1,13 @@
 import asyncio
 from pathlib import Path
-from functools import partial
 from urllib.parse import urljoin
 
 import httpx
 import aiofiles
 import curl_cffi
 from nonebot import logger, get_driver
-from rich.progress import (
-    Progress,
-    BarColumn,
-    TextColumn,
-    DownloadColumn,
-)
 
+from .rich import progress_bar, add_progress_task
 from .task import auto_task
 from ..utils import merge_av, safe_unlink, generate_file_name, is_module_available
 from ..config import pconfig
@@ -26,26 +20,9 @@ class StreamDownloader:
         self.headers: dict[str, str] = COMMON_HEADER.copy()
         self.cache_dir: Path = pconfig.cache_dir
         self.client: httpx.AsyncClient = httpx.AsyncClient(timeout=DOWNLOAD_TIMEOUT, verify=False)
-        self.progress_bar: Progress = Progress(
-            TextColumn("[bold blue]{task.description}", justify="right"),
-            BarColumn(bar_width=None),
-            "[progress.percentage]{task.percentage:>3.1f}%",
-            "•",
-            DownloadColumn(),
-        )
 
     async def aclose(self):
         await self.client.aclose()
-        self.progress_bar.stop()
-
-    def add_progress_task(
-        self,
-        desc: str,
-        total: int | None = None,
-    ):
-        task_id = self.progress_bar.add_task(description=desc, total=total)
-        self.progress_bar.start_task(task_id)
-        return partial(self.progress_bar.update, task_id)
 
     @staticmethod
     def _validate_content_length(
@@ -84,8 +61,8 @@ class StreamDownloader:
             response.raise_for_status()
             content_length = self._validate_content_length(response)
 
-            with self.progress_bar:
-                update_progress = self.add_progress_task(
+            with progress_bar:
+                update_progress = add_progress_task(
                     f"httpx | {file_path.name}",
                     content_length,
                 )
@@ -113,8 +90,8 @@ class StreamDownloader:
             response.raise_for_status()
             content_length = self._validate_content_length(response)
 
-            with self.progress_bar:
-                update_progress = self.add_progress_task(
+            with progress_bar:
+                update_progress = add_progress_task(
                     f"curl_cffi | {file_path.name}",
                     content_length,
                 )
@@ -243,9 +220,9 @@ class StreamDownloader:
         video_path = pconfig.cache_dir / video_name
 
         try:
-            with self.progress_bar:
+            with progress_bar:
                 async with aiofiles.open(video_path, "wb") as f:
-                    update_progress = self.add_progress_task(desc=video_name)
+                    update_progress = add_progress_task(desc=video_name)
                     for url in await self._get_m3u8_slices(m3u8_url):
                         async with self.client.stream("GET", url, headers=ext_headers) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
