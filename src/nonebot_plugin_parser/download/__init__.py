@@ -38,7 +38,7 @@ class StreamDownloader:
         await self.client.aclose()
         self.progress_bar.stop()
 
-    def rich_progress(
+    def add_progress_task(
         self,
         desc: str,
         total: int | None = None,
@@ -85,7 +85,7 @@ class StreamDownloader:
             content_length = self._validate_content_length(response)
 
             with self.progress_bar:
-                update_progress = self.rich_progress(
+                update_progress = self.add_progress_task(
                     f"httpx | {file_path.name}",
                     content_length,
                 )
@@ -114,7 +114,7 @@ class StreamDownloader:
             content_length = self._validate_content_length(response)
 
             with self.progress_bar:
-                update_progress = self.rich_progress(
+                update_progress = self.add_progress_task(
                     f"curl_cffi | {file_path.name}",
                     content_length,
                 )
@@ -246,7 +246,7 @@ class StreamDownloader:
             async with aiofiles.open(video_path, "wb") as f:
                 total_size = 0
                 with self.progress_bar:
-                    update_progress = self.rich_progress(desc=video_name)
+                    update_progress = self.add_progress_task(desc=video_name)
                     for url in await self._get_m3u8_slices(m3u8_url):
                         async with self.client.stream("GET", url, headers=ext_headers) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
