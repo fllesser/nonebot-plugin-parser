@@ -245,14 +245,12 @@ class StreamDownloader:
         try:
             with self.progress_bar:
                 async with aiofiles.open(video_path, "wb") as f:
-                    total_size = 0
                     update_progress = self.add_progress_task(desc=video_name)
                     for url in await self._get_m3u8_slices(m3u8_url):
                         async with self.client.stream("GET", url, headers=ext_headers) as response:
                             async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
                                 await f.write(chunk)
-                                total_size += len(chunk)
-                                update_progress(advance=len(chunk), total=total_size)
+                                update_progress(advance=len(chunk))
         except httpx.HTTPError:
             await safe_unlink(video_path)
             logger.exception("m3u8 视频下载失败")
