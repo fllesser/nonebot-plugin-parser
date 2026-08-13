@@ -6,10 +6,16 @@ from collections.abc import AsyncGenerator
 
 from msgspec import convert
 from nonebot import logger
-from bilibili_api import HEADERS, Credential, select_client, request_settings
+from bilibili_api import (
+    HEADERS,
+    Credential,
+    select_client,
+    request_settings,
+    get_client,
+)
 from bilibili_api.opus import Opus
 from bilibili_api.video import Video
-from bilibili_api.login_v2 import QrCodeLogin, QrCodeLoginEvents
+from bilibili_api.login_v2 import QrCodeLogin, QrCodeLoginEvents, QrCodeLoginChannel
 
 from ..base import (
     BaseParser,
@@ -353,18 +359,47 @@ class BilibiliParser(BaseParser):
 
     async def login_with_qrcode(self) -> bytes:
         """通过二维码登录获取哔哩哔哩登录凭证"""
-        self._qr_login = QrCodeLogin()
+        self._qr_login = QrCodeLogin(platform=QrCodeLoginChannel.WEB)
         await self._qr_login.generate_qrcode()
 
         qr_pic = self._qr_login.get_qrcode_picture()
         return qr_pic.content
+
+    async def check_state(self, qr: QrCodeLogin):
+        client = get_client()
+        resp = await client.request(
+            method="GET",
+            url="https://passport.bilibili.com/x/passport-login/web/qrcode/poll",
+            params={"qrcode_key": qr._QrCodeLogin__qr_key},  # pyright: ignore[reportAttributeAccessIssue]
+        )
+        result: dict = resp.json()["data"]  # pyright: ignore[reportIndexIssue]
+        code = result["code"]
+        if code == 86101:
+            return QrCodeLoginEvents.SCAN
+        elif code == 86090:
+            return QrCodeLoginEvents.CONF
+        elif code == 86038:
+            return QrCodeLoginEvents.TIMEOUT
+        else:
+            ac_time_value = result["refresh_token"]
+            cookies = resp.cookies
+            sessdata = cookies["SESSDATA"]
+            bili_jct = cookies["bili_jct"]
+            dedeuserid = cookies["DedeUserID"]
+            qr._QrCodeLogin__credential = Credential(  # pyright: ignore[reportAttributeAccessIssue]
+                sessdata=sessdata,
+                bili_jct=bili_jct,
+                dedeuserid=dedeuserid,
+                ac_time_value=ac_time_value,
+            )
+            return QrCodeLoginEvents.DONE
 
     async def check_qr_state(self) -> AsyncGenerator[str]:
         """检查二维码登录状态"""
         scan_tip_pending = True
 
         for _ in range(30):
-            state = await self._qr_login.check_state()
+            state = await self.check_state(self._qr_login)
             match state:
                 case QrCodeLoginEvents.DONE:
                     yield "登录成功"
