@@ -9,9 +9,9 @@ from nonebot import logger
 from bilibili_api import (
     HEADERS,
     Credential,
+    get_client,
     select_client,
     request_settings,
-    get_client,
 )
 from bilibili_api.opus import Opus
 from bilibili_api.video import Video
