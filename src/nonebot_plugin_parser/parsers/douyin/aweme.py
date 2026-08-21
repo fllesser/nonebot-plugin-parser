@@ -2,7 +2,6 @@ from msgspec import Struct, field
 from msgspec.json import Decoder
 
 
-
 class Addr(Struct):
     uri: str
 
@@ -78,5 +77,6 @@ class Aweme(Struct):
 
 class Response(Struct):
     aweme_detail: Aweme
-    
+
+
 decoder = Decoder(Response)
