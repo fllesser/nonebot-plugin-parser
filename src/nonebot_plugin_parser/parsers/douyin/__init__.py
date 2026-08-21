@@ -1,8 +1,8 @@
+import json
 import re
 from typing import ClassVar
 
 from httpx import AsyncClient
-from nonebot import logger
 
 from ..base import (
     COMMON_TIMEOUT,
@@ -12,10 +12,22 @@ from ..base import (
     ParseException,
     handle,
 )
+from .aweme import decoder
 
 
 class DouyinParser(BaseParser):
-    platform: ClassVar[Platform] = Platform(name=PlatformEnum.DOUYIN, display_name="抖音")
+    platform: ClassVar[Platform] = Platform(
+        name=PlatformEnum.DOUYIN, display_name="抖音"
+    )
+
+    def __init__(self):
+        super().__init__()
+        self.headers.update(
+            {
+                "Origin": "https://open.douyin.com",
+                "Referer": "https://open.douyin.com/",
+            }
+        )
 
     # https://v.douyin.com/_2ljF4AmKL8
     @handle("v.douyin", r"v\.douyin\.com/[a-zA-Z0-9_\-]+")
@@ -26,112 +38,85 @@ class DouyinParser(BaseParser):
 
     # https://www.douyin.com/video/7521023890996514083
     # https://www.douyin.com/note/7469411074119322899
-    @handle("douyin", r"douyin\.com/(?P<ty>video|note)/(?P<vid>\d+)")
-    @handle("iesdouyin", r"iesdouyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
-    @handle("m.douyin", r"m\.douyin\.com/share/(?P<ty>slides|video|note)/(?P<vid>\d+)")
+    @handle("douyin", r"douyin\.com/[a-z]+/(?P<aweme_id>\d+)")
+    @handle("iesdouyin", r"iesdouyin\.com/share/[a-z]+/(?P<aweme_id>\d+)")
+    @handle("m.douyin", r"m\.douyin\.com/share/[a-z]+/(?P<aweme_id>\d+)")
     # https://jingxuan.douyin.com/m/video/7574300896016862490?app=yumme&utm_source=copy_link
-    @handle("jingxuan.douyin", r"jingxuan\.douyin.com/m/(?P<ty>slides|video|note)/(?P<vid>\d+)")
+    @handle("jingxuan.douyin", r"jingxuan\.douyin.com/m/[a-z]+/(?P<aweme_id>\d+)")
     async def _parse_douyin(self, searched: re.Match[str]):
-        ty, vid = searched.group("ty"), searched.group("vid")
-        if ty == "slides":
-            return await self.parse_slides(vid)
+        aweme_id = searched.group("aweme_id")
+        return await self.parse_aweme(aweme_id)
 
-        for url in (self._build_m_douyin_url(ty, vid), self._build_iesdouyin_url(ty, vid)):
-            try:
-                return await self.parse_video(url)
-            except ParseException as e:
-                logger.warning(f"failed to parse {url}, error: {e}")
-                continue
-        raise ParseException("分享已删除或资源直链提取失败, 请稍后再试")
-
-    @staticmethod
-    def _build_iesdouyin_url(ty: str, vid: str) -> str:
-        return f"https://www.iesdouyin.com/share/{ty}/{vid}"
-
-    @staticmethod
-    def _build_m_douyin_url(ty: str, vid: str) -> str:
-        return f"https://m.douyin.com/share/{ty}/{vid}"
-
-    async def parse_video(self, url: str):
-        from . import video
-
+    async def parse_aweme(self, aweme_id: str):
         async with AsyncClient(
-            headers=self.ios_headers,
+            headers=self.headers,
             timeout=COMMON_TIMEOUT,
-            follow_redirects=False,
+            follow_redirects=True,
             verify=False,
         ) as client:
-            response = await client.get(url)
+            response = await client.get(
+                "https://www.douyin.com/aweme/v1/web/aweme/detail/",
+                params={"aweme_id": aweme_id, "aid": "6383"},
+            )
             if response.status_code != 200:
                 raise ParseException(f"status: {response.status_code}")
-            text = response.text
-
-        pattern = re.compile(
-            pattern=r"window\._ROUTER_DATA\s*=\s*(.*?)</script>",
-            flags=re.DOTALL,
-        )
-        matched = pattern.search(text)
-
-        if not matched or not matched.group(1):
-            raise ParseException("can't find _ROUTER_DATA in html")
-
-        video_data = video.decoder.decode(matched.group(1).strip()).video_data
+            aweme = decoder.decode(response.content).aweme_detail
 
         # 作者
         author = self.create_author(
-            video_data.author.nickname,
-            video_data.avatar_url,
+            aweme.author.nickname,
+            aweme.author.avatar_thumb.url_list[-1],
+            aweme.author.signature,
         )
 
         # 先以部分数据构建结果，后续再填充内容，避免使用临时变量
         result = self.result(
-            title=video_data.desc,
+            text=aweme.share_info.text,
             author=author,
-            timestamp=video_data.create_time,
+            timestamp=aweme.create_time,
+            url=aweme.share_url.split("?")[0],
         )
+        if music := aweme.music:
+            if not music.is_original_sound:
+                if music.play_url.uri == "":
+                    extra = json.loads(music.extra)
+                    music_url = extra.get("original_song_url")
+                else:
+                    music_url = music.play_url.uri
+                if music_url:
+                    result.contents.append(
+                        self.create_audio(
+                            url_or_task=music_url,
+                            duration=music.duration,
+                        )
+                    )
 
         # 添加图片内容
-        if image_urls := video_data.image_urls:
-            result.contents.extend(self.create_images(image_urls))
+        if images := aweme.images:
+            for image in images:
+                if image.clip_type == 2 or image.clip_type is None:
+                    result.contents.append(
+                        self.create_image(
+                            url_or_task=image.url_list[-1],
+                        )
+                    )
+                elif image_video := image.video:
+                    result.contents.extend(
+                        [
+                            self.create_image(
+                                url_or_task=image_video.cover.url_list[-1],
+                            ),
+                            self.create_video(url_or_task=image_video.play_addr.url),
+                        ]
+                    )
         # 添加视频内容
-        elif video_url := video_data.video_url:
+        elif video := aweme.video:
             result.video = self.create_video(
-                video_url,
-                video_data.cover_url,
-                video_data.duration,
+                video.play_addr.url,
+                video.cover_original_scale.url_list[-1]
+                if video.cover_original_scale
+                else video.cover.url_list[-1],
+                video.duration // 1000,
             )
-
-        return result
-
-    async def parse_slides(self, video_id: str):
-        from . import slides
-
-        url = "https://www.iesdouyin.com/web/api/v2/aweme/slidesinfo/"
-        params = {
-            "aweme_ids": f"[{video_id}]",
-            "request_source": "200",
-        }
-        async with AsyncClient(headers=self.android_headers, verify=False) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-
-        slides_data = slides.decoder.decode(response.content).aweme_details[0]
-
-        # 作者
-        author = self.create_author(slides_data.name, slides_data.avatar_url)
-
-        # 先以部分数据构建结果，后续再填充内容，避免使用临时变量
-        result = self.result(
-            title=slides_data.desc,
-            author=author,
-            timestamp=slides_data.create_time,
-        )
-
-        # 优先取动图
-        if dynamic_urls := slides_data.dynamic_urls:
-            for dynamic_url in dynamic_urls:
-                result.contents.append(self.create_gif(dynamic_url))
-        elif image_urls := slides_data.image_urls:
-            result.contents.extend(self.create_images(image_urls))
 
         return result
