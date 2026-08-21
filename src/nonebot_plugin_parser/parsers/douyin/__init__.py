@@ -1,5 +1,5 @@
-import json
 import re
+import json
 from typing import ClassVar
 
 from httpx import AsyncClient
@@ -16,9 +16,7 @@ from .aweme import decoder
 
 
 class DouyinParser(BaseParser):
-    platform: ClassVar[Platform] = Platform(
-        name=PlatformEnum.DOUYIN, display_name="抖音"
-    )
+    platform: ClassVar[Platform] = Platform(name=PlatformEnum.DOUYIN, display_name="抖音")
 
     def __init__(self):
         super().__init__()
@@ -113,9 +111,7 @@ class DouyinParser(BaseParser):
         elif video := aweme.video:
             result.video = self.create_video(
                 video.play_addr.url,
-                video.cover_original_scale.url_list[-1]
-                if video.cover_original_scale
-                else video.cover.url_list[-1],
+                video.cover_original_scale.url_list[-1] if video.cover_original_scale else video.cover.url_list[-1],
                 video.duration // 1000,
             )
 
