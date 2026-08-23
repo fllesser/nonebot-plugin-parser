@@ -23,10 +23,12 @@ async def test_common_video():
         result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
 
-        assert result.title, "标题为空"
+        # assert result.title, "标题为空"
+
         assert result.author, "作者为空"
         assert result.author.avatar, "作者头像不存在"
         assert await result.author.avatar.get(), "头像为空"
+        assert result.text, "内容为空"
         assert result.video, "视频内容为空"
 
         video_path = await result.video.path_task.get()
@@ -83,8 +85,9 @@ async def test_note():
 
         result = await parser.parse(keyword, searched)
         logger.debug(f"{url} | 解析结果: \n{result}")
-        assert result.title, "标题为空"
+        # assert result.title, "标题为空"
         assert result.author, "作者为空"
+        assert result.text, "内容为空"
         if img_contents := result.img_contents:
             for img_content in img_contents:
                 # 容易失败，使用 safe_get
@@ -116,7 +119,8 @@ async def test_slides():
     assert searched, "无法匹配 URL"
     result = await parser.parse(keyword, searched)
     logger.debug(f"{dynamic_image_url} | 解析结果: \n{result}")
-    assert result.title, "标题为空"
+    # assert result.title, "标题为空"
+    assert result.text, "内容为空"
     video_contents = result.video_contents
     assert video_contents, "视频内容为空"
     for video_content in video_contents:
@@ -130,7 +134,8 @@ async def test_slides():
     assert searched, "无法匹配 URL"
     result = await parser.parse(keyword, searched)
     logger.debug(f"{static_image_url} | 解析结果: \n{result}")
-    assert result.title, "标题为空"
+    # assert result.title, "标题为空"
+    assert result.text, "内容为空"
     img_contents = result.img_contents
     assert img_contents, "图片内容为空"
     for img_content in img_contents:
