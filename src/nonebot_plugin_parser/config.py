@@ -3,9 +3,8 @@ from pathlib import Path
 from nonebot import logger, require, get_driver, get_plugin_config
 from apilmoji import ELK_SH_CDN, EmojiStyle
 from pydantic import BaseModel
-from bilibili_api.video import VideoCodecs, VideoQuality
 
-from .constants import RenderType, PlatformEnum
+from .constants import RenderType, PlatformEnum, BiliVideoCodec, BiliVideoQuality
 
 require("nonebot_plugin_localstore")
 import nonebot_plugin_localstore as _store
@@ -36,13 +35,13 @@ class Config(BaseModel):
     """是否在解析结果中附加原始URL"""
     parser_disabled_platforms: list[PlatformEnum] = []
     """禁止的解析器"""
-    parser_bili_video_codes: list[VideoCodecs] = [
-        VideoCodecs.AVC,
-        VideoCodecs.AV1,
-        VideoCodecs.HEV,
+    parser_bili_video_codes: list[BiliVideoCodec] = [
+        BiliVideoCodec.AVC,
+        BiliVideoCodec.AV1,
+        BiliVideoCodec.HEV,
     ]
     """B站视频编码"""
-    parser_bili_video_quality: VideoQuality = VideoQuality._1080P
+    parser_bili_video_quality: BiliVideoQuality = BiliVideoQuality._1080P
     """B站视频分辨率"""
     parser_render_type: RenderType = RenderType.common
     """Renderer 类型"""
@@ -95,12 +94,12 @@ class Config(BaseModel):
         return self.parser_disabled_platforms
 
     @property
-    def bili_video_codes(self) -> list[VideoCodecs]:
+    def bili_video_codes(self) -> list[BiliVideoCodec]:
         """B站视频编码"""
         return self.parser_bili_video_codes
 
     @property
-    def bili_video_quality(self) -> VideoQuality:
+    def bili_video_quality(self) -> BiliVideoQuality:
         """B站视频分辨率"""
         return self.parser_bili_video_quality
 

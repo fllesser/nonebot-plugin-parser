@@ -1,72 +1,57 @@
-from msgspec import Struct
-
-
-class RoomInfo(Struct):
-    title: str
-    """标题"""
-    cover: str
-    """封面"""
-    keyframe: str
-    """关键帧"""
-    tags: str
-    """标签"""
-    area_name: str
-    """分区名称"""
-    parent_area_name: str
-    """父分区名称"""
-
-
-class BaseInfo(Struct):
-    uname: str
-    """用户名"""
-    face: str
-    """头像"""
-    gender: str
-    """性别"""
-
-
-class LiveInfo(Struct):
-    level: int
-    """等级"""
-    level_color: int
-    """等级颜色"""
-    score: int
-    """分数"""
+from msgspec import Struct, field
 
 
 class AnchorInfo(Struct):
-    base_info: BaseInfo
-    """基础信息"""
-    live_info: LiveInfo
-    """直播信息"""
+    uname: str = ""
+    """用户名"""
+    face: str = ""
+    """头像"""
+    uid: int = 0
 
 
 class RoomData(Struct):
-    room_info: RoomInfo
-    """房间信息"""
-    anchor_info: AnchorInfo
+    room_id: int = 0
+    uid: int = 0
+    raw_title: str = field(default="", name="title")
+    """原始标题"""
+    cover: str = field(default="", name="user_cover")
+    """封面"""
+    keyframe: str = ""
+    """关键帧"""
+    live_status: int = 0
+    """直播状态 1=直播中"""
+    online: int = 0
+    """在线人数"""
+    tags: str = ""
+    """标签"""
+    area_name: str = ""
+    """分区名称"""
+    parent_area_name: str = ""
+    """父分区名称"""
+    anchor_info: AnchorInfo | None = None
     """主播信息"""
 
     @property
     def title(self) -> str:
-        return f"直播 - {self.room_info.title}"
-
-    @property
-    def cover(self) -> str:
-        return self.room_info.cover
+        return f"直播 - {self.raw_title}"
 
     @property
     def detail(self) -> str:
-        return f"分区: {self.room_info.area_name} | {self.room_info.parent_area_name}\n标签: {self.room_info.tags}"
-
-    @property
-    def keyframe(self) -> str:
-        return self.room_info.keyframe
+        parts = []
+        if self.area_name:
+            parts.append(f"分区: {self.area_name}")
+            if self.parent_area_name:
+                parts[-1] += f" | {self.parent_area_name}"
+        if self.tags:
+            parts.append(f"标签: {self.tags}")
+        if self.online:
+            parts.append(f"在线: {self.online}")
+        return "\n".join(parts) if parts else ""
 
     @property
     def name(self) -> str:
-        return self.anchor_info.base_info.uname
+        return self.anchor_info.uname if self.anchor_info else ""
 
     @property
     def avatar(self) -> str:
-        return self.anchor_info.base_info.face
+        return self.anchor_info.face if self.anchor_info else ""
