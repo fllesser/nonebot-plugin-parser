@@ -7,7 +7,7 @@ import aiofiles
 import curl_cffi
 from nonebot import logger, get_driver
 
-from .rich import progress_bar, add_progress_task
+from .rich import add_progress_task
 from .task import auto_task
 from ..utils import merge_av, safe_unlink, generate_file_name, is_module_available
 from ..config import pconfig
@@ -61,15 +61,14 @@ class StreamDownloader:
             response.raise_for_status()
             content_length = self._validate_content_length(response)
 
-            with progress_bar:
-                update_progress = add_progress_task(
-                    f"httpx | {file_path.name}",
-                    content_length,
-                )
-                async with aiofiles.open(file_path, "wb") as file:
-                    async for chunk in response.aiter_bytes(chunk_size):
-                        await file.write(chunk)
-                        update_progress(advance=len(chunk))
+            update_progress = add_progress_task(
+                f"httpx | {file_path.name}",
+                content_length,
+            )
+            async with aiofiles.open(file_path, "wb") as file:
+                async for chunk in response.aiter_bytes(chunk_size):
+                    await file.write(chunk)
+                    update_progress(advance=len(chunk))
 
         return file_path
 
@@ -90,15 +89,14 @@ class StreamDownloader:
             response.raise_for_status()
             content_length = self._validate_content_length(response)
 
-            with progress_bar:
-                update_progress = add_progress_task(
-                    f"curl_cffi | {file_path.name}",
-                    content_length,
-                )
-                async with aiofiles.open(file_path, "wb") as file:
-                    async for chunk in response.aiter_content(chunk_size=8192):
-                        await file.write(chunk)
-                        update_progress(advance=len(chunk))
+            update_progress = add_progress_task(
+                f"curl_cffi | {file_path.name}",
+                content_length,
+            )
+            async with aiofiles.open(file_path, "wb") as file:
+                async for chunk in response.aiter_content(chunk_size=8192):
+                    await file.write(chunk)
+                    update_progress(advance=len(chunk))
 
         return file_path
 
@@ -220,14 +218,13 @@ class StreamDownloader:
         video_path = pconfig.cache_dir / video_name
 
         try:
-            with progress_bar:
-                async with aiofiles.open(video_path, "wb") as f:
-                    update_progress = add_progress_task(desc=video_name)
-                    for url in await self._get_m3u8_slices(m3u8_url):
-                        async with self.client.stream("GET", url, headers=ext_headers) as response:
-                            async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
-                                await f.write(chunk)
-                                update_progress(advance=len(chunk))
+            async with aiofiles.open(video_path, "wb") as f:
+                update_progress = add_progress_task(desc=video_name)
+                for url in await self._get_m3u8_slices(m3u8_url):
+                    async with self.client.stream("GET", url, headers=ext_headers) as response:
+                        async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):
+                            await f.write(chunk)
+                            update_progress(advance=len(chunk))
         except httpx.HTTPError:
             await safe_unlink(video_path)
             logger.exception("m3u8 视频下载失败")
