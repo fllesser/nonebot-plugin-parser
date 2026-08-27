@@ -365,7 +365,8 @@ class BilibiliParser(BaseParser):
         qr_pic = self._qr_login.get_qrcode_picture()
         return qr_pic.content
 
-    async def check_state(self, qr: QrCodeLogin):
+    @staticmethod
+    async def check_state(qr: QrCodeLogin):
         client = get_client()
         resp = await client.request(
             method="GET",
