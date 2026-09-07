@@ -109,10 +109,12 @@ class DouyinParser(BaseParser):
                     )
         # 添加视频内容
         elif video := aweme.video:
-            result.video = self.create_video(
-                video.play_addr.url,
-                video.cover_original_scale.url_list[-1] if video.cover_original_scale else video.cover.url_list[-1],
-                video.duration // 1000,
+            result.contents.append(
+                self.create_video(
+                    video.play_addr.url,
+                    video.cover_original_scale.url_list[-1] if video.cover_original_scale else video.cover.url_list[-1],
+                    video.duration // 1000,
+                )
             )
 
         return result
