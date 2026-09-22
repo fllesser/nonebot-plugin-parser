@@ -74,20 +74,6 @@ class DouyinParser(BaseParser):
             timestamp=aweme.create_time,
             url=aweme.share_url.split("?")[0],
         )
-        if music := aweme.music:
-            if not music.is_original_sound:
-                if music.play_url.uri == "":
-                    extra = json.loads(music.extra)
-                    music_url = extra.get("original_song_url")
-                else:
-                    music_url = music.play_url.uri
-                if music_url:
-                    result.contents.append(
-                        self.create_audio(
-                            url_or_task=music_url,
-                            duration=music.duration,
-                        )
-                    )
 
         # 添加图片内容
         if images := aweme.images:
@@ -107,14 +93,26 @@ class DouyinParser(BaseParser):
                             self.create_video(url_or_task=image_video.play_addr.url),
                         ]
                     )
+            if music := aweme.music:
+                if not music.is_original_sound:
+                    if music.play_url.uri == "":
+                        extra = json.loads(music.extra)
+                        music_url = extra.get("original_song_url")
+                    else:
+                        music_url = music.play_url.uri
+                    if music_url:
+                        result.contents.append(
+                            self.create_audio(
+                                url_or_task=music_url,
+                                duration=music.duration,
+                            )
+                        )
         # 添加视频内容
         elif video := aweme.video:
-            result.contents.append(
-                self.create_video(
-                    video.play_addr.url,
-                    video.cover_original_scale.url_list[-1] if video.cover_original_scale else video.cover.url_list[-1],
-                    video.duration // 1000,
-                )
+            result.video = self.create_video(
+                video.play_addr.url,
+                video.cover_original_scale.url_list[-1] if video.cover_original_scale else video.cover.url_list[-1],
+                video.duration // 1000,
             )
 
         return result
