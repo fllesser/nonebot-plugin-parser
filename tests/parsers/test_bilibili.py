@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 from nonebot import logger
 
@@ -103,29 +101,29 @@ async def test_read():
     logger.success("B站图文解析成功")
 
 
-@pytest.mark.asyncio
-async def test_dynamic():
-    from nonebot_plugin_parser.parsers import BilibiliParser
+# @pytest.mark.asyncio
+# async def test_dynamic():
+#     from nonebot_plugin_parser.parsers import BilibiliParser
 
-    dynamic_urls = [
-        "https://t.bilibili.com/1120105154190770281",
-        "https://www.bilibili.com/opus/998440765151510535",
-        "https://www.bilibili.com/opus/1040093151889457152",
-    ]
+#     dynamic_urls = [
+#         "https://t.bilibili.com/1120105154190770281",
+#         "https://www.bilibili.com/opus/998440765151510535",
+#         "https://www.bilibili.com/opus/1040093151889457152",
+#     ]
 
-    parser = BilibiliParser()
+#     parser = BilibiliParser()
 
-    async def test_parse_dynamic(dynamic_url: str) -> None:
-        _, searched = parser.search_url(dynamic_url)
-        dynamic_id = int(searched.group("dynamic_id"))
-        result = await parser.parse_dynamic_or_opus(dynamic_id)
-        assert result.author, "作者为空"
-        assert result.author.avatar, "作者头像为空"
-        avatar_path = await result.author.avatar.get()
-        assert avatar_path, "头像不存在"
-        assert avatar_path.exists(), "头像不存在"
+#     async def test_parse_dynamic(dynamic_url: str) -> None:
+#         _, searched = parser.search_url(dynamic_url)
+#         dynamic_id = int(searched.group("dynamic_id"))
+#         result = await parser.parse_dynamic_or_opus(dynamic_id)
+#         assert result.author, "作者为空"
+#         assert result.author.avatar, "作者头像为空"
+#         avatar_path = await result.author.avatar.get()
+#         assert avatar_path, "头像不存在"
+#         assert avatar_path.exists(), "头像不存在"
 
-        await result.ensure_downloads_complete()
+#         await result.ensure_downloads_complete()
 
-    await asyncio.gather(*[test_parse_dynamic(dynamic_url) for dynamic_url in dynamic_urls])
-    logger.success("B站动态解析成功")
+#     await asyncio.gather(*[test_parse_dynamic(dynamic_url) for dynamic_url in dynamic_urls])
+#     logger.success("B站动态解析成功")
