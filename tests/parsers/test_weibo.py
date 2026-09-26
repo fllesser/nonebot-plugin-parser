@@ -36,7 +36,7 @@ async def test_repost():
 
     urls = [
         # "https://mapp.api.weibo.cn/fx/77eaa5c2f741894631a87fc4806a1f05.html",
-        "https://weibo.com/1854467892/QsPbt51HH",
+        "https://weibo.com/3699172790/QdE9Aixlm"
     ]
 
     async def parse_repost(url) -> None:

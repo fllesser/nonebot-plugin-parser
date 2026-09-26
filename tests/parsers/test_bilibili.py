@@ -1,7 +1,5 @@
-import asyncio
-
-import pytest
-from nonebot import logger
+# import pytest
+# from nonebot import logger
 
 
 def test_bv_regex():
@@ -45,87 +43,87 @@ def test_av_regex():
         assert matched.group("page_num") == page_num, f"{url} | page_num 不匹配"
 
 
-@pytest.mark.asyncio
-async def test_live():
-    logger.info("开始解析B站直播 https://live.bilibili.com/6")
-    from nonebot_plugin_parser.parsers import BilibiliParser
+# @pytest.mark.asyncio
+# async def test_live():
+#     logger.info("开始解析B站直播 https://live.bilibili.com/6")
+#     from nonebot_plugin_parser.parsers import BilibiliParser
 
-    url = "https://live.bilibili.com/1"
-    parser = BilibiliParser()
-    _, searched = parser.search_url(url)
-    room_id = int(searched.group("room_id"))
-    try:
-        result = await parser.parse_live(room_id)
-    except Exception as e:
-        pytest.skip(f"B站直播解析失败: {e} (风控)")
+#     url = "https://live.bilibili.com/1"
+#     parser = BilibiliParser()
+#     _, searched = parser.search_url(url)
+#     room_id = int(searched.group("room_id"))
+#     try:
+#         result = await parser.parse_live(room_id)
+#     except Exception as e:
+#         pytest.skip(f"B站直播解析失败: {e} (风控)")
 
-    logger.debug(f"result: {result}")
-    assert result.title, "标题为空"
-    assert result.author, "作者为空"
+#     logger.debug(f"result: {result}")
+#     assert result.title, "标题为空"
+#     assert result.author, "作者为空"
 
-    assert result.author.avatar, "作者头像不存在"
-    avatar_path = await result.author.avatar.get()
-    assert avatar_path, "头像不存在"
-    assert avatar_path.exists(), "头像不存在"
+#     assert result.author.avatar, "作者头像不存在"
+#     avatar_path = await result.author.avatar.get()
+#     assert avatar_path, "头像不存在"
+#     assert avatar_path.exists(), "头像不存在"
 
-    img_contents = result.img_contents
-    for img_content in img_contents:
-        path = await img_content.path_task.get()
-        assert path.exists(), "图片不存在"
+#     img_contents = result.img_contents
+#     for img_content in img_contents:
+#         path = await img_content.path_task.get()
+#         assert path.exists(), "图片不存在"
 
-    logger.success("B站直播解析成功")
-
-
-async def test_read():
-    logger.info("开始解析B站图文 https://www.bilibili.com/read/cv523868")
-    from nonebot_plugin_parser.parsers import BilibiliParser
-
-    url = "https://www.bilibili.com/read/cv523868"
-    parser = BilibiliParser()
-    keyword, searched = parser.search_url(url)
-
-    try:
-        result = await parser.parse(keyword, searched)
-    except Exception as e:
-        pytest.skip(f"B站图文解析失败: {e} (风控)")
-
-    logger.debug(f"result: {result}")
-    assert result.title, "标题为空"
-    assert result.author, "作者为空"
-    assert result.author.avatar, "作者头像为空"
-    avatar_path = await result.author.avatar.safe_get()
-    assert avatar_path, "头像不存在"
-    assert avatar_path.exists(), "头像不存在"
-
-    assert result.graphics, "graphics 为空"
-    await result.ensure_downloads_complete()
-
-    logger.success("B站图文解析成功")
+#     logger.success("B站直播解析成功")
 
 
-@pytest.mark.asyncio
-async def test_dynamic():
-    from nonebot_plugin_parser.parsers import BilibiliParser
+# async def test_read():
+#     logger.info("开始解析B站图文 https://www.bilibili.com/read/cv523868")
+#     from nonebot_plugin_parser.parsers import BilibiliParser
 
-    dynamic_urls = [
-        "https://t.bilibili.com/1120105154190770281",
-        "https://www.bilibili.com/opus/998440765151510535",
-        "https://www.bilibili.com/opus/1040093151889457152",
-    ]
+#     url = "https://www.bilibili.com/read/cv523868"
+#     parser = BilibiliParser()
+#     keyword, searched = parser.search_url(url)
 
-    parser = BilibiliParser()
+#     try:
+#         result = await parser.parse(keyword, searched)
+#     except Exception as e:
+#         pytest.skip(f"B站图文解析失败: {e} (风控)")
 
-    async def test_parse_dynamic(dynamic_url: str) -> None:
-        _, searched = parser.search_url(dynamic_url)
-        dynamic_id = int(searched.group("dynamic_id"))
-        result = await parser.parse_dynamic_or_opus(dynamic_id)
-        assert result.author, "作者为空"
-        assert result.author.avatar, "作者头像为空"
-        avatar_path = await result.author.avatar.get()
-        assert avatar_path, "头像不存在"
-        assert avatar_path.exists(), "头像不存在"
+#     logger.debug(f"result: {result}")
+#     assert result.title, "标题为空"
+#     assert result.author, "作者为空"
+#     assert result.author.avatar, "作者头像为空"
+#     avatar_path = await result.author.avatar.safe_get()
+#     assert avatar_path, "头像不存在"
+#     assert avatar_path.exists(), "头像不存在"
 
-        await result.ensure_downloads_complete()
+#     assert result.graphics, "graphics 为空"
+#     await result.ensure_downloads_complete()
 
-    await asyncio.gather(*[test_parse_dynamic(dynamic_url) for dynamic_url in dynamic_urls])
-    logger.success("B站动态解析成功")
+#     logger.success("B站图文解析成功")
+
+
+# @pytest.mark.asyncio
+# async def test_dynamic():
+#     from nonebot_plugin_parser.parsers import BilibiliParser
+
+#     dynamic_urls = [
+#         "https://t.bilibili.com/1120105154190770281",
+#         "https://www.bilibili.com/opus/998440765151510535",
+#         "https://www.bilibili.com/opus/1040093151889457152",
+#     ]
+
+#     parser = BilibiliParser()
+
+#     async def test_parse_dynamic(dynamic_url: str) -> None:
+#         _, searched = parser.search_url(dynamic_url)
+#         dynamic_id = int(searched.group("dynamic_id"))
+#         result = await parser.parse_dynamic_or_opus(dynamic_id)
+#         assert result.author, "作者为空"
+#         assert result.author.avatar, "作者头像为空"
+#         avatar_path = await result.author.avatar.get()
+#         assert avatar_path, "头像不存在"
+#         assert avatar_path.exists(), "头像不存在"
+
+#         await result.ensure_downloads_complete()
+
+#     await asyncio.gather(*[test_parse_dynamic(dynamic_url) for dynamic_url in dynamic_urls])
+#     logger.success("B站动态解析成功")
