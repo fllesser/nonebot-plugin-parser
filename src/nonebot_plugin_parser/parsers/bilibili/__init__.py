@@ -41,6 +41,7 @@ class BilibiliParser(BaseParser):
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.BILIBILI, display_name="哔哩哔哩")
 
     def __init__(self):
+        super().__init__()
         self.headers = HEADERS.copy()
         self._credential: Credential | None = None
         self._cookies_file = pconfig.config_dir / "bilibili_cookies.json"

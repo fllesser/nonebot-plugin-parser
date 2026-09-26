@@ -57,6 +57,10 @@ decoder = Decoder(VxTwitterResponse)
 class TwitterParser(BaseParser):
     platform: ClassVar[Platform] = Platform(name=PlatformEnum.TWITTER, display_name="小蓝鸟")
 
+    def __init__(self):
+        super().__init__()
+        self.headers = {"User-Agent": "python-httpx/0.28.1"}
+
     @handle("x.com", r"x.com/[0-9-a-zA-Z_]{1,20}/status/([0-9]+)")
     async def _parse(self, searched: re.Match[str]) -> ParseResult:
         url = f"https://{searched.group(0)}"
