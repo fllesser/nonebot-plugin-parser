@@ -1,5 +1,6 @@
 import re
-from typing import TypeVar
+from typing import Any, TypeVar, Protocol
+from collections.abc import AsyncIterator
 
 from nonebot import logger, get_driver, on_command
 from nonebot.params import CommandArg
@@ -11,6 +12,10 @@ from ..config import pconfig
 from ..helper import UniHelper, UniMessage
 from ..parsers import BaseParser, ParseResult, BilibiliParser
 from ..renders import get_renderer
+
+
+class _MessageRenderer(Protocol):
+    def render_messages(self) -> AsyncIterator[UniMessage[Any]]: ...
 
 
 def _get_enabled_parser_classes() -> list[type[BaseParser]]:
@@ -60,6 +65,27 @@ def clear_result_cache():
     _RESULT_CACHE.clear()
 
 
+async def send_rendered_messages(renderer: _MessageRenderer) -> None:
+    """发送渲染结果，可选将所有输出聚合为单条合并转发。"""
+    if pconfig.forward_all_messages:
+        messages: list[UniMessage[Any]] = []
+        render_error: Exception | None = None
+        try:
+            async for message in renderer.render_messages():
+                messages.append(message)
+        except Exception as e:
+            render_error = e
+
+        if messages:
+            forward = UniHelper.construct_forward_messages(messages)
+            await UniMessage(forward).send()
+        if render_error is not None:
+            raise render_error
+    else:
+        async for message in renderer.render_messages():
+            await message.send()
+
+
 @UniHelper.with_reaction
 async def parser_handler(
     sr: SearchResult = Searched(),
@@ -79,8 +105,7 @@ async def parser_handler(
 
     # 3. 渲染内容消息并发送
     renderer = get_renderer(result.platform.name)(result)
-    async for message in renderer.render_messages():
-        await message.send()
+    await send_rendered_messages(renderer)
 
     # 4. 缓存解析结果
     _RESULT_CACHE[cache_key] = result

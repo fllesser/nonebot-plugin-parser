@@ -52,6 +52,8 @@ class Config(BaseModel):
     """字体粗细程度"""
     parser_need_forward_contents: bool = True
     """是否需要转发媒体内容"""
+    parser_forward_all_messages: bool = False
+    """是否将一次解析的所有消息放入同一条合并转发中"""
     parser_emoji_cdn: str = ELK_SH_CDN
     """Pilmoji 表情 CDN"""
     parser_emoji_style: EmojiStyle = EmojiStyle.FACEBOOK
@@ -173,6 +175,11 @@ class Config(BaseModel):
     def need_forward_contents(self) -> bool:
         """是否需要转发媒体内容"""
         return self.parser_need_forward_contents
+
+    @property
+    def forward_all_messages(self) -> bool:
+        """是否将一次解析的所有消息放入同一条合并转发中"""
+        return self.parser_forward_all_messages
 
     @property
     def emoji_cdn(self) -> str:
