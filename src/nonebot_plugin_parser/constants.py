@@ -48,5 +48,5 @@ class PlatformEnum(str, Enum):
 class RenderType(str, Enum):
     default = "default"
     common = "common"
-    htmlkit = "htmlkit"
+    takumi = "takumi"
     htmlrender = "htmlrender"

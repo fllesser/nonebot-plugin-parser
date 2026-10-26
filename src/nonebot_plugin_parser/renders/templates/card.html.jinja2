@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Media Card</title>
         <style>
+            /* TAKUMI_STYLESHEET_START */
             @font-face {
               font-family: "CustomFont";
               src: url('{{ font | safe }}');
@@ -505,6 +506,7 @@
               white-space: pre-wrap;
               word-wrap: break-word;
             }
+            /* TAKUMI_STYLESHEET_END */
         </style>
     </head>
     <body data-platform="{{ result.platform.name if result.platform else '' | safe }}">
