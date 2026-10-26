@@ -38,7 +38,6 @@ classifiers = [
 ]
 
 dependencies = [
-  "rich>=13.0.0",
   "takumi-py>=0.3.0,<1.0.0",
   "pillow>=11.0.0",
   "aiofiles>=25.1.0",
@@ -61,9 +60,9 @@ Release = "https://github.com/fllesser/nonebot-plugin-parser/releases"
 Repository = "https://github.com/fllesser/nonebot-plugin-parser"
 
 [project.optional-dependencies]
-ytdlp = ["yt-dlp[default]>=2025.2.21"]
+ytdlp = ["yt-dlp[default]>=2025.7.4"]
 emosvg = ["emosvg>=0.1.7"]
-all = ["yt-dlp[default]>=2026.3.13", "emosvg>=0.1.7"]
+all = ["yt-dlp[default]>=2026.7.4", "emosvg>=0.1.7"]
 
 [dependency-groups]
 dev = [
@@ -75,7 +74,7 @@ dev = [
 ]
 extras = [
   "emosvg>=0.1.7",
-  "yt-dlp[default]>=2026.3.13",
+  "yt-dlp[default]>=2026.7.4",
   "types-yt-dlp>=2026.3.13.20260314",
 ]
 test = [
