@@ -50,7 +50,6 @@ class HtmlRenderer(ImageRenderer):
         configured_renderer = Renderer(load_default_fonts=False)
         font_families = configured_renderer.register_font(FontResource(font_path.read_bytes()))
 
-        # Render the Jinja template asynchronously because PathTask.uri is async.
         environment = Environment(
             loader=FileSystemLoader(str(self.templates_dir)),
             autoescape=select_autoescape(

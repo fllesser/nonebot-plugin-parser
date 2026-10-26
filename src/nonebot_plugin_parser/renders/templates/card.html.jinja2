@@ -362,13 +362,18 @@
             }
 
             .grid-item {
+              height: 360px;
+              padding-bottom: 0;
               position: relative;
-              padding-bottom: 100%;
               background-color: var(--repost-bg);
               overflow: hidden;
               border-radius: var(--radius-img);
               border: 1.5px solid rgba(255, 255, 255, 0.7);
               box-shadow: none;
+            }
+
+            .image-grid.cols-3 .grid-item {
+              height: 240px;
             }
 
             .grid-item img {
@@ -560,7 +565,7 @@
                             {# ── 视频封面 ── #}
                             {% set video = result.video %}
                             {% if video and video.cover %}
-                                {% set cover_uri = (video.cover.uri if video.cover.uri else fallback_pic) %}
+                                {% set cover_uri = video.cover.uri if video.cover.uri else fallback_pic %}
                                 <div class="cover-wrapper">
                                     <img src="{{ cover_uri | safe }}" class="cover-img" alt="cover" />
                                     {% if play_button %}
