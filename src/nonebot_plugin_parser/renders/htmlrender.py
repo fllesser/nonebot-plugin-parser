@@ -7,6 +7,7 @@ from takumi_py import Renderer, FontResource, ImageResource
 
 from . import resources
 from .base import ImageRenderer, pconfig
+from ..parsers.task import PathTask
 
 _STYLESHEET_START = "/* TAKUMI_STYLESHEET_START */"
 _STYLESHEET_END = "/* TAKUMI_STYLESHEET_END */"
@@ -22,6 +23,14 @@ def _extract_stylesheet(html: str) -> tuple[str, str]:
         raise ValueError("card.html.jinja2 is missing the stylesheet end marker")
 
     return before + after, stylesheet
+
+
+async def _path_task_uri(path_task: PathTask | None) -> str | None:
+    if path_task is None:
+        return None
+
+    path = await path_task.safe_get()
+    return path.as_uri() if path else None
 
 
 class HtmlRenderer(ImageRenderer):
@@ -57,7 +66,9 @@ class HtmlRenderer(ImageRenderer):
                 enabled_extensions=("html", "xml", "jinja"),
                 default_for_string=False,
             ),
+            enable_async=True,
         )
+        environment.filters["path_uri"] = _path_task_uri
         template_context: dict[str, object] = {
             "logo": logo_path.as_uri() if logo_path.is_file() else None,
             "font": font_path.as_uri() if font_path.is_file() else None,
@@ -67,7 +78,7 @@ class HtmlRenderer(ImageRenderer):
             "play_button": resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri(),
             "default_avatar": resources.DEFAULT_AVATAR_PATH.as_uri(),
         }
-        html = environment.get_template("card.html.jinja2").render(**template_context)
+        html = await environment.get_template("card.html.jinja2").render_async(**template_context)
         html, stylesheet = _extract_stylesheet(html)
 
         # Takumi's synchronous native rendering runs outside the event loop.
