@@ -544,7 +544,7 @@
                         {% set author = result.author %}
                         {% if author %}
                             <div class="header">
-                                {% set avatar_uri = (author.avatar | path_uri) if author.avatar else default_avatar %}
+                                {% set avatar_uri = author.avatar.uri if (author.avatar and author.avatar.uri) else default_avatar %}
                                 <img src="{{ avatar_uri | safe }}" class="avatar" alt="avatar" />
                                 <div class="user-info">
                                     <div class="username">{{ author.name }}</div>
@@ -565,7 +565,7 @@
                             {# ── 视频封面 ── #}
                             {% set video = result.video %}
                             {% if video and video.cover %}
-                                {% set cover_uri = (video.cover | path_uri) or fallback_pic %}
+                                {% set cover_uri = video.cover.uri if video.cover.uri else fallback_pic %}
                                 <div class="cover-wrapper">
                                     <img src="{{ cover_uri | safe }}" class="cover-img" alt="cover" />
                                     {% if play_button %}
@@ -594,7 +594,7 @@
                                 {% if count == 1 %}
                                     {% set img = imgs[0] %}
                                     <div class="image-container">
-                                        <img src="{{ img | path_uri | safe }}"
+                                        <img src="{{ img.uri | safe }}"
                                               class="single-image"
                                               alt="image" />
                                     </div>
@@ -602,7 +602,7 @@
                                     {% set cols = 2 if count in [2, 4] else 3 %}
                                     <div class="image-grid cols-{{ cols }}">
                                         {% for img in imgs[:9] %}
-                                            {% set img_uri = (img | path_uri) or fallback_pic %}
+                                            {% set img_uri = (img.uri if img.uri else fallback_pic) %}
                                             <div class="grid-item">
                                                 <img src="{{ img_uri | safe }}" alt="image" />
                                                 {% if loop.last and count > 9 %}
@@ -619,7 +619,8 @@
                                         {% if text_or_img is string %}
                                             <div class="text">{{ text_or_img }}</div>
                                         {% else %}
-                                            {% set img_uri = (text_or_img.path_task | path_uri) or fallback_pic %}
+                                            {% set img_uri = text_or_img.path_task.uri %}
+                                            {% set img_uri = (img_uri if img_uri else fallback_pic) %}
                                             <div class="image-container">
                                                 <img src="{{ img_uri | safe }}"
                                                       class="single-image"
