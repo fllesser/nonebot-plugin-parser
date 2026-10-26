@@ -42,9 +42,8 @@ class PathTask:
             return None
 
     @property
-    async def uri(self) -> str | None:
-        path = await self.safe_get()
-        return path.as_uri() if path else None
+    def uri(self) -> str | None:
+        return self._path.as_uri() if isinstance(self._path, Path) else None
 
     def __repr__(self) -> str:
         if self._path is not None:

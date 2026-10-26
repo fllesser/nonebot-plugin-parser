@@ -17,17 +17,14 @@ match pconfig.render_type:
         RENDERER = CommonRenderer
     case RenderType.default:
         RENDERER = DefaultRenderer
-    case RenderType.htmlrender:
-        if is_module_available("nonebot_plugin_htmlrender"):
+    case RenderType.takumi | RenderType.htmlrender:
+        if is_module_available("takumi_py"):
             from .htmlrender import HtmlRenderer
 
             RENDERER = HtmlRenderer
         else:
-            logger.warning("未安装 `nonebot_plugin_htmlrender`, 已回退到 common 渲染器")
+            logger.warning("未安装 `takumi-py`, 已回退到 common 渲染器")
             RENDERER = CommonRenderer
-    case RenderType.htmlkit:
-        logger.warning("htmlkit 渲染器尚实现，已回退到 common 渲染器")
-        RENDERER = CommonRenderer
 
 
 def get_renderer(platform: str) -> type[BaseRenderer]:
