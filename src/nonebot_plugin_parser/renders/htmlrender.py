@@ -57,7 +57,6 @@ class HtmlRenderer(ImageRenderer):
                 enabled_extensions=("html", "xml", "jinja"),
                 default_for_string=False,
             ),
-            enable_async=True,
         )
         template_context: dict[str, object] = {
             "logo": logo_path.as_uri() if logo_path.is_file() else None,
@@ -68,7 +67,7 @@ class HtmlRenderer(ImageRenderer):
             "play_button": resources.DEFAULT_VIDEO_BUTTON_PATH.as_uri(),
             "default_avatar": resources.DEFAULT_AVATAR_PATH.as_uri(),
         }
-        html = await environment.get_template("card.html.jinja2").render_async(**template_context)
+        html = environment.get_template("card.html.jinja2").render(**template_context)
         html, stylesheet = _extract_stylesheet(html)
 
         # Takumi's synchronous native rendering runs outside the event loop.
