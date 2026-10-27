@@ -13,6 +13,7 @@ from nonebot_plugin_alconna.uniseg import (
     Image,
     Video,
     Voice,
+    RefNode,
     Segment,
     Reference,
     CustomNode,
@@ -61,6 +62,24 @@ class UniHelper:
                 content = seg
             node = CustomNode(uid=user_id, name=pconfig.nickname, content=content)
             nodes.append(node)
+
+        return Reference(nodes=nodes)
+
+    @staticmethod
+    def construct_forward_messages(
+        messages: Sequence[UniMessage],
+        user_id: str | None = None,
+    ) -> Reference:
+        """将多条消息合并为一条转发消息，并展开已有的转发节点。"""
+        if user_id is None:
+            user_id = current_bot.get().self_id
+
+        nodes: list[RefNode | CustomNode] = []
+        for message in messages:
+            if len(message) == 1 and isinstance(message[0], Reference):
+                nodes.extend(message[0].children)
+            else:
+                nodes.append(CustomNode(uid=user_id, name=pconfig.nickname, content=message))
 
         return Reference(nodes=nodes)
 

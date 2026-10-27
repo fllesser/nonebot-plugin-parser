@@ -256,6 +256,11 @@ parser_custom_font_weight: int = 700
 # [可选] 是否需要转发媒体内容(超过 4 项时始终使用合并转发)
 parser_need_forward_contents=True
 
+# [可选] 是否将一次解析产生的所有消息放入同一条合并转发
+# 默认关闭以保持原有发送行为；启用后外部只发送一条消息，插件不会主动限制内部节点数量
+# 实际可发送数量仍受适配器及平台限制
+parser_forward_all_messages=False
+
 # [可选] emoji 渲染 CDN
 # 例如 ELK_SH_CDN = "https://emojicdn.elk.sh", MQRIO_DEV_CDN = "https://emoji-cdn.mqrio.dev"
 parser_emoji_cdn="https://emojicdn.elk.sh"
