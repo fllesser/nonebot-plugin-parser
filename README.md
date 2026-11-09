@@ -145,9 +145,9 @@
 
     uv add "nonebot-plugin-parser[htmlkit]"
 
-`htmlrender`, 使用 `playwright` 渲染 `html`, 插件自 `v2.5.0` 起已正式支持
+`htmlrender` / `takumi`, 使用 `takumi` 渲染 `html`, 插件自 `v2.7.2` 起已正式支持
 
-    uv add "nonebot-plugin-parser[htmlrender]"
+    uv add "nonebot-plugin-parser[takumi]"
 
 现版本推荐组合
 
