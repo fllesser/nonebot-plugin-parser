@@ -26,6 +26,7 @@ bilibili:
 - https://www.bilibili.com/video/BV1VLk9YDEzB
 - https://bilibili.com/av1234567
 - https://bilibili.com/BV1uCzoYEEir
+- https://www.bilibili.com/zh-Hans/video/BV1ZLx46TExv/?share_source=copy_web
 - BV1uCzoYEEir
 - av113706574811958
 
