@@ -3,7 +3,7 @@ name = "nonebot-plugin-parser"
 version = "2.7.1"
 description = "NoneBot2 链接分享解析 Alconna 版, 现支持B站|抖音|快手|微博|小红书|YouTube|TikTok|Twitter|AcFun|NGA"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{ "name" = "fllesser", "email" = "fllessive@gmail.com" }]
 keywords = [
   "acfun",
@@ -38,7 +38,6 @@ classifiers = [
 ]
 
 dependencies = [
-  "takumi-py>=0.3.0,<1.0.0",
   "pillow>=11.0.0",
   "aiofiles>=25.1.0",
   "httpx>=0.27.2,<1.0.0",
@@ -60,9 +59,11 @@ Release = "https://github.com/fllesser/nonebot-plugin-parser/releases"
 Repository = "https://github.com/fllesser/nonebot-plugin-parser"
 
 [project.optional-dependencies]
+takumi = ["takumi-py>=0.4.0,<1.0.0"]
+htmlrender = ["takumi-py>=0.4.0,<1.0.0"]
 ytdlp = ["yt-dlp[default]>=2025.7.4"]
 emosvg = ["emosvg>=0.1.7"]
-all = ["yt-dlp[default]>=2026.7.4", "emosvg>=0.1.7"]
+all = ["yt-dlp[default]>=2026.7.4", "emosvg>=0.1.7", "takumi-py>=0.4.0,<1.0.0"]
 
 [dependency-groups]
 dev = [
@@ -75,6 +76,7 @@ dev = [
 extras = [
   "emosvg>=0.1.7",
   "yt-dlp[default]>=2026.7.4",
+  "takumi-py>=0.4.0,<1.0.0",
   "types-yt-dlp>=2026.3.13.20260314",
 ]
 test = [
