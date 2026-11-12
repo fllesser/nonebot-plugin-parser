@@ -145,6 +145,8 @@ class UniHelper:
     @classmethod
     def with_reaction(cls, func: Callable[..., Awaitable[Any]]):
         """自动回应装饰器"""
+        if pconfig.reaction_enabled is False:
+            return func
 
         @wraps(func)
         async def wrapper(*args, **kwargs):

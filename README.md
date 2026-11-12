@@ -266,6 +266,9 @@ parser_emoji_style="facebook"
 # [可选] 是否启用群组黑名单模式(默认启用，即所有群聊的解析都是开启的)
 parser_group_blacklist_enabled=True
 
+# [可选] 是否启用表情回应 (默认启用)
+parser_reaction_enabled=True
+
 ```
 
 </details>
@@ -423,5 +426,5 @@ real_url = await self.get_redirect_url(
 
 ## 🎉 致谢
 
-- [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) - 本项目最初基于此插件进行开发，在此表示感谢。尽管当前版本代码已完全重构，但仍感谢原项目提供的初始思路和参考。 
+- [nonebot-plugin-resolver](https://github.com/zhiyu1998/nonebot-plugin-resolver) - 本项目最初基于此插件进行开发，在此表示感谢。尽管当前版本代码已完全重构，但仍感谢原项目提供的初始思路和参考。
 - [parse-video-py](https://github.com/wujunwei928/parse-video-py) - 在抖音解析功能实现方面提供了技术参考和借鉴。
